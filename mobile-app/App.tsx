@@ -522,7 +522,7 @@ const App: React.FC<MobileAppProps> = ({
     // Selection States
     const [selectedClassId, setSelectedClassId] = useState<string>('');
     const [classListTab, setClassListTab] = useState<'class' | 'team'>('class');
-    const [isStudentTeamCreateOpen, setIsStudentTeamCreateOpen] = useState(false);
+    const [isStudentTeamFullPageOpen, setIsStudentTeamFullPageOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student>(MOCK_STUDENTS_CLASS_1[0]);
     const [studentDetailInitialSection, setStudentDetailInitialSection] = useState<'evaluation' | 'report' | 'collection'>('evaluation');
     const [activeStudentCollectionRecord, setActiveStudentCollectionRecord] = useState<StudentCollectionHistoryItem | null>(null);
@@ -1791,7 +1791,7 @@ const App: React.FC<MobileAppProps> = ({
             case 'leader_report': return '学生评价报表';
             case 'moral_education_cockpit': return '班级评价报表';
             case 'reward_verification': return '班级奖励兑换';
-            case 'class_exchange_records': return '成长币记录';
+            case 'class_exchange_records': return '兑换记录';
             case 'medal_issuance': return '颁发奖章';
             case 'face_update': return '更新人脸';
             case 'bank_password': return '设置兑换密码';
@@ -1856,18 +1856,18 @@ const App: React.FC<MobileAppProps> = ({
 
     const showInputBar = ['home_log', 'class_detail', 'student_team_detail'].includes(currentView)
         && !(currentView === 'class_detail' && isClassGroupingEditorOpen);
-    const isStudentTeamCreateView = currentView === 'class_list' && isStudentTeamCreateOpen;
-    const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView) && !isStudentTeamCreateView;
+    const isStudentTeamFullPage = currentView === 'class_list' && isStudentTeamFullPageOpen;
+    const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView) && !isStudentTeamFullPage;
     // 新建社团与团队仍由班级列表承载，切换外层导航时不能卸载列表组件，否则会丢失新建表单状态。
     const primaryTabViewKey = currentView === 'class_list' ? 'teacher-primary-tabs' : showTabBar ? 'teacher-primary-tabs' : currentView;
-    const pageTransitionClass = showTabBar || isStudentTeamCreateView ? '' : 'animate-page-enter';
+    const pageTransitionClass = showTabBar || isStudentTeamFullPage ? '' : 'animate-page-enter';
     const isPrincipalAssistantView = currentView === 'ai_principal_assistant';
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     // 助理各页面（含入口页与报告页）的标题栏必须承接屏幕级角色背景，所以由子页面自己持有滚动容器，
     // 避免透明标题栏与滚动正文互相压盖；滚动记忆与恢复通过 [data-view-scroll-root] 识别该容器。
     const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'student_team_info', 'student_team_report', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'class_exchange_records', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground;
-    const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamCreateView;
+    const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamFullPage;
     const hasPlainPageOwnHeader = currentView === 'class_exchange_records';
     const hasStudentDetailBackground = currentView === 'student_detail';
     const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
@@ -2065,7 +2065,7 @@ const App: React.FC<MobileAppProps> = ({
                                     isSchoolManager={isSchoolManager}
                                     canCreateStudentTeam={activeTeacherSpace.type === 'school'}
                                     onCreateStudentTeam={handleCreateStudentTeam}
-                                    onTeamCreateModeChange={setIsStudentTeamCreateOpen}
+                                    onStudentTeamFullPageChange={setIsStudentTeamFullPageOpen}
                                     onUpdateStudentTeam={handleUpdateStudentTeam}
                                     onSelectStudentTeam={handleSelectStudentTeam}
                                     onSelectStudentTeamInfo={handleSelectStudentTeamInfo}
@@ -2153,13 +2153,7 @@ const App: React.FC<MobileAppProps> = ({
                                     selectedIds={multiSelectIds}
                                     onSelectionChange={handleMultiSelectionChange}
                                     canManage={selectedStudentTeam.ownerId === activeTeacherId}
-                                    classes={studentTeamEditableClasses}
-                                    getStudentsForClass={getMergedStudentsForClass}
-                                    searchStudentsByExactName={searchStudentsByExactName}
                                     getStudentLabelById={getStudentLabelById}
-                                    getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, activeTeacherSpace)}
-                                    currentSpace={activeTeacherSpace}
-                                    onUpdateTeam={handleUpdateStudentTeam}
                                     performanceByStudentId={Object.fromEntries(
                                         Object.entries(evaluationRecordsByStudentId).map(([studentId, records]) => [
                                             studentId,

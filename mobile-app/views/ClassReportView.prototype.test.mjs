@@ -79,13 +79,8 @@ assert.ok(!viewSource.includes("classInfo.tags.includes('班主任')"), '班级�
 assert.ok(viewSource.includes('const visibleRankingRows = showAllRanking ? rankingRows : rankingRows.slice(0, 10)'), '积分排行应默认展示前10名，展开后展示当前班级全部学生。');
 assert.ok(viewSource.includes('rankingRows.length > 10') && viewSource.includes('`查看全部${rankingRows.length}名`'), '积分排行仅在超过10人时展示包含总人数的查看全部入口。');
 assert.ok(viewSource.includes('aria-expanded={showAllRanking}') && viewSource.includes('aria-controls="class-ranking-list"'), '积分排行展开入口应向辅助技术表达展开状态并关联排行列表。');
-assert.ok(viewSource.includes("import rankingCrownIcon from '../assets/resources/ranking-crown-icon.png'") && viewSource.includes('<RankingPosition position={index + 1} />'), '积分排行前3名应使用自定义生成的皇冠图片承载名次。');
-assert.ok(viewSource.includes('WebkitMaskImage: `url(${rankingCrownIcon})`') && viewSource.includes("maskSize: 'contain'"), '生成的皇冠图片应通过遮罩复用教师端排名语义色。');
+assert.ok(viewSource.includes("import MobileRankingBadge from '../components/ui/MobileRankingBadge'") && viewSource.includes('<MobileRankingBadge rank={index + 1} />'), '积分排行应复用公共数字绶带徽章，后续名次由同一组件展示。');
 assert.ok(!viewSource.includes('<Crown'), '积分排行不应继续使用图标库内置皇冠。');
-assert.ok(viewSource.includes('if (position > 3)') && viewSource.includes('aria-label={`第${position}名`}'), '积分排行第4名起应保持普通数字，前三名皇冠应保留明确的无障碍排名语义。');
-for (const rankingToken of ['--tm-brand-reward-strong', '--tm-text-secondary', '--tm-brand-secondary-strong']) {
-    assert.ok(viewSource.includes(rankingToken), `积分排行前三名应使用教师端语义Token：${rankingToken}`);
-}
 assert.ok(viewSource.includes("{ value: 'net', label: '总分' }") && viewSource.includes("{ value: 'progress', label: '进步幅度' }"), '积分排行应使用老师易理解的总分与进步幅度文案。');
 assert.ok(viewSource.includes('<CompactSegmentedControl') && viewSource.includes('ariaLabel="积分排行类型"') && !viewSource.includes('aria-label="积分排行类型"'), '积分排行应复用左对齐的紧凑分段控件，不再铺满整张卡片。');
 assert.ok(!viewSource.includes('净得分排行') && !viewSource.includes('进步排行'), '积分排行不应继续使用难理解或重复的旧文案。');
@@ -173,8 +168,8 @@ for (const filterLabel of ['积分排行类型', '需要关注维度']) {
 assert.ok(!viewSource.includes('bg-[var(--tm-brand-primary-soft)]'), '班级报告筛选与展开操作不应继续使用浅粉背景。');
 assert.ok(compactSegmentSource.includes('bg-[var(--tm-selection-segment-active-bg)] text-[var(--tm-selection-segment-active-text)] [box-shadow:var(--tm-selection-segment-active-shadow)]'), '积分排行紧凑分段选中项应通过组件 Token 使用白底主题红文字。');
 assert.ok(viewSource.includes('<PillSelectionControl') && pillSelectionSource.includes('border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]'), '需要关注未选项应通过组件 Token 复用白底浅边框胶囊，避免描边抢占视觉重点。');
-assert.ok(viewSource.includes("const customDateInputClass = 'h-12 w-full") && viewSource.includes('border border-[var(--tm-input-border)]') && viewSource.includes('bg-[var(--tm-input-bg)]') && viewSource.includes('focus:border-[var(--tm-input-focus-border)]') && viewSource.includes('focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]') && viewSource.includes('disabled:bg-[var(--tm-input-disabled-bg)]') && viewSource.includes('read-only:bg-[var(--tm-input-readonly-bg)]'), '弹窗内的自定义日期输入应使用白色可编辑默认态，并明确区分聚焦、禁用和只读状态。');
-assert.ok(viewSource.includes('open={showCustomDatePicker}') && viewSource.includes('title="选择日期范围"') && viewSource.includes('应用日期'), '自定义日期应通过公共底部抽屉渐进披露并在确认后应用。');
+assert.ok(viewSource.includes('<MobileDatePickerSheet') && viewSource.includes('mode="range"') && viewSource.includes('onConfirm={applyCustomRange}') && !viewSource.includes('const customDateInputClass'), '自定义日期应复用公共范围选择器，草稿由组件维护，确认后才应用。');
+assert.ok(viewSource.includes('open={showCustomDatePicker}') && !viewSource.includes('title="选择日期范围"') && !viewSource.includes('confirmLabel="应用日期"'), '自定义日期应通过公共底部抽屉渐进披露并在确认后应用。');
 assert.ok(viewSource.includes('aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}`}') && viewSource.includes('--tm-report-custom-range-height') && viewSource.includes('自定义时间：') && viewSource.includes('修改日期'), '已应用自定义日期应在日期下方通过紧凑摘要回显，并允许重新修改。');
 assert.ok(!viewSource.includes("timeRange === 'custom' && (\n                            <div className=\"grid grid-cols-[1fr_auto_1fr]"), '页面顶部不应继续直接展开两个日期输入框。');
 assert.ok(coverageDomainSource.includes('evaluationCount') && coverageDomainSource.includes('teacherCount'), '学生覆盖统计层应同时维护评价次数和评价老师数。');

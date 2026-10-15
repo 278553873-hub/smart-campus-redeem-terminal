@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Plus } from 'lucide-react';
 import type { ClassInfo, SchoolStudentTeam, Student, StudentTeamAvatarColorKey, StudentTeamAvatarKey, StudentTeamLabel } from '../../types';
 import { BackIcon, CloseIcon } from '../../components/Icons';
 import StudentCompactSelectGrid from '../../components/student/StudentCompactSelectGrid';
@@ -7,15 +7,17 @@ import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl';
-import MobileClassCascadePicker, { type MobileClassCascadeGroup } from '../../components/ui/MobileClassCascadePicker';
+import type { MobileClassCascadeGroup } from '../../components/ui/MobileClassCascadePicker';
+import MobileClassPickerSheet from '../../components/ui/MobileClassPickerSheet';
 import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
 import { ASSETS } from '../../assets/images';
 import { getStudentTeamAvatarImage, getStudentTeamAvatarOption, studentTeamAvatarOptions } from '../../assets/teamAvatarCatalog';
 import { getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import StudentTeamSelectedList from './StudentTeamSelectedList';
 import StudentTeamPhotoRecognitionFlow, { StudentTeamPhotoRecognitionButton } from './StudentTeamPhotoRecognitionFlow';
+import StudentTeamCreateView from './StudentTeamCreateView';
 
-export type StudentTeamEditorMode = 'create' | 'settings' | 'members';
+export type StudentTeamEditorMode = 'create' | 'settings' | 'members' | 'add';
 export type StudentTeamSearchResult = Pick<Student, 'id' | 'name' | 'gender' | 'grade' | 'class' | 'avatar'> & {
   classLabel: string;
 };
@@ -43,7 +45,7 @@ interface StudentTeamEditorViewProps {
 
 type EditorPage = 'details' | 'members';
 type MemberScope = 'authorized' | 'other';
-type MemberPickerView = 'students' | 'classes';
+type MemberPickerView = 'students' | 'classes' | 'roster';
 
 const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   open,
@@ -79,17 +81,35 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   const [memberScope, setMemberScope] = useState<MemberScope>('authorized');
   const [memberPickerView, setMemberPickerView] = useState<MemberPickerView>('students');
   const [recognitionOpen, setRecognitionOpen] = useState(false);
+  const [additionBaseIds, setAdditionBaseIds] = useState<Set<string>>(new Set());
+  const [rosterIds, setRosterIds] = useState<string[]>([]);
+  const [isAdditionPageOpen, setIsAdditionPageOpen] = useState(false);
+  const isRosterPage = mode === 'members' && memberPickerView === 'roster';
+  const isAdding = mode === 'add' || (mode === 'members' && !isRosterPage);
+  const addedIds = new Set(Array.from(selectedIds).filter(id => !additionBaseIds.has(id)));
+  const pickerSelectedIds = isAdding ? addedIds : selectedIds;
+  const isAlreadyJoined = (id: string) => isAdding && additionBaseIds.has(id);
+  const hasMemberChanges = selectedIds.size !== (team?.memberIds.length ?? 0)
+    || (team?.memberIds ?? []).some(id => !selectedIds.has(id));
+
+  const openAddition = () => {
+    setIsAdditionPageOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return;
     const initialGrade = Array.from(new Set(classes.map(item => item.gradeLevel)))[0] ?? '';
     const initialClassId = classes.find(item => item.gradeLevel === initialGrade)?.id ?? classes[0]?.id ?? '';
-    setPage(mode === 'members' ? 'members' : 'details');
+    setPage(mode === 'members' || mode === 'add' ? 'members' : 'details');
     setName(team?.name ?? '');
     setAvatarKey(team?.avatarKey ?? 'sports-basketball');
     setAvatarPickerOpen(false);
     setVisibility(team?.visibility ?? null);
     setSelectedIds(new Set(team?.memberIds ?? []));
+    setAdditionBaseIds(new Set(team?.memberIds ?? []));
+    setRosterIds(team?.memberIds ?? []);
+    setRecognitionOpen(false);
+    setIsAdditionPageOpen(false);
     setActiveGrade(initialGrade);
     setActiveClassId(initialClassId);
     setClassQuery('');
@@ -97,7 +117,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
     setSubmittedExactName('');
     setExactSearchResults([]);
     setMemberScope('authorized');
-    setMemberPickerView('students');
+    setMemberPickerView(mode === 'members' ? 'roster' : 'students');
   }, [classScopeKey, mode, open, teamDraftKey]);
 
   const gradeClasses = useMemo(() => classes.filter(item => item.gradeLevel === activeGrade), [activeGrade, classes]);
@@ -118,21 +138,12 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
   const visibleStudents = useMemo(() => activeStudents.filter(student => (
     !normalizedClassQuery || student.name.replace(/\s+/g, '').includes(normalizedClassQuery)
   )), [activeStudents, normalizedClassQuery]);
-  const allActiveSelected = activeStudents.length > 0 && activeStudents.every(student => selectedIds.has(student.id));
   const hasValidDetails = name.trim().length > 0 && visibility !== null;
   const toggleStudent = (studentId: string) => setSelectedIds(current => {
+    if (isAlreadyJoined(studentId)) return current;
     const next = new Set(current);
     if (next.has(studentId)) next.delete(studentId);
     else next.add(studentId);
-    return next;
-  });
-
-  const toggleActiveClass = () => setSelectedIds(current => {
-    const next = new Set(current);
-    activeStudents.forEach(student => {
-      if (allActiveSelected) next.delete(student.id);
-      else next.add(student.id);
-    });
     return next;
   });
 
@@ -153,6 +164,11 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
     }
     if (memberPickerView === 'classes') {
       setMemberPickerView('students');
+      return;
+    }
+    if (mode === 'members' && !isRosterPage) {
+      setSelectedIds(new Set(additionBaseIds));
+      setMemberPickerView('roster');
       return;
     }
     if (mode === 'create' && page === 'members') {
@@ -191,30 +207,104 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
       if (hasValidDetails) setPage('members');
       return;
     }
+    if (mode === 'members' && isAdding) {
+      setRosterIds(current => Array.from(new Set([...current, ...selectedIds])));
+      setMemberPickerView('roster');
+      return;
+    }
     if (!visibility) return;
     onSave({ name: name.trim(), memberIds: Array.from(selectedIds), visibility, avatarKey });
   };
 
   const isMemberPage = page === 'members';
   const isClassPickerPage = isMemberPage && memberPickerView === 'classes';
-  const title = mode === 'settings'
-      ? '团队设置'
-      : mode === 'members'
-        ? isClassPickerPage ? '选择班级' : '调整学生'
-        : page === 'members'
-          ? isClassPickerPage ? '选择班级' : '选择学生'
-          : '新建社团或团队';
-  const primaryDisabled = page === 'details' ? !hasValidDetails : selectedIds.size === 0;
+  const title = isClassPickerPage ? '选择班级'
+    : mode === 'settings' ? '团队设置'
+    : isRosterPage ? '调整学生'
+    : isAdding ? '添加学生'
+    : page === 'members' ? '选择学生' : '新建社团或团队';
+  const primaryDisabled = page === 'details' ? !hasValidDetails
+    : isRosterPage ? !hasMemberChanges
+    : pickerSelectedIds.size === 0;
   const primaryLabel = mode === 'create' && page === 'details'
     ? '选择学生'
-    : mode === 'settings'
-      ? '保存'
-      : `完成（${selectedIds.size}人）`;
+    : mode === 'settings' ? '保存'
+    : isRosterPage ? '保存修改'
+    : isAdding ? `添加（${addedIds.size}人）`
+    : `完成（${selectedIds.size}人）`;
+
+  if (mode === 'members' && isAdditionPageOpen && team) {
+    return (
+      <StudentTeamCreateView
+        mode="add"
+        initialTeam={{ ...team, memberIds: Array.from(selectedIds) }}
+        classes={classes}
+        getStudentsForClass={getStudentsForClass}
+        searchStudentsByExactName={searchStudentsByExactName}
+        getStudentLabelById={getStudentLabelById}
+        getClassLabel={getClassLabel}
+        currentSpace={currentSpace}
+        onBack={() => setIsAdditionPageOpen(false)}
+        onSave={value => {
+          const nextIds = new Set(value.memberIds);
+          setSelectedIds(nextIds);
+          setRosterIds(current => Array.from(new Set([...current, ...nextIds])));
+          setIsAdditionPageOpen(false);
+        }}
+      />
+    );
+  }
+
+  const adjustmentRoster = isRosterPage && (
+    <div className="pb-2">
+      <div className="flex min-h-14 items-center justify-between gap-3">
+        <span className="text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">当前成员 {selectedIds.size} 人</span>
+        <button type="button" onClick={openAddition} className="flex min-h-11 items-center gap-1 px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">
+          <Plus className="h-4 w-4" aria-hidden="true" />添加学生
+        </button>
+      </div>
+      <div className="space-y-[var(--tm-space-2)]">
+        {rosterIds.filter(id => selectedIds.has(id)).map(id => {
+          const student = getStudentLabelById(id);
+          return (
+            <div key={id} className="flex min-h-[72px] items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-3 py-2 [box-shadow:var(--tm-shadow-card-ambient)]">
+              <img src={student?.avatar || ASSETS.AVATAR.GENERIC_BOY} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+              <div className="min-w-0 flex-1">
+                <span className="block truncate text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{student?.name ?? '学生'}</span>
+                <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{student?.classLabel}</span>
+              </div>
+              <button type="button" onClick={() => toggleStudent(id)} aria-label={`移除${student?.name ?? '学生'}`} className="min-h-11 min-w-11 shrink-0 rounded-[var(--tm-radius-control)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative)]">移除</button>
+            </div>
+          );
+        })}
+      </div>
+      {selectedIds.size === 0 && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.CHAIR} title="暂无成员" className="min-h-56 py-4" />}
+    </div>
+  );
 
   return (
     <>
+      {mode === 'members' ? (
+        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
+          <header className="relative z-10 flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4 [padding-right:var(--mini-program-capsule-right-inset,16px)]">
+            <button type="button" onClick={requestClose} aria-label="返回社团与团队" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+              <BackIcon className="h-5 w-5 text-[var(--tm-text-secondary)]" />
+            </button>
+            <h1 className="pointer-events-none absolute left-1/2 max-w-[52%] -translate-x-1/2 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">调整学生</h1>
+            <div className="h-11 w-11" aria-hidden="true" />
+          </header>
+          <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pb-[var(--tm-space-4)] pt-[var(--tm-space-2)]">
+            {adjustmentRoster}
+          </main>
+          <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
+            <button type="button" disabled={!hasMemberChanges} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]">
+              保存修改
+            </button>
+          </footer>
+        </div>
+      ) : (
       <MobileBottomSheet
-        open={open && !recognitionOpen}
+        open={open && !isClassPickerPage && !recognitionOpen}
         title={title}
         size={isMemberPage ? 'tall' : 'content'}
         contentInset={isMemberPage ? 'compact' : 'standard'}
@@ -231,6 +321,14 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
               <CloseIcon className="h-5 w-5" />
             </button>
           </header>
+        ) : undefined}
+        footerLeading={isMemberPage && !isRosterPage && !isClassPickerPage && pickerSelectedIds.size > 0 ? (
+          <StudentTeamSelectedList
+            selectedIds={pickerSelectedIds}
+            getStudentLabelById={getStudentLabelById}
+            onRemove={toggleStudent}
+            className="h-9 bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)]"
+          />
         ) : undefined}
         footer={!isClassPickerPage && (
           <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
@@ -299,22 +397,9 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
           </div>
         )}
 
-        {page === 'members' && isClassPickerPage && (
-          <div className="-mx-3 h-[min(420px,56dvh)]">
-            <MobileClassCascadePicker
-              selectionMode="single"
-              groups={classGroups}
-              activeGrade={activeGrade}
-              onActiveGradeChange={setActiveGrade}
-              selectedClassId={activeClassId}
-              onSelectClass={handleClassSelect}
-              getClassLabel={getClassLabel}
-              ariaLabel="选择班级"
-            />
-          </div>
-        )}
+        {adjustmentRoster}
 
-        {page === 'members' && !isClassPickerPage && (
+        {page === 'members' && !isClassPickerPage && !isRosterPage && (
           <div className="min-h-full">
             <div className="sticky top-0 z-30 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2">
               <div className="mt-[var(--tm-space-2)] flex items-center gap-2">
@@ -339,16 +424,13 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                   <div className="mt-[var(--tm-space-2)]">
                     <button type="button" onClick={() => setMemberPickerView('classes')} aria-label="选择班级" className="flex min-h-11 w-full items-center justify-between gap-[var(--tm-space-3)] text-left">
                       <span className="min-w-0 truncate text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-                        {activeGrade}{gradeClasses.find(item => item.id === activeClassId) ? ` · ${getClassLabel(gradeClasses.find(item => item.id === activeClassId)!)}` : ''}
+                        {gradeClasses.find(item => item.id === activeClassId) ? getClassLabel(gradeClasses.find(item => item.id === activeClassId)!) : activeGrade}
                       </span>
                       <ChevronDown className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-[var(--tm-space-2)]">
-                    <MobileSearchInput value={classQuery} onChange={event => setClassQuery(event.target.value)} placeholder="搜索姓名" aria-label="搜索当前班级学生" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
-                    <button type="button" onClick={toggleActiveClass} className="min-h-11 shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">{allActiveSelected ? '取消全选' : '全选'}</button>
-                  </div>
+                  <MobileSearchInput value={classQuery} onChange={event => setClassQuery(event.target.value)} placeholder="搜索姓名" aria-label="搜索当前班级学生" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
                 </>
               )}
 
@@ -358,18 +440,12 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                   <button type="button" disabled={!exactName.trim()} onClick={handleExactSearch} className="min-h-11 shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] disabled:text-[var(--tm-text-disabled)]">查找</button>
                 </div>
               )}
-              {selectedIds.size > 0 && (
-                <StudentTeamSelectedList
-                  selectedIds={selectedIds}
-                  getStudentLabelById={getStudentLabelById}
-                  onRemove={toggleStudent}
-                />
-              )}
+
             </div>
 
             {memberScope === 'authorized' && classes.length > 0 ? (
               <>
-                <StudentCompactSelectGrid sections={[{ id: activeClassId || 'authorized-class', students: visibleStudents }]} isSelected={studentId => selectedIds.has(studentId)} onToggle={toggleStudent} className="pt-2" />
+                <StudentCompactSelectGrid sections={[{ id: activeClassId || 'authorized-class', students: visibleStudents }]} isSelected={studentId => pickerSelectedIds.has(studentId)} isDisabled={isAlreadyJoined} getSecondaryLabel={student => isAlreadyJoined(student.id) ? '已加入' : undefined} onToggle={toggleStudent} className="pt-2" />
                 {visibleStudents.length === 0 && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER} title="没有匹配的学生" className="min-h-56 py-4" imageClassName="w-[52%] min-w-[140px] max-w-[176px]" />}
               </>
             ) : memberScope === 'authorized' ? (
@@ -379,8 +455,9 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                 {submittedExactName && exactSearchResults.length > 0 && (
                   <StudentCompactSelectGrid
                     sections={[{ id: 'other-class-search', students: exactSearchResults }]}
-                    isSelected={studentId => selectedIds.has(studentId)}
-                    getSecondaryLabel={student => (student as StudentTeamSearchResult).classLabel}
+                    isSelected={studentId => pickerSelectedIds.has(studentId)}
+                    isDisabled={isAlreadyJoined}
+                    getSecondaryLabel={student => `${(student as StudentTeamSearchResult).classLabel}${isAlreadyJoined(student.id) ? ' · 已加入' : ''}`}
                     showRosterNumber={false}
                     onToggle={toggleStudent}
                     className="pt-3"
@@ -394,6 +471,19 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
           </div>
         )}
       </MobileBottomSheet>
+      )}
+
+      <MobileClassPickerSheet
+        open={open && isClassPickerPage}
+        selectionMode="single"
+        commitMode="immediate"
+        groups={classGroups}
+        value={{ gradeValue: activeGrade, classId: activeClassId }}
+        getClassLabel={getClassLabel}
+        onChange={({ classId }) => handleClassSelect(classId)}
+        onClose={() => setMemberPickerView('students')}
+        ariaLabel="选择班级"
+      />
 
       <MobileBottomSheet open={avatarPickerOpen} title="选择头像" onClose={() => setAvatarPickerOpen(false)}>
         <div className="space-y-4 pb-2">

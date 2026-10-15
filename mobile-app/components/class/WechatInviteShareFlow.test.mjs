@@ -15,7 +15,8 @@ assert.match(appScreen, /absolute inset-0 z-\[1200\]/, '跳转微信必须铺满
 assert.match(appScreen, /teacher-mobile-overlay-root/, '微信整屏应挂到手机壳的整屏弹层根节点。');
 assert.match(appScreen, /SimulatedIosStatusBar/, '微信整屏应自带系统状态栏。');
 assert.match(statusBar, /h-\[54px\]/, '系统状态栏仿真高度应保持 54px。');
-assert.match(phoneMockup, /<SimulatedIosStatusBar visible=\{shouldShowNativeChrome\} \/>/, '手机壳与微信整屏应共用同一份状态栏实现，避免两个界面高度不一致。');
+assert.match(phoneMockup, /<SimulatedMiniProgramChrome \/>/, '手机壳复用公共原生模拟层。');
+assert.match(read('../../../components/SimulatedMiniProgramChrome.tsx'), /<SimulatedIosStatusBar/, '公共原生层与微信整屏共用状态栏。');
 
 // 微信「选择聊天」页：关闭 / 选择聊天 / 多选、搜索、最近转发、最近聊天、折叠的聊天。
 assert.match(shareFlow, /选择聊天/, '应还原微信选择聊天页标题。');

@@ -1,3 +1,4 @@
+import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertTriangle,
@@ -8,7 +9,7 @@ import {
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import ClassRankingList from '../components/ui/ClassRankingList';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
-import ReportPeriodCalendar, { periodTypeLabels } from '../components/report/ReportPeriodCalendar';
+import { toMobilePeriodOptions, periodTypeLabels } from '../components/report/ReportPeriodCalendar';
 import {
     TeacherReportDonutChart,
     TeacherReportLineChart,
@@ -604,27 +605,16 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 </div>
             </div>
 
-            <MobileBottomSheet
+            <MobileDatePickerSheet
                 open={isPeriodSheetOpen}
+                mode={reportPeriodType}
                 title={`选择${periodTypeLabels[reportPeriodType]}`}
+                value={selectedPeriodId}
+                periods={toMobilePeriodOptions(periodOptions)}
+                currentPeriodId={currentPeriod?.id}
+                onConfirm={periodId => setSelectedPeriodId(periodId)}
                 onClose={() => setIsPeriodSheetOpen(false)}
-                headerAction={currentPeriod ? {
-                    label: '本周',
-                    onClick: () => {
-                        setSelectedPeriodId(currentPeriod.id);
-                        setIsPeriodSheetOpen(false);
-                    },
-                } : undefined}
-            >
-                <ReportPeriodCalendar
-                    periods={periodOptions}
-                    selectedPeriodId={selectedPeriodId}
-                    onSelect={periodId => {
-                        setSelectedPeriodId(periodId);
-                        setIsPeriodSheetOpen(false);
-                    }}
-                />
-            </MobileBottomSheet>
+            />
 
             <MobileBottomSheet
                 open={isRankingSheetOpen}

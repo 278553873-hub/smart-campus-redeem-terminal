@@ -11,6 +11,7 @@ interface MobileBottomSheetProps {
   contentInset?: 'standard' | 'compact' | 'none';
   contentTone?: 'surface' | 'plain';
   footer?: React.ReactNode;
+  footerLeading?: React.ReactNode;
   footerDivider?: boolean;
   header?: React.ReactNode;
   headerAction?: {
@@ -40,6 +41,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   contentInset = 'standard',
   contentTone = 'surface',
   footer,
+  footerLeading,
   footerDivider = false,
   header,
   headerAction,
@@ -175,8 +177,8 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">
           {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}
           {header ?? (
-            <header className="flex h-14 shrink-0 items-center justify-between px-4">
-              <h2 className="min-w-0 flex-1 truncate text-[17px] font-semibold text-[var(--tm-text-primary)]">{title}</h2>
+            <header className="flex h-[var(--tm-sheet-header-height)] shrink-0 items-center justify-between px-[var(--tm-sheet-inline)]">
+              <h2 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] leading-6 font-semibold text-[var(--tm-text-primary)]">{title}</h2>
               <div className="-mr-2 flex shrink-0 items-center">
                 {headerAction && (
                   <button
@@ -198,6 +200,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
           )}
         </div>
         <div className={`relative z-0 isolate min-h-0 flex-1 ${contentLayout === 'fill' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'} overscroll-contain [clip-path:inset(0)] no-scrollbar ${contentTone === 'plain' ? 'bg-[var(--tm-page-plain-content-bg)]' : 'bg-[var(--tm-bg-surface)]'} ${contentInset === 'none' ? '' : contentInset === 'compact' ? 'px-3' : 'px-[var(--tm-space-4)]'} ${footer ? 'pb-[var(--tm-space-4)]' : flushContentBottom ? 'pb-0' : 'pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))]'}`}>{children}</div>
+        {footerLeading && <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">{footerLeading}</div>}
         {footer && (
           <footer className={`relative z-20 shrink-0 bg-[var(--tm-bg-surface-glass)] px-4 pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-3 ${footerDivider ? 'border-solid border-[var(--tm-border-subtle)] [border-top-width:var(--tm-sheet-footer-divider-width)]' : ''}`}>
             {footer}

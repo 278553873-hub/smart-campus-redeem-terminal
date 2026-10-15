@@ -86,7 +86,7 @@ interface ClassListViewProps {
     isSchoolManager: boolean;
     canCreateStudentTeam: boolean;
     onCreateStudentTeam: (value: StudentTeamEditorValue) => void;
-    onTeamCreateModeChange?: (open: boolean) => void;
+    onStudentTeamFullPageChange?: (open: boolean) => void;
     onUpdateStudentTeam: (teamId: string, value: StudentTeamEditorValue) => void;
     onSelectStudentTeam: (teamId: string) => void;
     onSelectStudentTeamInfo: (teamId: string) => void;
@@ -151,7 +151,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     isSchoolManager,
     canCreateStudentTeam,
     onCreateStudentTeam,
-    onTeamCreateModeChange,
+    onStudentTeamFullPageChange,
     onUpdateStudentTeam,
     onSelectStudentTeam,
     onSelectStudentTeamInfo,
@@ -246,9 +246,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     }, [currentSpace.id]);
 
     useEffect(() => {
-        onTeamCreateModeChange?.(teamCreateOpen);
-        return () => onTeamCreateModeChange?.(false);
-    }, [onTeamCreateModeChange, teamCreateOpen]);
+        onStudentTeamFullPageChange?.(teamCreateOpen || teamEditor?.mode === 'members');
+        return () => onStudentTeamFullPageChange?.(false);
+    }, [onStudentTeamFullPageChange, teamCreateOpen, teamEditor?.mode]);
 
     useEffect(() => {
         if (!copyFeedback) return;
@@ -535,6 +535,27 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         </article>
         );
     };
+
+    if (teamEditor?.mode === 'members' && editingStudentTeam) {
+        return (
+            <StudentTeamEditorView
+                open
+                mode="members"
+                team={editingStudentTeam}
+                classes={studentTeamEditableClasses}
+                getStudentsForClass={getStudentsForClass}
+                searchStudentsByExactName={searchStudentsByExactName}
+                getStudentLabelById={getStudentLabelById}
+                getClassLabel={classInfo => getTeacherClassDisplayName(classInfo, currentSpace)}
+                currentSpace={currentSpace}
+                onClose={() => setTeamEditor(null)}
+                onSave={value => {
+                    if (teamEditor.teamId) onUpdateStudentTeam(teamEditor.teamId, value);
+                    setTeamEditor(null);
+                }}
+            />
+        );
+    }
 
     if (teamCreateOpen) {
         return (

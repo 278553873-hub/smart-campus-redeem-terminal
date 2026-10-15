@@ -41,7 +41,7 @@ assert.ok(!viewSource.includes('班级范围</span>') && !viewSource.includes('r
 assert.ok(!viewSource.includes('aria-label="选择年级"') && !viewSource.includes('aria-label="选择班级"'), '评价明细抽屉不得使用两个独立下拉筛选器。');
 assert.ok(classCascadeSource.includes('const classSelectionOptionClass =') && classCascadeSource.includes("border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)]"), '班级行应使用白色表面，仅通过选择标记表达选中状态。');
 assert.ok(viewSource.includes('ariaLabel="评价记录时间范围"') && viewSource.includes('handleTimeRangeChange'), '评价明细应复用报告日期栏并按时间过滤。');
-assert.ok(viewSource.includes('<MobileBottomSheet') && viewSource.includes('title="选择日期范围"') && viewSource.includes('应用日期'), '自定义日期应通过公共底部抽屉渐进披露。');
+assert.ok(viewSource.includes('<MobileBottomSheet') && !viewSource.includes('title="选择日期范围"') && !viewSource.includes('confirmLabel="应用日期"'), '自定义日期应通过公共底部抽屉渐进披露。');
 assert.ok(viewSource.includes('recordDay >= start && recordDay <= end'), '自定义日期应实际过滤记录，而不是仅改变选中状态。');
 assert.ok(viewSource.includes('<ol className="space-y-4"') && viewSource.includes('[box-shadow:var(--tm-shadow-card)]'), '评价记录应使用留白充足的独立轻量卡片展示。');
 assert.ok(viewSource.includes('onClick={() => openRecordDetail(record)}') && viewSource.includes('{record.reason}') && viewSource.includes('formatScore(record.score)'), '评价卡片应可进入详情，并展示解析理由和两位小数得分。');

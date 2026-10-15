@@ -532,5 +532,38 @@ if (new Set(renderedStudentReports.values()).size !== studentReportCases.length)
   throw new Error('每位学生的期末报告内容应各不相同');
 }
 
+// 教师发展评价：两种身份、四个入口及完整教师资料。
+for (const actorId of ['t1', 't2']) {
+  for (const initialTab of ['record', 'archive', 'report', 'me']) {
+    await renderPage('教师评价（' + actorId + ' / ' + initialTab + '）', () => import('../mobile-app/teacher-development/TeacherDevelopmentApp'), { initialActorId: actorId, initialTab }, html => {
+      const text = plainText(html);
+      for (const label of ['记录', '档案', '报表', '我的']) if (!text.includes(label)) throw new Error('缺少导航：' + label);
+      if (initialTab === 'archive' && actorId === 't1') {
+        for (const label of ['基本信息', '任职信息', '资格证书', '工作经历']) if (!text.includes(label)) throw new Error('教师档案缺少' + label);
+        if (text.includes('全校教师')) throw new Error('教师不应看到全校教师目录');
+      }
+      if (initialTab === 'archive' && actorId === 't2' && !text.includes('全校教师')) throw new Error('管理者应访问全校目录');
+      if (initialTab === 'report' && actorId === 't2' && !text.includes('赵宁')) throw new Error('全校报表应包含无记录教师');
+    });
+  }
+}
+for (const initialActorId of ['t2', 't4']) {
+  await renderPage('教师评价审核（' + initialActorId + '）', () => import('../mobile-app/teacher-development/TeacherDevelopmentApp'), { initialActorId, initialTab: 'record', initialRecordMode: 'review' }, html => {
+    const text = plainText(html);
+    if (!text.includes(initialActorId === 't2' ? '审核 (1)' : '审核 (2)')) throw new Error('审核待办数必须排除本人记录');
+    if (text.includes('按住说话')) throw new Error('审核功能不应显示录入条');
+  });
+}
+const developmentData = await import('../mobile-app/teacher-development/data');
+const profileModule = await import('../mobile-app/teacher-development/ArchiveView');
+for (const [part, expected] of [['basic', '学科教学（语文）'], ['positions', '高一1班、2班'], ['qualifications', '2014**********2186'], ['experience', '成都市实验中学']]) {
+  await renderPage('教师完整资料（' + part + '）', async () => ({ default: profileModule.ProfileDetails }), { teacher: developmentData.TEACHERS[0], part }, html => {
+    if (!plainText(html).includes(expected)) throw new Error('档案资料未完整渲染');
+  });
+}
+await renderPage('管理者查看教师档案', () => import('../mobile-app/teacher-development/TeacherDevelopmentApp'), { initialActorId: 't2', initialSelectedTeacherId: 't3' }, html => {
+  if (!plainText(html).includes('王悦的档案')) throw new Error('管理者查看对象应明确');
+});
+
 // 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
 process.exit(0);

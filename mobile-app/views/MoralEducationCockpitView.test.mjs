@@ -11,7 +11,7 @@ const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
-const periodCalendarSource = fs.readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
+const periodCalendarSource = fs.readFileSync(new URL('../components/ui/MobilePeriodPicker.tsx', import.meta.url), 'utf8');
 const bottomSheetSource = fs.readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const pillSource = fs.readFileSync(new URL('../components/ui/PillSelectionControl.tsx', import.meta.url), 'utf8');
@@ -56,7 +56,7 @@ for (const required of [
   'TeacherReportLineChart',
   '<MobileBottomSheet',
   '<ClassRankingList',
-  '<ReportPeriodCalendar',
+  '<MobileDatePickerSheet',
   "const reportPeriodType: MoralEducationPeriodType = 'week'",
   'getMoralEducationCockpitSnapshot({ periodType: reportPeriodType, periodId: selectedPeriodId })',
   'const currentPeriod = periodOptions[periodOptions.length - 1]',
@@ -145,7 +145,7 @@ for (const requiredToken of [
 ]) {
   assert.ok(tokenSource.includes(requiredToken), `数据概况应通过组件级 Token 收敛样式，缺少：${requiredToken}`);
 }
-for (const required of ['title={`选择${periodTypeLabels[reportPeriodType]}`}', 'periods={periodOptions}', 'setIsPeriodSheetOpen(false)']) {
+for (const required of ['title={`选择${periodTypeLabels[reportPeriodType]}`}', 'periods={toMobilePeriodOptions(periodOptions)}', 'setIsPeriodSheetOpen(false)']) {
   assert.ok(viewSource.includes(required), `周选择抽屉应按固定周口径切换历史周期，缺少：${required}`);
 }
 for (const required of [
@@ -163,7 +163,7 @@ for (const required of [
 ]) {
   assert.ok(periodCalendarSource.includes(required), `报表周期选择器应分别展示周范围、月份和学期按钮，缺少：${required}`);
 }
-for (const required of ["headerAction={currentPeriod ? {", "label: '本周'", 'setSelectedPeriodId(currentPeriod.id)', 'setIsPeriodSheetOpen(false)']) {
+for (const required of ['currentPeriodId={currentPeriod?.id}', 'onConfirm={periodId => setSelectedPeriodId(periodId)}', 'setIsPeriodSheetOpen(false)']) {
   assert.ok(viewSource.includes(required), `班级评价报表选择周弹窗标题栏应提供本周快捷定位，缺少：${required}`);
 }
 for (const required of ['headerAction?: {', 'headerAction.onClick', 'h-[var(--tm-size-touch)]', 'h-7', 'rounded-[8px]', 'border-[var(--tm-brand-primary)]', 'text-[var(--tm-brand-primary)]']) {

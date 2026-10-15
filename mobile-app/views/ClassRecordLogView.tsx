@@ -1,3 +1,4 @@
+import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
 import React, { useState, useEffect, useRef } from 'react';
 import {
     BackIcon, VolumeIcon, ActivityIcon,
@@ -583,52 +584,13 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </div>
 
 
-            {/* Mobile Style Date Picker */}
-            {showDatePicker && editingLog && (
-                <div className={recordSheetBackdropClass} onClick={() => setShowDatePicker(false)}>
-                    <div className={recordSheetSurfaceClass} onClick={(e) => e.stopPropagation()}>
-                        <div className="p-5 border-b border-slate-50 flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-slate-800">选择日期</h3>
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => setShowDatePicker(false)} className="min-h-11 px-2 text-sm font-bold text-[var(--tm-text-disabled)]">取消</button>
-                                <button onClick={() => setShowDatePicker(false)} className={`min-h-11 px-2 text-sm font-semibold ${modeTextTone}`}>完成</button>
-                            </div>
-                        </div>
-                        <div className="h-64 overflow-hidden relative flex items-center justify-center p-6">
-                            <div className="absolute inset-x-0 h-12 bg-slate-50 border-y border-slate-100 pointer-events-none"></div>
-                            <div className="flex-1 h-full flex items-center justify-center gap-8 z-10">
-                                {/* Simulated Wheels */}
-                                <div className="text-center">
-                                    <div className="mb-1 text-[11px] font-medium text-slate-300">年</div>
-                                    <div className="text-xl font-semibold text-slate-800">2025</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="mb-1 text-[11px] font-medium text-slate-300">月</div>
-                                    <div className="text-xl font-semibold text-slate-800">11</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="mb-1 text-[11px] font-medium text-slate-300">日</div>
-                                    <div className="text-xl font-semibold text-slate-700 opacity-40">11</div>
-                                    <div className="text-xl font-semibold text-slate-800 py-2">12</div>
-                                    <div className="text-xl font-semibold text-slate-700 opacity-40">13</div>
-                                </div>
-                            </div>
-                            <input
-                                type="date"
-                                className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                                value={editingLog.rawDate || '2025-11-12'}
-                                onChange={(e) => {
-                                    handleUpdateLogDate(editingLog.id, e.target.value);
-                                    setTimeout(() => setShowDatePicker(false), 300);
-                                }}
-                            />
-                        </div>
-                        <div className="p-4 safe-area-bottom">
-                            <button onClick={() => setShowDatePicker(false)} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-semibold">确认日期</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <MobileDatePickerSheet
+                open={showDatePicker && Boolean(editingLog)}
+                mode="single"
+                value={editingLog?.rawDate ?? ''}
+                onConfirm={date => { if (editingLog) handleUpdateLogDate(editingLog.id, date); }}
+                onClose={() => setShowDatePicker(false)}
+            />
 
             {/* Class Select Modal with Grade Filter */}
             {showClassSelect && editingLog && (

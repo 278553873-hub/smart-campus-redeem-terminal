@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import ts from 'typescript';
 
 const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-周报/班主任周报.md', import.meta.url), 'utf8');
-const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
+const prdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const viewSource = fs.readFileSync(new URL('./WeeklyActionAdviceView.tsx', import.meta.url), 'utf8');
 const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');

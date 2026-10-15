@@ -585,6 +585,8 @@ export const teacherBrandCssVariables = {
   '--tm-text-tertiary': teacherBrandSemantic.textTertiary,
   '--tm-text-disabled': teacherBrandSemantic.textDisabled,
   '--tm-text-inverse': teacherBrandSemantic.surface,
+  '--tm-ranking-size-compact': '16px',
+  '--tm-ranking-size-standard': '18px',
   '--tm-action-icon-neutral': teacherActionSemantic.iconNeutral,
   '--tm-action-icon-brand': teacherActionSemantic.iconBrand,
   '--tm-action-icon-danger': teacherActionSemantic.iconDanger,
@@ -809,6 +811,19 @@ export const teacherBrandCssVariables = {
   '--tm-class-list-divider-vertical-height': '20px',
   '--tm-radius-sheet': '28px',
   '--tm-sheet-footer-divider-width': '0px',
+  '--tm-sheet-header-height': '56px',
+  '--tm-sheet-inline': 'var(--tm-space-4)',
+  '--tm-sheet-content-gap': 'var(--tm-space-2)',
+  // 日期快捷项可见高度；外层仍保留 44px 触控区。
+  '--tm-date-shortcut-height': '34px',
+  '--tm-date-control-radius': '8px',
+  '--tm-date-row-height': '48px',
+  // 滚轮非当前候选弱化；当前值使用主文字色。
+  '--tm-wheel-inactive-text': 'color-mix(in srgb, var(--tm-text-primary) 55%, var(--tm-bg-surface))',
+  // 公共弹窗底部操作统一尺寸：完成、取消、确认及清空等。
+  '--tm-sheet-action-height': '48px',
+  '--tm-sheet-action-radius': '8px',
+  '--tm-sheet-action-font-size': '15px',
   '--tm-size-touch': '44px',
   '--tm-class-action-header-bottom-space': '16px',
   '--tm-class-action-group-gap': '24px',

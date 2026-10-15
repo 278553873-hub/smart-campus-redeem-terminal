@@ -13,11 +13,12 @@ import { teacherBrandCssVariables } from '../mobile-app/styles/teacherMobileToke
 import type { ClassInfo, Student } from '../mobile-app/types';
 import PhoneMockup from './PhoneMockup';
 import PublicLoginDemo from './PublicLoginDemo';
+import PublicDatePickerDemo from './PublicDatePickerDemo';
 import ClassroomStudentCard from './classroom/ClassroomStudentCard';
 import ClassroomStudentSelectCard from './classroom/ClassroomStudentSelectCard';
 import { getClassroomDisplayConfig } from '../shared/classroomDisplay';
 
-type PublicComponentId = 'grade-picker' | 'class-picker' | 'student-card' | 'login';
+type PublicComponentId = 'date-picker' | 'grade-picker' | 'class-picker' | 'student-card' | 'login';
 type ClassPreviewMode = 'single' | 'multiple';
 
 const gradeOptions: ReadonlyArray<MobileGradePickerOption> = [
@@ -601,6 +602,7 @@ const PublicComponentsDemo: React.FC = () => {
         <h2 className="px-3 py-2 text-sm font-semibold text-[var(--tm-text-primary)]">公共组件</h2>
         <div className="space-y-1">
           {([
+            ['date-picker', '日期选择器'],
             ['grade-picker', '年级选择弹窗'],
             ['class-picker', '班级选择弹窗'],
             ['student-card', '学生卡片'],
@@ -628,7 +630,7 @@ const PublicComponentsDemo: React.FC = () => {
         </div>
       </nav>
 
-      {isLogin ? <PublicLoginDemo /> : (
+      {activeComponent === 'date-picker' ? <PublicDatePickerDemo /> : isLogin ? <PublicLoginDemo /> : (
       <section className={isStudentCard ? 'min-h-0 overflow-y-auto' : 'grid min-h-0 grid-cols-[440px_minmax(0,1fr)] overflow-hidden max-[1120px]:grid-cols-1 max-[1120px]:overflow-y-auto'} aria-label={isStudentCard ? '学生卡片组件说明' : isClassPicker ? '班级选择弹窗组件说明' : '年级选择弹窗组件说明'}>
         {isStudentCard ? (
           renderStudentCardGallery()
@@ -836,7 +838,7 @@ const PublicComponentsDemo: React.FC = () => {
       </section>
       )}
 
-      {isStudentCard || isLogin ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
+      {isStudentCard || isLogin || activeComponent === 'date-picker' ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
         <MobileClassPickerSheet
           open={classSheetVisible}
           groups={previewGroups}

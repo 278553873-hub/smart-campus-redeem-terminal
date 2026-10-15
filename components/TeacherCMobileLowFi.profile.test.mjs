@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('./TeacherCMobileLowFi.tsx', import.meta.url), 'utf8');
-const prd = fs.readFileSync(new URL('../docs/PRD-ToC个人教师自助开通改造.md', import.meta.url), 'utf8');
+const prd = fs.readFileSync(new URL('../docs/演示项目/个人教师体验版/PRD-ToC个人教师自助开通改造.md', import.meta.url), 'utf8');
 const failures = [];
 
 const requireSource = (text, message) => {

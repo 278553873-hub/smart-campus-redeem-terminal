@@ -4,7 +4,7 @@ const historyViewSource = fs.readFileSync(new URL('./PrincipalReportHistoryView.
 const historyDataSource = fs.readFileSync(new URL('../data/principalReportHistory.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const headerSource = fs.readFileSync(new URL('../components/AssistantSubpageHeader.tsx', import.meta.url), 'utf8');
-const prdSource = fs.readFileSync(new URL('../../docs/PRD-校长助理周月学期报告.md', import.meta.url), 'utf8');
+const prdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-校长助理周月学期报告.md', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);

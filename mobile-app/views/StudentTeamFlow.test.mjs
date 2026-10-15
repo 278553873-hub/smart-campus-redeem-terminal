@@ -71,9 +71,9 @@ requireText(selectedListSource, 'src={student.avatar}', '已选名单应渲染�
 requireText(selectedListSource, '<StudentRosterNumber studentNo={student.studentNo} ariaHidden variant="student-card" />', '已选名单学号应与班级学生卡片一致的11像素、800字重班内号。');
 requireText(selectedListSource, 'text-[length:var(--tm-student-card-name-font-size)] [font-weight:var(--tm-student-card-name-font-weight)]', '已选名单姓名应与班级学生卡片一致的12像素、500字重。');
 assert.ok(!selectedListSource.includes('{student.name.slice(0, 1)}'), '已选名单头像不得回退为文字首字。');
-requireText(editorSource, '<MobileClassCascadePicker', '学生选择中的班级筛选应复用公共级联选择内容。');
-assert.ok(!editorSource.includes('MobileClassPickerSheet'), '学生选择弹窗内不得再嵌套公共班级底部弹窗。');
-requireText(editorSource, "type MemberPickerView = 'students' | 'classes';", '班级筛选应在同一个学生选择弹窗内切换视图。');
+requireText(editorSource, '<MobileClassPickerSheet', '学生选择中的班级筛选应复用 UI 改造的公共班级选择弹窗。');
+requireText(editorSource, 'open={open && !isClassPickerPage && !recognitionOpen}', '班级选择时暂时隐藏学生弹窗，保留草稿。');
+requireText(editorSource, "type MemberPickerView = 'students' | 'classes' | 'roster';", '班级筛选应在同一个学生选择弹窗内切换视图。');
 requireText(editorSource, 'bg-[var(--tm-bg-surface)] px-3 py-2', '团队选人工具栏应沿用学生选择器的白色工具栏样式。');
 requireText(editorSource, 'sticky top-0 z-30 -mx-3 bg-[var(--tm-bg-surface)] px-3 py-2', '团队选人工具栏必须高于滚动中的学生卡片。');
 requireText(createSource, 'data-teacher-demo-context="student-team-other-search"', '其他班级精确搜索状态应向手机壳提供演示标注上下文。');
@@ -86,7 +86,7 @@ requireText(compactStudentSource, 'showRosterNumber?: boolean;', '公共学生�
 requireText(createSource, "sections={[{ id: 'other-class-search', students: exactSearchResults }]}", '新建页的跨班搜索结果必须复用公共学生卡片网格。');
 requireText(editorSource, "sections={[{ id: 'other-class-search', students: exactSearchResults }]}", '调整学生弹窗的跨班搜索结果必须复用公共学生卡片网格。');
 requireText(createSource, 'getSecondaryLabel={student => (student as StudentTeamSearchResult).classLabel}', '新建页搜索卡片必须展示规范化班级名。');
-requireText(editorSource, 'getSecondaryLabel={student => (student as StudentTeamSearchResult).classLabel}', '调整学生弹窗搜索卡片必须展示规范化班级名。');
+requireText(editorSource, '(student as StudentTeamSearchResult).classLabel', '调整学生弹窗搜索卡片必须展示规范化班级名。');
 requireText(appSource, 'getTeacherClassDisplayName(classInfo, activeTeacherSpace)', '跨班搜索结果必须按当前学校空间格式化班级名。');
 requireText(appSource, 'gender: student.gender,', '跨班搜索结果应提供公共学生卡片所需的性别头像回退信息。');
 requireText(appSource, 'avatar: student.avatar,', '跨班搜索结果应沿用学生已有头像。');
@@ -103,7 +103,7 @@ assert.ok(!radioOptionSource.includes('bg-[var(--tm-brand-primary-soft)] text-[v
 requireText(editorSource, 'tagTone: \'red\'', '私密标签应使用班级页同类的红色浅底标签。');
 requireText(editorSource, 'tagTone: \'jade\'', '公开标签应使用班级页同类的青绿色浅底标签。');
 assert.ok(!editorSource.includes('选择后，符合范围的老师才能查看和评价这个团队'), '可见范围区域不得保留重复的权限解释文案。');
-requireText(editorSource, "export type StudentTeamEditorMode = 'create' | 'settings' | 'members';", '创建、团队设置与调整学生必须使用明确的渐进流程模式。');
+requireText(editorSource, "export type StudentTeamEditorMode = 'create' | 'settings' | 'members' | 'add';", '创建、团队设置与调整学生必须使用明确的渐进流程模式。');
 requireText(editorSource, 'open: boolean;', '团队编辑器必须作为公共弹窗挂载，不得继续作为独立页面。');
 requireText(editorSource, '<MobileBottomSheet', '创建团队必须复用公共底部弹窗。');
 requireText(createSource, "type CreatePage = 'details' | 'members';", '新建团队页面必须采用基础信息到成员选择的两步流程。');

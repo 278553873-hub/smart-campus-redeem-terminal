@@ -233,11 +233,11 @@ for (const required of [
   'showAward={rankingTab === \'active\'}',
   '<TeacherUsageRankingSheet',
 ]) {
-  if (!source.includes(required)) throw new Error(`教师使用排行榜需要弱化排名并用前三图形标识，缺少：${required}`);
+  if (!source.includes(required)) throw new Error(`教师使用排行榜需要用统一前三名徽章标识，缺少：${required}`);
 }
 if (teacherRows.includes('>{rank}</span>') || fullTeacherSheet.includes('>{rank}</span>')) {
-  throw new Error('教师使用排行榜积极使用 tab 不应显示排名数字');
+  throw new Error('教师使用排行榜不应在统一徽章之外重复展示排名数字');
 }
-if (!teacherRankingSheet.includes("rankingType === 'active' && index < 3") || !teacherRankingSheet.includes('<Trophy')) {
-  throw new Error('完整榜单应仅为积极使用的前三名展示奖杯');
+if (!teacherRankingSheet.includes("rankingType === 'active' && index < 3") || !teacherRankingSheet.includes('<MobileRankingBadge')) {
+  throw new Error('完整榜单应仅为积极使用的前三名展示统一数字徽章');
 }

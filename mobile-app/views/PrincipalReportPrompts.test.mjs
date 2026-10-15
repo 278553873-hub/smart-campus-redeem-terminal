@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 
-const weeklyPrompt = fs.readFileSync(new URL('../../docs/校长助理_本周管理建议_内容生成提示词.md', import.meta.url), 'utf8');
-const monthlyPrompt = fs.readFileSync(new URL('../../docs/校长助理_上月学校复盘_内容生成提示词.md', import.meta.url), 'utf8');
-const termPrompt = fs.readFileSync(new URL('../../docs/校长助理_学期学校报告_内容生成提示词.md', import.meta.url), 'utf8');
-const prdSource = fs.readFileSync(new URL('../../docs/PRD-校长助理周月学期报告.md', import.meta.url), 'utf8');
+const weeklyPrompt = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/提示词/校长助理_本周管理建议_内容生成提示词.md', import.meta.url), 'utf8');
+const monthlyPrompt = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/提示词/校长助理_上月学校复盘_内容生成提示词.md', import.meta.url), 'utf8');
+const termPrompt = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/提示词/校长助理_学期学校报告_内容生成提示词.md', import.meta.url), 'utf8');
+const prdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-校长助理周月学期报告.md', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);
@@ -30,9 +30,9 @@ for (const [name, prompt, version, reportType] of [
 }
 
 for (const required of [
-  'docs/校长助理_本周管理建议_内容生成提示词.md',
-  'docs/校长助理_上月学校复盘_内容生成提示词.md',
-  'docs/校长助理_学期学校报告_内容生成提示词.md',
+  'docs/演示项目/教师手机端/提示词/校长助理_本周管理建议_内容生成提示词.md',
+  'docs/演示项目/教师手机端/提示词/校长助理_上月学校复盘_内容生成提示词.md',
+  'docs/演示项目/教师手机端/提示词/校长助理_学期学校报告_内容生成提示词.md',
   '周报告建议最多60条代表记录',
   '月报告建议最多100条代表记录',
   '学期报告每个章节建议最多120条代表记录',

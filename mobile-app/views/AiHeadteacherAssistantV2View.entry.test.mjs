@@ -5,7 +5,7 @@ const viewSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx',
 const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
-const unifiedPrdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理.md', import.meta.url), 'utf8');
+const unifiedPrdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-班主任助理.md', import.meta.url), 'utf8');
 const classAssistantDomainSource = fs.readFileSync(new URL('../domain/classEvaluationAssistantV2.ts', import.meta.url), 'utf8');
 const conversationDomainSource = fs.readFileSync(new URL('../domain/headteacherAssistantConversation.ts', import.meta.url), 'utf8');
 // 对话气泡、输入控件与建议问题已收敛为公共组件，班主任助理与校长助理共用同一套实现。

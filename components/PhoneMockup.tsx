@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { MoreHorizontal } from 'lucide-react';
-import SimulatedIosStatusBar from './SimulatedIosStatusBar';
+import SimulatedMiniProgramChrome from './SimulatedMiniProgramChrome';
 
 interface PhoneMockupProps {
   children: React.ReactNode;
@@ -62,7 +61,6 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const simulatedStatusBarHeight = shouldShowNativeChrome ? simulatedStatusBarHeightValue : 0;
   const simulatedCapsuleRightInset = shouldShowNativeChrome ? 112 : 0;
   const deviceFrameVisibility = showDeviceFrame ? 'opacity-100' : 'opacity-0';
-  const nativeChromeVisibility = shouldShowNativeChrome ? 'opacity-100' : 'opacity-0';
   const screenCornerClass = showDeviceFrame ? 'rounded-[50px]' : 'rounded-none';
   const screenClipStyle: React.CSSProperties = showDeviceFrame
     ? {
@@ -76,7 +74,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const screenContent = (
     <div
       ref={screenRef}
-      className={`relative overflow-hidden border border-slate-200 bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${screenCornerClass}`}
+      className={`relative overflow-hidden bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${screenCornerClass}`}
       style={{
         width: `${screenWidth}px`,
         height: `${screenHeight}px`,
@@ -84,6 +82,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         '--mini-program-status-bar-height': `${simulatedStatusBarHeight}px`,
         '--mini-program-title-bar-height': `${simulatedTitleBarHeight}px`,
         '--mini-program-capsule-right-inset': `${simulatedCapsuleRightInset}px`,
+        '--mini-program-bottom-safe-area': shouldShowNativeChrome ? '28px' : '0px',
       } as React.CSSProperties}
     >
         {screenBackground && (
@@ -107,23 +106,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
           />
         )}
 
-        {/* iOS 状态栏 (Overlay) */}
-        <SimulatedIosStatusBar visible={shouldShowNativeChrome} />
-
-        {/* 微信胶囊仿真 (Overlay) */}
-        <div className={`absolute top-[60px] right-4 z-[99] flex items-center bg-white/60 backdrop-blur-md border border-black/5 rounded-full h-8 px-3 gap-3 pointer-events-none ${nativeChromeVisibility}`} aria-hidden={!shouldShowNativeChrome}>
-            <MoreHorizontal size={16} className="text-black/80" />
-            <div className="w-[1px] h-3.5 bg-black/10"></div>
-            <div className="relative w-4 h-4 flex items-center justify-center">
-                <div className="w-3.5 h-3.5 border-[1.8px] border-black/80 rounded-full"></div>
-                <div className="absolute w-1 h-1 bg-black/80 rounded-full"></div>
-            </div>
-        </div>
-
-        {/* Home Bar (Overlay) */}
-        <div className={`absolute bottom-0 left-0 w-full h-7 flex justify-center items-end pb-2 z-[90] pointer-events-none ${nativeChromeVisibility}`} aria-hidden={!shouldShowNativeChrome}>
-            <div className="w-32 h-[4px] bg-black/10 rounded-full"></div>
-        </div>
+        <SimulatedMiniProgramChrome />
 
         {screenOverlay && (
           <div

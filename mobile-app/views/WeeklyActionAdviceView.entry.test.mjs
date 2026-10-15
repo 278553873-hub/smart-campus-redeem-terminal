@@ -6,7 +6,7 @@ const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8'
 const assistantSource = fs.readFileSync(new URL('./AiHeadteacherAssistantV2View.tsx', import.meta.url), 'utf8');
 const cssSource = fs.readFileSync(new URL('../index.css', import.meta.url), 'utf8');
 const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-周报/班主任周报.md', import.meta.url), 'utf8');
-const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
+const prdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const cardsSource = fs.readFileSync(new URL('../components/assistant-report/AssistantReportCards.tsx', import.meta.url), 'utf8');
 const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 

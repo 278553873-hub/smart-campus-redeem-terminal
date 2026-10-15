@@ -1,3 +1,4 @@
+import { mobileSheetActionClass } from './mobileSheetActionStyles';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ClassInfo } from '../../types';
 import MobileBottomSheet from './MobileBottomSheet';
@@ -220,7 +221,7 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
               type="button"
               onClick={handleConfirm}
               disabled={confirmDisabled}
-              className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]"
+              className={`${mobileSheetActionClass} flex w-full items-center justify-center bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]`}
             >
               {confirmLabel}
             </button>
@@ -230,7 +231,7 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
               type="button"
               onClick={handleClear}
               disabled={clearDisabled}
-              className="flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--tm-text-disabled)]"
+              className={`${mobileSheetActionClass} flex w-full items-center justify-center font-medium text-[var(--tm-text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--tm-text-disabled)]`}
             >
               {clearLabel}
             </button>

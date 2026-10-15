@@ -1,3 +1,5 @@
+import MobileDatePickerSheet, { type MobileDateRange } from '../components/ui/MobileDatePickerSheet';
+import { currentTermToDateRange, localToday } from '../components/ui/mobileDatePickerModel';
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarRange, Check, ChevronDown, Pause, Pencil, Play, Trash2, X } from 'lucide-react';
 import { ASSETS } from '../assets/images';
@@ -8,7 +10,7 @@ import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker'
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import type { ClassInfo } from '../types';
-import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
+import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 interface EvaluationRecordsLogViewProps {
     classes: ClassInfo[];
@@ -233,7 +235,6 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
         start: toDateInputValue(addDays(today, -6)),
         end: toDateInputValue(today),
     }));
-    const [draftCustomRange, setDraftCustomRange] = useState(customRange);
     const getClassLabel = (classInfo: ClassInfo) => getTeacherClassDisplayName(classInfo, currentSpace);
     const [records, setRecords] = useState(() => createEvaluationRecords(classes, today, getClassLabel));
     const [activeRecordId, setActiveRecordId] = useState('');
@@ -278,9 +279,6 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
         return recordDay >= start && recordDay <= end;
     }).sort((left, right) => right.occurredAt.getTime() - left.occurredAt.getTime()), [customRange, gradeGroups, records, selectedClassId, selectedGrade, timeRange, today]);
 
-    const customRangeInvalid = draftCustomRange.start === ''
-        || draftCustomRange.end === ''
-        || draftCustomRange.start > draftCustomRange.end;
     const selectedClass = classes.find(classInfo => classInfo.id === selectedClassId);
     const selectedGradeLabel = selectedGrade === 'all' ? '全部年级' : selectedGrade;
     const selectedScopeLabel = selectedClass ? getClassLabel(selectedClass) : selectedGradeLabel;
@@ -336,15 +334,14 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
 
     const handleTimeRangeChange = (nextTimeRange: TimeRange) => {
         if (nextTimeRange === 'custom') {
-            setDraftCustomRange(customRange);
             setShowCustomDatePicker(true);
             return;
         }
         setTimeRange(nextTimeRange);
     };
 
-    const applyCustomRange = () => {
-        if (customRangeInvalid) return;
+    const applyCustomRange = (draftCustomRange: MobileDateRange) => {
+        if (!draftCustomRange.start || !draftCustomRange.end || draftCustomRange.start > draftCustomRange.end) return;
         setCustomRange(draftCustomRange);
         setTimeRange('custom');
         setShowCustomDatePicker(false);
@@ -449,7 +446,6 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                     <button
                         type="button"
                         onClick={() => {
-                            setDraftCustomRange(customRange);
                             setShowCustomDatePicker(true);
                         }}
                         className="flex h-[var(--tm-report-custom-range-height)] w-full items-center gap-1 bg-[var(--tm-bg-surface-soft)] px-[var(--tm-report-page-inline)] text-left"
@@ -769,44 +765,14 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 </div>
             </MobileBottomSheet>
 
-            <MobileBottomSheet
+            <MobileDatePickerSheet
                 open={showCustomDatePicker}
-                title="选择日期范围"
+                mode="range"
+                value={customRange}
+                currentTerm={currentTermToDateRange(localToday())}
+                onConfirm={applyCustomRange}
                 onClose={() => setShowCustomDatePicker(false)}
-                footer={(
-                    <button
-                        type="button"
-                        disabled={customRangeInvalid}
-                        onClick={applyCustomRange}
-                        className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition active:bg-[var(--tm-brand-primary-pressed)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]"
-                    >
-                        应用日期
-                    </button>
-                )}
-            >
-                <div className="grid grid-cols-2 gap-3 pb-2">
-                    <label className="space-y-2 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-                        <span>开始日期</span>
-                        <input
-                            type="date"
-                            value={draftCustomRange.start}
-                            max={draftCustomRange.end || undefined}
-                            onChange={event => setDraftCustomRange(value => ({ ...value, start: event.target.value }))}
-                            className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
-                        />
-                    </label>
-                    <label className="space-y-2 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-                        <span>结束日期</span>
-                        <input
-                            type="date"
-                            value={draftCustomRange.end}
-                            min={draftCustomRange.start || undefined}
-                            onChange={event => setDraftCustomRange(value => ({ ...value, end: event.target.value }))}
-                            className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
-                        />
-                    </label>
-                </div>
-            </MobileBottomSheet>
+            />
 
             <MobileConfirmSheet
                 open={showDeleteConfirm && Boolean(activeRecord)}

@@ -1,3 +1,5 @@
+import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
+import { currentTermToDateRange, localToday } from '../components/ui/mobileDatePickerModel';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
@@ -7,7 +9,6 @@ import {
     ClipboardList,
     Info,
     PencilLine,
-    Trophy,
     UserCheck,
     Users,
     X,
@@ -36,6 +37,8 @@ import {
 } from '../services/leaderReportService';
 import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
 import TeacherUsageRankingSheet from '../components/report/TeacherUsageRankingSheet';
+import IndividualEvaluationRateHelp from '../components/report/IndividualEvaluationRateHelp';
+import MobileRankingBadge from '../components/ui/MobileRankingBadge';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
@@ -47,8 +50,6 @@ type FiveEducationChartValueKey = 'plusScore' | 'minusScore' | 'netScore' | 'sco
 type IndicatorUsageLevel = 'second' | 'third';
 type IndicatorUsageSort = 'asc' | 'desc';
 type IndicatorGroupFilter = LeaderReportFiveEducationStat['key'];
-type CustomDateQuickRange = 'yesterday' | 'lastWeek' | 'lastMonth';
-
 interface LeaderReportViewProps {
     onBack: () => void;
     currentSpace: TeacherSpaceOption;
@@ -285,28 +286,17 @@ interface TeacherRowProps {
 const teacherUsageHeaderColumns = ['老师', '个评率', '评价次数', '评价条数'] as const;
 
 const TeacherUsageRankingHeader = () => (
-    <div className="mb-2 grid grid-cols-[minmax(0,1fr)_48px_52px_56px] gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
+    <div className="mb-2 grid grid-cols-[minmax(0,1fr)_56px_52px_56px] items-center gap-2 px-3 text-[11px] font-semibold text-[var(--tm-text-secondary)]">
         {teacherUsageHeaderColumns.map((label, index) => (
-            <span key={label} className={index === 0 ? undefined : 'text-right'}>{label}</span>
+            <span key={label} className={index === 0 ? undefined : 'text-right'}>
+                {label === '个评率' ? <IndividualEvaluationRateHelp /> : label}
+            </span>
         ))}
     </div>
 );
 
-// 奖牌徽章使用浅底+深图标组合：金/铜取奖励金与辅助橙语义，银取中性弱表面；禁用色不得用作装饰。
-const awardStyles = [
-    'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)] shadow-sm',
-    'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)] shadow-sm',
-    'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)] shadow-sm',
-];
-
 const TeacherRankBadge = ({ rank }: { rank?: number }) => {
-    if (!rank || rank > 3) return null;
-
-    return (
-        <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full shadow-sm ${awardStyles[rank - 1]}`} aria-label={`第${rank}名`}>
-            <Trophy className="h-3 w-3" />
-        </span>
-    );
+    return rank ? <MobileRankingBadge rank={rank} size="compact" showOtherRanks={false} /> : null;
 };
 
 const TeacherRow: React.FC<TeacherRowProps> = ({
@@ -314,7 +304,7 @@ const TeacherRow: React.FC<TeacherRowProps> = ({
     rank,
     showAward,
 }) => (
-    <div className="grid min-h-[48px] grid-cols-[minmax(0,1fr)_48px_52px_56px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
+    <div className="grid min-h-[48px] grid-cols-[minmax(0,1fr)_56px_52px_56px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{teacher.name}</span>
             {showAward && <TeacherRankBadge rank={rank} />}
@@ -426,36 +416,6 @@ const getPresetDateRange = (period: Exclude<LeaderReportPeriod, 'custom'>): Lead
             : new Date(today.getFullYear(), 1, 1);
     return { startDate: toDateInputValue(termStart), endDate };
 };
-
-const getCustomQuickDateRange = (range: CustomDateQuickRange): LeaderReportDateRange => {
-    const today = new Date();
-
-    if (range === 'yesterday') {
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-        const dateValue = toDateInputValue(yesterday);
-        return { startDate: dateValue, endDate: dateValue };
-    }
-
-    if (range === 'lastWeek') {
-        const day = today.getDay() || 7;
-        const end = new Date(today);
-        end.setDate(today.getDate() - day);
-        const start = new Date(end);
-        start.setDate(end.getDate() - 6);
-        return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
-    }
-
-    const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const end = new Date(today.getFullYear(), today.getMonth(), 0);
-    return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
-};
-
-const customDateQuickRanges: { key: CustomDateQuickRange; label: string }[] = [
-    { key: 'yesterday', label: '昨天' },
-    { key: 'lastWeek', label: '上周' },
-    { key: 'lastMonth', label: '上月' },
-];
 
 const getDateRangeError = (range: LeaderReportDateRange) => {
     if (!range.startDate || !range.endDate) return '请选择开始日期和结束日期';
@@ -613,9 +573,12 @@ const EventDistributionTabs = ({
     onChange: (value: EventDistributionMetric) => void;
 }) => <SegmentedTabs value={value} onChange={onChange} tabs={eventDistributionTabs} />;
 
-const TeacherScoreRow: React.FC<{ item: LeaderReportTeacherScoreSummary }> = ({ item }) => (
+const TeacherScoreRow: React.FC<{ item: LeaderReportTeacherScoreSummary; rank?: number }> = ({ item, rank }) => (
     <div className="grid min-h-[44px] grid-cols-[minmax(0,1.1fr)_56px_56px_64px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
-        <div className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{item.teacherName}</div>
+        <div className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{item.teacherName}</span>
+            <TeacherRankBadge rank={rank} />
+        </div>
         <div className="text-right font-semibold text-[var(--tm-chart-positive-text)]">{formatPlusScore(item.plusScore)}</div>
         <div className="text-right font-semibold text-[var(--tm-chart-negative-text)]">{formatMinusScore(item.minusScore)}</div>
         <div className={`text-right font-bold ${netScoreTone(item.netScore)}`}>{formatNetScore(item.netScore)}</div>
@@ -651,7 +614,7 @@ const TeacherScoreRankingCard = ({
                 <span className="text-right">总分</span>
             </div>
             <div className="space-y-2.5">
-                {visibleItems.map(item => <TeacherScoreRow key={item.teacherId} item={item} />)}
+                {visibleItems.map((item, index) => <TeacherScoreRow key={item.teacherId} item={item} rank={sort === 'minus' ? undefined : index + 1} />)}
             </div>
         </section>
     );
@@ -2112,7 +2075,6 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
     const [snapshot, setSnapshot] = useState<LeaderReportSnapshot | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isFilterPinned, setIsFilterPinned] = useState(false);
-    const dateRangeError = getDateRangeError(draftDateRange);
     const periodQuery = activePeriod === 'custom' && confirmedDateRange
         ? { period: 'custom' as const, ...confirmedDateRange }
         : { period: activePeriod === 'custom' ? 'week' as const : activePeriod };
@@ -2191,9 +2153,9 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
         }
         handlePresetPeriodChange(period);
     };
-    const applyCustomDateRange = () => {
-        if (dateRangeError) return;
-        setConfirmedDateRange(draftDateRange);
+    const applyCustomDateRange = (range: LeaderReportDateRange) => {
+        if (getDateRangeError(range)) return;
+        setConfirmedDateRange(range);
         setActivePeriod('custom');
         setShowCustomDateSheet(false);
     };
@@ -2399,74 +2361,16 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                 </div>
             </div>
 
-            {showCustomDateSheet && (
-                <div className="absolute inset-0 z-[114] flex items-end bg-[var(--tm-mask)] backdrop-blur-sm" onClick={() => setShowCustomDateSheet(false)}>
-                    <div className="flex max-h-[82%] w-full flex-col rounded-t-[32px] bg-white shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] px-5 py-4">
-                            <h3 className="text-lg font-semibold text-[var(--tm-text-primary)]">选择统计时间</h3>
-                            <button className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]" onClick={() => setShowCustomDateSheet(false)}>
-                                <X className="h-5 w-5" />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto px-5 py-4">
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className="block">
-                                    <span className="mb-1.5 block text-xs font-semibold text-[var(--tm-text-secondary)]">开始日期</span>
-                                    <input
-                                        type="date"
-                                        value={draftDateRange.startDate}
-                                        max={getTodayValue()}
-                                        onChange={(event) => setDraftDateRange(current => ({ ...current, startDate: event.target.value }))}
-                                        className="min-h-[44px] w-full rounded-2xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-sm font-semibold text-[var(--tm-input-text)] outline-none"
-                                    />
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1.5 block text-xs font-semibold text-[var(--tm-text-secondary)]">结束日期</span>
-                                    <input
-                                        type="date"
-                                        value={draftDateRange.endDate}
-                                        max={getTodayValue()}
-                                        onChange={(event) => setDraftDateRange(current => ({ ...current, endDate: event.target.value }))}
-                                        className="min-h-[44px] w-full rounded-2xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-sm font-semibold text-[var(--tm-input-text)] outline-none"
-                                    />
-                                </label>
-                            </div>
-
-                            <div className="mt-4 grid grid-cols-3 gap-2">
-                                {customDateQuickRanges.map(quickRange => {
-                                    const range = getCustomQuickDateRange(quickRange.key);
-                                    return (
-                                        <button
-                                            key={quickRange.key}
-                                            type="button"
-                                            onClick={() => setDraftDateRange(range)}
-                                            className="min-h-[40px] rounded-2xl border border-[var(--tm-border-subtle)] bg-white px-2 text-xs font-semibold text-[var(--tm-text-secondary)] transition-all active:scale-95 active:bg-[var(--tm-bg-surface-soft)]"
-                                        >
-                                            设为{quickRange.label}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {dateRangeError && (
-                                <div className="mt-3 rounded-2xl bg-[var(--tm-status-negative-soft)] px-3 py-2 text-xs font-semibold text-[var(--tm-status-negative)]">
-                                    {dateRangeError}
-                                </div>
-                            )}
-                        </div>
-                        <div className="shrink-0 border-t border-[var(--tm-border-subtle)] px-5 pb-6 pt-3">
-                            <button
-                                type="button"
-                                disabled={Boolean(dateRangeError)}
-                                onClick={applyCustomDateRange}
-                                className="min-h-[44px] w-full rounded-2xl bg-[var(--tm-brand-primary)] px-4 text-[15px] font-semibold text-white shadow-[0_14px_28px_-18px_var(--tm-shadow-brand)] transition-all active:scale-[0.98] disabled:bg-[var(--tm-border-subtle)] disabled:text-[var(--tm-text-disabled)] disabled:shadow-none disabled:active:scale-100"
-                            >
-                                确认使用
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <MobileDatePickerSheet
+                open={showCustomDateSheet}
+                mode="range"
+                value={{ start: draftDateRange.startDate, end: draftDateRange.endDate }}
+                currentTerm={currentTermToDateRange(localToday())}
+                max={getTodayValue()}
+                validate={range => getDateRangeError({ startDate: range.start, endDate: range.end })}
+                onConfirm={range => applyCustomDateRange({ startDate: range.start, endDate: range.end })}
+                onClose={() => setShowCustomDateSheet(false)}
+            />
 
             {showClassCoverageSheet && selectedGrade && snapshot && (
                 <div className="absolute inset-0 z-[115] flex items-end bg-[var(--tm-mask)] backdrop-blur-sm" onClick={() => setShowClassCoverageSheet(false)}>
@@ -2579,7 +2483,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                             </div>
                         </div>
                         <div className="max-h-[58vh] space-y-2.5 overflow-y-auto p-4 pb-8">
-                            {fullScoreRanking.map(item => <TeacherScoreRow key={item.teacherId} item={item} />)}
+                            {fullScoreRanking.map((item, index) => <TeacherScoreRow key={item.teacherId} item={item} rank={fullScoreRankingSort === 'minus' ? undefined : index + 1} />)}
                         </div>
                     </div>
                 </div>

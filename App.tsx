@@ -14,6 +14,7 @@ import TeacherDashboard from './components/TeacherDashboard';
 import SmartBigScreen from './components/SmartBigScreen';
 import AdminApp from './components/AdminApp';
 import MobileApp from './mobile-app/App';
+import TeacherDevelopmentApp from './mobile-app/teacher-development/TeacherDevelopmentApp';
 import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
 import ParentBankFeaturePreviewControls from './components/ParentBankFeaturePreviewControls';
@@ -1415,10 +1416,10 @@ const AppSwitcher: React.FC = () => {
   const questionnaireInviteCode = useMemo(() => (
     new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
   ), []);
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation'>(() => {
+  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation') {
+    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation') {
       return app;
     }
     return 'terminal'; // default
@@ -1806,6 +1807,7 @@ const AppSwitcher: React.FC = () => {
             onViewChange={setTerminalView}
           />
         )}
+        {currentApp === 'teacher-evaluation' && <TeacherDevelopmentApp />}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
@@ -2090,6 +2092,14 @@ const AppSwitcher: React.FC = () => {
             >
               <Smartphone size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
+            </button>
+            <button
+              onClick={() => setCurrentApp('teacher-evaluation')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-evaluation' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="教师评价 - 教师发展档案"
+            >
+              <ShieldCheck size={22} className="mb-1" />
+              <span className="text-[9px] font-bold leading-tight">教师评价</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}

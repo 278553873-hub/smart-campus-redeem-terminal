@@ -5,7 +5,7 @@ const historySource = fs.readFileSync(new URL('./TeacherEvaluationReviewHistoryV
 const dataSource = fs.readFileSync(new URL('../data/teacherEvaluationReview.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const promptSource = fs.readFileSync(new URL('../../prompt/student/班主任助理-月报/班主任月报.md', import.meta.url), 'utf8');
-const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
+const prdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 const adapterSource = fs.readFileSync(new URL('../domain/assistantReportAdapters.ts', import.meta.url), 'utf8');
 const contractSource = fs.readFileSync(new URL('../domain/assistantReport.ts', import.meta.url), 'utf8');
 

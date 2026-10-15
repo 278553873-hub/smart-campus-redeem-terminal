@@ -30,6 +30,7 @@ import {
   DEMO_SUNSHINE_REWARD,
 } from '../shared/demoRewardScenario';
 import PhoneMockup from './PhoneMockup';
+import { ImageGallery, ImagePreview } from './media/ImageGallery';
 import {
   ParentBottomSheet,
   ParentCard,
@@ -105,6 +106,7 @@ interface EvaluationRecord {
   createdAt: number;
   score: number;
   content: string;
+  images?: string[];
 }
 
 const formatEvaluationTeacherName = (teacher: string) => {
@@ -261,9 +263,9 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
     exchangePassword: index % 2 === 0 ? '246810' : '135790',
     fiveScores: { 德: 91 + scoreOffset, 智: 86 + scoreOffset, 体: 78 + scoreOffset, 美: 84 + scoreOffset, 劳: 93 + scoreOffset },
     records: [
-      { id: `record-${index}-1`, title: '主动整理班级图书角', dimension: '德育', indicatorPath: ['崇德', '仪容仪表', '举止得体'], teacher: '张林老师', time: '今天 10:20', createdAt: dayAgo(0), score: 3, content: '你坐姿端正，展现了良好的形象。' },
-      { id: `record-${index}-2`, title: '科学实验记录完整', dimension: '智育', indicatorPath: ['启智', '科学探究', '记录完整'], teacher: '周老师', time: '昨天 15:35', createdAt: dayAgo(1), score: 5, content: '观察记录清晰，能用自己的语言解释实验现象。' },
-      { id: `record-${index}-2b`, title: '课前物品整理提醒', dimension: '智育', indicatorPath: ['启智', '学习准备', '材料整理'], teacher: '周老师', time: '昨天 08:25', createdAt: dayAgo(1), score: -1, content: '课前材料整理稍慢，提醒后已完成。' },
+      { id: `record-${index}-1`, title: '主动整理班级图书角', dimension: '德育', indicatorPath: ['崇德', '仪容仪表', '举止得体'], teacher: '张林老师', time: '今天 10:20', createdAt: dayAgo(0), score: 3, content: '你坐姿端正，展现了良好的形象。', images: [ASSETS.HIGHLIGHT_DEFAULTS['daily-classroom-thinking'], ASSETS.HIGHLIGHT_DEFAULTS['daily-kindness-collaboration'], ASSETS.HIGHLIGHT_DEFAULTS['daily-default-growth']] },
+      { id: `record-${index}-2`, title: '科学实验记录完整', dimension: '智育', indicatorPath: ['启智', '科学探究', '记录完整'], teacher: '周老师', time: '昨天 15:35', createdAt: dayAgo(1), score: 5, content: '观察记录清晰，能用自己的语言解释实验现象。', images: [ASSETS.HIGHLIGHT_DEFAULTS['daily-classroom-thinking']] },
+      { id: `record-${index}-2b`, title: '课前物品整理提醒', dimension: '智育', indicatorPath: ['启智', '学习准备', '材料整理'], teacher: '周老师', time: '昨天 08:25', createdAt: dayAgo(1), score: -1, content: '课前材料整理稍慢，提醒后已完成。', images: [ASSETS.HIGHLIGHT_DEFAULTS['daily-classroom-thinking'], ASSETS.HIGHLIGHT_DEFAULTS['daily-labor-service']] },
       { id: `record-${index}-3`, title: '课间奔跑提醒后已改正', dimension: '体育', indicatorPath: ['健体', '安全习惯', '课间有序'], teacher: '陈老师', time: '本周三 09:12', createdAt: dayAgo(2), score: -1, content: '课间活动安全意识需要加强，提醒后能及时调整。' },
       { id: `record-${index}-4`, title: '红领巾岗位认真负责', dimension: '劳动', indicatorPath: ['乐劳', '岗位责任', '主动服务'], teacher: '王老师', time: '本周二 14:10', createdAt: dayAgo(3), score: 4, content: '值日流程熟练，能主动帮助同学完成公共任务。' },
       { id: `record-${index}-5`, title: '晨跑坚持完成目标', dimension: '体育', indicatorPath: ['健体', '运动习惯', '坚持锻炼'], teacher: '陈老师', time: '本周一 08:05', createdAt: dayAgo(4), score: 2, content: '能按节奏完成晨跑，并主动鼓励同伴。' },
@@ -727,6 +729,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [submitSuccessMessage, setSubmitSuccessMessage] = useState('');
   const [selectedGrowthDate, setSelectedGrowthDate] = useState(() => new Date());
   const [growthRangeMode, setGrowthRangeMode] = useState<GrowthRangeMode>('day');
+  const [evaluationImagePreview, setEvaluationImagePreview] = useState<{ childId: string; recordId: string; index: number } | null>(null);
   const [mineSheet, setMineSheet] = useState<MineSheet>(null);
   const [exchangePasswordChildId, setExchangePasswordChildId] = useState('');
   const [parentNavActiveIndex, setParentNavActiveIndex] = useState(0);
@@ -952,6 +955,14 @@ const ParentApp: React.FC<ParentAppProps> = ({
     () => getGrowthRangeRecords(selectedGrowthDate, growthRangeMode),
     [activeChild, selectedGrowthDate, growthRangeMode]
   );
+  // 每次渲染都重新核对孩子、时段与明细权限，权限撤回时不保留图片副本。
+  const previewRecord = isLoggedIn && screen === 'growthRecords' && evaluationImagePreview?.childId === activeChild?.id
+    ? selectedGrowthRangeRecords.find(record => record.id === evaluationImagePreview?.recordId && isRecordDetailVisible(record) && record.images?.length)
+    : undefined;
+  useEffect(() => {
+    if (!previewRecord) setEvaluationImagePreview(null);
+  }, [previewRecord]);
+
   const selectedPraiseCount = showPositiveSummary
     ? selectedGrowthRangeRecords.filter(record => record.score > 0).length
     : 0;
@@ -1815,14 +1826,19 @@ const ParentApp: React.FC<ParentAppProps> = ({
                   const positive = record.score > 0;
                   return (
                     <ParentCard key={record.id} as="article" className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-[var(--pm-text-primary)]">{record.content}</p>
-                          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
-                            <span>{record.time}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>{formatEvaluationTeacherName(record.teacher)}</span>
-                          </div>
+                      <p className="break-words text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-[var(--pm-text-primary)]">{record.content}</p>
+                      {record.images && record.images.length > 0 && (
+                        <ImageGallery
+                          images={record.images}
+                          label="评价图片"
+                          className="mt-3 [--media-radius:var(--pm-radius-control)]"
+                          onSelect={index => setEvaluationImagePreview({ childId: activeChild.id, recordId: record.id, index })}
+                        />
+                      )}
+                      <div className="mt-3 flex items-baseline justify-between gap-3">
+                        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
+                          <span className="break-words">{formatEvaluationTeacherName(record.teacher)}</span>
+                          <span>{record.time}</span>
                         </div>
                         <span className={`shrink-0 tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold ${positive ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--evaluation-score-negative)]'}`}>
                           {record.score > 0 ? `+${record.score}` : record.score}
@@ -2945,11 +2961,22 @@ const ParentApp: React.FC<ParentAppProps> = ({
     >
       <PhoneMockup showDeviceFrame={showPhoneShell} contentTopInsetMode="status-bar" screenBackground={<ParentDiffuseBackdrop preview={gradientPreview} />}>
         <div className="relative flex flex-1 flex-col overflow-hidden bg-transparent text-[var(--pm-text-primary)]">
-          {renderScreen()}
-          {showTabs && renderParentBottomNav()}
-          <SubmitSuccessToast />
-          <ChildSwitcherSheet />
-          <ExchangePasswordSheet />
+          <div className="flex min-h-0 flex-1 flex-col" inert={previewRecord ? true : undefined}>
+            {renderScreen()}
+            {showTabs && renderParentBottomNav()}
+            <SubmitSuccessToast />
+            <ChildSwitcherSheet />
+            <ExchangePasswordSheet />
+          </div>
+          {previewRecord?.images && evaluationImagePreview && (
+            <ImagePreview
+              key={`${evaluationImagePreview.childId}-${previewRecord.id}`}
+              images={previewRecord.images}
+              initialIndex={evaluationImagePreview.index}
+              label="评价图片"
+              onClose={() => setEvaluationImagePreview(null)}
+            />
+          )}
         </div>
       </PhoneMockup>
     </div>

@@ -1,3 +1,5 @@
+import MobileDatePickerSheet, { type MobileDateRange } from '../components/ui/MobileDatePickerSheet';
+import { currentTermToDateRange, localToday } from '../components/ui/mobileDatePickerModel';
 import React, { useCallback, useId, useMemo, useRef, useState } from 'react';
 import {
     ArrowDownNarrowWide,
@@ -12,7 +14,7 @@ import {
     Quote,
     Triangle,
 } from 'lucide-react';
-import rankingCrownIcon from '../assets/resources/ranking-crown-icon.png';
+import MobileRankingBadge from '../components/ui/MobileRankingBadge';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
@@ -88,7 +90,6 @@ const timeRangeTabs: { key: TimeRange; label: string }[] = [
 ];
 
 const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
-const customDateInputClass = 'h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,background-color,box-shadow] [transition-duration:var(--tm-duration-standard)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
 interface ReportSectionProps {
     id: string;
@@ -195,45 +196,6 @@ const StatCell = ({
                 </div>
             )}
         </div>
-    );
-};
-
-const rankingCrownToneClasses = [
-    'text-[var(--tm-brand-reward-strong)]',
-    'text-[var(--tm-text-secondary)]',
-    'text-[var(--tm-brand-secondary-strong)]',
-] as const;
-
-const RankingPosition = ({ position }: { position: number }) => {
-    if (position > 3) {
-        return (
-            <span className="text-center text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
-                {position}
-            </span>
-        );
-    }
-
-    const toneClass = rankingCrownToneClasses[position - 1];
-    return (
-        <span role="img" aria-label={`第${position}名`} className={`relative flex h-7 w-7 items-center justify-center ${toneClass}`}>
-            <span
-                aria-hidden="true"
-                className="absolute inset-0 h-7 w-7 bg-current"
-                style={{
-                    WebkitMaskImage: `url(${rankingCrownIcon})`,
-                    maskImage: `url(${rankingCrownIcon})`,
-                    WebkitMaskPosition: 'center',
-                    maskPosition: 'center',
-                    WebkitMaskRepeat: 'no-repeat',
-                    maskRepeat: 'no-repeat',
-                    WebkitMaskSize: 'contain',
-                    maskSize: 'contain',
-                }}
-            />
-            <span aria-hidden="true" className="relative pt-1 text-[10px] font-bold tabular-nums text-[var(--tm-text-inverse)]">
-                {position}
-            </span>
-        </span>
     );
 };
 
@@ -390,7 +352,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const [reportSourceKey, setReportSourceKey] = useState<ReportSourceKey>('all');
     const [timeRange, setTimeRange] = useState<TimeRange>('week');
     const [customRange, setCustomRange] = useState({ start: '', end: '' });
-    const [draftCustomRange, setDraftCustomRange] = useState({ start: '', end: '' });
     const [appliedCustomRange, setAppliedCustomRange] = useState<{ start: string; end: string; days: number } | null>(null);
     const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
     const [rankingMode, setRankingMode] = useState<RankingMode>('net');
@@ -669,9 +630,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     };
 
     const openCustomDatePicker = () => {
-        setDraftCustomRange(appliedCustomRange == null
-            ? customRange
-            : { start: appliedCustomRange.start, end: appliedCustomRange.end });
         setShowCustomDatePicker(true);
     };
 
@@ -684,7 +642,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         applyReportPeriod(nextTimeRange);
     };
 
-    const applyCustomRange = () => {
+    const applyCustomRange = (draftCustomRange: MobileDateRange) => {
         const nextDays = getValidDaysInRange(draftCustomRange.start, draftCustomRange.end);
         if (nextDays == null) return;
         setCustomRange(draftCustomRange);
@@ -693,11 +651,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         applyReportPeriod(getPeriodForDays(nextDays));
         setShowCustomDatePicker(false);
     };
-
-    const draftCustomRangeDays = getValidDaysInRange(draftCustomRange.start, draftCustomRange.end);
-    const customRangeError = draftCustomRange.start && draftCustomRange.end && draftCustomRangeDays == null
-        ? '结束日期不能早于开始日期'
-        : null;
 
     const appliedPeriodKey = timeRange === 'custom' && appliedCustomRange != null
         ? `custom-${appliedCustomRange.start}-${appliedCustomRange.end}`
@@ -927,7 +880,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                         onClick={() => onSelectStudent(row.student)}
                                         className="grid min-h-11 w-full grid-cols-[28px_1fr_auto] items-center gap-2 rounded-[8px] px-2 text-left transition active:bg-[var(--tm-bg-surface-soft)]"
                                     >
-                                        <RankingPosition position={index + 1} />
+                                        <MobileRankingBadge rank={index + 1} />
                                         <span className="truncate text-[var(--tm-font-size-body)] font-medium">{row.student.name}</span>
                                         <span className={`text-[var(--tm-font-size-body)] font-semibold ${
                                             (rankingMode === 'net' ? row.net : row.progress) >= 0
@@ -1023,55 +976,14 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             </div>
             </div>
 
-            <MobileBottomSheet
+            <MobileDatePickerSheet
                 open={showCustomDatePicker}
-                title="选择日期范围"
+                mode="range"
+                value={customRange}
+                currentTerm={currentTermToDateRange(localToday())}
+                onConfirm={applyCustomRange}
                 onClose={() => setShowCustomDatePicker(false)}
-                footer={(
-                    <button
-                        type="button"
-                        disabled={draftCustomRangeDays == null}
-                        onClick={applyCustomRange}
-                        className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition-[background-color,opacity,scale] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] disabled:opacity-40 disabled:active:scale-100 motion-reduce:transform-none"
-                    >
-                        应用日期
-                    </button>
-                )}
-            >
-                <div className="space-y-[var(--tm-space-4)] pb-[var(--tm-space-2)]">
-                    <label className="block">
-                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">开始日期</span>
-                        <input
-                            type="date"
-                            aria-label="开始日期"
-                            value={draftCustomRange.start}
-                            onInput={event => {
-                                const value = event.currentTarget.value;
-                                setDraftCustomRange(current => ({ ...current, start: value }));
-                            }}
-                            className={customDateInputClass}
-                        />
-                    </label>
-                    <label className="block">
-                        <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">结束日期</span>
-                        <input
-                            type="date"
-                            aria-label="结束日期"
-                            value={draftCustomRange.end}
-                            onInput={event => {
-                                const value = event.currentTarget.value;
-                                setDraftCustomRange(current => ({ ...current, end: value }));
-                            }}
-                            className={customDateInputClass}
-                        />
-                    </label>
-                    {customRangeError && (
-                        <p role="alert" className="text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-status-negative)]">
-                            {customRangeError}
-                        </p>
-                    )}
-                </div>
-            </MobileBottomSheet>
+            />
 
             <MobileBottomSheet
                 open={showRecordDistributionDetails}

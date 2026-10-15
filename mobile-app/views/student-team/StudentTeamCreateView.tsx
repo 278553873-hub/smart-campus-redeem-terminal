@@ -26,6 +26,8 @@ export type StudentTeamCreateValue = {
 };
 
 interface StudentTeamCreateViewProps {
+  mode?: 'create' | 'add';
+  initialTeam?: Pick<SchoolStudentTeam, 'name' | 'memberIds' | 'visibility' | 'avatarKey'>;
   classes: ClassInfo[];
   getStudentsForClass: (classId: string) => Student[];
   searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
@@ -40,6 +42,8 @@ type CreatePage = 'details' | 'members';
 type MemberScope = 'authorized' | 'other';
 
 const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
+  mode = 'create',
+  initialTeam,
   classes,
   getStudentsForClass,
   searchStudentsByExactName,
@@ -53,13 +57,15 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
     (currentSpace ? getTeacherSchoolGradeOptions(currentSpace) : undefined)
       ?? Array.from(new Set(classes.map(item => item.gradeLevel)))
   ), [classes, currentSpace]);
-  const [page, setPage] = useState<CreatePage>('details');
+  const [page, setPage] = useState<CreatePage>(mode === 'add' ? 'members' : 'details');
   const [classPickerOpen, setClassPickerOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [avatarKey, setAvatarKey] = useState<StudentTeamAvatarKey>('sports-basketball');
+  const [name, setName] = useState(initialTeam?.name ?? '');
+  const [avatarKey, setAvatarKey] = useState<StudentTeamAvatarKey>(initialTeam?.avatarKey ?? 'sports-basketball');
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
-  const [visibility, setVisibility] = useState<SchoolStudentTeam['visibility'] | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [visibility, setVisibility] = useState<SchoolStudentTeam['visibility'] | null>(initialTeam?.visibility ?? null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(initialTeam?.memberIds ?? []));
+  const existingMemberIds = new Set(initialTeam?.memberIds ?? []);
+  const newlySelectedIds = new Set(Array.from(selectedIds).filter(id => !existingMemberIds.has(id)));
   const [activeGrade, setActiveGrade] = useState(gradeOptions[0] ?? '');
   const [activeClassId, setActiveClassId] = useState(classes[0]?.id ?? '');
   const [classQuery, setClassQuery] = useState('');
@@ -87,22 +93,13 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
   const visibleStudents = useMemo(() => activeStudents.filter(student => (
     !normalizedClassQuery || student.name.replace(/\s+/g, '').includes(normalizedClassQuery)
   )), [activeStudents, normalizedClassQuery]);
-  const allActiveSelected = activeStudents.length > 0 && activeStudents.every(student => selectedIds.has(student.id));
   const hasValidDetails = name.trim().length > 0 && visibility !== null;
 
   const toggleStudent = (studentId: string) => setSelectedIds(current => {
+    if (existingMemberIds.has(studentId)) return current;
     const next = new Set(current);
     if (next.has(studentId)) next.delete(studentId);
     else next.add(studentId);
-    return next;
-  });
-
-  const toggleActiveClass = () => setSelectedIds(current => {
-    const next = new Set(current);
-    activeStudents.forEach(student => {
-      if (allActiveSelected) next.delete(student.id);
-      else next.add(student.id);
-    });
     return next;
   });
 
@@ -144,7 +141,8 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
       return;
     }
     if (page === 'members') {
-      setPage('details');
+      if (mode === 'create') setPage('details');
+      else onBack();
       return;
     }
     onBack();
@@ -155,13 +153,13 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
       if (hasValidDetails) setPage('members');
       return;
     }
-    if (!visibility || selectedIds.size === 0) return;
+    if (!visibility || (mode === 'add' && newlySelectedIds.size === 0) || selectedIds.size === 0) return;
     onSave({ name: name.trim(), memberIds: Array.from(selectedIds), visibility, avatarKey });
   };
 
-  const title = page === 'details' ? '新建社团或团队' : '选择学生';
-  const primaryDisabled = page === 'details' ? !hasValidDetails : selectedIds.size === 0;
-  const primaryLabel = page === 'details' ? '选择学生' : `完成（${selectedIds.size}人）`;
+  const title = page === 'details' ? '新建社团或团队' : mode === 'add' ? '添加学生' : '选择学生';
+  const primaryDisabled = page === 'details' ? !hasValidDetails : mode === 'add' ? newlySelectedIds.size === 0 : selectedIds.size === 0;
+  const primaryLabel = page === 'details' ? '选择学生' : mode === 'add' ? `添加（${newlySelectedIds.size}人）` : `完成（${selectedIds.size}人）`;
   const selectedAvatar = getStudentTeamAvatarOption(avatarKey);
   const selectedAvatarSrc = getStudentTeamAvatarImage(avatarKey);
 
@@ -257,14 +255,11 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                 <>
                   <button type="button" onClick={() => setClassPickerOpen(true)} aria-label="选择班级" className="mt-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                     <span className="min-w-0 truncate text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
-                      {activeGrade}{gradeClasses.find(item => item.id === activeClassId) ? ` · ${getClassLabel(gradeClasses.find(item => item.id === activeClassId)!)}` : ''}
+                      {gradeClasses.find(item => item.id === activeClassId) ? getClassLabel(gradeClasses.find(item => item.id === activeClassId)!) : activeGrade}
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
                   </button>
-                  <div className="flex items-center gap-[var(--tm-space-2)]">
-                    <MobileSearchInput value={classQuery} onChange={event => setClassQuery(event.target.value)} placeholder="搜索姓名" aria-label="搜索当前班级学生" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
-                    <button type="button" onClick={toggleActiveClass} className="min-h-11 shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">{allActiveSelected ? '取消全选' : '全选'}</button>
-                  </div>
+                  <MobileSearchInput value={classQuery} onChange={event => setClassQuery(event.target.value)} placeholder="搜索姓名" aria-label="搜索当前班级学生" className="min-w-0 flex-1" containerClassName="flex min-h-11 min-w-0 flex-1 items-center" density="compact" appearance="filled" fillTone="soft" />
                 </>
               )}
 
@@ -278,7 +273,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
 
             {memberScope === 'authorized' && classes.length > 0 ? (
               <>
-                <StudentCompactSelectGrid sections={[{ id: activeClassId || 'authorized-class', students: visibleStudents }]} isSelected={studentId => selectedIds.has(studentId)} onToggle={toggleStudent} className="pt-2" />
+                <StudentCompactSelectGrid sections={[{ id: activeClassId || 'authorized-class', students: visibleStudents }]} isSelected={studentId => selectedIds.has(studentId)} isDisabled={studentId => existingMemberIds.has(studentId)} getSecondaryLabel={student => existingMemberIds.has(student.id) ? '已加入' : undefined} onToggle={toggleStudent} className="pt-2" />
                 {visibleStudents.length === 0 && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER} title="没有匹配的学生" className="min-h-56 py-4" imageClassName="w-[52%] min-w-[140px] max-w-[176px]" />}
               </>
             ) : memberScope === 'authorized' ? (
@@ -289,7 +284,8 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                   <StudentCompactSelectGrid
                     sections={[{ id: 'other-class-search', students: exactSearchResults }]}
                     isSelected={studentId => selectedIds.has(studentId)}
-                    getSecondaryLabel={student => (student as StudentTeamSearchResult).classLabel}
+                    isDisabled={studentId => existingMemberIds.has(studentId)}
+                    getSecondaryLabel={student => `${(student as StudentTeamSearchResult).classLabel}${existingMemberIds.has(student.id) ? ' · 已加入' : ''}`}
                     showRosterNumber={false}
                     onToggle={toggleStudent}
                     className="pt-3"
@@ -340,10 +336,10 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         />
       )}
 
-      {page === 'members' && selectedIds.size > 0 && (
+      {page === 'members' && (mode === 'add' ? newlySelectedIds.size > 0 : selectedIds.size > 0) && (
         <div className="shrink-0">
           <StudentTeamSelectedList
-            selectedIds={selectedIds}
+            selectedIds={mode === 'add' ? newlySelectedIds : selectedIds}
             getStudentLabelById={getStudentLabelById}
             onRemove={toggleStudent}
             className="h-9 bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)]"
@@ -364,7 +360,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         getClassLabel={getClassLabel}
         onClose={() => setRecognitionOpen(false)}
         onConfirm={addRecognizedStudents}
-        existingStudentIds={selectedIds}
+        existingStudentIds={mode === 'add' ? selectedIds : undefined}
       />
     </div>
   );

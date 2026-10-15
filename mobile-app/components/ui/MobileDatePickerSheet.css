@@ -1,0 +1,6 @@
+/* 页脚已有左右留白，按弹窗总宽计算 80% 的居中按钮组。 */
+.tm-date-range-actions {
+  width: calc((100% + 2 * var(--tm-sheet-inline)) * 0.8);
+  max-width: 100%;
+  margin-inline: auto;
+}

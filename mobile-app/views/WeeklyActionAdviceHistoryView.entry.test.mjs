@@ -4,7 +4,7 @@ const historySource = fs.readFileSync(new URL('./WeeklyActionAdviceHistoryView.t
 const dataSource = fs.readFileSync(new URL('../data/weeklyActionAdvice.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const pickerSource = fs.readFileSync(new URL('../components/HomeroomClassPickerSheet.tsx', import.meta.url), 'utf8');
-const prdSource = fs.readFileSync(new URL('../../docs/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
+const prdSource = fs.readFileSync(new URL('../../docs/演示项目/教师手机端/PRD-班主任助理本周行动建议.md', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {
   if (!source.includes(needle)) throw new Error(message);

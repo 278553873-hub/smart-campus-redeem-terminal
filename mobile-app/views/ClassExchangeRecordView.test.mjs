@@ -14,29 +14,30 @@ const has = (source, needle, message) => assert.ok(source.includes(needle), mess
 
 const headerStart = viewSource.indexOf('<header');
 const headerTag = headerStart >= 0 ? viewSource.slice(headerStart, viewSource.indexOf('>', headerStart) + 1) : '';
-assert.ok(headerTag.length > 0, '成长币记录页应自绘标题栏。');
-has(headerTag, 'bg-[var(--tm-page-plain-header-bg)]', '成长币记录页标题栏应使用白色表面。');
-has(appSource, "const hasPlainPageOwnHeader = currentView === 'class_exchange_records';", '成长币记录页应由页面自绘标题栏。');
-has(appSource, '!hasPlainPageOwnHeader && (', '全局标题栏应跳过成长币记录页。');
-has(appSource, 'hasPlainBackground && !hasStudentDetailBackground && !hasPlainPageOwnHeader', 'plain 页面顶部色带应跳过成长币记录页。');
+assert.ok(headerTag.length > 0, '兑换记录页应自绘标题栏。');
+has(headerTag, 'bg-[var(--tm-page-plain-header-bg)]', '兑换记录页标题栏应使用白色表面。');
+has(appSource, "const hasPlainPageOwnHeader = currentView === 'class_exchange_records';", '兑换记录页应由页面自绘标题栏。');
+has(appSource, '!hasPlainPageOwnHeader && (', '全局标题栏应跳过兑换记录页。');
+has(appSource, 'hasPlainBackground && !hasStudentDetailBackground && !hasPlainPageOwnHeader', 'plain 页面顶部色带应跳过兑换记录页。');
 
-assert.ok(!viewSource.includes('getTeacherClassDisplayName'), '成长币记录页不应显示班级名称。');
-assert.ok(!viewSource.includes('ReportDateRangeTabs'), '成长币记录页不应继续使用五段日期页签。');
-has(viewSource, "type: 'month', month: toMonthValue", '成长币记录页应默认按当前月份筛选。');
-has(viewSource, "label: '选择月份'", '时间筛选弹窗应提供选择月份页签。');
-has(viewSource, "label: '选择时间段'", '时间筛选弹窗应提供选择时间段页签。');
-has(viewSource, 'MobileWheelPicker', '时间筛选应使用滚轮选择。');
+assert.ok(!viewSource.includes('getTeacherClassDisplayName'), '兑换记录页不应显示班级名称。');
+assert.ok(!viewSource.includes('ReportDateRangeTabs'), '兑换记录页不应继续使用五段日期页签。');
+has(viewSource, "type: 'month', month: toMonthValue", '兑换记录页应默认按当前月份筛选。');
+has(viewSource, '<MobileDatePickerSheet', '时间筛选应使用公共日期选择器。');
+has(viewSource, 'mode="month"', '兑换记录只提供月份选择。');
+assert.ok(!viewSource.includes('draftRange'), '兑换记录不应保留时间段筛选。');
 
 has(viewSource, 'divide-y divide-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]', '成长币记录应使用通栏分隔列表。');
 assert.ok(!viewSource.includes('--tm-shadow-card'), '成长币记录列表不应使用卡片阴影。');
-has(viewSource, '>{GROWTH_COIN_TERMS.name}记录<', '页面标题应使用成长币记录。');
-has(rewardSource, 'GROWTH_COIN_TERMS.name}记录', '兑换奖励更多操作入口应同步使用成长币记录。');
+has(viewSource, '>兑换记录<', '页面标题应使用兑换记录。');
+has(rewardSource, '兑换记录', '兑换奖励更多操作入口应同步使用兑换记录。');
+has(rewardSource, '清空货币', '清空操作应使用清空货币。');
 
 // 展示层只做展示：批次模型、演示数据与规则都在领域层与数据层。
-assert.ok(!viewSource.includes('createCoinLedger'), '成长币记录页不应自己生成流水。');
-assert.ok(!viewSource.includes('productTemplates'), '成长币记录页不应内置演示商品。');
-has(viewSource, "from '../domain/campusCoinLedger'", '成长币记录页应复用领域层的成长币记录模型。');
-has(viewSource, 'entries: CampusCoinLedgerEntry[]', '成长币记录页的流水应通过属性传入。');
+assert.ok(!viewSource.includes('createCoinLedger'), '兑换记录页不应自己生成流水。');
+assert.ok(!viewSource.includes('productTemplates'), '兑换记录页不应内置演示商品。');
+has(viewSource, "from '../domain/campusCoinLedger'", '兑换记录页应复用领域层的成长币记录模型。');
+has(viewSource, 'entries: CampusCoinLedgerEntry[]', '兑换记录页的流水应通过属性传入。');
 has(viewSource, 'onRevokeEntry: (entryId: string) => void', '撤回应由上层写入，页面只负责发起。');
 has(viewSource, 'filterCoinLedgerEntries(entries, filter)', '时间筛选应复用领域层实现。');
 has(viewSource, 'countActiveCoinLedgerEntries(filteredEntries)', '笔数统计应复用领域层实现。');
@@ -60,7 +61,7 @@ has(appSource, 'const getCoinLedgerForClass = (classId: string)', 'App 应按班
 has(appSource, 'handleRecordCoinRedeem', '兑换成功后应写入成长币记录。');
 has(appSource, 'handleRecordCoinClear', '清空成长币后应写入成长币记录。');
 has(appSource, 'handleRevokeCoinLedgerEntry', '撤回应写回成长币记录。');
-has(appSource, 'entries={getCoinLedgerForClass(selectedClassInfo.id)}', '成长币记录页应读取同一份流水。');
+has(appSource, 'entries={getCoinLedgerForClass(selectedClassInfo.id)}', '兑换记录页应读取同一份流水。');
 has(appSource, 'expandCoinLedgerForStudent(getCoinLedgerForClass(activeStudentClassId), activeStudent.id)', '学生侧明细应从批次流水展开。');
 
 has(rewardSource, 'onRecordCoinRedeem(', '兑换成功后应上报记录。');

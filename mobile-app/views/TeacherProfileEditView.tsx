@@ -1,3 +1,4 @@
+import { mobileSheetActionClass } from '../components/ui/mobileSheetActionStyles';
 import React, { useMemo, useRef, useState } from 'react';
 import {
     Camera,
@@ -285,7 +286,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                             type="button"
                             disabled={primaryDisabled}
                             onClick={onPrimary}
-                            className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] transition-transform active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+                            className={`${mobileSheetActionClass} flex w-full items-center justify-center bg-[var(--tm-brand-primary)] font-bold text-[var(--tm-text-inverse)] transition-transform active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]`}
                         >
                             {primaryDisabled ? (selectedClassIds.size === 0 ? '请先选择班级' : '请先选择学科') : '完成'}
                         </button>
@@ -293,7 +294,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                             <button
                                 type="button"
                                 onClick={clearHomeroomClasses}
-                                className="flex h-11 w-full items-center justify-center text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                className={`${mobileSheetActionClass} flex w-full items-center justify-center font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]`}
                             >
                                 清空带班班级
                             </button>
@@ -305,7 +306,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                     const group = teachingGroups.find(item => item.subject === editingTeachingSubject);
                                     if (group) clearTeachingGroup(group);
                                 }}
-                                className="flex h-11 w-full items-center justify-center text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
+                                className={`${mobileSheetActionClass} flex w-full items-center justify-center font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]`}
                             >
                                 清空任教信息
                             </button>
@@ -374,7 +375,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <button
                     type="button"
                     onClick={clearDepartment}
-                    className="flex h-11 w-full items-center justify-center text-sm font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]"
+                    className={`${mobileSheetActionClass} flex w-full items-center justify-center font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]`}
                 >
                     清空部门
                 </button>
@@ -447,7 +448,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     type="button"
                     disabled={!value.trim()}
                     onClick={onSave}
-                    className="h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+                    className={`${mobileSheetActionClass} w-full bg-[var(--tm-brand-primary)] font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]`}
                 >
                     完成
                 </button>

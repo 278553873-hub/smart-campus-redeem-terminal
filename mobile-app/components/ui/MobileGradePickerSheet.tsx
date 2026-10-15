@@ -1,3 +1,4 @@
+import { mobileSheetActionClass } from './mobileSheetActionStyles';
 import React, { useEffect, useState } from 'react';
 import MobileBottomSheet from './MobileBottomSheet';
 
@@ -154,7 +155,7 @@ const MobileGradePickerSheet: React.FC<MobileGradePickerSheetProps> = props => {
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+              className={`${mobileSheetActionClass} flex w-full items-center justify-center bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]`}
             >
               {multipleProps.confirmLabel ?? '完成'}
             </button>
@@ -164,7 +165,7 @@ const MobileGradePickerSheet: React.FC<MobileGradePickerSheetProps> = props => {
               type="button"
               onClick={handleClear}
               disabled={selectedCount === 0}
-              className="flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--tm-text-disabled)]"
+              className={`${mobileSheetActionClass} flex w-full items-center justify-center font-medium text-[var(--tm-text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] disabled:cursor-not-allowed disabled:text-[var(--tm-text-disabled)]`}
             >
               {props.clearLabel ?? '清空'}
             </button>

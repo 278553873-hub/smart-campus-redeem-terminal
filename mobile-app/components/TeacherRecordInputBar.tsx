@@ -18,6 +18,8 @@ interface TeacherRecordInputBarProps {
     onVoicePointerDown: (event: React.PointerEvent<HTMLButtonElement>) => void;
     onVoiceContextMenu: (event: React.MouseEvent<HTMLButtonElement>) => void;
     onKeyboardClick: () => void;
+    /** 键盘与读屏用户可直接激活语音入口。 */
+    onVoiceKeyboardActivate?: () => void;
 }
 
 export default function TeacherRecordInputBar({
@@ -35,6 +37,7 @@ export default function TeacherRecordInputBar({
     onVoicePointerDown,
     onVoiceContextMenu,
     onKeyboardClick,
+    onVoiceKeyboardActivate,
 }: TeacherRecordInputBarProps) {
     if (showKeyboard) {
         return (
@@ -88,6 +91,7 @@ export default function TeacherRecordInputBar({
                 <button
                     type="button"
                     onPointerDown={onVoicePointerDown}
+                    onClick={event => { if (event.detail === 0) onVoiceKeyboardActivate?.(); }}
                     onContextMenu={onVoiceContextMenu}
                     disabled={!hasSelectionTarget}
                     aria-label={voiceAriaLabel}

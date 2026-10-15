@@ -511,7 +511,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
             onClick={openClearConfirm}
             className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
           >
-            清空{GROWTH_COIN_TERMS.name}{clearSelectedIds.size > 0 ? `（${clearSelectedIds.size}人）` : ''}
+            清空货币{clearSelectedIds.size > 0 ? `（${clearSelectedIds.size}人）` : ''}
           </button>
         </footer>
       ) : (
@@ -534,7 +534,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
             className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"
           >
             <History className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
-            {GROWTH_COIN_TERMS.name}记录
+            兑换记录
           </button>
           <button
             type="button"
@@ -542,7 +542,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
             className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative)]"
           >
             <Trash2 className="h-5 w-5 text-[var(--tm-status-negative)]" />
-            清空{GROWTH_COIN_TERMS.name}
+            清空货币
           </button>
         </div>
       </MobileBottomSheet>
@@ -614,7 +614,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
 
       <MobileDangerConfirmSheet
         open={showClearConfirm}
-        title={`清空${GROWTH_COIN_TERMS.name}`}
+        title="清空货币"
         description={`将清空 ${clearSelectedIds.size} 名学生的${GROWTH_COIN_TERMS.name}，已有的评价记录和积分不受影响。`}
         confirmLabel="确认清空"
         acknowledgeLabel="清空后不可恢复，我已知晓"

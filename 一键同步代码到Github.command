@@ -159,15 +159,52 @@ if [ "\$MODE" = "prepare" ]; then
   exit 0
 fi
 cd "\$APP_DIR"
-if [ -f app.pid ] && kill -0 "\$(cat app.pid)" 2>/dev/null; then
-  kill "\$(cat app.pid)" || true
-  sleep 1
+# 用户服务在开机时启动，且不依赖 SSH 登录会话持续存在。
+loginctl enable-linger "\$(id -un)"
+test "\$(loginctl show-user "\$(id -un)" -p Linger --value)" = yes
+NODE_BIN="\$(command -v node)"
+SERVICE_NAME="campus-smart-points-\$WEB_PORT.service"
+mkdir -p "\$HOME/.config/systemd/user"
+cat > "\$HOME/.config/systemd/user/\$SERVICE_NAME" <<EOF_SERVICE
+[Unit]
+Description=Campus Smart Points web service on port \$WEB_PORT
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=\$APP_DIR
+Environment="PORT=\$WEB_PORT" "WEB_ROOT=\$APP_DIR/dist"
+ExecStart="\$NODE_BIN" "\$APP_DIR/server.mjs"
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target
+EOF_SERVICE
+systemctl --user daemon-reload
+systemctl --user enable "\$SERVICE_NAME"
+# 迁移旧的后台进程前核对命令，避免服务器重启后误杀复用同一编号的进程。
+if [ -f app.pid ]; then
+  OLD_PID="\$(cat app.pid)"
+  if [[ "\$OLD_PID" =~ ^[0-9]+\$ ]]; then
+    OLD_COMMAND="\$(ps -p "\$OLD_PID" -o args= 2>/dev/null || true)"
+    if [[ "\$OLD_COMMAND" == *"node \$APP_DIR/server.mjs"* ]]; then
+      kill "\$OLD_PID"
+      sleep 1
+    fi
+  fi
+  rm -f app.pid
 fi
-nohup env PORT="\$WEB_PORT" WEB_ROOT="\$APP_DIR/dist" node "\$APP_DIR/server.mjs" > "\$APP_DIR/logs/app-\$WEB_PORT.log" 2>&1 &
-echo \$! > app.pid
-sleep 1
-ss -ltnp 2>/dev/null | grep ":\$WEB_PORT" || true
-curl -I --max-time 5 "http://127.0.0.1:\$WEB_PORT/" | head -6
+systemctl --user restart "\$SERVICE_NAME"
+for ATTEMPT in {1..10}; do
+  if systemctl --user is-active --quiet "\$SERVICE_NAME" && curl --noproxy '*' --fail --silent --show-error --max-time 2 "http://127.0.0.1:\$WEB_PORT/" -o /dev/null; then
+    systemctl --user status "\$SERVICE_NAME" --no-pager --lines=5
+    exit 0
+  fi
+  sleep 1
+done
+journalctl --user -u "\$SERVICE_NAME" --no-pager -n 30
+exit 1
 EOF_REMOTE_DEPLOY
 chmod +x "$TMP_REMOTE_DEPLOY_FILE"
 rsync_with_password "$TMP_REMOTE_DEPLOY_FILE" "/home/$DEPLOY_USER/campus-smart-points-remote-deploy.sh"

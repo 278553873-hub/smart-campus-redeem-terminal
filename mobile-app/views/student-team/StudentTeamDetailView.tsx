@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Eye } from 'lucide-react';
-import type { ClassInfo, SchoolStudentTeam, Student, StudentCardDisplaySettings, StudentTeamLabel } from '../../types';
+import type { SchoolStudentTeam, Student, StudentCardDisplaySettings, StudentTeamLabel } from '../../types';
 import { BackIcon, FemaleIcon, MaleIcon, MenuIcon, SearchIcon } from '../../components/Icons';
-import StudentRosterCard, { StudentRosterAddCard } from '../../components/student/StudentRosterCard';
+import StudentRosterCard from '../../components/student/StudentRosterCard';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
@@ -11,8 +11,6 @@ import CardEvaluationDisplaySettings from '../../components/student-performance/
 import { ASSETS } from '../../assets/images';
 import { createDemoStudentPerformanceSummary, type StudentPerformanceSummary } from '../../domain/studentPerformance';
 import { getStudentCardDisplaySettings } from '../../domain/studentCardDisplay';
-import type { TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
-import StudentTeamEditorView, { type StudentTeamEditorValue, type StudentTeamSearchResult } from './StudentTeamEditorView';
 
 interface StudentTeamDetailViewProps {
   team: SchoolStudentTeam;
@@ -25,13 +23,7 @@ interface StudentTeamDetailViewProps {
   onSelectionChange: (ids: Set<string>) => void;
   performanceByStudentId?: Record<string, StudentPerformanceSummary>;
   canManage: boolean;
-  classes: ClassInfo[];
-  getStudentsForClass: (classId: string) => Student[];
-  searchStudentsByExactName: (name: string) => StudentTeamSearchResult[];
   getStudentLabelById: (studentId: string) => StudentTeamLabel | undefined;
-  getClassLabel: (classInfo: ClassInfo) => string;
-  currentSpace: TeacherSpaceOption;
-  onUpdateTeam: (teamId: string, value: StudentTeamEditorValue) => void;
 }
 
 const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
@@ -45,18 +37,11 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
   onSelectionChange,
   performanceByStudentId = {},
   canManage,
-  classes,
-  getStudentsForClass,
-  searchStudentsByExactName,
   getStudentLabelById,
-  getClassLabel,
-  currentSpace,
-  onUpdateTeam,
 }) => {
   const [query, setQuery] = useState('');
   const [showMore, setShowMore] = useState(false);
   const [showCardSettings, setShowCardSettings] = useState(false);
-  const [showMemberEditor, setShowMemberEditor] = useState(false);
   const [displaySettings, setDisplaySettings] = useState<StudentCardDisplaySettings>(() => getStudentCardDisplaySettings());
   const normalizedQuery = query.trim().replace(/\s+/g, '').toLowerCase();
   const visibleStudents = useMemo(() => students.filter(student => (
@@ -64,6 +49,22 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
     || student.name.replace(/\s+/g, '').toLowerCase().includes(normalizedQuery)
     || (student.studentNo ?? '').toLowerCase().includes(normalizedQuery)
   )), [normalizedQuery, students]);
+  const classSections = useMemo(() => {
+    const sections = new Map<string, Array<{ student: Student; index: number }>>();
+    students.forEach((student, index) => {
+      const classLabel = getStudentLabelById(student.id)?.classLabel || `${student.grade ?? ''}${student.class ?? ''}` || '班级未注明';
+      const section = sections.get(classLabel) ?? [];
+      section.push({ student, index });
+      sections.set(classLabel, section);
+    });
+    return Array.from(sections, ([label, entries]) => ({ label, entries }));
+  }, [getStudentLabelById, students]);
+  const shouldGroupByClass = classSections.length > 1;
+  const visibleStudentIds = new Set(visibleStudents.map(student => student.id));
+  const visibleClassSections = classSections.map(section => ({
+    ...section,
+    entries: section.entries.filter(({ student }) => visibleStudentIds.has(student.id)),
+  })).filter(section => section.entries.length > 0);
   const studentsByGender = useMemo(() => ({
     male: students.filter(student => student.gender === 'male'),
     female: students.filter(student => student.gender === 'female'),
@@ -148,26 +149,47 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
       </div>
 
       <main className="min-h-0 flex-1 overflow-y-auto px-3 pb-40 pt-3 no-scrollbar">
-        <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
-          {visibleStudents.map((student, index) => (
-            <StudentRosterCard
-              key={student.id}
-              student={student}
-              index={index}
-              performance={performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student)}
-              displaySettings={displaySettings}
-              showSelection={isSelectionMode}
-              selected={selectedIds.has(student.id)}
-              onClick={() => isSelectionMode ? toggleStudent(student.id) : onSelectStudent(student)}
-            />
-          ))}
-          {canManage && !isSelectionMode && !normalizedQuery && (
-            <StudentRosterAddCard
-              displaySettings={displaySettings}
-              onClick={() => setShowMemberEditor(true)}
-            />
-          )}
-        </div>
+        {shouldGroupByClass ? (
+          <div className="space-y-4">
+            {visibleClassSections.map((section, index) => (
+              <section key={section.label} aria-labelledby={`team-class-section-${index}`}>
+                <div className="flex min-h-10 items-center justify-between px-1">
+                  <h2 id={`team-class-section-${index}`} className="truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{section.label}</h2>
+                  <span className="shrink-0 pl-3 text-[12px] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{section.entries.length}人</span>
+                </div>
+                <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
+                  {section.entries.map(({ student, index }) => (
+                    <StudentRosterCard
+                      key={student.id}
+                      student={student}
+                      index={index}
+                      performance={performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student)}
+                      displaySettings={displaySettings}
+                      showSelection={isSelectionMode}
+                      selected={selectedIds.has(student.id)}
+                      onClick={() => isSelectionMode ? toggleStudent(student.id) : onSelectStudent(student)}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
+            {visibleStudents.map((student, index) => (
+              <StudentRosterCard
+                key={student.id}
+                student={student}
+                index={index}
+                performance={performanceByStudentId[student.id] ?? createDemoStudentPerformanceSummary(student)}
+                displaySettings={displaySettings}
+                showSelection={isSelectionMode}
+                selected={selectedIds.has(student.id)}
+                onClick={() => isSelectionMode ? toggleStudent(student.id) : onSelectStudent(student)}
+              />
+            ))}
+          </div>
+        )}
 
         {visibleStudents.length === 0 && (normalizedQuery || !canManage) && (
           <MobileEmptyState imageSrc={normalizedQuery ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR} title={normalizedQuery ? '没有匹配的学生' : '暂无成员'} className="min-h-[420px]" />
@@ -193,23 +215,6 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
           />
         </div>
       </MobileBottomSheet>
-
-      <StudentTeamEditorView
-        open={showMemberEditor}
-        mode="members"
-        team={team}
-        classes={classes}
-        getStudentsForClass={getStudentsForClass}
-        searchStudentsByExactName={searchStudentsByExactName}
-        getStudentLabelById={getStudentLabelById}
-        getClassLabel={getClassLabel}
-        currentSpace={currentSpace}
-        onClose={() => setShowMemberEditor(false)}
-        onSave={value => {
-          onUpdateTeam(team.id, value);
-          setShowMemberEditor(false);
-        }}
-      />
 
     </div>
   );

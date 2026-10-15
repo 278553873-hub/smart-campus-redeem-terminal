@@ -5,7 +5,7 @@ const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const accessSource = readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const pillSource = readFileSync(new URL('../components/ui/PillSelectionControl.tsx', import.meta.url), 'utf8');
 const rankingListSource = readFileSync(new URL('../components/ui/ClassRankingList.tsx', import.meta.url), 'utf8');
-const periodCalendarSource = readFileSync(new URL('../components/report/ReportPeriodCalendar.tsx', import.meta.url), 'utf8');
+const periodCalendarSource = readFileSync(new URL('../components/ui/MobilePeriodPicker.tsx', import.meta.url), 'utf8');
 const bottomSheetSource = readFileSync(new URL('../components/ui/MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const gradePickerSource = readFileSync(new URL('../components/ui/MobileGradePickerSheet.tsx', import.meta.url), 'utf8');
 const guidelineSource = readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
@@ -43,7 +43,7 @@ for (const required of [
   "if (settlementCycle === 'month')",
   "type: 'week'",
   'title={periodPickerTitle}',
-  '<ReportPeriodCalendar',
+  '<MobileDatePickerSheet',
   'aria-label={`查看上一${periodUnitLabel}`}',
   'aria-label={`查看下一${periodUnitLabel}`}',
   "aria-label={`打开${settlementCycle === 'week' ? '周历' : '月份'}选择，当前${selectedPeriodLabel}`}",
@@ -120,7 +120,7 @@ for (const required of [
 
 if (source.includes('ActivityIcon')) throw new Error('评价记录卡片标题不应展示图标。');
 if (source.includes('weekDisplay="calendar"')) throw new Error('排行榜应直接复用班级评价报表的公共周期选择样式。');
-for (const required of ["headerAction={settlementCycle === 'week' && currentPeriod ? {", "label: '本周'", 'setSelectedPeriodId(currentPeriod.id)', 'setIsPeriodSheetOpen(false)']) {
+for (const required of ['currentPeriodId={currentPeriod?.id}', 'onConfirm={periodId => setSelectedPeriodId(periodId)}', 'setIsPeriodSheetOpen(false)']) {
   if (!source.includes(required)) throw new Error(`排行榜选择周弹窗标题栏缺少本周快捷定位能力：${required}`);
 }
 for (const required of ['headerAction?: {', 'headerAction.onClick', 'h-[var(--tm-size-touch)]', 'h-7', 'rounded-[8px]', 'border-[var(--tm-brand-primary)]', 'text-[var(--tm-brand-primary)]']) {

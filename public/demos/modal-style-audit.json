@@ -1,119 +1,1420 @@
 {
-  "scope": "mobile-app 教师手机端源码中的模态弹窗与阻断式覆盖层；不含 Toast、普通下拉菜单、上下文菜单、页面内展开区和全屏业务页面",
-  "auditDate": "2026-08-27",
-  "verdict": "未统一",
-  "visualStyleCount": 7,
-  "shellImplementationCount": 12,
+  "auditDate": "2026-10-13",
+  "scope": "管理端「教师-手机端」：mobile-app/**/*.tsx；涵盖教师、班主任与校长在该入口下的弹窗。不混入 teacher-c-mobile 低保真体验版、家长端和 PC 后台。",
+  "method": "当前工作区源码静态盘点：用 TypeScript 语法树统计 JSX 开始/自闭合标签，再人工追踪包装组件与局部外壳。不是浏览器逐页验收；样式图为源码归纳示意。",
+  "sourceRevision": "6ef1031",
+  "sourceState": "包含盘点时工作区未提交修改；不是仅统计提交版本。",
+  "verdict": "日期五模式已组件化，其他旁路弹窗继续收敛",
+  "visualStyleCount": 6,
+  "visualStyleDefinition": "按位置与承载面归为底部全宽、底部悬浮、居中浅色、居中深色、居中海报、全屏媒体六种外观；任务模板和局部样式偏差不另计一类。",
+  "implementationFamilyCount": 14,
   "parallelBottomShellCount": 9,
-  "standardBottomSheetReferenceCount": 87,
-  "standardBottomSheetFileCount": 35,
-  "standardConfirmReferenceCount": 11,
+  "standardBottomSheetReferenceCount": 101,
+  "standardBottomSheetFileCount": 49,
+  "standardConfirmReferenceCount": 13,
   "standardConfirmFileCount": 8,
+  "countingRules": [
+    "实现族按共同维护位置与模式归组，不等于独立组件数或线上唯一弹窗数。",
+    "101 为公共底部抽屉直接 JSX 引用；包括包装组件内部的 1 次引用，不展开业务状态，不与包装组件业务引用相加。",
+    "13 处 BottomSheet 中，FormBuilder 的 6 处通过局部适配器复用公共组件；仅档案 3 处和问卷 4 处属于独立外壳。",
+    "活动海报 2 处源码引用中有 1 处为预览；预览不当成第二个线上弹窗。",
+    "各来源当前可达性按代码引用核对，未逐一触发权限、数据与设备条件。"
+  ],
   "implementationFamilies": [
     {
       "id": "mobile-bottom-sheet",
-      "style": "标准全宽底部抽屉",
+      "style": "公共底部抽屉",
       "source": "mobile-app/components/ui/MobileBottomSheet.tsx",
-      "stateCount": 87,
-      "fileCount": 35,
-      "status": "标准",
-      "notes": "28px 顶部圆角、tm-mask、tm-shadow-sheet、无背景模糊、统一标题与滚动层、Portal、焦点循环、Esc 关闭"
+      "line": 158,
+      "referenceCount": 101,
+      "countUnit": "直接引用 / 49 文件",
+      "status": "沿用并完善",
+      "notes": "28px 顶部圆角、42% 中性遮罩、无模糊；56px 标题栏与 44px 关闭热区；正文裁切；独立页脚；有焦点循环、退出键和焦点恢复。",
+      "target": "继续作为底部外壳；完善多层管理、关闭策略与描述关联。",
+      "scenes": "记录详情、班级操作、学生资料、作业、问卷、档案、报表等，逐项见引用索引。"
     },
     {
       "id": "mobile-notice-sheet",
-      "style": "图标提示底部抽屉",
+      "style": "图标提示抽屉",
       "source": "mobile-app/components/ui/MobileNoticeSheet.tsx",
-      "stateCount": 1,
-      "status": "近似但重复",
-      "notes": "视觉接近标准抽屉，但自行实现遮罩、标题、焦点和按钮，且增加背景模糊"
+      "line": 42,
+      "referenceCount": 1,
+      "countUnit": "业务引用",
+      "status": "替换外壳",
+      "notes": "沿用 28px 圆角，但独立遮罩、焦点逻辑与按钮；有背景模糊，有初始焦点和恢复，无完整焦点循环。",
+      "target": "保留提示内容封装，内部改用公共底部抽屉。",
+      "scenes": "校长助理 → 尚不可用报告的提示。"
     },
     {
       "id": "homeroom-class-picker",
-      "style": "班级选择底部抽屉",
+      "style": "班主任班级选择",
       "source": "mobile-app/components/HomeroomClassPickerSheet.tsx",
-      "stateCount": 6,
-      "fileCount": 5,
-      "status": "近似但重复",
-      "notes": "具备焦点循环和 Esc，但外壳、标题、遮罩和列表滚动仍独立实现"
+      "line": 64,
+      "referenceCount": 6,
+      "countUnit": "业务引用 / 5 文件",
+      "status": "替换外壳",
+      "notes": "独立 28px 抽屉，2px 模糊，52vh 列表滚动；已有选中项聚焦、焦点循环与退出键。",
+      "target": "保留业务适配；比较 MobileClassPickerSheet 的级联需求，不将单列表强改为双栏。",
+      "scenes": "班主任助理 V2 的两个入口、行动建议及历史、评价复盘及历史。"
     },
     {
       "id": "dashboard-leave-confirm",
-      "style": "离校确认底部抽屉",
+      "style": "学生离校确认",
       "source": "mobile-app/views/DashboardView.tsx",
-      "stateCount": 1,
-      "status": "重复实现",
-      "notes": "外观接近标准确认抽屉，但没有复用 MobileConfirmSheet，按钮高度、圆角和模糊策略不同"
+      "line": 772,
+      "referenceCount": 1,
+      "countUnit": "局部渲染点",
+      "status": "迁移确认模板",
+      "notes": "独立遮罩、2px 模糊，48px 双按钮；已有 alertdialog（警示对话框）语义，但没有公共焦点管理。",
+      "target": "MobileConfirmSheet 的危险色变体；保留可恢复离校的说明。",
+      "scenes": "学生详情 → 更多操作 → 办理离校。"
     },
     {
       "id": "class-record-local",
-      "style": "班级记录编辑抽屉",
+      "style": "班级记录编辑与名单",
       "source": "mobile-app/views/ClassRecordLogView.tsx",
-      "stateCount": 4,
-      "status": "重复实现",
-      "notes": "共享了两个局部 class 字符串，但标题、关闭入口、颜色、语义和焦点管理仍散落在页面"
+      "line": 51,
+      "referenceCount": 3,
+      "countUnit": "局部渲染点",
+      "status": "优先迁移",
+      "notes": "仅共享样式字符串；固定定位、背景模糊和自管标题/按钮，未提供统一对话框语义与焦点管理。",
+      "target": "公共底部抽屉 + 对象、分值、名单内容；保留编辑校验。",
+      "scenes": "记录详情 → 选择班级、修改分数、查看学生名单。日期编辑已迁入公共日期组件。"
     },
     {
       "id": "archive-local-bottom-sheet",
-      "style": "档案局部底部抽屉",
+      "style": "档案局部抽屉",
       "source": "mobile-app/views/archive-design/archivePagePrimitives.tsx",
-      "stateCount": 3,
-      "status": "重复基础组件",
-      "notes": "使用正确 Token，但滚动整个表面、手柄颜色和焦点管理与标准组件不一致"
+      "line": 30,
+      "referenceCount": 3,
+      "countUnit": "业务引用 / 2 文件",
+      "status": "移除重复基础层",
+      "notes": "88% 最大高度、整面滚动；使用基础令牌，有对话框语义，没有公共焦点管理。",
+      "target": "普通确认使用确认模板；填写成长数据保留业务内容并换公共外壳。",
+      "scenes": "档案设计 → 删除/启用档案；学生档案 → 填写成长数据。"
     },
     {
       "id": "questionnaire-local-bottom-sheet",
-      "style": "问卷局部底部抽屉",
+      "style": "问卷局部抽屉",
       "source": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
-      "stateCount": 4,
-      "status": "重复基础组件",
-      "notes": "与档案局部组件高度相似，但各自维护，增加 2px 背景模糊且缺少统一标题与焦点管理"
+      "line": 364,
+      "referenceCount": 4,
+      "countUnit": "业务引用 / 1 文件",
+      "status": "移除重复基础层",
+      "notes": "没有统一最大高度与正文滚动容器，增加 2px 模糊；和已接入公共抽屉的新流程并存。",
+      "target": "填写分工、日期与操作菜单分别保留内容，统一外壳。",
+      "scenes": "填写分工、记录日期、两处采集操作。"
     },
     {
       "id": "leader-report-legacy",
       "style": "校长报表旧式抽屉",
       "source": "mobile-app/views/LeaderReportView.tsx",
-      "stateCount": 6,
-      "status": "明显偏离",
-      "notes": "硬编码 32px 顶部圆角、white、shadow-2xl、40px 关闭按钮和背景模糊，缺少标准弹窗语义与焦点管理"
+      "line": 1283,
+      "referenceCount": 4,
+      "countUnit": "局部渲染点",
+      "status": "优先迁移",
+      "notes": "32px 顶部圆角、shadow-2xl 重阴影、背景模糊和 40px 关闭按钮；未接入公共焦点管理。",
+      "target": "MobileBottomSheet；指标筛选与表格继续保持各自业务组件。",
+      "scenes": "指标使用情况、班级覆盖、班级评价记录、完整积分排名。自定义日期与教师使用完整榜单已迁移。"
     },
     {
       "id": "me-feature-floating",
-      "style": "底部悬浮编辑与删除面板",
+      "style": "科目/部门编辑与删除",
       "source": "mobile-app/views/MeFeatureViews.tsx",
-      "stateCount": 3,
-      "status": "独立形态",
-      "notes": "四周 16px 留白、28px 全圆角、玻璃表面，标题与按钮布局均不同，缺少 dialog 语义和焦点管理"
+      "line": 602,
+      "referenceCount": 3,
+      "countUnit": "业务引用 / 2 个局部组件",
+      "status": "迁移编辑/确认模板",
+      "notes": "16px 外留白、28px 全圆角、玻璃和模糊；编辑栏动作高 36px，输入自动聚焦；删除按钮为纵排。",
+      "target": "编辑使用公共外壳及统一动作区；删除使用危险色确认。",
+      "scenes": "我的 → 科目或部门 → 新增/编辑；删除确认。并非所有个人资料都使用此面板。"
     },
     {
       "id": "term-report-floating",
-      "style": "期末报告图片浮动面板",
+      "style": "高光时刻图片选择",
       "source": "mobile-app/views/TermReportView.tsx",
-      "stateCount": 2,
-      "status": "明显偏离",
-      "notes": "黑色遮罩、24px 全圆角、shadow-2xl 和局部 Portal，未使用教师手机端弹层 Token 与公共语义"
+      "line": 973,
+      "referenceCount": 2,
+      "countUnit": "业务渲染点",
+      "status": "迁移并处理叠层",
+      "notes": "局部挂载到 document.body（页面根节点）；35% 黑色遮罩、16px 外留白、24px 全圆角、模糊和重阴影。",
+      "target": "图片选择与上传方式使用公共底部抽屉；明确第二层返回行为。",
+      "scenes": "期末报告 → 高光时刻 → 编辑 → 更换图片 → 上传图片。"
     },
     {
       "id": "report-generate-centered",
-      "style": "居中玻璃确认弹窗",
+      "style": "报告生成确认",
       "source": "mobile-app/App.tsx",
-      "stateCount": 1,
-      "status": "明显偏离",
-      "notes": "白色半透明遮罩、24px 全圆角玻璃卡片、缩放入场和旧 slate/orange 色系，没有 dialog 语义与焦点管理"
+      "line": 2864,
+      "referenceCount": 1,
+      "countUnit": "局部渲染点",
+      "status": "迁移表单模板",
+      "notes": "白色 40% 遮罩、24px 玻璃卡片、缩放动效与旧灰/橙色系；包含年级选择等设置。",
+      "target": "作为生成配置表单迁入公共抽屉；纯确认步骤才使用确认模板。",
+      "scenes": "期末报告生成入口 → 选择范围并确认生成。"
     },
     {
       "id": "report-feedback-centered",
-      "style": "居中深色反馈弹窗",
+      "style": "报告生成反馈",
       "source": "mobile-app/App.tsx",
-      "stateCount": 1,
-      "status": "明显偏离",
-      "notes": "虽然命名为 Toast，但实际阻断全屏并要求点击关闭；黑色遮罩、深色面板和闪光动效均不属于公共提示样式"
+      "line": 2995,
+      "referenceCount": 1,
+      "countUnit": "局部渲染点",
+      "status": "重新定义反馈",
+      "notes": "黑色 40% 遮罩、深色卡、旋转与闪光效果；名为 successToast，实际要求点击“知道了”。",
+      "target": "需确认知晓的结果用提示抽屉；真实进度由任务状态承载，短反馈才用 MobileToast。",
+      "scenes": "报告生成后 → 生成反馈。"
+    },
+    {
+      "id": "teacher-campaign-modal",
+      "style": "活动海报弹窗",
+      "source": "mobile-app/components/TeacherCampaignModal.tsx",
+      "line": 15,
+      "referenceCount": 2,
+      "countUnit": "源码引用（含 1 个预览入口）",
+      "status": "保留独立呈现",
+      "notes": "76% 黑色遮罩、336px 最大宽、70dvh 图片上限、44px 外置关闭按钮；已有对话框语义，无公共焦点循环。",
+      "target": "保留海报业务组件，接入公共模态行为层；不强制变成底部抽屉。",
+      "scenes": "教师手机端活动投放；TeacherCampaignPreview 仅为方案预览引用。"
+    },
+    {
+      "id": "term-report-image-preview",
+      "style": "高光时刻大图预览",
+      "source": "mobile-app/views/TermReportView.tsx",
+      "line": 853,
+      "referenceCount": 1,
+      "countUnit": "局部渲染点",
+      "status": "保留媒体呈现",
+      "notes": "90% 黑色背景、图片居中、局部计算手机边界并挂到页面根节点；无公共对话框语义和焦点循环。",
+      "target": "抽象媒体预览容器；与抽屉共享边界、关闭、焦点和层级能力。",
+      "scenes": "期末报告 → 高光时刻 → 点击已上传图片。"
+    }
+  ],
+  "reusableComponents": [
+    {
+      "component": "MobileBottomSheet",
+      "scene": "基础外壳",
+      "status": "已有；沿用",
+      "referenceCount": 101,
+      "fileCount": 49,
+      "notes": "负责遮罩、边界、标题、滚动、页脚和基础交互。"
+    },
+    {
+      "component": "MobileDatePickerSheet",
+      "scene": "单日 / 范围 / 周 / 月份 / 学期",
+      "status": "本次已抽取并接入",
+      "referenceCount": 6,
+      "fileCount": 6,
+      "notes": "统一无横线标题、留白、日历及周期选择。单日/范围通过完成提交，取消丢弃；周/月/学期点击即选。业务传入周期、上下限与校验。"
+    },
+    {
+      "component": "MobileConfirmSheet",
+      "scene": "普通/危险色确认",
+      "status": "已有；完善",
+      "referenceCount": 13,
+      "fileCount": 8,
+      "notes": "13 处引用；52px 双按钮仍放在滚动正文内，没有加载/失败状态参数。"
+    },
+    {
+      "component": "MobileDangerConfirmSheet",
+      "scene": "高风险确认",
+      "status": "已有；按风险使用",
+      "referenceCount": 1,
+      "fileCount": 1,
+      "notes": "当前清空成长币使用；知晓勾选、默认 5 秒倒计时、内容插槽、固定 52px 危险按钮。不要给普通确认一律加倒计时。"
+    },
+    {
+      "component": "MobileGradePickerSheet",
+      "scene": "年级选择",
+      "status": "已有；沿用",
+      "referenceCount": 4,
+      "fileCount": 4,
+      "notes": "单选/多选、草稿和清空；无手柄、48px 完成按钮。"
+    },
+    {
+      "component": "MobileClassPickerSheet",
+      "scene": "班级级联选择",
+      "status": "已有；沿用",
+      "referenceCount": 1,
+      "fileCount": 1,
+      "notes": "年级/班级级联、可组合学科；不承接权限判断。"
+    },
+    {
+      "component": "MobileStudentPickerSheet",
+      "scene": "学生选择",
+      "status": "已有；沿用",
+      "referenceCount": 3,
+      "fileCount": 2,
+      "notes": "通用选择交互；学生对象和规则由调用方传入。"
+    },
+    {
+      "component": "MobileQrInviteSheet",
+      "scene": "问卷二维码邀请",
+      "status": "已有；边界需拆分",
+      "referenceCount": 1,
+      "fileCount": 1,
+      "notes": "二维码生成/下载可复用；“微信扫码填写问卷”是业务文案，不能直接充当所有邀请模板。"
+    },
+    {
+      "component": "TeacherUsageRankingSheet",
+      "scene": "教师使用完整榜单",
+      "status": "已接入公共外壳",
+      "referenceCount": 1,
+      "fileCount": 1,
+      "notes": "本次源码已有独立业务组件和公共高位抽屉；从旧式报表待迁移项移除。"
+    },
+    {
+      "component": "MobileNoticeSheet",
+      "scene": "单操作提示",
+      "status": "已有；替换内部外壳",
+      "referenceCount": 1,
+      "fileCount": 1,
+      "notes": "保留名称与调用接口，不再维护第二套模态机制。"
+    },
+    {
+      "component": "HomeroomClassPickerSheet",
+      "scene": "班主任班级切换",
+      "status": "已有；替换内部外壳",
+      "referenceCount": 6,
+      "fileCount": 5,
+      "notes": "单列表选择有明确场景，保留选中定位；不因共用外壳而改变信息结构。"
+    }
+  ],
+  "references": [
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 1967,
+      "component": "TeacherCampaignModal"
+    },
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 2751,
+      "component": "TextEditSheet",
+      "title": "{subjectDraftTarget ? '修改科目' : '新增科目'}"
+    },
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 2762,
+      "component": "TextEditSheet",
+      "title": "{departmentDraftTarget ? '修改部门' : '新增部门'}"
+    },
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 2773,
+      "component": "DeleteConfirmSheet",
+      "title": "{`删除${deleteTarget.name}`}"
+    },
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 2826,
+      "component": "ClassSourceSheet"
+    },
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 2846,
+      "component": "MobileConfirmSheet",
+      "open": "{studentTeamInvitePreview}",
+      "title": "\"收到协作邀请\""
+    },
+    {
+      "file": "mobile-app/App.tsx",
+      "line": 2982,
+      "component": "MobileGradePickerSheet",
+      "open": "{showGradeSelect}",
+      "title": "\"选择生成年级范围\""
+    },
+    {
+      "file": "mobile-app/components/TeacherCampaignPreview.tsx",
+      "line": 27,
+      "component": "TeacherCampaignModal"
+    },
+    {
+      "file": "mobile-app/components/assistant-report/AssistantReportCards.tsx",
+      "line": 212,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(evidence)}",
+      "title": "\"分析依据\""
+    },
+    {
+      "file": "mobile-app/components/class/ClassInviteFlow.tsx",
+      "line": 78,
+      "component": "MobileBottomSheet",
+      "open": "{open && !wechatShareOpen}",
+      "title": "{sheetTitle}"
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 155,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{label}"
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 963,
+      "component": "BottomSheet",
+      "open": "{typeSheetSectionId !== null}",
+      "label": "{typePickerTitle ?? `选择${itemLabel}类型`}"
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 1001,
+      "component": "BottomSheet",
+      "open": "{Boolean(activeField)}",
+      "label": "{`${itemLabel}设置`}"
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 1069,
+      "component": "BottomSheet",
+      "open": "{Boolean(activeSection)}",
+      "label": "{activeSection?.label || '分组操作'}"
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 1079,
+      "component": "BottomSheet",
+      "open": "{Boolean(sectionDraft)}",
+      "label": "{sectionDraft && sections.some(section => section.id === sectionDraft.id) ? '编辑分组' : '添加分组'}"
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 1088,
+      "component": "BottomSheet",
+      "open": "{showSectionSorter}",
+      "label": "\"分组排序\""
+    },
+    {
+      "file": "mobile-app/components/form-builder/FormBuilder.tsx",
+      "line": 1098,
+      "component": "BottomSheet",
+      "open": "{Boolean(deleteTarget)}",
+      "label": "{`删除${deleteTarget?.type === 'section' ? '分组' : itemLabel}`}"
+    },
+    {
+      "file": "mobile-app/components/report/ClassReportIndicatorDrilldown.tsx",
+      "line": 100,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/report/MoralEducationScoreDrilldown.tsx",
+      "line": 55,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "\"指标得分明细\""
+    },
+    {
+      "file": "mobile-app/components/report/TeacherUsageRankingSheet.tsx",
+      "line": 29,
+      "component": "MobileBottomSheet",
+      "title": "\"教师使用完整榜单\""
+    },
+    {
+      "file": "mobile-app/components/student/MobileStudentPickerSheet.tsx",
+      "line": 53,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/ui/MobileClassPickerSheet.tsx",
+      "line": 207,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/ui/MobileConfirmSheet.tsx",
+      "line": 27,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/ui/MobileDangerConfirmSheet.tsx",
+      "line": 67,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/ui/MobileDatePickerSheet.tsx",
+      "line": 57,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/ui/MobileGradePickerSheet.tsx",
+      "line": 143,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/components/ui/MobileQrInviteSheet.tsx",
+      "line": 47,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/views/AddStudentView.tsx",
+      "line": 209,
+      "component": "MobileBottomSheet",
+      "open": "{showStudentScanSheet}",
+      "title": "\"扫码识别表格\""
+    },
+    {
+      "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+      "line": 1031,
+      "component": "HomeroomClassPickerSheet"
+    },
+    {
+      "file": "mobile-app/views/AiHeadteacherAssistantV2View.tsx",
+      "line": 1184,
+      "component": "HomeroomClassPickerSheet"
+    },
+    {
+      "file": "mobile-app/views/AiPrincipalAssistantView.tsx",
+      "line": 240,
+      "component": "MobileNoticeSheet",
+      "open": "{Boolean(notice)}",
+      "title": "{notice?.title ?? ''}"
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1369,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(moreActionTarget)}",
+      "title": "\"更多操作\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1401,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(cardDisplayTarget)}",
+      "title": "{cardDisplayTarget === 'group' ? '小组卡片展示' : '学生卡片展示'}"
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1435,
+      "component": "MobileBottomSheet",
+      "open": "{showRecountConfirmation}",
+      "title": "\"确认重新计数\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1468,
+      "component": "MobileBottomSheet",
+      "open": "{showGroupPlanSheet}",
+      "title": "\"切换分组方案\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1513,
+      "component": "MobileBottomSheet",
+      "open": "{showNewGroupNameSheet}",
+      "title": "\"新建另一套分组\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1528,
+      "component": "MobileBottomSheet",
+      "open": "{showNewStudentGroupNameSheet && addStudentGroupStep === 'name'}",
+      "title": "\"添加小组\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1543,
+      "component": "MobileStudentPickerSheet",
+      "open": "{showNewStudentGroupNameSheet && addStudentGroupStep === 'members'}",
+      "title": "\"选择学生\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1578,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(groupDetailTarget) && groupDetailMode !== 'adjust'}",
+      "title": "{groupDetailMode === 'settings' ? '小组设置' : '小组详情'}"
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1698,
+      "component": "MobileStudentPickerSheet",
+      "open": "{Boolean(groupDetailTarget) && groupDetailMode === 'adjust'}",
+      "title": "\"调整学生\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1731,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(groupPlanActionTarget)}",
+      "title": "{groupPlanActionTarget?.name || '分组管理'}"
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1744,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(renameGroupPlanTarget)}",
+      "title": "\"重命名分组\""
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1753,
+      "component": "MobileConfirmSheet",
+      "open": "{Boolean(deleteGroupPlanTarget)}",
+      "title": "{`删除“${deleteGroupPlanTarget?.name || ''}”？`}"
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1763,
+      "component": "MobileConfirmSheet",
+      "open": "{Boolean(dissolveStudentGroupTarget)}",
+      "title": "{`解散“${dissolveStudentGroupTarget?.name || ''}”？`}"
+    },
+    {
+      "file": "mobile-app/views/ClassDetailView.tsx",
+      "line": 1773,
+      "component": "MobileConfirmSheet",
+      "open": "{showDiscardGroupingConfirm}",
+      "title": "\"放弃本次创建？\""
+    },
+    {
+      "file": "mobile-app/views/ClassExchangeRecordView.tsx",
+      "line": 278,
+      "component": "MobileBottomSheet",
+      "open": "{sheetOpen}",
+      "title": "\"选择时间范围\""
+    },
+    {
+      "file": "mobile-app/views/ClassExchangeRecordView.tsx",
+      "line": 332,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(detailEntry)}",
+      "title": "{detailEntry ? (detailEntry.type === 'clear' ? getCoinLedgerEntryTitle(detailEntry) : '兑换详情') : ''}"
+    },
+    {
+      "file": "mobile-app/views/ClassExchangeRecordView.tsx",
+      "line": 422,
+      "component": "MobileConfirmSheet",
+      "open": "{showRevokeConfirm}",
+      "title": "\"撤回本次兑换\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 662,
+      "component": "MobileBottomSheet",
+      "open": "{showEditSheet}",
+      "title": "\"编辑班级信息\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 716,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeTeacher)}",
+      "title": "\"老师更多操作\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 735,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(removeTeacherTarget)}",
+      "title": "\"确认移除老师\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 749,
+      "component": "MobileBottomSheet",
+      "open": "{showTransferSheet}",
+      "title": "\"转移班主任\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 769,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(transferTarget)}",
+      "title": "\"确认转移班主任\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 783,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeGuardianRecord)}",
+      "title": "\"家长绑定详情\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 824,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(removeGuardianRecord)}",
+      "title": "\"确认解除绑定\""
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 838,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(inviteAudience)}",
+      "title": "{inviteTitle}"
+    },
+    {
+      "file": "mobile-app/views/ClassInfoView.tsx",
+      "line": 842,
+      "component": "MobileBottomSheet",
+      "open": "{showDangerSheet}",
+      "title": "{isPersonalOwner ? (dangerStep === 'check' ? '解散班级' : '最终确认') : '退出班级'}"
+    },
+    {
+      "file": "mobile-app/views/ClassLeaderboardView.tsx",
+      "line": 284,
+      "component": "MobileDatePickerSheet",
+      "open": "{isPeriodSheetOpen}",
+      "mode": "{settlementCycle}",
+      "title": "{periodPickerTitle}"
+    },
+    {
+      "file": "mobile-app/views/ClassLeaderboardView.tsx",
+      "line": 295,
+      "component": "MobileBottomSheet",
+      "open": "{showFullRanking}",
+      "title": "{`${activeGrade}完整排名`}"
+    },
+    {
+      "file": "mobile-app/views/ClassLeaderboardView.tsx",
+      "line": 306,
+      "component": "MobileGradePickerSheet",
+      "open": "{isGradeSheetOpen}",
+      "title": "\"选择年级\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 764,
+      "component": "MobileGradePickerSheet",
+      "open": "{showGradeFilter}",
+      "title": "\"选择年级\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 782,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeActionTeam)}",
+      "title": "\"团队更多操作\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 847,
+      "component": "MobileBottomSheet",
+      "open": "{canManagePersonal && showClassManagement}",
+      "title": "\"班级管理\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 874,
+      "component": "MobileBottomSheet",
+      "open": "{showDisplaySettings}",
+      "title": "\"显示班级\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 896,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeActionClass && actionGroups.length > 0)}",
+      "title": "\"班级更多操作\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 978,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(parentVisibilityClass)}",
+      "title": "\"家长端评价展示\""
+    },
+    {
+      "file": "mobile-app/views/ClassListView.tsx",
+      "line": 998,
+      "component": "MobileBottomSheet",
+      "open": "{showLeftStudentSheet}",
+      "title": "\"离校学生\""
+    },
+    {
+      "file": "mobile-app/views/ClassRecordLogView.tsx",
+      "line": 587,
+      "component": "MobileDatePickerSheet",
+      "open": "{showDatePicker && Boolean(editingLog)}",
+      "mode": "\"single\""
+    },
+    {
+      "file": "mobile-app/views/ClassReportView.tsx",
+      "line": 978,
+      "component": "MobileDatePickerSheet",
+      "open": "{showCustomDatePicker}",
+      "mode": "\"range\"",
+      "title": "\"选择时间段\""
+    },
+    {
+      "file": "mobile-app/views/ClassReportView.tsx",
+      "line": 988,
+      "component": "MobileBottomSheet",
+      "open": "{showRecordDistributionDetails}",
+      "title": "\"评价记录对比\""
+    },
+    {
+      "file": "mobile-app/views/ClassReportView.tsx",
+      "line": 1008,
+      "component": "MobileBottomSheet",
+      "open": "{showAllCoverage}",
+      "title": "\"全部学生覆盖情况\""
+    },
+    {
+      "file": "mobile-app/views/DashboardView.tsx",
+      "line": 676,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeEvaluationRecord)}",
+      "title": "\"评价详情\""
+    },
+    {
+      "file": "mobile-app/views/DashboardView.tsx",
+      "line": 707,
+      "component": "MobileBottomSheet",
+      "open": "{showMoreActionsSheet}",
+      "title": "\"更多操作\""
+    },
+    {
+      "file": "mobile-app/views/EvaluationRecordsLogView.tsx",
+      "line": 509,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeRecord)}",
+      "title": "{detailSheetTitle}"
+    },
+    {
+      "file": "mobile-app/views/EvaluationRecordsLogView.tsx",
+      "line": 735,
+      "component": "MobileBottomSheet",
+      "open": "{showClassFilterSheet}",
+      "title": "\"选择班级范围\""
+    },
+    {
+      "file": "mobile-app/views/EvaluationRecordsLogView.tsx",
+      "line": 767,
+      "component": "MobileDatePickerSheet",
+      "open": "{showCustomDatePicker}",
+      "mode": "\"range\"",
+      "title": "\"选择时间段\""
+    },
+    {
+      "file": "mobile-app/views/EvaluationRecordsLogView.tsx",
+      "line": 777,
+      "component": "MobileConfirmSheet",
+      "open": "{showDeleteConfirm && Boolean(activeRecord)}",
+      "title": "\"删除评价\""
+    },
+    {
+      "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+      "line": 625,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(pendingRosterId)}",
+      "title": "\"确认更换班级\""
+    },
+    {
+      "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+      "line": 682,
+      "component": "MobileBottomSheet",
+      "open": "{uploadSheetOpen}",
+      "title": "\"识别作业表\""
+    },
+    {
+      "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+      "line": 688,
+      "component": "MobileBottomSheet",
+      "open": "{templateSheetOpen}",
+      "title": "{templatePreviewPageSize ? `${templatePreviewPageSize} 模版预览` : '下载导入模版'}"
+    },
+    {
+      "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+      "line": 738,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(actionDraft)}",
+      "title": "\"识别任务操作\""
+    },
+    {
+      "file": "mobile-app/views/HomeworkBatchImportView.tsx",
+      "line": 746,
+      "component": "MobileConfirmSheet",
+      "open": "{Boolean(deleteDraft)}",
+      "title": "\"删除识别任务\""
+    },
+    {
+      "file": "mobile-app/views/HomeworkEntryView.tsx",
+      "line": 301,
+      "component": "MobileBottomSheet",
+      "open": "{editorMode !== null && Boolean(draftAssignment)}",
+      "title": "{editorMode === 'create' ? '新增作业' : '编辑作业'}"
+    },
+    {
+      "file": "mobile-app/views/LeaderReportView.tsx",
+      "line": 2395,
+      "component": "MobileDatePickerSheet",
+      "open": "{showCustomDateSheet}",
+      "mode": "\"range\"",
+      "title": "\"选择时间段\""
+    },
+    {
+      "file": "mobile-app/views/LeaderReportView.tsx",
+      "line": 2529,
+      "component": "IndicatorUsageSheet"
+    },
+    {
+      "file": "mobile-app/views/LeaderReportView.tsx",
+      "line": 2541,
+      "component": "TeacherUsageRankingSheet"
+    },
+    {
+      "file": "mobile-app/views/MeFeatureViews.tsx",
+      "line": 153,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "\"页面风格\""
+    },
+    {
+      "file": "mobile-app/views/MeFeatureViews.tsx",
+      "line": 235,
+      "component": "TeacherStyleSheet",
+      "open": "{showTeacherStyleSheet}"
+    },
+    {
+      "file": "mobile-app/views/MeView.tsx",
+      "line": 157,
+      "component": "MobileBottomSheet",
+      "title": "\"切换班级来源\""
+    },
+    {
+      "file": "mobile-app/views/MedalIssuanceView.tsx",
+      "line": 248,
+      "component": "MobileStudentPickerSheet",
+      "open": "{sheetMode === 'students'}",
+      "title": "\"选择学生\""
+    },
+    {
+      "file": "mobile-app/views/MedalIssuanceView.tsx",
+      "line": 271,
+      "component": "MobileBottomSheet",
+      "open": "{sheetMode === 'confirm'}",
+      "title": "\"确认发放\""
+    },
+    {
+      "file": "mobile-app/views/MedalIssuanceView.tsx",
+      "line": 304,
+      "component": "MobileBottomSheet",
+      "open": "{showCreateMedal}",
+      "title": "\"新增班级奖章\""
+    },
+    {
+      "file": "mobile-app/views/MoralEducationCockpitView.tsx",
+      "line": 608,
+      "component": "MobileDatePickerSheet",
+      "open": "{isPeriodSheetOpen}",
+      "mode": "{reportPeriodType}",
+      "title": "{`选择${periodTypeLabels[reportPeriodType]}`}"
+    },
+    {
+      "file": "mobile-app/views/MoralEducationCockpitView.tsx",
+      "line": 619,
+      "component": "MobileBottomSheet",
+      "open": "{isRankingSheetOpen}",
+      "title": "\"完整班级排名\""
+    },
+    {
+      "file": "mobile-app/views/StudentBasicEditView.tsx",
+      "line": 514,
+      "component": "MobileBottomSheet",
+      "open": "{editingField !== null}",
+      "title": "{currentEditingFieldConfig ? `修改${currentEditingFieldConfig.label}` : '修改资料'}"
+    },
+    {
+      "file": "mobile-app/views/StudentBasicEditView.tsx",
+      "line": 551,
+      "component": "MobileBottomSheet",
+      "open": "{showClassPicker}",
+      "title": "\"选择班级\""
+    },
+    {
+      "file": "mobile-app/views/StudentBasicEditView.tsx",
+      "line": 590,
+      "component": "MobileBottomSheet",
+      "open": "{contactSheetOpen}",
+      "title": "{contactSheetMode === 'edit' ? '编辑联系方式' : '添加联系方式'}"
+    },
+    {
+      "file": "mobile-app/views/StudentBasicEditView.tsx",
+      "line": 679,
+      "component": "MobileConfirmSheet",
+      "open": "{deleteContactIndex !== null}",
+      "title": "{deletingContact ? `删除${getGuardianRelationLabel(deletingContact)} ${formatGuardianPhone(deletingContact.phone)}？` : '删除这条联系方式？'}"
+    },
+    {
+      "file": "mobile-app/views/StudentBasicEditView.tsx",
+      "line": 689,
+      "component": "MobileBottomSheet",
+      "open": "{showAvatarSheet}",
+      "title": "\"更换头像\""
+    },
+    {
+      "file": "mobile-app/views/StudentEvaluationRecordsView.tsx",
+      "line": 377,
+      "component": "EvaluationTimeFilterSheet",
+      "open": "{showTimeFilterSheet}"
+    },
+    {
+      "file": "mobile-app/views/StudentEvaluationRecordsView.tsx",
+      "line": 386,
+      "component": "EvaluationTeacherFilterSheet",
+      "open": "{showTeacherFilterSheet}"
+    },
+    {
+      "file": "mobile-app/views/StudentEvaluationRecordsView.tsx",
+      "line": 396,
+      "component": "EvaluationIndicatorFilterSheet",
+      "open": "{showIndicatorFilterSheet}"
+    },
+    {
+      "file": "mobile-app/views/TeacherEvaluationReviewHistoryView.tsx",
+      "line": 130,
+      "component": "HomeroomClassPickerSheet"
+    },
+    {
+      "file": "mobile-app/views/TeacherEvaluationReviewView.tsx",
+      "line": 221,
+      "component": "HomeroomClassPickerSheet"
+    },
+    {
+      "file": "mobile-app/views/TeacherIndicatorCatalogView.tsx",
+      "line": 40,
+      "component": "IndicatorDetailSheet"
+    },
+    {
+      "file": "mobile-app/views/TeacherIndicatorCatalogView.tsx",
+      "line": 55,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(selection)}",
+      "title": "{selection?.leaf.name ?? '指标详情'}"
+    },
+    {
+      "file": "mobile-app/views/TeacherLoginView.tsx",
+      "line": 160,
+      "component": "MobileBottomSheet",
+      "open": "{activeSheet === 'wechat'}",
+      "title": "\"申请获取并验证你的手机号\""
+    },
+    {
+      "file": "mobile-app/views/TeacherLoginView.tsx",
+      "line": 218,
+      "component": "MobileBottomSheet",
+      "open": "{activeSheet === 'phone'}",
+      "title": "\"手机号登录/注册\""
+    },
+    {
+      "file": "mobile-app/views/TeacherProfileEditView.tsx",
+      "line": 276,
+      "component": "MobileBottomSheet",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/views/TeacherProfileEditView.tsx",
+      "line": 351,
+      "component": "MobileGradePickerSheet",
+      "title": "\"选择分管年级\""
+    },
+    {
+      "file": "mobile-app/views/TeacherProfileEditView.tsx",
+      "line": 368,
+      "component": "MobileBottomSheet",
+      "title": "\"选择部门\""
+    },
+    {
+      "file": "mobile-app/views/TeacherProfileEditView.tsx",
+      "line": 404,
+      "component": "MobileBottomSheet",
+      "title": "\"更换头像\""
+    },
+    {
+      "file": "mobile-app/views/TeacherProfileEditView.tsx",
+      "line": 440,
+      "component": "MobileBottomSheet",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/views/WeeklyActionAdviceHistoryView.tsx",
+      "line": 135,
+      "component": "HomeroomClassPickerSheet"
+    },
+    {
+      "file": "mobile-app/views/WeeklyActionAdviceView.tsx",
+      "line": 308,
+      "component": "HomeroomClassPickerSheet"
+    },
+    {
+      "file": "mobile-app/views/WeeklyDutyScheduleView.tsx",
+      "line": 205,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(teacherSheetWeek)}",
+      "title": "{teacherSheetWeek ? formatDutyWeekRange(teacherSheetWeek) : '选择教师'}"
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 845,
+      "component": "MobileBottomSheet",
+      "open": "{showOutlineSheet}",
+      "title": "\"大纲\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 915,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeTemplateAction)}",
+      "title": "{activeTemplateAction?.name ?? ''}"
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 946,
+      "component": "MobileBottomSheet",
+      "open": "{showCreateSheet}",
+      "title": "\"新建档案\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 980,
+      "component": "MobileBottomSheet",
+      "open": "{showDraftRecoverySheet}",
+      "title": "\"继续编辑\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 987,
+      "component": "MobileBottomSheet",
+      "open": "{showAppearanceSheet}",
+      "title": "\"外观设置\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 1037,
+      "component": "MobileBottomSheet",
+      "open": "{showBasicSettingsSheet}",
+      "title": "\"基础设置\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 1076,
+      "component": "BottomSheet",
+      "open": "{showDeleteConfirm}",
+      "label": "\"删除档案\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/ArchiveDesignView.tsx",
+      "line": 1086,
+      "component": "BottomSheet",
+      "open": "{showEnableConfirm}",
+      "label": "{templateDraft?.status === 'disabled' ? '重新启用档案' : '启用档案'}"
+    },
+    {
+      "file": "mobile-app/views/archive-design/StudentArchiveView.tsx",
+      "line": 508,
+      "component": "MobileBottomSheet",
+      "open": "{showArchivePicker}",
+      "title": "\"选择档案\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/StudentArchiveView.tsx",
+      "line": 540,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(repeatArchiveTemplateId)}",
+      "title": "\"再次填写\""
+    },
+    {
+      "file": "mobile-app/views/archive-design/StudentArchiveView.tsx",
+      "line": 552,
+      "component": "BottomSheet",
+      "open": "{editingGrowthField !== null}",
+      "label": "\"填写成长数据\""
+    },
+    {
+      "file": "mobile-app/views/face-update/FaceUpdateView.tsx",
+      "line": 130,
+      "component": "MobileBottomSheet",
+      "open": "{activeStudent !== null}",
+      "title": "{`${activeStudent?.hasFaceData ? '更新' : '录入'}人脸`}"
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 1821,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(activeListActionRecord)}",
+      "title": "{activeListActionRecord?.title ?? ''}"
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2256,
+      "component": "MobileBottomSheet",
+      "open": "{showOutlineSheet}",
+      "title": "\"大纲\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2268,
+      "component": "MobileBottomSheet",
+      "open": "{showAppearanceSheet}",
+      "title": "\"风格\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2317,
+      "component": "MobileBottomSheet",
+      "open": "{showBasicSettingsSheet}",
+      "title": "\"设置\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2324,
+      "component": "BottomSheet",
+      "open": "{showAssignmentSheet}",
+      "label": "\"填写分工\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2344,
+      "component": "BottomSheet",
+      "open": "{showGrowthDateSheet}",
+      "label": "\"记录日期\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2393,
+      "component": "BottomSheet",
+      "open": "{!assignedContext && showRecordMenu}",
+      "label": "\"采集操作\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 2789,
+      "component": "BottomSheet",
+      "open": "{canManageActiveRecord && showRecordMenu}",
+      "label": "\"采集操作\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 3021,
+      "component": "MobileBottomSheet",
+      "open": "{Boolean(respondentSheetMode)}",
+      "title": "\"谁来填写\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 3054,
+      "component": "MobileBottomSheet",
+      "open": "{showDraftRecoverySheet}",
+      "title": "\"继续编辑\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 3061,
+      "component": "MobileBottomSheet",
+      "open": "{showCreateSourceSheet}",
+      "title": "\"选择采集内容\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 3106,
+      "component": "MobileConfirmSheet",
+      "open": "{showPublishConfirm}",
+      "title": "\"确认发布问卷？\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 3115,
+      "component": "MobileConfirmSheet",
+      "open": "{Boolean(closeConfirmRecord)}",
+      "title": "\"确认结束收集？\""
+    },
+    {
+      "file": "mobile-app/views/questionnaire/QuestionnaireManagementView.tsx",
+      "line": 3125,
+      "component": "MobileQrInviteSheet",
+      "open": "{Boolean(inviteRecord)}",
+      "title": "\"邀请家长填写\""
+    },
+    {
+      "file": "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+      "line": 526,
+      "component": "MobileBottomSheet",
+      "open": "{showMoreActions}",
+      "title": "\"更多操作\""
+    },
+    {
+      "file": "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+      "line": 550,
+      "component": "MobileBottomSheet",
+      "open": "{sheetMode !== null}",
+      "title": "{sheetTitle}"
+    },
+    {
+      "file": "mobile-app/views/reward-verification/RewardVerificationView.tsx",
+      "line": 615,
+      "component": "MobileDangerConfirmSheet",
+      "open": "{showClearConfirm}",
+      "title": "{`清空${GROWTH_COIN_TERMS.name}`}"
+    },
+    {
+      "file": "mobile-app/views/student-evaluation/EvaluationIndicatorFilterSheet.tsx",
+      "line": 65,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "\"选择指标\""
+    },
+    {
+      "file": "mobile-app/views/student-evaluation/EvaluationTeacherFilterSheet.tsx",
+      "line": 64,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "\"选择评价人\""
+    },
+    {
+      "file": "mobile-app/views/student-evaluation/EvaluationTimeFilterSheet.tsx",
+      "line": 180,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "\"选择记录时间\""
+    },
+    {
+      "file": "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+      "line": 308,
+      "component": "MobileBottomSheet",
+      "open": "{showRecordMenu}",
+      "title": "\"成长数据操作\""
+    },
+    {
+      "file": "mobile-app/views/student-growth/StudentBodyMeasurementsView.tsx",
+      "line": 339,
+      "component": "MobileBottomSheet",
+      "open": "{showCreateSheet}",
+      "title": "\"新增成长数据\""
+    },
+    {
+      "file": "mobile-app/views/student-growth/StudentHealthRecordsView.tsx",
+      "line": 259,
+      "component": "MobileBottomSheet",
+      "open": "{showRecordMenu}",
+      "title": "\"体检记录操作\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamCreateView.tsx",
+      "line": 307,
+      "component": "MobileBottomSheet",
+      "open": "{avatarPickerOpen}",
+      "title": "\"选择头像\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamCreateView.tsx",
+      "line": 326,
+      "component": "MobileClassPickerSheet",
+      "open": "{classPickerOpen}",
+      "title": "\"选择班级\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamDetailView.tsx",
+      "line": 177,
+      "component": "MobileBottomSheet",
+      "open": "{showMore}",
+      "title": "\"更多操作\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamDetailView.tsx",
+      "line": 183,
+      "component": "MobileBottomSheet",
+      "open": "{showCardSettings}",
+      "title": "\"学生卡片展示\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamEditorView.tsx",
+      "line": 216,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamEditorView.tsx",
+      "line": 398,
+      "component": "MobileBottomSheet",
+      "open": "{avatarPickerOpen}",
+      "title": "\"选择头像\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamInfoView.tsx",
+      "line": 177,
+      "component": "MobileBottomSheet",
+      "open": "{showTransferSheet}",
+      "title": "\"选择新负责人\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamInfoView.tsx",
+      "line": 214,
+      "component": "MobileConfirmSheet",
+      "open": "{Boolean(transferTarget)}",
+      "title": "\"确认转让负责人\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamInfoView.tsx",
+      "line": 223,
+      "component": "MobileConfirmSheet",
+      "open": "{Boolean(removeTarget)}",
+      "title": "\"移除协作老师\""
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamInfoView.tsx",
+      "line": 233,
+      "component": "MobileConfirmSheet",
+      "open": "{showArchiveConfirm}",
+      "title": "{`解散${team.name}`}"
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamScanFlow.tsx",
+      "line": 127,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "{title}"
+    },
+    {
+      "file": "mobile-app/views/student-team/StudentTeamSelectedList.tsx",
+      "line": 39,
+      "component": "MobileBottomSheet",
+      "open": "{open}",
+      "title": "\"已选名单\""
     }
   ],
   "excludedPatterns": [
-    "MobileToast 等非阻断式短反馈",
-    "MyFilesView 与 ClassRecordLogView 的卡片上下文菜单",
-    "日期、学期等控件内部下拉列表",
-    "RecordInputView 等全屏业务页面覆盖层",
-    "图片卡片内部的局部编辑遮罩"
-  ]
+    "MobileToast 非阻断短反馈、MobilePressHelp 按住说明、普通下拉与上下文菜单，不并入模态数量。",
+    "MobileWechatAppScreen 与 WechatInviteShareFlow 的微信选聊、发送确认与已发送提示属于外部应用模拟：单列边界，不套用教师品牌外壳。",
+    "TeacherCMobileLowFi.tsx 属于独立 teacher-c-mobile 入口，未混入本报告。",
+    "RecordInputView 等全屏业务页、相机预览、图片内部编辑遮罩不是弹窗外壳。"
+  ],
+  "validation": "已检查范围滚轮、起止切换、快捷范围及取消不保存；当前改为带标签的日期块和取消/确定双按钮。不等同于全部入口逐页实机验收。",
+  "datePicker": {
+    "modes": [
+      "single",
+      "range",
+      "week",
+      "month",
+      "term"
+    ],
+    "demo": "UI 改造 → 公共组件 → 日期选择器",
+    "migratedPages": [
+      "班级记录日期编辑",
+      "班级报告",
+      "评价记录",
+      "学校报表",
+      "班级排行榜",
+      "班级评价报表"
+    ],
+    "pending": "其他包含日期字段的表单与问卷记录日期尚未逐项迁移。",
+    "rangeInteraction": "起止日期标签配合浅色日期块，选中块使用浅品牌底；未选日期在对应日期块内显示灰色“轻触选择日期”，不另起提示行；共用带年月日单位的滚轮。保留五个快捷范围，范围仅使用滚轮，底部取消/确定居中占宽80%，滚动停稳前不可提交，日期有效时保留品牌色并轻微弱化，仅校验失败显示灰色禁用态；日期块到滚轮间距24px。标题17px、底部操作按钮15px，其余内容统一14px，滚轮选中不加粗，快捷项为细描边等宽按钮，选中浅品牌底与品牌边框，可见34px、触控44px，通过留白分组。起止值显示年月日，与滚轮选中行同高48px；日期块、滚轮选中底及底部按钮圆角统一8px；滚轮比日期区更宽，未选候选为400常规字重、两行连续渐隐，起止块间隔32px。"
+  }
 }

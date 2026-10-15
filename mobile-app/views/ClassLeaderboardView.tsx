@@ -1,7 +1,8 @@
+import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChevronRightIcon } from '../components/Icons';
-import ReportPeriodCalendar from '../components/report/ReportPeriodCalendar';
+import { toMobilePeriodOptions } from '../components/report/ReportPeriodCalendar';
 import ClassRankingList from '../components/ui/ClassRankingList';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
@@ -280,27 +281,16 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                     </section>
                 </div>
 
-                <MobileBottomSheet
+                <MobileDatePickerSheet
                     open={isPeriodSheetOpen}
+                    mode={settlementCycle}
                     title={periodPickerTitle}
+                    value={selectedPeriodId}
+                    periods={toMobilePeriodOptions(periods)}
+                    currentPeriodId={currentPeriod?.id}
+                    onConfirm={periodId => setSelectedPeriodId(periodId)}
                     onClose={() => setIsPeriodSheetOpen(false)}
-                    headerAction={settlementCycle === 'week' && currentPeriod ? {
-                        label: '本周',
-                        onClick: () => {
-                            setSelectedPeriodId(currentPeriod.id);
-                            setIsPeriodSheetOpen(false);
-                        },
-                    } : undefined}
-                >
-                    <ReportPeriodCalendar
-                        periods={periods}
-                        selectedPeriodId={selectedPeriod?.id ?? ''}
-                        onSelect={periodId => {
-                            setSelectedPeriodId(periodId);
-                            setIsPeriodSheetOpen(false);
-                        }}
-                    />
-                </MobileBottomSheet>
+                />
 
                 <MobileBottomSheet open={showFullRanking} title={`${activeGrade}完整排名`} onClose={() => setShowFullRanking(false)}>
                     <PillSelectionControl

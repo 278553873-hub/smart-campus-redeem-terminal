@@ -1,3 +1,4 @@
+import { mobileSheetActionClass } from '../mobile-app/components/ui/mobileSheetActionStyles';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Info,
@@ -18,7 +19,7 @@ const phoneNumberPattern = /^1\d{10}$/;
 
 const wechatLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] items-center justify-center rounded-full bg-[var(--tm-platform-wechat)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-platform-wechat-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
 const phoneLoginLinkClass = 'flex min-h-11 items-center justify-center px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)] transition-colors active:text-[var(--tm-brand-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]';
-const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
+const sheetPrimaryButtonClass = `${mobileSheetActionClass} mx-auto flex w-full max-w-[300px] items-center justify-center bg-[var(--tm-brand-primary)] px-4 font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55`;
 const fieldClass = 'h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]';
 
 const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
@@ -184,7 +185,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
           <button
             type="button"
             onClick={closeActiveSheet}
-            className="mt-[var(--tm-space-4)] flex min-h-16 w-full items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] text-[17px] font-medium text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+            className={`${mobileSheetActionClass} mt-[var(--tm-space-4)] flex w-full items-center justify-center bg-[var(--tm-bg-surface)] font-medium text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]`}
           >
             不允许
           </button>
@@ -192,7 +193,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
           <button
             type="button"
             onClick={closeActiveSheet}
-            className="mt-auto flex min-h-14 w-full items-center justify-center text-base font-semibold text-[var(--tm-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
+            className={`${mobileSheetActionClass} mt-auto flex w-full items-center justify-center font-semibold text-[var(--tm-link)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]`}
           >
             管理号码
           </button>

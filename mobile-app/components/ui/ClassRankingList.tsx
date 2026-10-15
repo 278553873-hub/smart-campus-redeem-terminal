@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
+import MobileRankingBadge from './MobileRankingBadge';
 
 export interface ClassRankingListItem {
   id: string;
@@ -16,12 +17,6 @@ interface ClassRankingListProps {
   actionLabel?: string;
 }
 
-const rankToneClasses = [
-  'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]',
-  'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]',
-  'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]',
-];
-
 const ClassRankingList: React.FC<ClassRankingListProps> = ({
   items,
   ariaLabel,
@@ -36,12 +31,7 @@ const ClassRankingList: React.FC<ClassRankingListProps> = ({
           role="listitem"
           className="grid min-h-[58px] grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 border-b border-[var(--tm-border-subtle)] last:border-b-0"
         >
-          <span
-            aria-label={`第${item.rank}名`}
-            className={`flex h-7 w-7 items-center justify-center rounded-full text-[12px] font-bold tabular-nums ${rankToneClasses[item.rank - 1] ?? 'text-[var(--tm-text-disabled)]'}`}
-          >
-            {item.rank}
-          </span>
+          <MobileRankingBadge rank={item.rank} />
           <span className="min-w-0 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">{item.name}</span>
           <span className="text-right">
             <strong className="block text-[15px] font-bold tabular-nums text-[var(--tm-text-primary)]">{item.score}分</strong>

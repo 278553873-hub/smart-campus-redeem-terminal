@@ -206,24 +206,27 @@ assert.ok(groupingButton.childClassNames.some(className => (
 
 const modalInventory = fs.readFileSync(modalInventoryPath, 'utf8');
 assert.match(modalInventory, /<title>教师手机端弹窗样式盘点<\/title>/);
-assert.match(modalInventory, /7 类可见样式/);
-assert.match(modalInventory, /<strong>12<\/strong><span>套弹层外壳实现<\/span>/);
-assert.match(modalInventory, /结论：未统一/);
+assert.match(modalInventory, /6 类可见外观/);
+assert.match(modalInventory, /14 个实现族/);
+assert.match(modalInventory, /结论：主干可复用，旁路仍分散/);
 assert.match(modalInventory, /MobileBottomSheet/);
 assert.match(modalInventory, /MobileConfirmSheet/);
 assert.match(modalInventory, /校长报表旧式抽屉/);
 assert.match(modalInventory, /全量实现索引/);
-assert.doesNotMatch(modalInventory, /补充|更新日志|本次发现的遗漏/);
+assert.match(modalInventory, /公共组件抽象方案/);
+assert.match(modalInventory, /非运行截图/);
 
 const modalAudit = JSON.parse(fs.readFileSync(modalAuditPath, 'utf8'));
-assert.equal(modalAudit.visualStyleCount, 7, '弹窗应按 7 类可见样式归类。');
-assert.equal(modalAudit.shellImplementationCount, 12, '应覆盖 12 套弹层外壳实现。');
-assert.equal(modalAudit.parallelBottomShellCount, 9, '应识别主组件之外的 9 套底部弹层外壳。');
-assert.equal(modalAudit.standardBottomSheetReferenceCount, 87, '应记录公共底部抽屉的源码引用数。');
-assert.equal(modalAudit.standardBottomSheetFileCount, 35, '应记录公共底部抽屉的覆盖文件数。');
-assert.equal(modalAudit.implementationFamilies.length, 12, '全量实现索引不可缺项。');
-assert.ok(modalAudit.implementationFamilies.some(item => item.id === 'leader-report-legacy' && item.stateCount === 6));
-assert.ok(modalAudit.implementationFamilies.some(item => item.id === 'class-record-local' && item.stateCount === 4));
+assert.equal(modalAudit.visualStyleCount, 6, '按位置与承载面归为 6 类，不混入任务模板数量。');
+assert.equal(modalAudit.implementationFamilyCount, 14, '当前应覆盖 14 个实现族。');
+assert.equal(modalAudit.parallelBottomShellCount, 9, '应识别主组件之外的 9 个底部外壳族。');
+assert.equal(modalAudit.standardBottomSheetReferenceCount, 101, '应记录当前公共底部抽屉的直接源码引用数。');
+assert.equal(modalAudit.standardBottomSheetFileCount, 49, '应记录当前公共底部抽屉的覆盖文件数。');
+assert.equal(modalAudit.implementationFamilies.length, modalAudit.implementationFamilyCount, '全量实现索引不可缺项。');
+assert.ok(modalAudit.implementationFamilies.some(item => item.id === 'leader-report-legacy' && item.referenceCount === 4));
+assert.ok(modalAudit.implementationFamilies.some(item => item.id === 'class-record-local' && item.referenceCount === 3));
+assert.ok(modalAudit.implementationFamilies.some(item => item.id === 'teacher-campaign-modal'));
+assert.ok(modalAudit.implementationFamilies.some(item => item.id === 'term-report-image-preview'));
 
 const termReportRedesign = fs.readFileSync(termReportRedesignPath, 'utf8');
 const termReportView = fs.readFileSync(termReportViewPath, 'utf8');
