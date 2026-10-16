@@ -1422,7 +1422,7 @@ const AppSwitcher: React.FC = () => {
     if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation') {
       return app;
     }
-    return 'terminal'; // default
+    return 'admin'; // Demo 默认展示教师手机端
   });
   const [isDemoOpen, setIsDemoOpen] = useState(false);
   const [studentLoginPreviewMode, setStudentLoginPreviewMode] = useState<StudentLoginPreviewMode>('password-only');
@@ -2078,14 +2078,6 @@ const AppSwitcher: React.FC = () => {
               环境切换
             </button>
             <button
-              onClick={() => setCurrentApp('terminal')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="货柜机 - 学生端"
-            >
-              <MonitorSmartphone size={22} className="mb-1" />
-              <span className="text-[9px] font-bold">货柜机</span>
-            </button>
-            <button
               onClick={() => setCurrentApp('admin')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'admin' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="管理端 - 教师-手机端"
@@ -2094,12 +2086,12 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
             </button>
             <button
-              onClick={() => setCurrentApp('teacher-evaluation')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-evaluation' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="教师评价 - 教师发展档案"
+              onClick={() => setCurrentApp('terminal')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="货柜机 - 学生端"
             >
-              <ShieldCheck size={22} className="mb-1" />
-              <span className="text-[9px] font-bold leading-tight">教师评价</span>
+              <MonitorSmartphone size={22} className="mb-1" />
+              <span className="text-[9px] font-bold">货柜机</span>
             </button>
             <button
               onClick={() => setCurrentApp('parent')}
@@ -2127,6 +2119,14 @@ const AppSwitcher: React.FC = () => {
             </button>
             {showAdvancedApps && (
               <>
+                <button
+                  onClick={() => setCurrentApp('teacher-evaluation')}
+                  className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-evaluation' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+                  title="教师评价 - 教师发展档案"
+                >
+                  <ShieldCheck size={22} className="mb-1" />
+                  <span className="text-[9px] font-bold leading-tight">教师评价</span>
+                </button>
                 <button
                   onClick={() => setCurrentApp('region-pc')}
                   className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'region-pc' ? 'bg-blue-700 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
