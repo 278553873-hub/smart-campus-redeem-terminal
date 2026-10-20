@@ -444,6 +444,22 @@ export const teacherAudienceSemantic = {
 } as const;
 
 export const teacherBrandCssVariables = {
+  '--tm-composer-height': '52px',
+  '--tm-composer-panel-radius': 'var(--tm-radius-card)',
+  '--tm-composer-control-radius': 'var(--tm-radius-inner)',
+  '--tm-composer-glass-bg': teacherAssistantRoleSemantic.headteacher.glassSurface,
+  '--tm-composer-glass-highlight': teacherAssistantRoleSemantic.headteacher.glassSurfaceStrong,
+  '--tm-composer-glass-shadow': teacherAssistantRoleSemantic.headteacher.glassShadow,
+  '--tm-composer-shadow-subtle': '0 1px 2px -1px var(--tm-composer-glass-shadow), 0 18px 42px -28px var(--tm-composer-glass-shadow), inset 0 1px 0 var(--tm-composer-glass-highlight)',
+  '--tm-composer-shadow-floating': '0 4px 16px rgba(64, 60, 58, 0.13), inset 0 1px 0 var(--tm-composer-glass-highlight)',
+  '--tm-composer-glass-blur': '24px',
+  '--tm-composer-glass-saturation': '145%',
+  '--tm-voice-feedback-blue': 'radial-gradient(ellipse 100% 100% at 50% 100%, #1479e6 0%, #229bec 48%, #229bec 60%, rgb(50 173 242 / 48%) 76%, rgb(86 193 248 / 14%) 88%, transparent 100%)',
+  '--tm-voice-feedback-red': 'radial-gradient(ellipse 100% 100% at 50% 100%, #ffd2d2 0%, #ffdddd 48%, #ffdddd 60%, rgb(255 210 210 / 48%) 76%, rgb(255 221 221 / 14%) 88%, transparent 100%)',
+  '--tm-voice-feedback-text': '#ffffff',
+  '--tm-voice-feedback-label': 'var(--tm-voice-feedback-text)',
+  '--tm-voice-feedback-cancel-text': '#b4232c',
+  '--tm-voice-breathe-duration': '2400ms',
   '--tm-brand-primary': teacherBrandSemantic.primary,
   '--tm-brand-primary-strong': teacherBrandSemantic.primaryStrong,
   '--tm-brand-primary-hover': teacherBrandSemantic.primaryHover,

@@ -52,7 +52,7 @@ import {
     type SchoolSubjectItem,
 } from './views/MeFeatureViews';
 import ParentEvaluationVisibilityManagementView from './views/ParentEvaluationVisibilityManagementView';
-import { VirtualKeyboard } from './components/VirtualKeyboard';
+import { useHoldToTalk } from './hooks/useHoldToTalk';
 import TeacherMobileScreenBackground from './components/TeacherMobileScreenBackground';
 import TeacherBottomNavigation, { type TeacherBottomTab } from './components/TeacherBottomNavigation';
 import TeacherRecordInputBar from './components/TeacherRecordInputBar';
@@ -732,10 +732,6 @@ const App: React.FC<MobileAppProps> = ({
     const [pendingRecordData, setPendingRecordData] = useState<any>(null);
     const [recordMode, setRecordMode] = useState<'voice' | 'camera' | 'text'>('voice');
     const [recordCandidateStudentIds, setRecordCandidateStudentIds] = useState<string[]>([]);
-    const [voicePressState, setVoicePressState] = useState<'idle' | 'listening' | 'canceling'>('idle');
-    const voicePressActiveRef = useRef(false);
-    const voicePressCanceledRef = useRef(false);
-    const voicePressCleanupRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         if (!recordContextToast) return;
@@ -1569,74 +1565,35 @@ const App: React.FC<MobileAppProps> = ({
         setCurrentView('home_log');
     };
 
-    const beginVoiceRecording = (event: React.PointerEvent<HTMLButtonElement>, targetIds: string[]) => {
-        if (!event.isPrimary || voicePressActiveRef.current) return;
-
-        event.preventDefault();
-        const pointerId = event.pointerId;
-        const startY = event.clientY;
-        voicePressActiveRef.current = true;
-        voicePressCanceledRef.current = false;
-        setVoicePressState('listening');
-
-        if (currentView === 'home_log' && recordGuidePending[activeLogTab]) {
-            setRecordGuidePending(current => ({ ...current, [activeLogTab]: false }));
-        }
-
-        const cleanup = () => {
-            window.removeEventListener('pointermove', handlePointerMove);
-            window.removeEventListener('pointerup', handlePointerUp);
-            window.removeEventListener('pointercancel', handlePointerCancel);
-            voicePressCleanupRef.current = null;
-        };
-
-        const finish = (forceCancel = false) => {
-            if (!voicePressActiveRef.current) return;
-            const shouldCancel = forceCancel || voicePressCanceledRef.current;
-            voicePressActiveRef.current = false;
-            voicePressCanceledRef.current = false;
-            cleanup();
-            setVoicePressState('idle');
-            if (shouldCancel) return;
-
-            const targetNames = targetIds
-                .map(studentId => activeSpaceStudentById.get(studentId)?.name)
-                .filter((name): name is string => Boolean(name))
-                .join('、');
-            handleAnalysisComplete({
-                type: 'voice',
-                text: `今天数学课，${targetNames || '大家'}表现都很积极，主动回答问题。`,
-                mockStudents: targetIds,
-                candidateStudentIds: currentView === 'student_team_detail'
-                    ? selectedStudentTeamCandidateIds
-                    : [],
-            });
-        };
-
-        const handlePointerMove = (pointerEvent: PointerEvent) => {
-            if (pointerEvent.pointerId !== pointerId) return;
-            pointerEvent.preventDefault();
-            const shouldCancel = startY - pointerEvent.clientY > 90;
-            if (voicePressCanceledRef.current === shouldCancel) return;
-            voicePressCanceledRef.current = shouldCancel;
-            setVoicePressState(shouldCancel ? 'canceling' : 'listening');
-        };
-
-        const handlePointerUp = (pointerEvent: PointerEvent) => {
-            if (pointerEvent.pointerId === pointerId) finish();
-        };
-
-        const handlePointerCancel = (pointerEvent: PointerEvent) => {
-            if (pointerEvent.pointerId === pointerId) finish(true);
-        };
-
-        voicePressCleanupRef.current = cleanup;
-        window.addEventListener('pointermove', handlePointerMove, { passive: false });
-        window.addEventListener('pointerup', handlePointerUp);
-        window.addEventListener('pointercancel', handlePointerCancel);
-    };
-
-    useEffect(() => () => voicePressCleanupRef.current?.(), []);
+    // 演示评价适配器只提供提交内容；手势、取消和反馈与两个助理共用。
+    const recordVoice = useHoldToTalk(() => {}, () => {}, {
+        createSession: callbacks => {
+            const targetIds = isMultiSelectMode ? Array.from(multiSelectIds) : [];
+            let closed = false;
+            return {
+                start() {
+                    if (currentView === 'home_log' && recordGuidePending[activeLogTab]) {
+                        setRecordGuidePending(current => ({ ...current, [activeLogTab]: false }));
+                    }
+                },
+                release() {
+                    if (closed) return;
+                    closed = true;
+                    callbacks.finish();
+                    const targetNames = targetIds.map(id => activeSpaceStudentById.get(id)?.name).filter(Boolean).join('、');
+                    handleAnalysisComplete({
+                        type: 'voice',
+                        text: `今天数学课，${targetNames || '大家'}表现都很积极，主动回答问题。`,
+                        mockStudents: targetIds,
+                        candidateStudentIds: currentView === 'student_team_detail' ? selectedStudentTeamCandidateIds : [],
+                    });
+                },
+                cancel() { closed = true; callbacks.finish(); },
+            };
+        },
+    });
+    // 页面、身份或评价对象变化后，旧会话必须丢弃。
+    useEffect(() => { recordVoice.cancel(); }, [currentView, activeTeacherId, activeTeacherSpace.id, isMultiSelectMode, multiSelectIds]);
 
     const handleImportWeChat = () => {
         setShowPlusMenu(false);
@@ -1827,7 +1784,7 @@ const App: React.FC<MobileAppProps> = ({
     };
 
     // Shared record input: a quiet white action surface above the bottom navigation.
-    const GlobalInputBar = () => {
+    const renderGlobalInputBar = () => {
         const targetIds: string[] = isMultiSelectMode ? Array.from(multiSelectIds) : [];
         const isGroupSelectionTarget = isMultiSelectMode && classGroupSelectionState.active;
         const selectedTargetCount = isGroupSelectionTarget ? classGroupSelectionState.count : targetIds.length;
@@ -1844,11 +1801,16 @@ const App: React.FC<MobileAppProps> = ({
                 isMultiSelectMode={isMultiSelectMode}
                 selectedTargetCount={selectedTargetCount}
                 selectedTargetUnit={selectedTargetUnit}
-                voicePressState={voicePressState}
+                voicePressState={recordVoice.state}
+                voice={recordVoice}
+                onInputChange={setInputText}
+                onSubmit={() => {
+                    if (!inputText.trim()) return;
+                    handleAnalysisComplete({ type: 'text', text: inputText, mockStudents: targetIds,
+                        candidateStudentIds: currentView === 'student_team_detail' ? selectedStudentTeamCandidateIds : [] });
+                }}
                 onCloseKeyboard={() => setShowKeyboard(false)}
                 onCameraClick={() => handleStartRecord(targetIds, 'camera')}
-                onVoicePointerDown={event => beginVoiceRecording(event, targetIds)}
-                onVoiceContextMenu={event => event.preventDefault()}
                 onKeyboardClick={() => setShowKeyboard(true)}
             />
         );
@@ -2739,7 +2701,7 @@ const App: React.FC<MobileAppProps> = ({
                             </Suspense>
                         </main>
 
-                        {showInputBar && <GlobalInputBar />}
+                        {showInputBar && renderGlobalInputBar()}
 
                         {activeNameEditor === 'subject' && (
                             <TextEditSheet
@@ -2782,29 +2744,6 @@ const App: React.FC<MobileAppProps> = ({
                                     onAnalysisComplete={handleAnalysisComplete}
                                 />
                             </div>
-                        )}
-
-                        {/* Keyboard Overlay */}
-                        {showKeyboard && (
-                            <>
-                                <div className="absolute inset-0 z-[70] bg-black/5" onClick={() => setShowKeyboard(false)}></div>
-                                <VirtualKeyboard
-                                    onClose={() => setShowKeyboard(false)}
-                                    onKeyPress={(key) => setInputText(prev => prev + (key === 'space' ? ' ' : key))}
-                                    onDelete={() => setInputText(prev => prev.slice(0, -1))}
-                                    onSubmit={() => {
-                                        if (!inputText.trim()) return;
-                                        handleAnalysisComplete({
-                                            type: 'text',
-                                            text: inputText,
-                                            mockStudents: isMultiSelectMode ? Array.from(multiSelectIds) : [],
-                                            candidateStudentIds: currentView === 'student_team_detail'
-                                                ? selectedStudentTeamCandidateIds
-                                                : [],
-                                        });
-                                    }}
-                                />
-                            </>
                         )}
 
                         {/* Teacher mobile bottom navigation - semantic line icons and brand red active state. */}

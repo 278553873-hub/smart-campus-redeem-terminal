@@ -1,0 +1,32 @@
+/* 统一使用班主任助理的轻玻璃表面；无模糊支持时回退白色。 */
+.mobile-input-composer {
+    background: var(--tm-bg-surface);
+    box-shadow: var(--tm-composer-shadow-subtle);
+}
+.mobile-input-composer[data-shadow='floating'] { box-shadow: var(--tm-composer-shadow-floating); }
+.mobile-input-composer__icon {
+    display: flex;
+    height: var(--tm-size-touch);
+    width: var(--tm-size-touch);
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--tm-text-primary);
+}
+.mobile-input-composer__send { color: var(--tm-brand-primary); }
+.mobile-input-composer__icon:disabled { opacity: .4; }
+.mobile-input-composer__icon:focus-visible { outline: 2px solid var(--tm-focus-ring); outline-offset: -2px; }
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .mobile-input-composer {
+        background: var(--tm-composer-glass-bg);
+        -webkit-backdrop-filter: blur(var(--tm-composer-glass-blur)) saturate(var(--tm-composer-glass-saturation));
+        backdrop-filter: blur(var(--tm-composer-glass-blur)) saturate(var(--tm-composer-glass-saturation));
+    }
+}
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+    .mobile-input-composer {
+        background: var(--tm-bg-surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

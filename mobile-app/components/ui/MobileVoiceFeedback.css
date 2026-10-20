@@ -1,0 +1,40 @@
+.mobile-voice-feedback {
+    inset: 0;
+    z-index: 900;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity var(--tm-duration-standard) ease-out;
+    color: var(--tm-voice-feedback-text);
+}
+.mobile-voice-feedback[data-active='true'] { opacity: 1; }
+.mobile-voice-feedback__glow {
+    position: absolute;
+    left: -20%;
+    right: -20%;
+    bottom: -24px;
+    height: min(44%, 340px);
+    min-height: calc(240px + max(env(safe-area-inset-bottom), var(--mini-program-bottom-safe-area, 0px)));
+    transform-origin: 50% 100%;
+    /* 在透明区域内收边，不能在可见光晕处裁成矩形。 */
+    mask-image: linear-gradient(to bottom, transparent, #000 16%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 16%);
+    animation: mobile-voice-breathe var(--tm-voice-breathe-duration) ease-in-out infinite;
+}
+.mobile-voice-feedback__blue, .mobile-voice-feedback__red { position: absolute; inset: 0; transition: opacity var(--tm-duration-standard) ease-out; }
+.mobile-voice-feedback__blue { background: var(--tm-voice-feedback-blue); }
+.mobile-voice-feedback__red { background: var(--tm-voice-feedback-red); opacity: 0; }
+.mobile-voice-feedback[data-canceling='true'] { color: var(--tm-voice-feedback-cancel-text); }
+.mobile-voice-feedback[data-canceling='true'] .mobile-voice-feedback__blue { opacity: 0; }
+.mobile-voice-feedback[data-canceling='true'] .mobile-voice-feedback__red { opacity: 1; }
+.mobile-voice-feedback__content { position: absolute; inset: auto 24px calc(40px + max(env(safe-area-inset-bottom), var(--mini-program-bottom-safe-area, 0px))); text-align: center; }
+.mobile-voice-feedback__content p { margin: 0 0 30px; color: var(--tm-voice-feedback-label); font-size: var(--tm-font-size-body); font-weight: 600; line-height: 24px; }
+.mobile-voice-feedback[data-canceling='true'] p { color: var(--tm-voice-feedback-cancel-text); }
+.mobile-voice-feedback__wave { display: flex; align-items: center; justify-content: center; gap: 3px; height: 36px; }
+.mobile-voice-feedback__wave i { display: block; flex-shrink: 1; width: 3px; height: 4px; border-radius: 999px; background: currentColor; transition: transform 70ms linear; }
+.mobile-voice-feedback[data-active='false'] * { animation-play-state: paused; }
+@keyframes mobile-voice-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04, 1.04); } }
+@media (prefers-reduced-motion: reduce) {
+    .mobile-voice-feedback, .mobile-voice-feedback * { animation: none !important; transition: none !important; }
+    .mobile-voice-feedback__wave i { transform: none !important; }
+}
