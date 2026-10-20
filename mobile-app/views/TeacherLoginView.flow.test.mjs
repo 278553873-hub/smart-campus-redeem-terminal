@@ -24,7 +24,7 @@ assert.match(loginSource, />最近登录<[\s\S]*>190\*\*\*\*0000</, '登录页�
 assert.match(loginSource, /const \[agreed, setAgreed\] = useState\(true\)/, '教师端 Demo 登录页应默认勾选隐私保护指引。');
 assert.match(loginSource, /loginWithRecentAccount[\s\S]*请先阅读并同意隐私保护指引[\s\S]*completeLogin\(\)/, '最近登录应校验协议后直接登录。');
 assert.match(loginSource, /手机号登录\/注册/, '登录页应提供手机号登录或注册。');
-assert.match(loginSource, /header=\{\([\s\S]*aria-label="关闭手机号登录"/, '手机号登录弹窗应隐藏重复标题，仅保留关闭入口。');
+assert.match(loginSource, /title="手机号登录\/注册"[\s\S]*titleContent=\{\(/, '手机号登录弹窗应通过标题内容插槽展示页签并复用公共关闭入口。');
 assert.match(loginSource, /验证码登录/, '手机号底部弹窗应支持验证码登录。');
 assert.match(loginSource, /密码登录/, '手机号底部弹窗应支持密码登录。');
 assert.match(loginSource, /MobileBottomSheet/, '登录低频能力应复用统一底部弹窗。');

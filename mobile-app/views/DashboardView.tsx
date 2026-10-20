@@ -1,3 +1,4 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from '../../components/GrowthCoinBranding';
 import React, { useState, useMemo } from 'react';
 import { Student, ScoreItem, GrowthReportItem, CampusCoinDetail, ClassInfo } from '../types';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
@@ -10,7 +11,6 @@ import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRig
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
-import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
@@ -308,6 +308,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onOpenStudentArchive,
     initialSection = 'evaluation',
 }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
     const [activeTab, setActiveTab] = useState<'evaluation' | 'report'>(initialSection === 'report' ? 'report' : 'evaluation');
 
     // UI States
@@ -382,11 +383,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     // --- Sub-renderers ---
 
     const renderEvaluationTab = () => (
-        <div className="space-y-3 pb-24 animate-in fade-in duration-300">
+        <div className="space-y-[var(--tm-layout-card-gap)] pb-24 animate-in fade-in duration-300">
             <StudentTermSelector value={selectedTerm} options={STUDENT_TERM_OPTIONS} onChange={setSelectedTerm} ariaLabel="选择评价记录学期" />
 
             {/* C. Compact Selected-Term Five-Education Summary */}
-            <section className="relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+            <section className="relative overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                 <h3 className="px-4 pt-4 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
                     {selectedTermOption.isCurrent ? '本学期' : '该学期'}五育积分
                 </h3>
@@ -446,16 +447,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     );
 
     const renderReportTab = () => (
-        <div className="space-y-3 pb-24 animate-in fade-in duration-300">
+        <div className="space-y-[var(--tm-layout-card-gap)] pb-24 animate-in fade-in duration-300">
             <StudentTermSelector value={selectedTerm} options={STUDENT_TERM_OPTIONS} onChange={setSelectedTerm} ariaLabel="选择成长报告学期" />
 
-            <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+            <section className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                 <button
                     onClick={() => toggleSection('term_report')}
                     className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">
                             <FileTextIcon className="h-4 w-4" />
                         </div>
                         <span>期末综合素质报告</span>
@@ -465,7 +466,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 {expandedSections.has('term_report') && (
                     <div className="flex items-center justify-between border-t border-[var(--tm-border-subtle)] px-4 py-3 pl-[4.25rem]">
                         <span className="text-xs text-[var(--tm-text-secondary)]">{selectedTermOption.label}</span>
-                        <button onClick={onViewTermReport} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-strong)] active:scale-95">查看</button>
+                        <button onClick={onViewTermReport} className="min-h-11 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-strong)] active:scale-95">查看</button>
                     </div>
                 )}
                 {selectedTermOption.isCurrent ? growthReports.map((report) => (
@@ -475,7 +476,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                     >
                         <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]">
                                 <GrowthIcon />
                             </div>
                             <span>{report.title}</span>
@@ -538,7 +539,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             <div className="min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar">
             {/* A. Student Profile Card */}
-            <section className="mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card)] [background:var(--tm-student-detail-profile-bg)] [box-shadow:var(--tm-shadow-card)]">
+            <section className="mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card-compact)] [background:var(--tm-student-detail-profile-bg)] [box-shadow:var(--tm-shadow-card)]">
                 <div className="p-4">
                     <div className="flex min-w-0 items-start gap-4">
                         <button
@@ -564,7 +565,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                     type="button"
                                     onClick={onEditBasicInfo}
                                     aria-label="编辑学生姓名和性别"
-                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-2 rounded-[var(--tm-radius-inner)] text-left active:opacity-70"
+                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-2 rounded-[var(--tm-radius-control-compact)] text-left active:opacity-70"
                                 >
                                     <h2 className="flex min-w-0 items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
                                         <span className="truncate">{student.name}</span>
@@ -616,7 +617,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     className="grid h-[var(--tm-student-detail-asset-height)] w-full grid-cols-[var(--tm-student-detail-asset-label-width)_1px_minmax(0,1fr)_1px_minmax(0,1fr)_var(--tm-student-detail-asset-chevron-space)] items-center border-t border-[var(--tm-student-detail-asset-border)] bg-[var(--tm-student-detail-asset-bg)] text-left active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <span className="flex min-w-0 items-center justify-center gap-1.5 px-2">
-                        <img src="/assets/coin.png" className="h-4 w-4 shrink-0" alt="" />
+                        <GrowthCoinIcon className="h-4 w-4 shrink-0" alt="" />
                         <span className="shrink-0 text-[11px] font-semibold text-[var(--tm-text-primary)]">{GROWTH_COIN_TERMS.name}</span>
                     </span>
                     <span className="h-5 bg-[var(--tm-student-detail-asset-border)]" aria-hidden="true" />
@@ -640,10 +641,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             </section>
 
             {/* 2. Scrollable Content */}
-            <div className="space-y-4 p-4">
+            <div className="space-y-[var(--tm-layout-card-gap)] p-4">
                 {/* C. Tabs */}
                 <div className="sticky top-0 z-30 bg-[var(--tm-page-plain-content-bg)] py-2">
-                    <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
+                    <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
                         <button
                             type="button"
                             role="tab"
@@ -651,7 +652,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('evaluation')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'evaluation' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>评价记录</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-form-segment-active-radius)] transition-all ${activeTab === 'evaluation' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>评价记录</span>
                         </button>
                         <button
                             type="button"
@@ -660,7 +661,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => setActiveTab('report')}
                             className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
                         >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
+                            <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-form-segment-active-radius)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
                         </button>
                     </div>
                 </div>
@@ -721,7 +722,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 }}
                                 className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
                             >
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]">
                                     <FolderOpen className="h-4 w-4" />
                                 </span>
                                 <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">成长档案</span>
@@ -735,7 +736,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 }}
                                 className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
                             >
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]">
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]">
                                     <ClipboardList className="h-4 w-4" />
                                 </span>
                                 <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">采集记录</span>
@@ -748,7 +749,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     <section aria-labelledby="student-enrollment-heading">
                         <h3 id="student-enrollment-heading" className="pb-1 text-xs font-medium text-[var(--tm-text-tertiary)]">学籍状态</h3>
                         <div className="flex min-h-[60px] items-center gap-3">
-                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]'}`}>
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]'}`}>
                                 {student.status === 'left' ? <AlertTriangle className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4" />}
                             </span>
                             <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">{studentStatusLabel}</span>
@@ -790,7 +791,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setShowLeaveConfirm(false)}
-                                className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] text-sm font-semibold text-[var(--tm-text-secondary)] active:scale-[0.98]"
+                                className="h-12 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] text-sm font-semibold text-[var(--tm-text-secondary)] active:scale-[0.98]"
                             >
                                 取消
                             </button>
@@ -801,7 +802,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                     setShowLeaveConfirm(false);
                                     onBack?.();
                                 }}
-                                className="h-12 rounded-[var(--tm-radius-inner)] bg-[var(--tm-status-negative)] text-sm font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]"
+                                className="h-12 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-negative)] text-sm font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]"
                             >
                                 确认离校
                             </button>

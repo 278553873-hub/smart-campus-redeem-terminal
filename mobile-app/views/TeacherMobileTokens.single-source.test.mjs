@@ -133,16 +133,16 @@ assert.match(classList, /ariaLabel="班级内容分类"/, '班级与社团页签
 assert.match(slidingSegmented, /--tm-bg-surface-glass/, '班级与社团页签必须使用记录页同源的轻玻璃底轨。');
 assert.doesNotMatch(classList, /--tm-selection-segment-track-bg/, '班级与社团页签不得继续使用通用灰色底轨。');
 assert.match(guidelines, /班级页学校版年级筛选例外使用公共底部弹窗/, '教师手机端规范应明确班级页年级筛选使用公共底部弹窗。');
-assert.match(canonical, /minimum: 500/);
+assert.match(canonical, /minimum: 450/);
 assert.match(canonical, /regular: 500/);
 assert.match(css, /\.teacher-mobile-app\s*\{\s*font-weight: var\(--tm-font-weight-regular\);\s*\}/);
 assert.match(css, /\.tm-font-regular\s*\{\s*font-weight: var\(--tm-font-weight-regular\);\s*\}/);
-assert.match(guidelines, /所有可见文字最低使用 500 中等字重/);
+assert.match(guidelines, /所有可见文字最低允许使用 450 字重/);
 
 for (const sourcePath of appSourceFiles) {
   const source = fs.readFileSync(sourcePath, 'utf8');
-  assert.doesNotMatch(source, /\bfont-(?:thin|extralight|light|normal)\b/, `${sourcePath} 不得使用低于 500 的 Tailwind 字重。`);
-  assert.doesNotMatch(source, /fontWeight\s*:[^\n,}]*(?:100|200|300|400)\b/, `${sourcePath} 的图形文字字重不得低于 500。`);
+  assert.doesNotMatch(source, /\bfont-(?:thin|extralight|light|normal)\b/, `${sourcePath} 不得使用低于 450 的 Tailwind 字重。`);
+  assert.doesNotMatch(source, /fontWeight\s*:[^\n,}]*(?:100|200|300|400)\b/, `${sourcePath} 的图形文字字重不得低于 450。`);
   for (const selectBlock of source.match(/<select[\s\S]*?<\/select>/g) ?? []) {
     assert.doesNotMatch(selectBlock, /--tm-focus-ring/, `${sourcePath} 的下拉控件不得复用品牌色焦点环。`);
     assert.doesNotMatch(selectBlock, /focus-visible:ring/, `${sourcePath} 的手机端下拉控件聚焦时不得增加描边。`);

@@ -140,7 +140,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
         </div>
 
         <section className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))] pt-[var(--tm-space-4)] no-scrollbar">
-          <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] pb-[var(--tm-space-4)] pt-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-card)]">
+          <div className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] pb-[var(--tm-space-4)] pt-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-card)]">
             <div className="grid min-h-[52px] grid-cols-[44px_minmax(0,1fr)_44px_auto] items-center gap-[var(--tm-space-1)]">
               <button
                 type="button"
@@ -166,7 +166,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
                 onClick={resetToCurrentWeek}
                 className="group flex h-[var(--tm-size-touch)] items-center justify-center px-1 transition-transform duration-150 ease-out active:scale-[0.96]"
               >
-                <span className="flex h-7 items-center justify-center rounded-[8px] border border-[var(--tm-duty-current-button-border)] bg-[var(--tm-duty-current-button-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-duty-current-button-text)] [box-shadow:var(--tm-duty-current-button-shadow)] transition-[background-color,color,border-color] duration-150 ease-out group-active:bg-[var(--tm-duty-current-button-pressed-bg)]">
+                <span className="flex h-7 items-center justify-center rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-duty-current-button-border)] bg-[var(--tm-duty-current-button-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-duty-current-button-text)] [box-shadow:var(--tm-duty-current-button-shadow)] transition-[background-color,color,border-color] duration-150 ease-out group-active:bg-[var(--tm-duty-current-button-pressed-bg)]">
                   本周
                 </span>
               </button>
@@ -210,7 +210,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
           <button
             type="button"
             onClick={saveTeacherSelection}
-            className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+            className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
           >
             {draftTeacherIds.length > 0 ? `保存（${draftTeacherIds.length}人）` : '保存'}
           </button>
@@ -245,6 +245,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
       >
         <div className="pb-[var(--tm-space-2)]">
           <MobileSearchInput
+            shape="subtle"
             value={teacherSearch}
             onChange={event => setTeacherSearch(event.target.value)}
             placeholder="搜索教师姓名"
@@ -268,7 +269,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
                     type="button"
                     onClick={() => toggleTeacher(teacher.id)}
                     aria-label={`移除${teacher.name}`}
-                    className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-[var(--tm-space-2)] text-[var(--tm-text-primary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                    className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] px-[var(--tm-space-2)] text-[var(--tm-text-primary)] transition-[scale,background-color] duration-150 ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                   >
                     <img src={teacher.avatar} alt="" className="h-6 w-6 shrink-0 rounded-full object-cover outline outline-1 -outline-offset-1 outline-black/10" />
                     <span className="text-[length:var(--tm-font-size-compact)] font-semibold">{teacher.name}</span>
@@ -281,7 +282,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
             </div>
           </section>
 
-          <div className="mt-[var(--tm-space-2)] space-y-[var(--tm-space-2)]" aria-live="polite">
+          <div className="mt-[var(--tm-space-2)] space-y-[var(--tm-layout-list-gap-compact)]" aria-live="polite">
             {filteredTeachers.length > 0 ? filteredTeachers.map(teacher => {
               const active = draftTeacherIds.includes(teacher.id);
               return (
@@ -290,7 +291,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
                   type="button"
                   onClick={() => toggleTeacher(teacher.id)}
                   aria-pressed={active}
-                  className={`flex min-h-[var(--tm-duty-teacher-row-height)] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] px-[var(--tm-space-3)] text-left transition-[scale,background-color,box-shadow] duration-150 ease-out active:scale-[0.96] ${active ? 'bg-[var(--tm-bg-surface-muted)] [box-shadow:var(--tm-shadow-control)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}
+                  className={`flex min-h-[var(--tm-duty-teacher-row-height)] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] px-[var(--tm-space-3)] text-left transition-[scale,background-color,box-shadow] duration-150 ease-out active:scale-[0.96] ${active ? 'bg-[var(--tm-bg-surface-muted)] [box-shadow:var(--tm-shadow-control)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}
                 >
                   <img src={teacher.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover outline outline-1 -outline-offset-1 outline-black/10" />
                   <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{teacher.name}</span>

@@ -55,19 +55,17 @@ const RecordDistributionComparison: React.FC<RecordDistributionComparisonProps> 
 );
 
 export const RecordDistributionDetails: React.FC<RecordDistributionDetailsProps> = ({ rows }) => (
-    <table className="w-full table-fixed border-collapse" aria-label="本周期、上周期和年级平均的评价记录数量对比">
+    <table className="w-full table-fixed border-collapse" aria-label="本周期与年级平均的评价记录数量对比">
         <caption className="sr-only">评价记录数量对比，单位为条</caption>
         <colgroup>
-            <col className="w-[31%]" />
-            <col className="w-[23%]" />
-            <col className="w-[23%]" />
-            <col className="w-[23%]" />
+            <col className="w-[34%]" />
+            <col className="w-[33%]" />
+            <col className="w-[33%]" />
         </colgroup>
         <thead>
             <tr className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
                 <th scope="col" className="px-1 pb-2.5 text-left tm-font-regular">事件类型</th>
                 <th scope="col" className="px-1 pb-2.5 text-center font-semibold text-[var(--tm-text-primary)]">本周期</th>
-                <th scope="col" className="px-1 pb-2.5 text-center tm-font-regular">上周期</th>
                 <th scope="col" className="whitespace-nowrap px-1 pb-2.5 text-center tm-font-regular">年级平均</th>
             </tr>
         </thead>
@@ -82,9 +80,6 @@ export const RecordDistributionDetails: React.FC<RecordDistributionDetailsProps>
                     </th>
                     <td className="whitespace-nowrap px-1 py-4 text-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-text-primary)]">
                         {row.current}条
-                    </td>
-                    <td className="whitespace-nowrap px-1 py-4 text-center text-[length:var(--tm-font-size-body)] tm-font-regular tabular-nums text-[var(--tm-text-secondary)]">
-                        {row.previous}条
                     </td>
                     <td className="whitespace-nowrap px-1 py-4 text-center text-[length:var(--tm-font-size-body)] tm-font-regular tabular-nums text-[var(--tm-text-secondary)]">
                         {row.gradeAverage}条

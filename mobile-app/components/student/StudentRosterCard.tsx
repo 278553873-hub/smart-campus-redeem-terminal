@@ -24,6 +24,7 @@ interface StudentRosterCardProps {
   selected: boolean;
   selectionStatus?: string;
   contextLabel?: string;
+  shape?: 'default' | 'subtle';
   onClick: () => void;
 }
 
@@ -58,6 +59,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
   selected,
   selectionStatus,
   contextLabel,
+  shape = 'default',
   onClick,
 }) => {
   const [bgClass, textClass, borderClass] = getAvatarStyle(index);
@@ -95,7 +97,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       onClick={onClick}
       aria-pressed={showSelection ? selected : undefined}
       aria-label={accessibilityDetails}
-      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] py-[3px] text-center [box-shadow:var(--tm-shadow-card)] ${contextLabel ? contextHeightClass : baseHeightClass}`}
+      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface)] py-[3px] text-center [box-shadow:var(--tm-shadow-card)] ${contextLabel ? contextHeightClass : baseHeightClass}`}
     >
       {showSelection && (
         <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
@@ -146,14 +148,15 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
 interface StudentRosterAddCardProps {
   displaySettings: StudentCardDisplaySettings;
   onClick: () => void;
+  shape?: 'default' | 'subtle';
 }
 
-export const StudentRosterAddCard: React.FC<StudentRosterAddCardProps> = ({ displaySettings, onClick }) => (
+export const StudentRosterAddCard: React.FC<StudentRosterAddCardProps> = ({ displaySettings, onClick, shape = 'default' }) => (
   <button
     type="button"
     onClick={onClick}
     aria-label="添加学生"
-    className={`flex w-full min-w-0 select-none items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)] ${getStudentRosterCardHeightClass(displaySettings)}`}
+    className={`flex w-full min-w-0 select-none items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)] ${getStudentRosterCardHeightClass(displaySettings)}`}
   >
     <span className="flex flex-col items-center justify-center gap-[var(--tm-space-2)]">
       <PlusIcon className="h-6 w-6 text-[var(--tm-action-icon-brand)]" />

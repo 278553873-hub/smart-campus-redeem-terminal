@@ -1,3 +1,4 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useEffect, useState } from 'react';
 import { Alert, Breadcrumb, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Typography, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
 import {
@@ -191,6 +192,7 @@ interface HomeworkRecordRow {
 }
 
 const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen, embedded = false }) => {
+    const coinTerms = useGrowthCoinTerms();
     // 侧边栏菜单展开状态控制
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
         '货柜机配置中心': true,
@@ -208,7 +210,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const menus = [
         {
             title: '货柜机配置中心', icon: <Package size={18} />,
-            children: ['货柜超市', '货币发放', '发币记录', '储蓄银行', '终端设备']
+            children: ['货柜超市', '成长币规则', '发币记录', '储蓄银行', '终端设备']
         },
         {
             title: '报表中心', icon: <FileText size={18} />,
@@ -289,8 +291,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         shopLabel: '文创星光超市',
         shopDesc: '把努力变成奖励，海量商品兑换',
         bankLabel: '博学储蓄银行',
-        bankDesc: '将资产存入银行，赚取高额利息',
-        coinIconUrl: '/assets/coin.png'
+        bankDesc: '将资产存入银行，赚取高额利息'
     });
 
     // 历次发币记录筛选状态
@@ -2985,7 +2986,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             className={`pl-12 pr-6 py-2 text-[13px] cursor-pointer transition-colors ${(activeMenu === child ||
                                                 (child === '终端设备' && (activeMenu === '终端设备管理' || activeMenu === '设备基础配置')) ||
                                                 (child === '货柜超市' && activeMenu === '货柜超市管理') ||
-                                                (child === '货币发放' && activeMenu === '货币发放管理') ||
+                                                (child === '成长币规则' && ['货币发放', '货币发放管理'].includes(activeMenu)) ||
                                                 (child === '发币记录' && activeMenu === '历次发币记录') ||
                                                 (child === '储蓄银行' && activeMenu === '储蓄银行配置'))
                                                 ? 'bg-blue-50 text-blue-600 font-bold border-r-4 border-blue-600'
@@ -3083,11 +3084,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
-                    {(activeMenu === '货币发放' || activeMenu === '货币发放管理') && (
+                    {(['成长币规则', '货币发放', '货币发放管理'].includes(activeMenu)) && (
                         <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform">
                             <div className="border-b border-[#E5E6EB] bg-white px-6 py-4">
                                 {/* 内部 Tab 切换器 */}
-                                <div className="flex" role="tablist" aria-label="校园币发放方式">
+                                <div className="flex" role="tablist" aria-label="成长币管理">
                                     <button
                                         type="button"
                                         role="tab"
@@ -3095,7 +3096,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                         onClick={() => setIssuanceTab('auto')}
                                         className={`border-b-2 px-1 pb-3 text-sm ${issuanceTab === 'auto' ? 'border-[#165DFF] font-medium text-[#165DFF]' : 'border-transparent text-[#4E5969] hover:text-[#1D2129]'}`}
                                     >
-                                        自动发放
+                                        发放规则
                                     </button>
                                     <button
                                         type="button"
@@ -3153,13 +3154,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                             style={{ width: 160 }}
                                                             aria-label="每人发放数量"
                                                         />
-                                                        <span className="text-sm text-[#4E5969]">校园币 / 人</span>
+                                                        <span className="text-sm text-[#4E5969]">{coinTerms.name} / 人</span>
                                                     </div>
                                                 </div>
                                                 <div className="mt-5 flex flex-wrap items-baseline gap-x-2 border-t border-[#F2F3F5] pt-4 text-sm text-[#4E5969]">
                                                     <span>本次发放总计</span>
                                                     <span className="text-base font-semibold tabular-nums text-[#1D2129]">{totalManualIssuance.toLocaleString()}</span>
-                                                    <span>校园币</span>
+                                                    <span>{coinTerms.name}</span>
                                                     <span className="text-xs text-[#86909C]">（{selectedClassStudentCount} 人 × {manualPerStudent} 币/人）</span>
                                                 </div>
                                             </section>
@@ -3193,7 +3194,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 )}
                                                 <div className="mt-5 flex items-start gap-2 border-t border-[#F2F3F5] pt-4 text-xs leading-5 text-[#86909C]">
                                                     <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                                                    <span>发放确认后，校园币将实时打入对应班级每位学生的可用余额，并产生流水记录，此操作无法撤销。</span>
+                                                    <span>发放确认后，{coinTerms.name}将实时打入对应班级每位学生的可用余额，并产生流水记录，此操作无法撤销。</span>
                                                 </div>
                                             </section>
                                         </div>
@@ -3204,7 +3205,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 disabled={!manualClass || manualPerStudent <= 0}
                                                 onClick={() => {
                                                     if (!manualClass || manualPerStudent <= 0) return;
-                                                    alert('已成功发放 ' + totalManualIssuance + ' 校园币至 ' + manualClass);
+                                                    alert('已成功发放 ' + totalManualIssuance + ' ' + coinTerms.name + '至 ' + manualClass);
                                                     setManualClass('');
                                                     setManualPerStudent(0);
                                                 }}
@@ -3257,7 +3258,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             <tr>
                                                 <th className="px-6 py-3">商品</th>
                                                 <th className="px-4 py-3">分类</th>
-                                                <th className="px-4 py-3">售价（校园币）</th>
+                                                <th className="px-4 py-3">售价（{coinTerms.name}）</th>
                                                 <th className="px-4 py-3 text-center">上架状态</th>
                                                 <th className="px-6 py-3 text-right">操作</th>
                                             </tr>
@@ -3892,37 +3893,37 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                                     <div className="flex-1 bg-[#F7F8FA] p-5 rounded-lg border border-[#E5E6EB] flex flex-col gap-4">
                                         <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                            <Info size={16} className="text-[#86909C]" /> 收益体验试算 <span className="text-slate-400 font-normal">（假设存入 1000 校园币）</span>
+                                            <Info size={16} className="text-[#86909C]" /> 收益体验试算 <span className="text-slate-400 font-normal">（假设存入 1000 {coinTerms.name}）</span>
                                         </div>
                                         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center">
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一天</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><GrowthCoinIcon className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 1).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一周</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><GrowthCoinIcon className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 7).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一个月</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><GrowthCoinIcon className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 30).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">半年</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><GrowthCoinIcon className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 180).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                             <div className="bg-white p-3 rounded-lg border border-[#E5E6EB] flex flex-col justify-center">
                                                 <div className="text-xs text-slate-500 mb-1">一年</div>
                                                 <div className="text-sm font-bold text-slate-800">
-                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><img src="/assets/coin.png" className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
+                                                    <span className="text-[#1D2129] flex justify-center items-center gap-0.5"><GrowthCoinIcon className="w-[1em] h-[1em] inline" alt="coin" /> {(1000 * (currentDailyRate / 100) * 365).toFixed(2)}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -3976,7 +3977,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                         <span className="text-[10px] text-slate-500 font-bold mb-0.5">存1000币收益试算</span>
                                                         <div className="flex items-baseline gap-1">
                                                             <span className={`text-base font-bold ${plan.active ? 'text-[#1D2129]' : 'text-slate-400'}`}>+</span>
-                                                            <img src="/assets/coin.png" className="w-[1em] h-[1em] mb-[1px] opacity-80" alt="coin" />
+                                                            <GrowthCoinIcon className="w-[1em] h-[1em] mb-[1px] opacity-80" alt="coin" />
                                                             <span className={`text-base font-bold ${plan.active ? 'text-[#1D2129]' : 'text-slate-400'}`}>{parseFloat((1000 * plan.rate).toFixed(2))}</span>
                                                         </div>
                                                     </div>
@@ -4275,34 +4276,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                                     <div className="border-t border-[#F2F3F5] mb-5 w-full"></div>
 
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <span className="h-[18px] w-[5px] rounded-sm bg-[#165DFF]"></span>
-                                        <h3 className="m-0 text-base font-semibold leading-[24px] text-[#1D2129]">校园币图标</h3>
-                                    </div>
-                                    <div className="grid grid-cols-[96px_1fr] items-start gap-x-4 mb-6">
-                                        <div className="pt-[5px] text-sm font-normal leading-[22px] text-[#1D2129]">当前图标</div>
-                                        <div className="flex flex-wrap gap-2">
-                                            {[
-                                                { id: '1', url: '/assets/coin.png', name: '经典铜钱' },
-                                                { id: '2', url: '/assets/c4d_growth.png', name: '成长勋章' },
-                                                { id: '3', url: '/assets/c4d_shop.png', name: '星光钻' },
-                                                { id: '4', url: '/assets/c4d_bank.png', name: '博学水晶' }
-                                            ].map(icon => (
-                                                <button
-                                                    key={icon.id}
-                                                    onClick={() => setTerminalConfig({ ...terminalConfig, coinIconUrl: icon.url })}
-                                                    className={`h-8 rounded border px-3 text-sm font-normal leading-[22px] transition-all flex items-center gap-2 ${terminalConfig.coinIconUrl === icon.url ? 'border-[#165DFF] bg-[#E8F3FF] text-[#165DFF]' : 'border-[#E5E6EB] bg-white text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF]'}`}
-                                                >
-                                                    <img src={icon.url} alt="" className="h-4 w-4 object-contain" />
-                                                    {icon.name}
-                                                    {terminalConfig.coinIconUrl === icon.url && <Check size={14} />}
-                                                </button>
-                                            ))}
-                                            <button className="h-8 rounded border border-dashed border-[#E5E6EB] bg-white px-3 text-sm font-normal leading-[22px] text-[#4E5969] hover:border-[#165DFF] hover:text-[#165DFF] transition-all flex items-center gap-2">
-                                                <Upload size={14} />
-                                                上传新图标
-                                            </button>
-                                        </div>
+                                    <div className="mb-6 flex items-center justify-between gap-4">
+                                        <span className="text-sm text-[#4E5969]">货币名称与图标</span>
+                                        <Button type="text" onClick={() => { setActiveMenu('成长币规则'); setIssuanceTab('auto'); }}>前往成长币规则设置</Button>
                                     </div>
 
                                     <div className="border-t border-[#F2F3F5] pt-5 flex justify-end gap-2">
@@ -6162,7 +6138,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             <input id="shop-product-name" name="name" defaultValue={editingShopProduct?.name || ''} required className="w-full rounded border border-[#E5E6EB] bg-white px-3 py-2.5 text-[#1D2129] outline-none transition-colors placeholder:text-[#86909C] focus:border-[#165DFF] focus:ring-2 focus:ring-[#165DFF]/10" placeholder="例如：校庆限量徽章" />
                                         </div>
                                         <div>
-                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="shop-product-price"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>售价（校园币）</label>
+                                            <label className="mb-2 block text-sm font-medium text-[#4E5969]" htmlFor="shop-product-price"><span className="mr-1 text-[#F53F3F]" aria-hidden="true">*</span>售价（{coinTerms.name}）</label>
                                             <input
                                                 id="shop-product-price"
                                                 type="text"
@@ -6631,7 +6607,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">起存金额 (校园币) <span className="text-red-500">*</span></label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1.5">起存金额 ({coinTerms.name}) <span className="text-red-500">*</span></label>
                                     <div className="relative">
                                         <Coins size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                                         <input name="min" type="number" required min="1" defaultValue={editingProduct?.min || 1} className="w-full bg-white border border-[#E5E6EB] rounded-xl pl-10 pr-4 py-2.5 text-slate-800 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all" />

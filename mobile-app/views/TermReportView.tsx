@@ -14,6 +14,14 @@ import {
     MOCK_TERM_REPORT_AI_DATA_FEMALE
 } from '../constants';
 import { ASSETS } from '../assets/images';
+import PageCover from '../components/term-report/TermReportCover';
+import { useReportAppearance } from '../hooks/useReportAppearance';
+import TermReportTagEditor from '../components/term-report/TermReportTagEditor';
+import MobileToast from '../components/ui/MobileToast';
+import { TERM_REPORT_PERIOD } from '../domain/termReportTags';
+import { termReportTagKey } from '../services/termReportTagStore';
+import { useTermReportTags } from '../hooks/useTermReportTags';
+import { teacherBrandCssVariables } from '../styles/teacherMobileTokens';
 import { FIRST_GRADE_CHINESE_RUBRIC_DIMENSIONS } from '../data/firstGradeChineseTermReport';
 import type { SchoolReportRadarDimension, StudentTermReportContent } from '../data/schoolTermReportProfiles';
 import SubjectRadarChart from '../components/SubjectRadarChart';
@@ -247,72 +255,6 @@ const EditableArea = ({
 };
 
 // --- 3. PAGE SECTIONS ---
-
-const COVER_TRAITS = [
-    { label: '全面发展', className: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
-    { label: '成熟可靠', className: 'bg-pink-50 text-pink-600 border-pink-100' },
-    { label: '独立自主', className: 'bg-emerald-50 text-emerald-600 border-emerald-100' }
-];
-
-// 1. Cover Page
-const PageCover = ({ student, classLabel, onStart, mode = 'mobile', showEnglish = true, tags }: { student: Student, classLabel?: string, onStart: () => void, mode?: 'a4' | 'mobile', showEnglish?: boolean, tags?: readonly string[], key?: any }) => {
-    const displayClassLabel = classLabel || student.class || '2025级1班';
-    const gradeLabel = student.grade || '一年级';
-    const termLabel = '2026-2027学年 上学期';
-
-    return (
-        <ReportPageContainer mode={mode} hideFooterLabel={!showEnglish} fullHeightMobile className="flex flex-col items-center justify-between text-center bg-gradient-to-b from-blue-50/30 to-white overflow-hidden">
-            {/* Background Blobs */}
-            <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[30%] bg-blue-100/40 rounded-full blur-[80px]"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[30%] bg-purple-100/40 rounded-full blur-[80px]"></div>
-
-            <div className="mt-16 relative z-10 w-full px-8">
-                <div className="w-12 h-1.5 bg-blue-600 mx-auto rounded-full mb-6"></div>
-                <h1 className="text-[32px] sm:text-[40px] font-black text-slate-900 tracking-tight leading-none mb-3">学期成长手册</h1>
-                {showEnglish && <p className="text-xs font-bold text-slate-300 uppercase tracking-[0.3em]">Semester Growth Report</p>}
-            </div>
-
-            <div className="flex-1 w-full flex items-center justify-center relative z-10 py-8">
-                <div className="w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] relative flex items-center justify-center">
-                    <div className="absolute inset-4 bg-gradient-to-tr from-white to-blue-50 rounded-full border border-white shadow-2xl shadow-blue-100/50"></div>
-                    <img
-                        src={student.gender === 'male' ? ASSETS.COVER.BOY : ASSETS.COVER.GIRL}
-                        alt="Cover"
-                        className="relative w-full h-full object-contain drop-shadow-xl z-20"
-                    />
-                </div>
-            </div>
-
-            <div className="w-full pb-16 z-10 px-8">
-                <div className="bg-white/70 backdrop-blur-md border border-white rounded-3xl p-8 shadow-xl max-w-sm mx-auto space-y-3">
-                    <div className="text-2xl font-black text-slate-800">{student.name}</div>
-                    <div className="flex items-center justify-center gap-3 text-[13px] text-slate-600 font-semibold tracking-wide whitespace-nowrap">
-                        <span>{displayClassLabel}</span>
-                        <span className="text-slate-300">|</span>
-                        <span>{gradeLabel}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.3em]">{termLabel}</div>
-                    <div className="flex items-center justify-center gap-2.5 pt-4">
-                        {(tags ?? (student.gender === 'female' ? MOCK_TERM_REPORT_AI_DATA_FEMALE.studentTags : MOCK_TERM_REPORT_AI_DATA.studentTags)).map((tag, idx) => (
-                            <span
-                                key={tag}
-                                className={`text-[11px] px-3 py-1.5 rounded-lg font-black tracking-tight border whitespace-nowrap ${COVER_TRAITS[idx % COVER_TRAITS.length].className}`}
-                            >
-                                {tag}
-                            </span>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {showEnglish && (
-                <div className="absolute bottom-6 text-[9px] text-slate-300 font-bold uppercase tracking-[0.2em]">
-                    Future Education System
-                </div>
-            )}
-        </ReportPageContainer>
-    );
-};
 
 // 2. School Profile
 const PageSchoolProfile = ({ mode = 'mobile', id }: { mode?: 'a4' | 'mobile', id?: string, key?: any }) => (
@@ -1064,7 +1006,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                                     {isEditing ? (
                                         <div className="space-y-4">
                                             <textarea
-                                                className="relative z-10 min-h-[120px] w-full resize-none rounded-xl border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] p-3 pt-1 text-[15px] leading-[1.8] text-[var(--tm-input-text)] shadow-inner outline-none"
+                                                className="relative z-10 min-h-[120px] w-full resize-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] p-3 pt-1 text-[15px] leading-[1.8] text-[var(--tm-input-text)] shadow-inner outline-none"
                                                 value={item.description}
                                                 onChange={(e) => handleChange(idx, 'description', e.target.value)}
                                                 placeholder="请输入真实、具体、适合展示给学生和家长的高光时刻..."
@@ -1085,7 +1027,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
             {(isEditing || highlights.length === 0) && (
                 <button
                     onClick={handleAdd}
-                    className="w-full mt-5 py-4 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all active:scale-[0.98]"
+                    className="w-full mt-[var(--tm-layout-card-gap)] py-4 border-2 border-dashed border-slate-300 rounded-[var(--tm-radius-control-compact)] flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-all active:scale-[0.98]"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     <span className="font-bold text-sm">新增一条高光时刻</span>
@@ -1111,7 +1053,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                         <button
                             type="button"
                             onClick={() => setUploadSheetIndex(imagePickerIndex)}
-                            className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white active:scale-[0.98]"
+                            className="mb-[var(--tm-layout-card-gap)] flex w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-slate-900 px-4 py-3 text-sm font-bold text-white active:scale-[0.98]"
                         >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 16V4m0 12l-4-4m4 4l4-4M4 20h16" /></svg>
                             上传图片
@@ -1123,7 +1065,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                                     type="button"
                                     onClick={() => handleDefaultImageSelect(imagePickerIndex, option.key)}
                                     aria-label="选择内置高光图片"
-                                    className={`overflow-hidden rounded-xl border bg-white shadow-sm active:scale-95 transition-all ${highlights[imagePickerIndex]?.defaultImageKey === option.key && !highlights[imagePickerIndex]?.imageUrl ? 'border-amber-400 ring-2 ring-amber-200' : 'border-slate-100'}`}
+                                    className={`overflow-hidden rounded-[var(--tm-radius-card-compact)] border bg-white shadow-sm active:scale-95 transition-all ${highlights[imagePickerIndex]?.defaultImageKey === option.key && !highlights[imagePickerIndex]?.imageUrl ? 'border-amber-400 ring-2 ring-amber-200' : 'border-slate-100'}`}
                                 >
                                     <img src={(ASSETS.HIGHLIGHT_DEFAULTS as Record<string, string>)[option.key]} alt="内置高光图片" className="h-14 w-full object-cover" />
                                 </button>
@@ -1140,7 +1082,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="mb-3 text-center text-sm font-black text-slate-800">上传图片</div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
                             <div>
                                 <input
                                     id={`highlight-camera-${uploadSheetIndex}`}
@@ -1152,7 +1094,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                                 />
                                 <label
                                     htmlFor={`highlight-camera-${uploadSheetIndex}`}
-                                    className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 px-4 py-5 text-sm font-bold text-slate-700 ring-1 ring-slate-100 active:scale-95"
+                                    className="flex flex-col items-center justify-center gap-2 rounded-[var(--tm-radius-card-compact)] bg-slate-50 px-4 py-5 text-sm font-bold text-slate-700 ring-1 ring-slate-100 active:scale-95"
                                 >
                                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                     拍照
@@ -1168,7 +1110,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                                 />
                                 <label
                                     htmlFor={`highlight-upload-${uploadSheetIndex}`}
-                                    className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 px-4 py-5 text-sm font-bold text-slate-700 ring-1 ring-slate-100 active:scale-95"
+                                    className="flex flex-col items-center justify-center gap-2 rounded-[var(--tm-radius-card-compact)] bg-slate-50 px-4 py-5 text-sm font-bold text-slate-700 ring-1 ring-slate-100 active:scale-95"
                                 >
                                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                     相册选择
@@ -1178,7 +1120,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
                         <button
                             type="button"
                             onClick={() => setUploadSheetIndex(null)}
-                            className="mt-3 w-full rounded-2xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 active:scale-[0.98]"
+                            className="mt-[var(--tm-layout-card-gap)] w-full rounded-[var(--tm-radius-control-compact)] bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 active:scale-[0.98]"
                         >
                             取消
                         </button>
@@ -2393,6 +2335,8 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     studentReportContent,
 }) => {
     const [viewMode, setViewMode] = useState<'mobile' | 'a4'>(initialViewMode);
+    const [printRoot, setPrintRoot] = useState<HTMLElement | null>(null);
+    useEffect(() => { setPrintRoot(document.body); }, []);
     const [currentPage, setCurrentPage] = useState(0);
     const [activeSection, setActiveSection] = useState('cover');
     const [showSubjectSubPage, setShowSubjectSubPage] = useState(false);
@@ -2402,6 +2346,18 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         ? getTeacherClassDisplayName(classInfo, currentSpace)
         : student.class;
     const isConfiguredPreview = enabledSections !== undefined;
+    const coverAppearance = useReportAppearance(currentSpace.id, currentSpace.type === 'school' ? currentSpace.title : '');
+    const tagKey = termReportTagKey(currentSpace.id, student.id, TERM_REPORT_PERIOD.id);
+    const defaultTags = studentReportContent?.tags ?? (isMale ? MOCK_TERM_REPORT_AI_DATA.studentTags : MOCK_TERM_REPORT_AI_DATA_FEMALE.studentTags);
+    const { tags: coverTags, save: saveCoverTags } = useTermReportTags(tagKey, defaultTags);
+    const [editingTagKey, setEditingTagKey] = useState<string | null>(null);
+    const [tagToast, setTagToast] = useState('');
+    const editCoverTags = isConfiguredPreview ? undefined : () => setEditingTagKey(tagKey);
+    useEffect(() => {
+        if (!tagToast) return;
+        const timer = window.setTimeout(() => setTagToast(''), 2400);
+        return () => window.clearTimeout(timer);
+    }, [tagToast]);
     const sectionEnabled = (id: TermReportSectionId) => enabledSections?.[id] !== false;
     const hiddenSectionSet = useMemo(() => new Set<TermReportSectionId>(hiddenSections), [hiddenSections]);
     const schoolGrowthProps = {
@@ -2482,7 +2438,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     };
 
     const a4PagesLegacy = isMale ? [
-        <PageCover key="cover" student={student} classLabel={displayStudentClassName} onStart={handleStartReading} mode="a4" showEnglish={false} tags={studentReportContent?.tags} />,
+        <PageCover key="cover" student={student} classLabel={displayStudentClassName} mode="a4" tags={coverTags} onEditTags={editCoverTags} appearance={coverAppearance} />,
         <PageTeacherAttention key="teacher" mode="a4" />,
         <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={true} {...schoolGrowthProps} />,
         ...additionalA4Pages,
@@ -2495,7 +2451,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         <PageParentFeedback key="parent" mode="a4" />,
         <PageStudentFeedback key="student" mode="a4" />
     ] : [
-        <PageCover key="cover" student={student} classLabel={displayStudentClassName} onStart={handleStartReading} mode="a4" showEnglish={false} tags={studentReportContent?.tags} />,
+        <PageCover key="cover" student={student} classLabel={displayStudentClassName} mode="a4" tags={coverTags} onEditTags={editCoverTags} appearance={coverAppearance} />,
         <PageGrowthOverview key="growth" student={student} mode="a4" onSubjectClick={handleSubjectClick} showFullContent={false} {...schoolGrowthProps} />,
         ...additionalA4Pages,
         <PageComprehensiveGrowthAdvice key="advice" student={student} mode="a4" growthAdvice={studentReportContent?.growthAdvice} />,
@@ -2504,7 +2460,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
 
     const renderConfiguredPages = (mode: 'a4' | 'mobile'): React.ReactNode[] => {
         const pages: React.ReactNode[] = [
-            <PageCover key={`${mode}-cover`} student={student} classLabel={displayStudentClassName} onStart={handleStartReading} mode={mode} showEnglish={false} tags={studentReportContent?.tags} />,
+            <PageCover key={`${mode}-cover`} student={student} classLabel={displayStudentClassName} mode={mode} tags={coverTags} onEditTags={editCoverTags} appearance={coverAppearance} />,
         ];
         const growthSectionIds: TermReportSectionId[] = ['medals', 'growth-radar', 'five-education-detail', 'subject-results', 'highlights', 'overall'];
         const isVisibleGrowthSection = (sectionId: TermReportSectionId) => {
@@ -2602,7 +2558,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     const handlePrint = () => window.print();
 
     const mobilePagesLegacy = isMale ? [
-        <PageCover key="cover" student={student} classLabel={displayStudentClassName} onStart={handleStartReading} mode="mobile" showEnglish={false} tags={studentReportContent?.tags} />,
+        <PageCover key="cover" student={student} classLabel={displayStudentClassName} mode="mobile" tags={coverTags} onEditTags={editCoverTags} appearance={coverAppearance} />,
         <PageTeacherAttention key="teacher" mode="mobile" id="section-teacher" />,
         <PageGrowthOverview key="growth" student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={true} {...schoolGrowthProps} />,
         ...additionalMobilePages,
@@ -2615,7 +2571,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
         <PageParentFeedback key="parent" mode="mobile" id="section-parent" />,
         <PageStudentFeedback key="student" mode="mobile" id="section-student" />
     ] : [
-        <PageCover key="cover" student={student} classLabel={displayStudentClassName} onStart={handleStartReading} mode="mobile" showEnglish={false} tags={studentReportContent?.tags} />,
+        <PageCover key="cover" student={student} classLabel={displayStudentClassName} mode="mobile" tags={coverTags} onEditTags={editCoverTags} appearance={coverAppearance} />,
         <PageGrowthOverview student={student} mode="mobile" id="section-growth" onSubjectClick={handleSubjectClick} showFullContent={false} {...schoolGrowthProps} />,
         ...additionalMobilePages,
         <PageComprehensiveGrowthAdvice key="advice" student={student} mode="mobile" id="section-advice" growthAdvice={studentReportContent?.growthAdvice} />,
@@ -2627,6 +2583,11 @@ const TermReportView: React.FC<TermReportViewProps> = ({
 
     return (
         <div className="h-full w-full bg-[#2A2A2A] sm:bg-[#E5E5E5] flex flex-col relative overflow-hidden print:bg-white print:h-auto print:overflow-visible font-sans">
+
+            {editingTagKey === tagKey && <TermReportTagEditor key={tagKey} tags={coverTags}
+                onClose={() => setEditingTagKey(null)}
+                onSave={tags => { saveCoverTags(tags); setTagToast('素养标签已保存'); }} />}
+            <MobileToast message={tagToast} />
 
             {/* Header */}
             <div className="bg-white px-4 py-2 flex items-center justify-between z-50 print:hidden h-[44px] shrink-0">
@@ -2715,9 +2676,9 @@ const TermReportView: React.FC<TermReportViewProps> = ({
                                 {resolvedA4Pages[currentPage]}
                             </div>
                         )}
-                        <div className={`hidden print:block w-full ${isConfiguredPreview ? 'configured-report-preview configured-report-preview-a4' : ''}`}>
+                        {printRoot && createPortal(<div className={`term-report-print-root hidden print:block w-full ${isConfiguredPreview ? 'configured-report-preview configured-report-preview-a4' : ''}`} style={teacherBrandCssVariables as React.CSSProperties}>
                             {resolvedA4Pages.map((page, i) => <React.Fragment key={i}>{page}</React.Fragment>)}
-                        </div>
+                        </div>, printRoot)}
                     </>
                 )}
             </div>

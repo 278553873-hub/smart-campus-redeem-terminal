@@ -29,6 +29,7 @@ export default function TeacherUsageRankingSheet({
         <MobileBottomSheet open title="教师使用完整榜单" onClose={onClose} size="tall" contentInset="none">
             <div className="sticky left-0 top-0 z-30 flex h-[60px] w-full items-center bg-[var(--tm-bg-surface)] px-4">
                 <CompactSegmentedControl
+                    shape="subtle"
                     value={rankingType}
                     items={[{ value: 'active', label: '积极使用' }, { value: 'low', label: '使用较少' }]}
                     onChange={onRankingTypeChange}

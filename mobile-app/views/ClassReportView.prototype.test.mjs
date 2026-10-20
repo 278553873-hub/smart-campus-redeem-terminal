@@ -49,14 +49,14 @@ for (const [token, value] of [
     ['--tm-report-filter-padding-pinned', '0px'],
     ['--tm-report-date-indicator-width', '56px'],
     ['--tm-report-date-indicator-height', '3px'],
-    ['--tm-report-custom-range-height', '40px'],
+    ['--tm-report-custom-range-height', '44px'],
     ['--tm-report-source-list-inline', 'var(--tm-space-2)'],
     ['--tm-report-source-item-gap', 'var(--tm-space-2)'],
     ['--tm-report-source-item-inline', '6px'],
     ['--tm-report-source-padding-top', '0px'],
     ['--tm-report-source-padding-bottom', '0px'],
     ['--tm-report-source-pill-height', '28px'],
-    ['--tm-report-source-pill-inline', '6px'],
+    ['--tm-report-source-pill-inline', '12px'],
 ]) {
     assert.ok(tokenSource.includes(`'${token}': '${value}'`), `班级报告缺少组件令牌：${token}`);
 }
@@ -170,7 +170,7 @@ assert.ok(compactSegmentSource.includes('bg-[var(--tm-selection-segment-active-b
 assert.ok(viewSource.includes('<PillSelectionControl') && pillSelectionSource.includes('border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)]'), '需要关注未选项应通过组件 Token 复用白底浅边框胶囊，避免描边抢占视觉重点。');
 assert.ok(viewSource.includes('<MobileDatePickerSheet') && viewSource.includes('mode="range"') && viewSource.includes('onConfirm={applyCustomRange}') && !viewSource.includes('const customDateInputClass'), '自定义日期应复用公共范围选择器，草稿由组件维护，确认后才应用。');
 assert.ok(viewSource.includes('open={showCustomDatePicker}') && !viewSource.includes('title="选择日期范围"') && !viewSource.includes('confirmLabel="应用日期"'), '自定义日期应通过公共底部抽屉渐进披露并在确认后应用。');
-assert.ok(viewSource.includes('aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}`}') && viewSource.includes('--tm-report-custom-range-height') && viewSource.includes('自定义时间：') && viewSource.includes('修改日期'), '已应用自定义日期应在日期下方通过紧凑摘要回显，并允许重新修改。');
+assert.ok(viewSource.includes('aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}，修改日期}`}') && viewSource.includes('--tm-report-custom-range-height') && !viewSource.includes('<CalendarRange') && viewSource.includes('修改日期'), '已应用自定义日期应在日期下方通过紧凑摘要回显，并允许重新修改。');
 assert.ok(!viewSource.includes("timeRange === 'custom' && (\n                            <div className=\"grid grid-cols-[1fr_auto_1fr]"), '页面顶部不应继续直接展开两个日期输入框。');
 assert.ok(coverageDomainSource.includes('evaluationCount') && coverageDomainSource.includes('teacherCount'), '学生覆盖统计层应同时维护评价次数和评价老师数。');
 assert.ok(coverageDomainSource.includes('sortStudentCoverageRows'), '学生覆盖排序应收敛到独立领域模块。');
@@ -336,8 +336,8 @@ assert.ok(plainBackgroundList.includes("'class_report'"), '班级报告应使用
 // 概况固定展示三项统计，评价次数与记录条数通过小图标查看定义。
 for (const required of [
   'const reportOverviewHints',
-  '老师发起评价行为的次数。发起 1 次评价计 1 次，无论评价对象是 1 人还是多人。示例：评价全班 50 人 = 1 次。',
-  '评价后生成的成长记录数。1 名学生 = 1 条。示例：评价全班 50 人 = 50 条。',
+  '发起评价的次数。无论评价对象是1人还是多人，评价1次算1次。示例：全班50人积极参与体育锻炼，只记为1次评价。',
+  '评价后生成的成长记录数。1名学生算1次。示例：全班50人积极参与体育锻炼，记为50条记录。',
   'aria-label={`查看${label}定义`}',
   'aria-expanded={hintOpen}',
   'role="tooltip"',

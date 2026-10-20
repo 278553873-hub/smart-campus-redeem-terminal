@@ -4,6 +4,7 @@ import { IconBadge } from './IconBadge';
 
 interface MobileNoticeSheetProps {
   open: boolean;
+  shape?: 'default' | 'subtle';
   title: string;
   message: string;
   confirmLabel?: string;
@@ -12,6 +13,7 @@ interface MobileNoticeSheetProps {
 
 const MobileNoticeSheet: React.FC<MobileNoticeSheetProps> = ({
   open,
+  shape = 'default',
   title,
   message,
   confirmLabel = '知道了',
@@ -58,7 +60,7 @@ const MobileNoticeSheet: React.FC<MobileNoticeSheetProps> = ({
           <button
             type="button"
             onClick={onDismiss}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
+            className={`flex h-11 w-11 shrink-0 items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} text-[var(--tm-text-secondary)] transition active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]`}
             aria-label="关闭"
           >
             <X className="h-5 w-5" strokeWidth={2.1} />
@@ -69,7 +71,7 @@ const MobileNoticeSheet: React.FC<MobileNoticeSheetProps> = ({
           ref={confirmRef}
           type="button"
           onClick={onDismiss}
-          className="mt-5 flex min-h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[15px] font-semibold text-white transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
+          className={`${shape === 'subtle' ? 'mt-[var(--tm-layout-card-gap)]' : 'mt-5'} flex min-h-12 w-full items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} bg-[var(--tm-brand-primary)] px-4 text-[15px] font-semibold text-white transition active:scale-[0.99] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2`}
         >
           {confirmLabel}
         </button>

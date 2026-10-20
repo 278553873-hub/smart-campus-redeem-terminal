@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { calendarCells, dateAllowed, isCalendarDate, localToday, shiftDate, type MobileDateRange } from './mobileDatePickerModel';
 
 interface MobileDateCalendarProps {
+  shape?: 'default' | 'subtle';
   value: MobileDateRange;
   min?: string;
   max?: string;
@@ -11,7 +12,7 @@ interface MobileDateCalendarProps {
 }
 
 /** 无弹层的日历内容，可供单日与范围选择共用。 */
-export default function MobileDateCalendar({ value, min, max, initialDate, onSelect }: MobileDateCalendarProps) {
+export default function MobileDateCalendar({ value, min, max, initialDate, onSelect, shape = 'default' }: MobileDateCalendarProps) {
   const today = localToday();
   const lower = isCalendarDate(min ?? '') ? min! : '1900-01-01';
   const upper = isCalendarDate(max ?? '') ? max! : '2100-12-31';
@@ -67,7 +68,7 @@ export default function MobileDateCalendar({ value, min, max, initialDate, onSel
           const endpoint = date === value.start || date === value.end;
           const inRange = Boolean(value.start && value.end && date > value.start && date < value.end);
           return <button key={date} ref={node => { if (node) buttons.current.set(date, node); else buttons.current.delete(date); }} type="button" disabled={disabled} tabIndex={!disabled && date === focusDate ? 0 : -1} aria-label={`${date.replaceAll('-', '/')} ${date === value.start ? '开始日期' : date === value.end ? '结束日期' : ''}`} aria-pressed={endpoint || inRange} aria-current={date === today ? 'date' : undefined} onKeyDown={event => handleKey(event, date)} onFocus={() => setFocusDate(date)} onClick={() => { setFocusDate(date); onSelect(date); }} className={`relative flex min-h-[var(--tm-size-touch)] items-center justify-center text-[length:var(--tm-font-size-body)] leading-5 tabular-nums ${focusClass} ${inRange && inMonth ? 'bg-[var(--tm-brand-primary-soft)]' : ''} ${!inMonth ? 'invisible' : ''} disabled:text-[var(--tm-text-disabled)]`}>
-            <span className={`flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] ${endpoint ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]' : date === today ? 'font-semibold text-[var(--tm-brand-primary)]' : ''}`}>{Number(date.slice(-2))}</span>
+            <span className={`flex h-9 w-9 items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} ${endpoint ? 'bg-[var(--tm-brand-primary)] font-semibold text-[var(--tm-text-inverse)]' : date === today ? 'font-semibold text-[var(--tm-brand-primary)]' : ''}`}>{Number(date.slice(-2))}</span>
           </button>;
         })}
       </div>

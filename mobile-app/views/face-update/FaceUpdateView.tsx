@@ -60,6 +60,7 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
     const faceImageSrc = resolveStudentAvatar(student);
     return (
       <StudentHorizontalCard
+        shape="subtle"
         key={student.id}
         student={student}
         avatarSrc={faceImageSrc}
@@ -69,7 +70,7 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
           <button
             type="button"
             onClick={() => setActiveStudentId(student.id)}
-            className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]"
+            className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]"
             aria-label={`${student.hasFaceData ? '更新' : '录入'}${student.name}人脸`}
           >
             <Camera aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
@@ -104,6 +105,7 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
         <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
           <div className="sticky top-0 z-20 bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pt-[var(--tm-space-2)] pb-[var(--tm-space-3)]">
             <CompactSegmentedControl
+              shape="subtle"
               value={activeTab}
               items={tabItems}
               onChange={selectTab}
@@ -115,7 +117,7 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
 
           <div className="px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">
             {visibleStudents.length > 0 ? (
-              <div className="space-y-[var(--tm-space-2)]">{visibleStudents.map(renderStudentRow)}</div>
+              <div className="space-y-[var(--tm-layout-list-gap-compact)]">{visibleStudents.map(renderStudentRow)}</div>
             ) : (
               <p className="py-20 text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-tertiary)]">
                 {activeTab === 'pending'
@@ -129,9 +131,9 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
 
       <MobileBottomSheet open={activeStudent !== null} title={`${activeStudent?.hasFaceData ? '更新' : '录入'}人脸`} onClose={() => setActiveStudentId(null)}>
         <div className="mb-[var(--tm-space-3)] truncate text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">{activeStudent?.name}</div>
-        <div className="space-y-[var(--tm-space-2)]">
-          <button type="button" onClick={() => updateFace('camera')} className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Camera className="h-[18px] w-[18px]" /></span>拍照录入</button>
-          <button type="button" onClick={() => updateFace('album')} className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Image className="h-[18px] w-[18px]" /></span>从相册选择</button>
+        <div className="space-y-[var(--tm-layout-list-gap-compact)]">
+          <button type="button" onClick={() => updateFace('camera')} className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Camera className="h-[18px] w-[18px]" /></span>拍照录入</button>
+          <button type="button" onClick={() => updateFace('album')} className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Image className="h-[18px] w-[18px]" /></span>从相册选择</button>
         </div>
       </MobileBottomSheet>
     </div>

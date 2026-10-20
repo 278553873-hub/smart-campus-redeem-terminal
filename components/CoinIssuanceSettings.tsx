@@ -1,13 +1,19 @@
+import { useGrowthCoinTerms } from './GrowthCoinBranding';
+import GrowthCoinBrandFields, { useCoinBrandingDraft, withCoinBrandingSaveNotice } from './GrowthCoinBrandFields';
+import GrowthCoinRuleDescription from './GrowthCoinRuleDescription';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, InputNumber, Message, Radio, Slider, Switch } from '@arco-design/web-react';
+import { Button, Card, InputNumber, Modal, Radio, Slider, Switch, Tabs } from '@arco-design/web-react';
 import { Coins, Info } from 'lucide-react';
 import type { CoinIssuanceConfig } from '../mobile-app/types';
 import { getClassBudgetTotal } from '../mobile-app/domain/campusCoinIssuance';
+import { getGrowthCoinMode, getScoreCoinRule, GROWTH_COIN_ENABLE_HELP, GROWTH_COIN_MODES } from '../shared/growthCoinRules';
 
 interface CoinIssuanceSettingsProps {
     value: CoinIssuanceConfig;
     onChange: (value: CoinIssuanceConfig) => void;
 }
+
+import { getEditableGrowthCoinConfig, saveGrowthCoinRule, type GrowthCoinSaveNotice } from '../shared/growthCoinRuleSchedule';
 
 const SAMPLE_CLASS_SIZE = 50;
 
@@ -24,12 +30,19 @@ const normalizeBudgetAmount = (value: number | undefined) => (
 );
 
 const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onChange }) => {
-    const [draft, setDraft] = useState(value);
+    const [activeTab, setActiveTab] = useState('rules');
+    const brandingEditor = useCoinBrandingDraft();
+    const coinTerms = useGrowthCoinTerms();
+    const [draft, setDraft] = useState(() => getEditableGrowthCoinConfig(value));
+    const [saveNotice, setSaveNotice] = useState<GrowthCoinSaveNotice | null>(null);
+    const pendingChange = value.pendingChange && Date.parse(value.pendingChange.effectiveAt) > Date.now() ? value.pendingChange : undefined;
 
     useEffect(() => {
-        setDraft(value);
+        setDraft(getEditableGrowthCoinConfig(value));
     }, [value]);
 
+    const mode = getGrowthCoinMode(draft);
+    const scoreRule = getScoreCoinRule(draft);
     const rankingRatio = 100 - draft.sunshineRatio;
     const classBudgetTotal = useMemo(() => getClassBudgetTotal({
         budgetMode: draft.budgetMode,
@@ -42,7 +55,6 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
     const updateDraft = (patch: Partial<CoinIssuanceConfig>) => {
         const nextValue = { ...draft, ...patch };
         setDraft(nextValue);
-        onChange(nextValue);
     };
 
     const updateSunshineRatio = (sunshineRatio: number) => {
@@ -50,16 +62,19 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
     };
 
     const handleSave = () => {
-        onChange(draft);
-        Message.success('自动发放规则已保存');
+        const brandingChanged = draft.enabled ? brandingEditor.commit() : false;
+        if (brandingChanged === null) { setActiveTab('branding'); return; }
+        const result = saveGrowthCoinRule(value, draft);
+        onChange(result.config);
+        setSaveNotice(withCoinBrandingSaveNotice(result.notice, brandingChanged));
     };
 
     return (
         <div className="pc-form bg-white">
             <div className="flex items-center justify-between gap-6 border-b border-[#E5E6EB] px-6 py-5">
                 <div className="min-w-0">
-                    <h3 className="m-0 text-base font-semibold leading-6 text-[#1D2129]">开启校园币发放</h3>
-                    <p className="mt-1 text-xs leading-5 text-[#86909C]">开启后，系统将按设置的周期和预算自动向学生发放校园币</p>
+                    <h3 className="m-0 text-base font-semibold leading-6 text-[#1D2129]">开启成长币发放</h3>
+                    <p className="mt-1 text-xs leading-5 text-[#86909C]">{GROWTH_COIN_ENABLE_HELP}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                     <span className={`text-sm ${draft.enabled ? 'text-[#00B42A]' : 'text-[#86909C]'}`}>
@@ -67,16 +82,71 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                     </span>
                     <Switch
                         checked={draft.enabled}
-                        onChange={(enabled) => updateDraft({ enabled })}
-                        aria-label="开启校园币发放"
+                        onChange={(enabled) => { updateDraft({ enabled }); if (enabled) setActiveTab('rules'); }}
+                        aria-label={'开启成长币发放'}
                     />
                 </div>
             </div>
 
-            <div className="px-6">
+            <div>
                 {draft.enabled && (
-                    <div>
-                        <section className="border-b border-[#E5E6EB] py-6">
+                    <Tabs type="card" lazyload={false} activeTab={activeTab} onChange={setActiveTab} className="pc-card-tabs-surface mt-4 mb-4" style={{ '--pc-tab-content-inline': '40px' } as React.CSSProperties}>
+                        <Tabs.TabPane key="rules" title="发放规则">
+                            <div className="space-y-4">
+                            {pendingChange && <p role="status" className="text-sm text-[#4E5969]">以下包含此前未生效的修改，保存后将立即生效。</p>}
+                        <Card>
+                            <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
+                                <span className="text-sm text-[#4E5969]">发放方式</span>
+                                <Radio.Group type="button" value={mode} onChange={mode => updateDraft({ mode })} aria-label="成长币发放方式">
+                                    {GROWTH_COIN_MODES.map(item => <Radio key={item.value} value={item.value}>{item.label}</Radio>)}
+                                </Radio.Group>
+                            </div>
+                            <p className="mt-4 text-xs leading-5 text-[#86909C]">
+                                <GrowthCoinRuleDescription mode={mode} />
+                            </p>
+                        </Card>
+                        {mode === 'score' ? (<>
+                            <Card>
+                                <h4 className="m-0 mb-5 text-base font-semibold leading-6 text-[#1D2129]">发放数量</h4>
+                                <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
+                                    <span className="text-sm text-[#4E5969]">每加 1 分</span>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <InputNumber min={0.01} precision={2} value={scoreRule.coinsPerPoint}
+                                            onChange={amount => updateDraft({ scoreRule: { ...scoreRule, coinsPerPoint: normalizeBudgetAmount(amount) } })}
+                                            style={{ width: 120 }} aria-label="每加1分获得的成长币" />
+                                        <span>币</span>
+                                    </div>
+                                </div>
+                                <p className="mt-5 text-xs leading-5 text-[#86909C]">扣分不扣币，负分不影响加分得币。</p>
+                            </Card>
+                            <Card>
+                                <h4 className="m-0 mb-5 text-base font-semibold leading-6 text-[#1D2129]">发放上限</h4>
+                                <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
+                                    <span className="text-sm text-[#4E5969]">限制发放数量</span>
+                                    <Switch checked={scoreRule.limitEnabled} aria-label="限制发放数量"
+                                        onChange={limitEnabled => updateDraft({ scoreRule: { ...scoreRule, limitEnabled } })} />
+                                    {scoreRule.limitEnabled && <>
+                                        <span className="text-sm text-[#4E5969]">上限周期</span>
+                                        <div className="flex items-center gap-3 whitespace-nowrap text-sm">
+                                            <Radio.Group type="button" value={scoreRule.limitPeriod} aria-label="发放上限周期"
+                                                onChange={limitPeriod => updateDraft({ scoreRule: { ...scoreRule, limitPeriod } })}>
+                                                <Radio value="weekly">每周</Radio>
+                                                <Radio value="monthly">每月</Radio>
+                                            </Radio.Group>
+                                        </div>
+                                        <span className="text-sm text-[#4E5969]">每人上限</span>
+                                        <div className="flex items-center gap-3 whitespace-nowrap text-sm">
+                                            <InputNumber min={0.01} precision={2} value={scoreRule.limitAmount}
+                                                onChange={amount => updateDraft({ scoreRule: { ...scoreRule, limitAmount: normalizeBudgetAmount(amount) } })}
+                                                style={{ width: 120 }} aria-label="每人每周期发放上限" />
+                                            <span>币</span>
+                                        </div>
+                                    </>}
+                                </div>
+                                {scoreRule.limitEnabled && <p className="mt-5 text-xs leading-5 text-[#86909C]">全校统一上限，领满后仍可加分，兑换不恢复额度。</p>}
+                            </Card>
+                        </>) : (<>
+                        <Card>
                             <h4 className="m-0 mb-5 text-base font-semibold leading-6 text-[#1D2129]">发放条件</h4>
                             <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
                                 <span className="text-sm text-[#4E5969]">发放周期</span>
@@ -109,9 +179,9 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                                 <Info size={14} className="mt-0.5 shrink-0" />
                                 <span>一次评价可包含多名学生，按老师发起的评价行为计 1 次。</span>
                             </div>
-                        </section>
+                        </Card>
 
-                        <section className="border-b border-[#E5E6EB] py-6">
+                        <Card>
                             <h4 className="m-0 mb-5 text-base font-semibold leading-6 text-[#1D2129]">发放数量</h4>
                             <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
                                 <span className="text-sm text-[#4E5969]">预算设置</span>
@@ -139,7 +209,7 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                                         style={{ width: 160 }}
                                         aria-label={draft.budgetMode === 'per_student' ? '每人预算' : '每班预算'}
                                     />
-                                    <span className="text-sm text-[#4E5969]">校园币</span>
+                                    <span className="text-sm text-[#4E5969]">{coinTerms.name}</span>
                                 </div>
                             </div>
                             {draft.budgetMode === 'per_student' && (
@@ -150,9 +220,9 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                                     </span>
                                 </div>
                             )}
-                        </section>
+                        </Card>
 
-                        <section className="border-b border-[#E5E6EB] py-6">
+                        <Card>
                             <div className="mb-5 flex items-center justify-between">
                                 <h4 className="m-0 text-base font-semibold leading-6 text-[#1D2129]">奖励分配</h4>
                                 <span className="text-xs text-[#86909C]">两项比例合计 100%</span>
@@ -212,16 +282,27 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                                     <div className="mt-1 text-xl font-semibold tabular-nums text-[#D25F00]">{formatCoinAmount(rankingAmount)}币</div>
                                 </div>
                             </div>
-                        </section>
-                    </div>
+                        </Card>
+                        </>)}
+                            </div>
+                        </Tabs.TabPane>
+                        <Tabs.TabPane key="branding" title="名称与图标">
+                            <Card>
+                                <GrowthCoinBrandFields editor={brandingEditor} variant="pc" />
+                            </Card>
+                        </Tabs.TabPane>
+                    </Tabs>
                 )}
             </div>
 
-            {draft.enabled && (
-                <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
-                    <Button type="primary" onClick={handleSave}>保存规则</Button>
+            <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                    <Button type="primary" disabled={brandingEditor.busy} onClick={handleSave}>保存</Button>
                 </div>
-            )}
+            <Modal visible={Boolean(saveNotice)} title="设置已保存" onCancel={() => setSaveNotice(null)}
+                footer={<Button type="primary" onClick={() => setSaveNotice(null)}>知道了</Button>}>
+                <p className="text-base font-medium text-[#1D2129]">{saveNotice?.headline}</p>
+                <p className="mt-3 text-sm leading-6 text-[#4E5969]">{saveNotice?.detail}</p>
+            </Modal>
         </div>
     );
 };

@@ -149,7 +149,7 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
     || customRange.customEnd > termEndDate;
 
   const selectedRangeLabel = getEvaluationTimeFilterLabel(value, termStartDate, termEndDate, referenceDate);
-  const optionClass = (selected: boolean) => `relative flex min-h-[58px] w-full items-center justify-between rounded-[var(--tm-radius-control)] border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${selected
+  const optionClass = (selected: boolean) => `relative flex min-h-[58px] w-full items-center justify-between rounded-[var(--tm-radius-control-compact)] border px-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${selected
     ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
     : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`;
 
@@ -178,9 +178,9 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
 
   return (
     <MobileBottomSheet open={open} title="选择记录时间" onClose={onClose}>
-      <div className="space-y-4 pb-2">
-        <div className="flex items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
+      <div className="space-y-[var(--tm-layout-card-gap)] pb-2">
+        <div className="flex items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
             <CalendarDays className="h-4 w-4" />
           </span>
           <div className="min-w-0">
@@ -225,7 +225,7 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
                     max={customRange.customEnd || termEndDate}
                     value={customRange.customStart}
                     onChange={event => setCustomRange(current => ({ ...current, customStart: event.target.value }))}
-                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[12px] text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[12px] text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                   />
                 </label>
                 <label className="text-[12px] font-medium text-[var(--tm-text-secondary)]">
@@ -236,7 +236,7 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
                     max={termEndDate}
                     value={customRange.customEnd}
                     onChange={event => setCustomRange(current => ({ ...current, customEnd: event.target.value }))}
-                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[12px] text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+                    className="mt-1.5 h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-[12px] text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                   />
                 </label>
               </div>
@@ -247,7 +247,7 @@ const EvaluationTimeFilterSheet: React.FC<EvaluationTimeFilterSheetProps> = ({
                   onSelect(customRange);
                   onClose();
                 }}
-                className="min-h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[14px] font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+                className="min-h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[14px] font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
               >
                 应用日期
               </button>

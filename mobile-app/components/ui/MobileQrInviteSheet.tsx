@@ -10,6 +10,7 @@ interface MobileQrInviteSheetProps {
   value: string;
   downloadName: string;
   onClose: () => void;
+  shape?: 'default' | 'subtle';
 }
 
 const MobileQrInviteSheet: React.FC<MobileQrInviteSheetProps> = ({
@@ -19,6 +20,7 @@ const MobileQrInviteSheet: React.FC<MobileQrInviteSheetProps> = ({
   value,
   downloadName,
   onClose,
+  shape = 'default',
 }) => {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [generationFailed, setGenerationFailed] = useState(false);
@@ -47,7 +49,7 @@ const MobileQrInviteSheet: React.FC<MobileQrInviteSheetProps> = ({
     <MobileBottomSheet open={open} title={title} onClose={onClose}>
       <div className="text-center">
         <h3 className="text-pretty text-[length:var(--tm-font-size-card-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{itemTitle}</h3>
-        <div className="mx-auto mt-4 flex aspect-square w-56 items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-3 [box-shadow:var(--tm-shadow-card-on-white)]">
+        <div className={`mx-auto flex aspect-square w-56 items-center justify-center ${shape === 'subtle' ? 'mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-card-compact)]' : 'mt-4 rounded-[var(--tm-radius-card)]'} bg-[var(--tm-bg-surface)] p-3 [box-shadow:var(--tm-shadow-card-on-white)]`}>
           {qrDataUrl ? (
             <img src={qrDataUrl} alt={`${itemTitle}填写二维码`} className="h-full w-full object-contain" />
           ) : generationFailed ? (
@@ -62,7 +64,7 @@ const MobileQrInviteSheet: React.FC<MobileQrInviteSheetProps> = ({
         <a
           href={qrDataUrl}
           download={`${downloadName}.png`}
-          className="mt-5 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
+          className={`inline-flex min-h-[52px] w-full items-center justify-center gap-2 ${shape === 'subtle' ? 'mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-control-compact)]' : 'mt-5 rounded-[var(--tm-radius-control)]'} bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] transition-transform active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2`}
         >
           <Download className="h-5 w-5" />保存二维码
         </a>

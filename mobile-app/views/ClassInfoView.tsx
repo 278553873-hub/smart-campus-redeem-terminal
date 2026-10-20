@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { MobileCard } from '../components/ui/MobileCard';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import TeacherAvatarImage from '../components/TeacherAvatar';
 import {
   buildClassName,
   EDUCATION_STAGE_OPTIONS,
@@ -60,6 +61,7 @@ interface EditDraft {
 interface ClassTeacherItem {
   id: string;
   name: string;
+  avatar?: string;
   subjects: string[];
   role: ClassInfoRole;
 }
@@ -93,11 +95,11 @@ const createDraft = (classInfo: ClassInfo): EditDraft => ({
   classNumber: String(inferClassNumber(classInfo)),
 });
 
-const fieldClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const fieldClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 const iconButtonClass = 'flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]';
-const secondaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]';
-const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
-const dangerButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
+const secondaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]';
+const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
+const dangerButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-negative)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
 const fixedFooterClass = 'shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]';
 
 const getRoleLabel = (role: ClassInfoRole): string => {
@@ -115,6 +117,7 @@ const buildTeachers = (teacherProfile: TeacherProfile, classRole: ClassInfoRole)
   const currentTeacher: ClassTeacherItem = {
     id: 'current',
     name: teacherProfile.name,
+    avatar: teacherProfile.avatar,
     subjects: currentSubjects,
     role: classRole,
   };
@@ -154,9 +157,7 @@ const sortTeachers = (teachers: ClassTeacherItem[]): ClassTeacherItem[] => [...t
 
 const TeacherAvatar: React.FC<{ teacher: ClassTeacherItem }> = ({ teacher }) => (
   <div className="w-[var(--tm-size-touch)] shrink-0 text-center">
-    <div className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
-      {teacher.name.slice(0, 1)}
-    </div>
+    <TeacherAvatarImage src={teacher.avatar} />
     <div className="mt-[var(--tm-space-1)] truncate text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]">
       {teacher.name}
     </div>
@@ -209,7 +210,9 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   const canManageParents = effectiveRole === 'headTeacher' || effectiveRole === 'deputyHeadTeacher';
   const canTransfer = effectiveRole === 'headTeacher';
   const isPersonalOwner = spaceType === 'personal' && effectiveRole === 'headTeacher';
-  const teachers = useMemo(() => sortTeachers(teacherItems), [teacherItems]);
+  const teachers = useMemo(() => sortTeachers(teacherItems.map(teacher => teacher.id === 'current'
+    ? { ...teacher, name: teacherProfile.name, avatar: teacherProfile.avatar }
+    : teacher)), [teacherItems, teacherProfile.name, teacherProfile.avatar]);
   const unboundParents = useMemo(() => parentItems.filter(item => item.guardians.length === 0), [parentItems]);
   const boundParents = useMemo(() => parentItems.filter(item => item.guardians.length > 0), [parentItems]);
   const boundParentCount = boundParents.length;
@@ -415,7 +418,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
 
   const renderDetail = () => (
     <>
-      <MobileCard variant="card" padding="md" className="relative">
+      <MobileCard shape="subtle" variant="card" padding="md" className="relative">
         {canEdit && (
           <button
             type="button"
@@ -433,7 +436,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
           <button
             type="button"
             onClick={handleCopyClassCode}
-            className="-ml-[var(--tm-space-2)] inline-flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-left active:bg-[var(--tm-bg-surface-soft)]"
+            className="-ml-[var(--tm-space-2)] inline-flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-left active:bg-[var(--tm-bg-surface-soft)]"
             aria-label={`复制班级号${classInfo.classCode}`}
           >
             <span className="shrink-0">班级号：</span>
@@ -446,18 +449,18 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         </div>
       </MobileCard>
 
-      <MobileCard variant="card" padding="md" className="mt-[var(--tm-space-4)]">
+      <MobileCard shape="subtle" variant="card" padding="md" className="mt-[var(--tm-layout-card-gap)]">
         {renderSectionHeader('老师列表', `${teachers.length}人`, () => setPage('teachers'), '查看完整老师列表')}
         <div className="mt-[var(--tm-space-3)] flex justify-between gap-[var(--tm-space-2)] overflow-hidden">
           {teachers.slice(0, 5).map(teacher => <TeacherAvatar key={teacher.id} teacher={teacher} />)}
         </div>
       </MobileCard>
 
-      <MobileCard variant="card" padding="md" className="mt-[var(--tm-space-4)]">
+      <MobileCard shape="subtle" variant="card" padding="md" className="mt-[var(--tm-layout-card-gap)]">
         {renderSectionHeader('家长绑定列表', `${boundParentCount}/${parentItems.length}`, () => setPage('parents'), '查看完整家长绑定列表')}
         <div className="mt-[var(--tm-space-3)] grid grid-cols-2 gap-[var(--tm-space-2)]">
           {parentItems.slice(0, 4).map(({ student, guardians }) => (
-            <div key={student.id} className="flex min-w-0 items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-2)]">
+            <div key={student.id} className="flex min-w-0 items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-2)]">
               <StudentAvatar student={student} />
               <div className="min-w-0">
                 <div className="truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{student.name}</div>
@@ -475,8 +478,8 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
   const renderTeacherList = () => (
     <div className="space-y-[var(--tm-space-3)]">
       {teachers.map(teacher => (
-        <MobileCard key={teacher.id} variant="card" padding="md" className="flex min-h-[76px] items-center gap-[var(--tm-space-3)]">
-          <div className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{teacher.name.slice(0, 1)}</div>
+        <MobileCard shape="subtle" key={teacher.id} variant="card" padding="md" className="flex min-h-[76px] items-center gap-[var(--tm-space-3)]">
+          <TeacherAvatarImage src={teacher.avatar} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{teacher.name}{teacher.id === 'current' ? '（我）' : ''}</div>
             <div className="mt-[var(--tm-space-1)] flex flex-wrap gap-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
@@ -498,7 +501,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
     const visibleItems = parentTab === 'unbound' ? unboundParents : boundParents;
     return (
       <>
-        <div className="mb-[var(--tm-space-4)] grid grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-[var(--tm-space-1)]" role="tablist" aria-label="家长绑定状态">
+        <div className="mb-[var(--tm-space-4)] grid grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-[var(--tm-space-1)]" role="tablist" aria-label="家长绑定状态">
           {([
             { key: 'unbound' as const, label: '未绑定', count: unboundParents.length },
             { key: 'bound' as const, label: '已绑定', count: boundParents.length },
@@ -509,7 +512,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
               role="tab"
               aria-selected={parentTab === item.key}
               onClick={() => setParentTab(item.key)}
-              className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums ${parentTab === item.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+              className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-form-segment-active-radius)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums ${parentTab === item.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
             >
               {item.label}({item.count})
             </button>
@@ -525,7 +528,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         {parentTab === 'unbound' && (
           <div className="space-y-[var(--tm-space-3)]">
             {unboundParents.map(({ student }) => (
-              <MobileCard key={student.id} variant="card" padding="md" className="flex min-h-[76px] items-center gap-[var(--tm-space-3)]">
+              <MobileCard shape="subtle" key={student.id} variant="card" padding="md" className="flex min-h-[76px] items-center gap-[var(--tm-space-3)]">
                 <StudentAvatar student={student} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{student.name}</div>
@@ -544,7 +547,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
                 key={guardian.id}
                 type="button"
                 onClick={() => openGuardianDetail({ studentId: student.id, guardianId: guardian.id })}
-                className="flex min-h-[76px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] py-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card)] active:bg-[var(--tm-bg-surface-soft)]"
+                className="flex min-h-[76px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] py-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card)] active:bg-[var(--tm-bg-surface-soft)]"
                 aria-label={`查看${student.name}的${getGuardianLabel(guardian)}绑定详情`}
               >
                 <StudentAvatar student={student} />
@@ -567,7 +570,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
       return (
         <div className="pb-[var(--tm-space-2)] text-center">
           <div className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>{inviteAudience === 'teacher' ? displayClassName : '绑定学生'}</div>
-          <img src={inviteQrAsset} alt={`${inviteTitle}二维码`} className="mx-auto mt-[var(--tm-space-4)] aspect-square w-40 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] object-contain p-[var(--tm-space-3)]" />
+          <img src={inviteQrAsset} alt={`${inviteTitle}二维码`} className="mx-auto mt-[var(--tm-space-4)] aspect-square w-40 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] object-contain p-[var(--tm-space-3)]" />
           {inviteAudience === 'teacher' ? (
             <div className={`mt-[var(--tm-space-3)] ${phoneText.body} text-[var(--tm-text-secondary)]`}>班级号：<span className="font-semibold tabular-nums text-[var(--tm-text-primary)]">{classInfo.classCode}</span></div>
           ) : (
@@ -580,7 +583,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
     if (inviteStep === 'copy') {
       return (
         <div className="pb-[var(--tm-space-2)]">
-          <div className={`rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] ${phoneText.body} text-[var(--tm-text-secondary)]`}>{inviteText}</div>
+          <div className={`rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] ${phoneText.body} text-[var(--tm-text-secondary)]`}>{inviteText}</div>
           <button type="button" onClick={copyInvite} className={`${primaryButtonClass} mt-[var(--tm-space-4)]`}>
             <Copy className="h-[18px] w-[18px]" />复制邀请文案
           </button>
@@ -653,7 +656,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
 
       {toast && (
         <div className="pointer-events-none absolute inset-x-[var(--tm-space-5)] top-[var(--tm-space-3)] z-[80] flex justify-center" role="status" aria-live="polite">
-          <div className={`rounded-[var(--tm-radius-control)] px-[var(--tm-space-4)] py-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)] ${toast.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}>
+          <div className={`rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-4)] py-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)] ${toast.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}>
             {toast.message}
           </div>
         </div>
@@ -673,14 +676,14 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         <div className="space-y-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
           <fieldset>
             <legend className={`${phoneText.label} text-[var(--tm-text-tertiary)]`}>学段</legend>
-            <div className="mt-[var(--tm-space-2)] grid min-h-[var(--tm-size-touch)] grid-cols-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-1)]">
+            <div className="mt-[var(--tm-space-2)] grid min-h-[var(--tm-size-touch)] grid-cols-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-1)]">
               {EDUCATION_STAGE_OPTIONS.map(option => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => updateEducationStage(option.value)}
                   aria-pressed={draft.educationStage === option.value}
-                  className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-body)] font-semibold transition ${draft.educationStage === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                  className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-form-segment-active-radius)] text-[length:var(--tm-font-size-body)] font-semibold transition ${draft.educationStage === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                 >
                   {option.label}
                 </button>
@@ -697,7 +700,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
 
           <label className="block">
             <span className={`${phoneText.label} text-[var(--tm-text-tertiary)]`}>班号</span>
-            <div className="mt-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] focus-within:border-[var(--tm-input-focus-border)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
+            <div className="mt-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] items-center rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] focus-within:border-[var(--tm-input-focus-border)] focus-within:ring-2 focus-within:ring-[var(--tm-input-focus-ring)]">
               <span className="shrink-0 text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">{draft.admissionYear}级</span>
               <input
                 value={draft.classNumber}
@@ -716,7 +719,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
       <MobileBottomSheet open={Boolean(activeTeacher)} title="老师更多操作" onClose={() => setActiveTeacher(null)}>
         {activeTeacher && (
           <div className="space-y-[var(--tm-space-3)] pb-[var(--tm-space-2)]">
-            <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)]">
+            <div className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)]">
               <div className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>{activeTeacher.name}</div>
               <div className={`mt-[var(--tm-space-1)] ${phoneText.meta} text-[var(--tm-text-secondary)]`}>{getRoleLabel(activeTeacher.role)} · {activeTeacher.subjects.join('、')}</div>
             </div>
@@ -753,9 +756,9 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
               key={teacher.id}
               type="button"
               onClick={() => { setShowTransferSheet(false); setTransferTarget(teacher); }}
-              className="flex min-h-[68px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left active:bg-[var(--tm-bg-surface-muted)]"
+              className="flex min-h-[68px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left active:bg-[var(--tm-bg-surface-muted)]"
             >
-              <div className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{teacher.name.slice(0, 1)}</div>
+              <TeacherAvatarImage src={teacher.avatar} />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{teacher.name}</div>
                 <div className={`mt-[var(--tm-space-1)] ${phoneText.meta} truncate text-[var(--tm-text-secondary)]`}>{teacher.subjects.join('、')}</div>
@@ -809,7 +812,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
               </div>
             ) : (
               <>
-                <dl className="mt-[var(--tm-space-4)] divide-y divide-[var(--tm-border-subtle)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)]">
+                <dl className="mt-[var(--tm-space-4)] divide-y divide-[var(--tm-border-subtle)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)]">
                   <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]"><dt className={`${phoneText.meta} text-[var(--tm-text-tertiary)]`}>关系</dt><dd className={`${phoneText.body} text-[var(--tm-text-primary)]`}>{getGuardianLabel(guardianDraft)}</dd></div>
                   <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]"><dt className={`${phoneText.meta} text-[var(--tm-text-tertiary)]`}>手机号</dt><dd className={`${phoneText.body} tabular-nums text-[var(--tm-text-primary)]`}>{guardianDraft.phone}</dd></div>
                 </dl>
@@ -855,7 +858,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         {isPersonalOwner ? (
           dangerStep === 'check' ? (
             <div className="space-y-[var(--tm-space-3)] pb-[var(--tm-space-2)]">
-              <div className={`rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] ${phoneText.body} text-[var(--tm-text-secondary)]`}>请确认班级中没有其他老师，且没有家长绑定学生。</div>
+              <div className={`rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] ${phoneText.body} text-[var(--tm-text-secondary)]`}>请确认班级中没有其他老师，且没有家长绑定学生。</div>
               <div className={`${phoneText.body} text-[var(--tm-status-negative-strong)]`}>解散后将清空班级与学生信息，且无法恢复。</div>
             </div>
           ) : (

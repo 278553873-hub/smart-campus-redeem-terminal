@@ -4,10 +4,12 @@ import { ChevronLeft } from 'lucide-react';
 interface MobilePageHeaderProps {
   title: string;
   onBack: () => void;
+  tone?: 'plain' | 'transparent';
+  action?: React.ReactNode;
 }
 
-const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({ title, onBack }) => (
-  <header className="relative z-40 flex h-11 shrink-0 items-center bg-[var(--tm-page-plain-header-bg)] pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
+const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({ title, onBack, tone = 'plain', action }) => (
+  <header className={`relative z-40 flex h-11 shrink-0 items-center ${tone === 'plain' ? 'bg-[var(--tm-page-plain-header-bg)]' : 'bg-transparent'} pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]`}>
     <button
       type="button"
       onClick={onBack}
@@ -19,6 +21,7 @@ const MobilePageHeader: React.FC<MobilePageHeaderProps> = ({ title, onBack }) =>
     <h1 className="pointer-events-none absolute inset-x-16 truncate text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">
       {title}
     </h1>
+    {action && <div className="relative ml-auto shrink-0">{action}</div>}
   </header>
 );
 

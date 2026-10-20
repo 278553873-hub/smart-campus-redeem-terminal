@@ -1,3 +1,4 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useState, useRef } from 'react';
 import {
   PiggyBank,
@@ -17,6 +18,7 @@ interface BankViewProps {
 }
 
 const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdrawDeposit }) => {
+  const coinTerms = useGrowthCoinTerms();
   const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
   // 按照要求：进入校园存单中心，默认选中“签署新存单”
   const [activeTab, setActiveTab] = useState<'deposit' | 'list'>('deposit');
@@ -315,12 +317,12 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
                             <div className="flex justify-between items-end">
                               <div>
                                 <p className="text-[11px] text-gray-400 font-black mb-1">存入本金</p>
-                                <p className="text-3xl font-black text-gray-800 tracking-tighter"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {dep.amount}</p>
+                                <p className="text-3xl font-black text-gray-800 tracking-tighter"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {dep.amount}</p>
                               </div>
                               <div className="flex flex-col gap-1 items-end bg-slate-50/50 px-4 py-2 rounded-xl border border-slate-50">
                                 <p className="text-[10px] text-gray-400 font-black">已得利息</p>
                                 <p className={`text-xl font-[NumberFont] font-black flex items-center gap-1 ${dep.type === 'current' ? 'text-green-600' : 'text-indigo-600'}`}>
-                                  <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
+                                  <GrowthCoinIcon className="w-[0.9em] h-[0.9em] -translate-y-[1px]" alt="coin" />
                                   +{details.interest}
                                 </p>
                               </div>
@@ -403,7 +405,7 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
             </div>
 
             <h2 className="text-4xl font-black text-slate-900 mb-2">确认签署这份存单？</h2>
-            <p className="text-slate-500 font-bold mb-6">请检查你的签署信息，确认后将扣除相应成长币。</p>
+            <p className="text-slate-500 font-bold mb-6">请检查你的签署信息，确认后将扣除相应{coinTerms.name}。</p>
 
             <div className="bg-slate-50 rounded-[2.5rem] p-8 mb-8 space-y-4 border border-slate-100 shadow-inner">
               <div className="flex justify-between items-center">
@@ -413,12 +415,12 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 font-black">投入本金</span>
-                <span className="text-xl font-black text-slate-800 tracking-tight"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {depositAmount}</span>
+                <span className="text-xl font-black text-slate-800 tracking-tight"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {depositAmount}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 font-black">预期利息</span>
                 <span className={`text-xl font-black ${selectedScheme.type === 'current' ? 'text-green-600' : 'text-indigo-600'}`}>
-                  <img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{calculateProjectedInterest(depositAmount, selectedScheme)}
+                  <GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{calculateProjectedInterest(depositAmount, selectedScheme)}
                 </span>
               </div>
               {selectedScheme.type === 'fixed' && (
@@ -481,19 +483,19 @@ const BankView: React.FC<BankViewProps> = ({ student, bank, onDeposit, onWithdra
               <div className="bg-slate-50 rounded-[2.5rem] p-8 mb-8 space-y-4">
                 <div className="flex justify-between text-slate-500 font-bold">
                   <span>拿回本金</span>
-                  <span className="text-slate-900 font-black"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {withdrawConfirmTarget.amount}</span>
+                  <span className="text-slate-900 font-black"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {withdrawConfirmTarget.amount}</span>
                 </div>
                 <div className="flex justify-between text-slate-500 font-bold">
                   <span>结算利息</span>
                   <span className={`font-black ${details.isPenalty ? 'text-yellow-600' : 'text-green-600'}`}>
-                    <img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{details.interest}
+                    <GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{details.interest}
                   </span>
                 </div>
                 <div className="h-px bg-slate-200 border-dashed border-t my-2"></div>
                 <div className="flex justify-between items-center">
                   <span className="text-xl font-black text-slate-900">到账总额</span>
                   <span className="text-4xl font-black text-indigo-600 tracking-tighter">
-                    <img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {formatCoin(withdrawConfirmTarget.amount + details.interest)}
+                    <GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {formatCoin(withdrawConfirmTarget.amount + details.interest)}
                   </span>
                 </div>
               </div>

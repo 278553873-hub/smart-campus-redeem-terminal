@@ -110,9 +110,9 @@ export const isCoinLedgerClearAllScope = (entry: CampusCoinLedgerEntry) => (
   entry.type === 'clear' && entry.shares.some(share => (share.bankAmount ?? 0) > 0)
 );
 
-export const getCoinLedgerEntryTitle = (entry: CampusCoinLedgerEntry) => {
+export const getCoinLedgerEntryTitle = (entry: CampusCoinLedgerEntry, coinName: string = GROWTH_COIN_TERMS.name) => {
   if (entry.type === 'redeem') return entry.productName ?? '兑换奖励';
-  return isCoinLedgerClearAllScope(entry) ? `清空全部${GROWTH_COIN_TERMS.name}` : `清空${GROWTH_COIN_TERMS.name}`;
+  return isCoinLedgerClearAllScope(entry) ? `清空全部${coinName}` : `清空${coinName}`;
 };
 
 let entrySequence = 0;

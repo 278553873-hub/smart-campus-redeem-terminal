@@ -91,7 +91,7 @@ const StudentCollectionHistoryTab: React.FC<StudentCollectionHistoryTabProps> = 
     <div className="pb-24 animate-in fade-in duration-200">
       <StudentTermSelector value={selectedTerm} options={termOptions} onChange={onSelectedTermChange} ariaLabel="选择采集记录学期" />
 
-      <div className="mt-3 space-y-3">
+      <div className="mt-3 space-y-[var(--tm-layout-card-gap)]">
         {groups.map(group => {
           const isExpanded = expandedGroupKeys.has(group.key);
           return (
@@ -100,7 +100,7 @@ const StudentCollectionHistoryTab: React.FC<StudentCollectionHistoryTabProps> = 
                 type="button"
                 onClick={() => toggleGroup(group.key)}
                 aria-expanded={isExpanded}
-                className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between rounded-[var(--tm-radius-control)] px-1 text-left"
+                className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-between rounded-[var(--tm-radius-control-compact)] px-1 text-left"
               >
                 <span className="text-[13px] font-semibold text-[var(--tm-text-primary)]">{group.label}</span>
                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-[var(--tm-text-tertiary)]">
@@ -110,7 +110,7 @@ const StudentCollectionHistoryTab: React.FC<StudentCollectionHistoryTabProps> = 
               </button>
 
               {isExpanded && (
-                <div className="space-y-2.5 pt-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="space-y-[var(--tm-layout-card-gap)] pt-1 animate-in fade-in slide-in-from-top-1 duration-150">
                   {group.items.map(item => {
                     const meta = modeMeta[item.collectionMode];
                     const ModeIcon = meta.icon;
@@ -119,7 +119,7 @@ const StudentCollectionHistoryTab: React.FC<StudentCollectionHistoryTabProps> = 
                         key={item.id}
                         type="button"
                         onClick={() => onOpen(item)}
-                        className="relative min-h-[88px] w-full overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
+                        className="relative min-h-[88px] w-full overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"
                       >
                         <span className={`pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-r-full ${meta.accentClass}`} aria-hidden="true" />
                         <span className="line-clamp-2 block text-pretty text-[15px] font-semibold leading-[21px] text-[var(--tm-text-primary)]">{item.title}</span>

@@ -45,10 +45,11 @@ requireText(primitivesSource, "export const pageBackground = 'bg-transparent'", 
 requireText(primitivesSource, 'justify-between bg-[var(--tm-bg-surface-glass)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md', '档案设计标题栏应使用表面玻璃令牌并避让微信胶囊安全区。');
 forbidText(primitivesSource, 'border-b border-white/70', '档案设计顶部标题栏不应保留分割线，应依靠毛玻璃与内容自然分层。');
 forbidText(primitivesSource, 'slate-', '档案设计基础组件不应残留旧灰色系。');
-requireText(primitivesSource, "export const sectionSurface = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]'", '档案普通卡片必须使用无线条表面分层。');
+requireText(primitivesSource, "const sectionSurfaceBase = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]'", '档案普通卡片必须使用无线条表面分层。');
+requireText(primitivesSource, 'export const sectionSurface = `rounded-[var(--tm-radius-card)] ${sectionSurfaceBase}`', '尚未迁移的档案卡片必须保留默认圆角。');
 requireText(primitivesSource, 'border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]', '档案次按钮必须使用浅边界令牌。');
 requireText(primitivesSource, '[box-shadow:var(--tm-shadow-control)]', '档案次按钮必须使用控件阴影令牌。');
-requireText(primitivesSource, "export const readonlyFieldClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '档案只读字段必须使用只读输入令牌。');
+requireText(primitivesSource, "const readonlyFieldBase = 'w-full border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '档案只读字段必须使用只读输入令牌。');
 requireText(primitivesSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '档案输入框应统一消费中性聚焦令牌。');
 requireText(formBuilderSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '共享表单输入框应统一消费中性聚焦令牌。');
 forbidText(archiveAppearanceSource, "'--tm-input-focus-border'", '档案主题不得覆盖全局输入聚焦边界。');
@@ -87,7 +88,7 @@ requireText(viewSource, 'line-clamp-2 min-h-12 text-[length:var(--tm-font-size-c
 requireText(viewSource, '{formatTemplateGradeScope(template.gradeScopes)}', '档案列表卡片必须展示适用年级内容。');
 forbidText(viewSource, '适用年级：{formatTemplateGradeScope(template.gradeScopes)}', '档案列表卡片不应重复展示适用年级标签。');
 requireText(viewSource, '<StatusPill className={meta.className}>{meta.label}</StatusPill>', '档案列表卡片必须展示状态标签。');
-requireText(viewSource, 'className="grid grid-cols-2 gap-3"', '档案设计列表必须使用一行两张的紧凑卡片布局。');
+requireText(viewSource, 'className="grid grid-cols-2 gap-[var(--tm-layout-card-gap)]"', '档案设计列表必须使用一行两张的紧凑卡片布局。');
 forbidText(viewSource, 'className={`${sectionSurface} flex min-h-[76px]', '档案列表不应继续使用图标式横向摘要卡片。');
 requireText(viewSource, 'title="暂无档案"', '档案设计空状态必须保持简洁。');
 requireText(viewSource, 'ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD', '档案设计无内容时必须使用担忧清单缺省图。');
@@ -103,8 +104,8 @@ requireText(viewSource, '<MobileBottomSheet open={showCreateSheet} title="新建
 requireText(viewSource, 'snap-x snap-mandatory overflow-x-auto', '推荐模板必须支持横向滑动。');
 requireText(viewSource, '>从模版新建</h3>', '推荐模板区标题必须使用已确认文案。');
 requireText(viewSource, '-mx-[var(--tm-space-4)] mt-5 bg-[var(--tm-bg-surface)]', '推荐模板区域必须使用白色表面背景。');
-requireText(viewSource, 'min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)]', '完全新建必须使用横向白色实心卡片。');
-requireText(viewSource, 'w-[220px] snap-start overflow-hidden rounded-[var(--tm-radius-card)]', '模板卡片必须保持稳定的横向卡片尺寸。');
+requireText(viewSource, 'min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)]', '完全新建必须使用横向白色实心卡片。');
+requireText(viewSource, 'w-[220px] snap-start overflow-hidden rounded-[var(--tm-radius-card-compact)]', '模板卡片必须保持稳定的横向卡片尺寸。');
 requireText(viewSource, '[box-shadow:var(--tm-shadow-card-on-white)]', '纯白承载面上的卡片必须使用中性双层环境阴影。');
 requireText(viewSource, 'const thumbnail = getArchiveHeaderImage(template.appearance)', '模板卡片必须读取模板自身的系统头图。');
 requireText(viewSource, '<img src={thumbnail} alt="" className="aspect-[16/7] w-full object-cover" />', '模板卡片必须使用全宽16:7头图缩略图。');
@@ -132,7 +133,7 @@ requireText(formBuilderSource, 'const copyField =', '字段更多菜单必须支
 requireText(formBuilderSource, "setDeleteTarget({ type: 'field', id: activeField.id", '字段更多菜单删除后必须进入二次确认。');
 requireText(formBuilderSource, 'fieldNumber={index + 1}', '字段序号必须单独显示在最左侧。');
 requireText(formBuilderSource, 'renderFieldPreview(field, choice, rating, usesSubFields)', '字段列表态必须展示真实填写控件预览。');
-requireText(formBuilderSource, "const readonlyPreviewSurfaceClass = 'rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '共享表单的文字预览必须使用只读输入令牌。');
+requireText(formBuilderSource, "const readonlyPreviewBaseClass = 'border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)]", '共享表单的文字预览必须使用只读输入令牌。');
 forbidText(formBuilderSource, 'min-h-[72px] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)]', '文字字段预览不得使用较深的交互控件边框。');
 requireText(formBuilderSource, 'const toggleFieldEditor =', '点击字段内容区必须统一控制进入和退出编辑态。');
 requireText(formBuilderSource, "document.addEventListener('click', closeFieldEditor)", '点击当前字段之外的区域必须退出编辑态。');
@@ -374,7 +375,7 @@ requireText(viewSource, '>档案名称</span>', '编辑已有档案时必须保�
 requireText(mobileDocumentTitleInputSource, 'text-[length:var(--tm-font-size-document-title)]', '新建档案名称必须与新建采集使用同一文档标题层级。');
 forbidText(viewSource, '>模板名称</span>', '档案编辑字段不得继续使用“模板名称”。');
 requireText(viewSource, 'placeholder="请输入档案名称"', '档案名称为空时必须显示填写提示。');
-requireText(viewSource, '${phoneRadius.sm} px-3', '档案适用年级必须使用8像素小圆角令牌。');
+requireText(viewSource, 'rounded-[var(--tm-radius-control-compact)] px-3', '档案适用年级必须使用8像素小圆角令牌。');
 forbidText(viewSource, 'min-h-[var(--tm-size-touch)] rounded-full px-3', '档案适用年级不应继续使用胶囊圆角。');
 requireText(viewSource, '请至少新增一个档案分组', '空白档案启用前必须校验档案分组。');
 requireText(viewSource, '请至少添加一项档案内容', '空白档案启用前必须校验档案内容。');
@@ -425,7 +426,7 @@ requireText(viewSource, "? '请输入整数'", '整数成长字段必须展示�
 requireText(viewSource, "`请输入数字，保留${definition.decimalPlaces === 2 ? '两' : '一'}位小数`", '小数成长字段必须按目录精度生成提示。');
 requireText(formBuilderSource, 'previewMeta?.suffix', '数字成长字段必须展示目录中的单位。');
 requireText(formBuilderSource, 'readOnly={fixedContent}', '成长字段名称必须完整展示且不可修改。');
-requireText(formBuilderSource, "'cursor-default rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3 text-[var(--tm-input-readonly-text)]'", '成长字段展开后的固定文本必须使用灰色只读状态。');
+requireText(formBuilderSource, '`cursor-default ${shapeClasses.control} border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3 text-[var(--tm-input-readonly-text)]`', '成长字段展开后的固定文本必须使用灰色只读状态。');
 requireText(formBuilderSource, 'fixedContent && (choice ? (', '内容固定的选择字段展开后必须展示选项。');
 requireText(formBuilderSource, 'renderFieldPreview(field, choice, rating, usesSubFields)', '成长字段展开后必须保留对应题型的完整只读内容。');
 requireText(growthCatalogSource, "key: 'height_cm', label: '身高', groupKey: 'body_growth', valueType: 'number', unit: '厘米', minValue: 50, maxValue: 250, decimalPlaces: 2", '身高必须使用两位小数精度和厘米单位。');
@@ -517,8 +518,8 @@ const basicSettingsSource = viewSource.slice(basicSettingsStart, deleteConfirmSt
 forbidText(basicSettingsSource, '删除档案', '基础设置中不得继续展示删除档案。');
 forbidText(basicSettingsSource, '<Trash2', '基础设置中不得继续展示删除图标。');
 forbidText(viewSource, 'renderDeleteArchiveAction', '删除操作不应继续出现在档案正文中。');
-requireText(viewSource, '<section className={`${sectionSurface} mt-3 p-4`}>', '档案详情的适用年级必须使用独立卡片。');
-requireText(viewSource, '<section className={`${sectionSurface} p-4 ${isCreating ? \'mt-4\' : \'mt-3\'}`}>', '档案编辑态的适用年级必须使用独立卡片。');
+requireText(viewSource, '<section className={`${sectionSurface} mt-[var(--tm-layout-card-gap)] p-4`}>', '档案详情的适用年级必须使用独立卡片。');
+requireText(viewSource, '<section className={`${sectionSurface} p-4 mt-[var(--tm-layout-card-gap)]`}>', '档案编辑态的适用年级必须使用独立卡片。');
 forbidText(viewSource, 'setShowTemplateMenu', '删除档案不得继续占用名称或适用年级卡片的更多入口。');
 requireText(viewSource, "templateEditorMode === 'create' || templateEditorMode === 'edit'", '已禁用档案必须提供独立的查看态和完整编辑态。');
 requireText(viewSource, 'saveDisabledTemplate();', '已禁用档案点击完成后必须保存修改且保持禁用。');

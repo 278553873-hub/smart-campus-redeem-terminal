@@ -1,7 +1,7 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ShoppingBag, Gift, CheckCircle2 } from 'lucide-react';
 import { Student, Product } from '../types';
-import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 import {
   ALL_CATEGORY_ID,
   getShopCategoryName,
@@ -57,6 +57,7 @@ const ShopView: React.FC<ShopViewProps> = ({
   onPendingPurchaseHandled,
   onRequireLogin,
 }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const [confirmingProduct, setConfirmingProduct] = useState<Product | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeCategoryId, setActiveCategoryId] = useState<string>(ALL_CATEGORY_ID);
@@ -254,7 +255,7 @@ const ShopView: React.FC<ShopViewProps> = ({
                         : 'bg-slate-200 text-slate-400'
                         }`}
                     >
-                      <img src="/assets/coin.png" alt="" className="h-[0.95em] w-[0.95em] object-contain" />
+                      <GrowthCoinIcon alt="" className="h-[0.95em] w-[0.95em] object-contain" />
                       {product.price}
                     </div>
                   </div>
@@ -282,16 +283,16 @@ const ShopView: React.FC<ShopViewProps> = ({
             <div className="w-full space-y-4 mb-10">
               <div className="flex justify-between items-center bg-slate-50 p-5 rounded-2xl border border-slate-100">
                 <span className="text-slate-500 font-bold">当前{GROWTH_COIN_TERMS.available}</span>
-                <span className="text-xl font-black text-slate-800"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins}</span>
+                <span className="text-xl font-black text-slate-800"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins}</span>
               </div>
               <div className={`flex justify-between items-center p-5 rounded-2xl border ${confirmingProduct.type === 'special' ? 'bg-indigo-50 border-indigo-100 text-indigo-700' : 'bg-pink-50 border-pink-100 text-pink-700'
                 }`}>
                 <span className="font-bold">本次消耗</span>
-                <span className="text-2xl font-black"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {confirmingProduct.price}</span>
+                <span className="text-2xl font-black"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {confirmingProduct.price}</span>
               </div>
               <div className="flex justify-between items-center bg-green-50 p-5 rounded-2xl border border-green-100">
                 <span className="text-green-600 font-bold">兑换后剩余</span>
-                <span className="text-2xl font-black text-green-700"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins - confirmingProduct.price}</span>
+                <span className="text-2xl font-black text-green-700"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {student.campusCoins - confirmingProduct.price}</span>
               </div>
             </div>
 

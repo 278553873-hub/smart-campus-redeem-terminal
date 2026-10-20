@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Info,
-  X,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import { PasswordRevealButton } from '../components/ui/PasswordRevealButton';
@@ -20,8 +19,8 @@ const phoneNumberPattern = /^1\d{10}$/;
 const wechatLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] items-center justify-center rounded-full bg-[var(--tm-platform-wechat)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-platform-wechat-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
 const recentLoginButtonClass = 'mx-auto flex h-14 w-full max-w-[300px] flex-col items-center justify-center rounded-full bg-[var(--tm-brand-primary)] px-4 py-2 font-medium text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
 const phoneLoginLinkClass = 'flex min-h-11 items-center justify-center px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)] transition-colors active:text-[var(--tm-brand-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]';
-const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
-const fieldClass = 'h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]';
+const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
+const fieldClass = 'h-[52px] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]';
 
 const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
   // Demo convenience only; production login must require explicit user consent.
@@ -33,6 +32,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [hasRequestedCode, setHasRequestedCode] = useState(false);
   const [formMessage, setFormMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -98,6 +98,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
       return;
     }
     setFormMessage('验证码已发送');
+    setHasRequestedCode(true);
     setCountdown(60);
   };
 
@@ -180,7 +181,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
             <p className="mt-[var(--tm-space-2)] text-base leading-6 text-[var(--tm-text-tertiary)]">用户正常进行授权登录</p>
           </div>
 
-          <div className="mt-[var(--tm-space-6)] overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)]">
+          <div className="mt-[var(--tm-space-6)] overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)]">
             {['152****1332', '199****8610'].map((maskedPhone, index) => (
               <button
                 key={maskedPhone}
@@ -198,7 +199,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
           <button
             type="button"
             onClick={closeActiveSheet}
-            className="mt-[var(--tm-space-4)] flex min-h-16 w-full items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] text-[17px] font-medium text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
+            className="mt-[var(--tm-layout-card-gap)] flex min-h-16 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[17px] font-medium text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
           >
             不允许
           </button>
@@ -219,34 +220,27 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
         open={activeSheet === 'phone'}
         title="手机号登录/注册"
         onClose={closeActiveSheet}
-        header={(
-          <header className="shrink-0 px-4">
-            <div className="mx-auto flex h-14 w-full max-w-[300px] items-center justify-between">
-              <div className="flex h-full items-center gap-[var(--tm-space-5)]" role="tablist" aria-label="手机号登录方式">
-                {([
-                  ['sms', '验证码登录'],
-                  ['password', '密码登录'],
-                ] as const).map(([mode, label]) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    role="tab"
-                    aria-selected={phoneLoginMode === mode}
-                    onClick={() => {
-                      setPhoneLoginMode(mode);
-                      setFormMessage('');
-                    }}
-                    className={`relative h-14 text-[length:var(--tm-font-size-section-title)] font-semibold transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:transition-colors ${phoneLoginMode === mode ? 'text-[var(--tm-text-primary)] after:bg-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-tertiary)] after:bg-transparent'}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <button type="button" onClick={closeActiveSheet} className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="关闭手机号登录">
-                <X className="h-5 w-5" />
+        titleContent={(
+          <div className="flex h-full items-center gap-[var(--tm-space-5)]" role="tablist" aria-label="手机号登录方式">
+            {([
+              ['sms', '验证码登录'],
+              ['password', '密码登录'],
+            ] as const).map(([mode, label]) => (
+              <button
+                key={mode}
+                type="button"
+                role="tab"
+                aria-selected={phoneLoginMode === mode}
+                onClick={() => {
+                  setPhoneLoginMode(mode);
+                  setFormMessage('');
+                }}
+                className={`relative h-14 text-[length:var(--tm-font-size-section-title)] font-semibold transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:transition-colors ${phoneLoginMode === mode ? 'text-[var(--tm-text-primary)] after:bg-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-tertiary)] after:bg-transparent'}`}
+              >
+                {label}
               </button>
-            </div>
-          </header>
+            ))}
+          </div>
         )}
       >
         <div className="mx-auto w-full max-w-[300px] pb-[var(--tm-space-4)] pt-[var(--tm-space-5)]">
@@ -270,7 +264,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
             {phoneLoginMode === 'sms' ? (
               <div>
                 <label htmlFor="teacher-login-code" className="sr-only">验证码</label>
-                <span className="flex gap-2">
+                <span className="relative block">
                   <input
                     id="teacher-login-code"
                     value={verificationCode}
@@ -281,15 +275,15 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     placeholder="请输入验证码"
-                    className={`${fieldClass} min-w-0 flex-1`}
+                    className={`${fieldClass} pr-[124px]`}
                   />
                   <button
                     type="button"
                     onClick={requestVerificationCode}
                     disabled={countdown > 0}
-                    className="min-h-[52px] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)] transition-colors active:bg-[var(--tm-brand-primary-soft)] disabled:text-[var(--tm-text-disabled)]"
+                    className="absolute right-1 top-1 flex min-h-[var(--tm-size-touch)] w-28 items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-transparent px-2 text-[length:var(--tm-font-size-body)] font-medium tabular-nums text-[var(--tm-brand-primary)] transition-colors before:absolute before:left-0 before:top-1/2 before:h-4 before:w-px before:-translate-y-1/2 before:bg-[var(--tm-border-subtle)] enabled:active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] disabled:text-[var(--tm-text-disabled)]"
                   >
-                    {countdown > 0 ? `${countdown}s` : '获取验证码'}
+                    {countdown > 0 ? `${countdown}秒后重发` : hasRequestedCode ? '重新获取' : '获取验证码'}
                   </button>
                 </span>
               </div>
@@ -312,7 +306,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
                   <PasswordRevealButton
                     visible={showPassword}
                     onToggle={() => setShowPassword(value => !value)}
-                    className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                    className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
                     size={20}
                   />
                 </span>

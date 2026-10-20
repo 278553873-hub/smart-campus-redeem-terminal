@@ -14,7 +14,7 @@ const EvaluationIndicatorCascadePicker: React.FC<EvaluationIndicatorCascadePicke
   onChange,
 }) => (
   <div
-    className="grid h-[264px] min-h-0 grid-cols-3 overflow-hidden rounded-[var(--tm-radius-control)] border border-[var(--tm-evaluation-indicator-editor-border)] bg-[var(--tm-bg-surface)]"
+    className="grid h-[264px] min-h-0 grid-cols-3 overflow-hidden rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-evaluation-indicator-editor-border)] bg-[var(--tm-bg-surface)]"
     aria-label="三级指标横向级联选择"
   >
     {columnLabels.map((label, depth) => (
@@ -39,7 +39,7 @@ const EvaluationIndicatorCascadePicker: React.FC<EvaluationIndicatorCascadePicke
                 role="option"
                 aria-selected={selected}
                 onClick={() => onChange(depth, option)}
-                className={`flex min-h-11 w-full items-center justify-center rounded-[var(--tm-radius-inner)] px-1.5 py-1 text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-evaluation-indicator-editor-focus-ring)] ${selected
+                className={`flex min-h-11 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] px-1.5 py-1 text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-evaluation-indicator-editor-focus-ring)] ${selected
                   ? 'bg-[var(--tm-evaluation-indicator-editor-selected-bg)] text-[var(--tm-evaluation-indicator-editor-selected-text)]'
                   : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-evaluation-indicator-editor-active-bg)]'
                 }`}

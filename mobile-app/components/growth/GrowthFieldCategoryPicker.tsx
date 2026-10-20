@@ -8,6 +8,7 @@ import {
 
 interface GrowthFieldCategoryPickerProps {
   fields: GrowthFieldDefinition[];
+  shape?: 'default' | 'subtle';
   isSelected: (field: GrowthFieldDefinition) => boolean;
   onToggle: (field: GrowthFieldDefinition) => void;
   isDisabled?: (field: GrowthFieldDefinition) => boolean;
@@ -18,6 +19,7 @@ interface GrowthFieldCategoryPickerProps {
 
 const GrowthFieldCategoryPicker: React.FC<GrowthFieldCategoryPickerProps> = ({
   fields,
+  shape = 'default',
   isSelected,
   onToggle,
   isDisabled = () => false,
@@ -74,7 +76,7 @@ const GrowthFieldCategoryPicker: React.FC<GrowthFieldCategoryPickerProps> = ({
         id={`${pickerId}-${activeGroup.key}-panel`}
         role="tabpanel"
         aria-labelledby={`${pickerId}-${activeGroup.key}-tab`}
-        className="mt-3 max-h-[46vh] overflow-y-auto rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] no-scrollbar"
+        className={`mt-[var(--tm-layout-card-gap)] max-h-[46vh] overflow-y-auto ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] no-scrollbar`}
       >
         {activeGroup.fields.map(field => {
           const selected = isSelected(field);

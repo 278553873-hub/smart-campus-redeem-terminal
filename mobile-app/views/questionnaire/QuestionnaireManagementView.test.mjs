@@ -244,7 +244,7 @@ forbidText(createStepThreeSource, 'aria-labelledby="respondent-role-title"', '�
 requireText(createStepThreeSource, "{isTeacherRespondent ? '老师填写' : '家长填写'}", '确认发布页必须展示第一步已经选择的填写人。');
 forbidText(formBuilderSource, 'min-h-[60px] items-center justify-between gap-4 px-4', '分组开关不应继续使用独立卡片。');
 requireText(formBuilderSource, 'setActiveSectionMenuId(section.id)', '分组低频操作必须通过更多菜单渐进披露。');
-requireText(formBuilderSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-3', '分组标题必须使用浅中性底标题行建立结构层级。');
+requireText(formBuilderSource, '${shapeClasses.control} bg-[var(--tm-bg-surface-muted)] px-3', '分组标题必须使用浅中性底标题行建立结构层级。');
 requireText(formBuilderSource, 'text-[length:var(--tm-font-size-group-title)] font-bold', '分组标题必须使用18像素独立层级和加粗字重。');
 const groupedFieldSection = formBuilderSource.slice(formBuilderSource.indexOf("<section className=\"mt-2\">", formBuilderSource.indexOf(") : (")), formBuilderSource.indexOf('</section>', formBuilderSource.indexOf("<section className=\"mt-2\">", formBuilderSource.indexOf(") : ("))));
 if (groupedFieldSection.indexOf('{renderGroupedFieldList()}') > groupedFieldSection.lastIndexOf('添加分组')) {
@@ -401,7 +401,7 @@ requireText(viewSource, 'questionGroup.label && <h2 className="mb-2 px-1 text-[l
 forbidText(viewSource, 'bg-[var(--tm-bg-surface-soft)] px-4 py-3 text-[length:var(--tm-font-size-group-title)]', '学生采集分组标签不得继续使用题目卡内的高层级底色标题行。');
 requireText(viewSource, 'text-[length:var(--tm-font-size-question-title)] font-bold', '学生采集字段名称必须使用16像素题目层级。');
 requireText(viewSource, 'min-h-[52px] w-full items-center gap-2.5', '学生采集选项必须统一为至少52像素并显示选择控件。');
-requireText(detailSource, 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]', '问卷详情基本信息卡必须复用教师端公共卡片令牌。');
+requireText(detailSource, 'rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]', '问卷详情基本信息卡必须复用教师端公共卡片令牌。');
 requireText(teacherTokenSource, "'--tm-shadow-card'", '教师端唯一令牌源必须提供公共卡片阴影。');
 forbidText(detailSource, 'openListPreview(activeRecord)', '统一采集详情不应提供原始问卷预览入口。');
 requireText(listActionsSource, 'onClick={previewListRecord}', '列表操作弹窗必须保留原始问卷预览入口。');
@@ -539,7 +539,7 @@ if (scrollRegionCount < 3) {
   throw new Error('问卷列表、创建和详情内容区必须允许收缩并独立纵向滚动。');
 }
 
-requireText(viewSource, 'min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain', '单份答卷详情必须保留独立纵向滚动区域。');
+requireText(viewSource, 'min-h-0 flex-1 touch-pan-y space-y-[var(--tm-layout-card-gap)] overflow-y-auto overscroll-contain', '单份答卷详情必须保留独立纵向滚动区域。');
 
 requireText(viewSource, 'sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]', '问卷顶部必须使用教师端纯色标题栏 Token、44像素高度并避让微信胶囊安全区。');
 requireText(assignedSource, 'preview ? (\n        <header className="sticky top-0 z-[45] flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)]', '家长填写问卷的教师端预览必须切换为教师端标准标题栏。');

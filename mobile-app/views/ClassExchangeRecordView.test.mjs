@@ -16,7 +16,7 @@ const headerStart = viewSource.indexOf('<header');
 const headerTag = headerStart >= 0 ? viewSource.slice(headerStart, viewSource.indexOf('>', headerStart) + 1) : '';
 assert.ok(headerTag.length > 0, '兑换记录页应自绘标题栏。');
 has(headerTag, 'bg-[var(--tm-page-plain-header-bg)]', '兑换记录页标题栏应使用白色表面。');
-has(appSource, "const hasPlainPageOwnHeader = currentView === 'class_exchange_records';", '兑换记录页应由页面自绘标题栏。');
+has(appSource, "const hasPlainPageOwnHeader = currentView === 'class_exchange_records'", '兑换记录页应由页面自绘标题栏。');
 has(appSource, '!hasPlainPageOwnHeader && (', '全局标题栏应跳过兑换记录页。');
 has(appSource, 'hasPlainBackground && !hasStudentDetailBackground && !hasPlainPageOwnHeader', 'plain 页面顶部色带应跳过兑换记录页。');
 

@@ -57,7 +57,7 @@ const InsufficientReview: React.FC<{
                 <span className="block">暂时无法生成评价复盘。</span>
             </h2>
 
-            <section className="mt-6 rounded-[var(--tm-radius-card)] border border-[var(--tm-assistant-role-border)] bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
+            <section className="mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-assistant-role-border)] bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
                 <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">上月记录</h2>
                 <div className="mt-1 flex min-h-14 items-center gap-3 py-2.5">
                     <span className="w-[72px] shrink-0 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">记录条数</span>
@@ -204,9 +204,9 @@ const TeacherEvaluationReviewView: React.FC<TeacherEvaluationReviewViewProps> = 
                     loading ? (
                         <ReviewAnalysisProgress visibleStepCount={visibleStepCount} />
                     ) : reportResolution.document ? (
-                        <AssistantReportCards document={reportResolution.document} className="mt-[var(--tm-space-4)]" />
+                        <AssistantReportCards shape="subtle" document={reportResolution.document} className="mt-[var(--tm-layout-card-gap)]" />
                     ) : (
-                        <AssistantReportContractError onRetry={onRetry} />
+                        <AssistantReportContractError shape="subtle" onRetry={onRetry} />
                     )
                 ) : (
                     <InsufficientReview

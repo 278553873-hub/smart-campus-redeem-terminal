@@ -1,3 +1,6 @@
+import ClassReportOutlinePreviewControls from './components/ClassReportOutlinePreviewControls';
+import { createDefaultClassReportOutline } from './shared/classReportOutline';
+import { GrowthCoinIcon, GrowthCoinName, useGrowthCoinTerms } from './components/GrowthCoinBranding';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { ViewState, Student, Product, BankAccount, Deposit } from './types';
@@ -50,7 +53,6 @@ import './mobile-app/index.css';
 import { ChevronLeft, ChevronDown, Sparkles, MonitorSmartphone, Monitor, Smartphone, Bot, Settings, ShieldCheck, Info, TrendingUp, Plus, Trash2, LayoutGrid, LogOut, Palette, X, Camera, Check, LoaderCircle, ShoppingBag, KeyRound } from 'lucide-react';
 import { playSound } from './utils/sound';
 import { exportElementAsPng } from './utils/exportElementAsPng';
-import { GROWTH_COIN_TERMS } from './shared/growthCoinTerminology';
 import { getRankingReward, sumPositiveScores } from './mobile-app/domain/campusCoinIssuance';
 import {
   PARENT_EVALUATION_VISIBILITY_UPDATED_EVENT,
@@ -91,6 +93,7 @@ const HeaderCoinBalance: React.FC<{
   value: number;
   tone: 'available' | 'saved';
 }> = ({ label, value, tone }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const isAvailable = tone === 'available';
   return (
     <div
@@ -101,7 +104,7 @@ const HeaderCoinBalance: React.FC<{
       aria-label={`${label}${GROWTH_COIN_TERMS.name}${value}`}
     >
       <span className="text-xs font-black leading-none">{label}</span>
-      <img src="/assets/coin.png" className="h-3.5 w-3.5 shrink-0" alt="" />
+      <GrowthCoinIcon className="h-3.5 w-3.5 shrink-0" alt="" />
       <span className="font-[NumberFont] text-xl font-black leading-none">{value}</span>
     </div>
   );
@@ -305,7 +308,7 @@ const GrowthSidePanel: React.FC = () => {
           {/* ── 第一行：奖励金额 + 班级人数（并排） ── */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block pl-1">积分排行池 (校园币)</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block pl-1">积分排行池 (<GrowthCoinName />)</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -394,7 +397,7 @@ const GrowthSidePanel: React.FC = () => {
                 <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-xl border bg-blue-50 border-blue-100">
                   <div className="text-xs font-black text-blue-600">我的得分奖励</div>
                   {numericBonus > 0 && (
-                    <div className="text-xs font-black text-orange-500 tabular-nums">≈ {myRewardPreview.myReward.toFixed(2)}<small className="text-orange-300 ml-0.5">校园币</small></div>
+                    <div className="text-xs font-black text-orange-500 tabular-nums">≈ {myRewardPreview.myReward.toFixed(2)}<small className="text-orange-300 ml-0.5"><GrowthCoinName /></small></div>
                   )}
                 </div>
               )}
@@ -472,7 +475,7 @@ const GrowthSidePanel: React.FC = () => {
                       <div className="text-right">
                         <div className="text-xs font-black text-slate-500">{s.score}<small className="text-slate-300 font-sans ml-0.5">分</small></div>
                         {s.reward > 0 ? (
-                          <div className="text-[11px] font-black text-orange-500">预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">校园币</small></div>
+                          <div className="text-[11px] font-black text-orange-500">预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5"><GrowthCoinName /></small></div>
                         ) : (
                           <div className="text-[10px] text-slate-400 font-bold pt-0.5">无得分奖励</div>
                         )}
@@ -521,7 +524,7 @@ const GrowthSidePanel: React.FC = () => {
                                   </div>
                                   {s.reward > 0 ? (
                                     <div className="font-black text-orange-500 text-[11px] tabular-nums">
-                                      预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">校园币</small>
+                                      预估 {s.reward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5"><GrowthCoinName /></small>
                                     </div>
                                   ) : (
                                     <div className="text-[10px] text-slate-400 font-bold pt-0.5">无得分奖励</div>
@@ -579,7 +582,7 @@ const GrowthSidePanel: React.FC = () => {
                           {displayReward !== null && (
                             <div className="font-black text-orange-500 text-xs tabular-nums flex items-center gap-1 justify-end">
                               <span className="text-slate-400 font-medium text-[10px]">预估</span>
-                              {displayReward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5">校园币</small>
+                              {displayReward.toFixed(2)}<small className="text-orange-300 font-sans ml-0.5"><GrowthCoinName /></small>
                             </div>
                           )}
                           {isIneligible && (
@@ -661,6 +664,7 @@ const TerminalApp: React.FC<{
   parentEvaluationVisibility,
   onViewChange,
 }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const isVending = mode === 'vending';
   const faceLoginEnabled = !isVending || loginMethods.face;
   const passwordLoginEnabled = !isVending || loginMethods.password;
@@ -1442,6 +1446,8 @@ const AppSwitcher: React.FC = () => {
   const [headteacherAssistantScopePreview, setHeadteacherAssistantScopePreview] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [headteacherAssistantScopePreviewDefault, setHeadteacherAssistantScopePreviewDefault] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [isHeadteacherAssistantViewActive, setIsHeadteacherAssistantViewActive] = useState(false);
+  const [classReportOutline, setClassReportOutline] = useState(createDefaultClassReportOutline);
+  const [isClassReportViewActive, setIsClassReportViewActive] = useState(false);
   const headteacherAssistantScopePreviewMode = headteacherAssistantScopePreview ?? headteacherAssistantScopePreviewDefault;
   const showParentPhoneShell = false;
   const [parentPreviewClassId, setParentPreviewClassId] = useState(DEFAULT_PARENT_PREVIEW_CLASS_ID);
@@ -1821,6 +1827,8 @@ const AppSwitcher: React.FC = () => {
             onHeadteacherAssistantScopePreviewDefaultChange={setHeadteacherAssistantScopePreviewDefault}
             onHeadteacherAssistantScopePreviewChange={setHeadteacherAssistantScopePreview}
             onHeadteacherAssistantViewChange={setIsHeadteacherAssistantViewActive}
+            classReportOutline={classReportOutline}
+            onClassReportViewChange={setIsClassReportViewActive}
             studentTeamInvitePreview={studentTeamInvitePreview}
             onStudentTeamInvitePreviewChange={setStudentTeamInvitePreview}
             onStudentTeamListViewChange={setIsStudentTeamListViewActive}
@@ -2026,6 +2034,12 @@ const AppSwitcher: React.FC = () => {
                 </span>
               </button>
             </div>
+            )}
+
+            {isClassReportViewActive && (
+              <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
+                <ClassReportOutlinePreviewControls value={classReportOutline} onChange={setClassReportOutline} />
+              </div>
             )}
 
             {isHeadteacherAssistantViewActive && (

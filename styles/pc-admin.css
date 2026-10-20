@@ -234,3 +234,102 @@
   color: #86909c !important;
   cursor: not-allowed;
 }
+
+/* 卡片页签与内容共用底板；圆弧跨过相邻页签，连接处不露出页面背景。 */
+.pc-card-tabs-surface {
+  --pc-tab-surface: var(--color-fill-1);
+  --pc-tab-curve: 12px;
+  --pc-tab-height: 44px;
+  --pc-tab-raised-height: 48px;
+  border-radius: var(--pc-tab-curve);
+  background: var(--pc-tab-surface);
+}
+
+.pc-card-tabs-surface > .arco-tabs-header-nav {
+  margin-bottom: 0;
+  background: transparent;
+}
+
+.pc-card-tabs-surface > .arco-tabs-header-nav::before {
+  display: none;
+}
+
+.pc-card-tabs-surface > .arco-tabs-header-nav .arco-tabs-header {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: var(--pc-tab-raised-height);
+}
+
+.pc-card-tabs-surface > .arco-tabs-header-nav .arco-tabs-header-title {
+  position: relative;
+  flex: 1 1 0;
+  justify-content: center;
+  min-width: 0;
+  min-height: var(--pc-tab-height);
+  height: var(--pc-tab-height);
+  padding: 0 16px;
+  margin: 0;
+  border: 0;
+  border-radius: var(--pc-tab-curve) var(--pc-tab-curve) 0 0;
+  background: var(--color-fill-2);
+}
+
+/* 未选中页签维持后层灰底，悬停不改变整体层次。 */
+.pc-card-tabs-surface > .arco-tabs-header-nav .arco-tabs-header-title:not(.arco-tabs-header-title-active):hover {
+  background: var(--color-fill-2);
+  color: var(--color-text-1);
+}
+
+.pc-card-tabs-surface > .arco-tabs-header-nav .arco-tabs-header-title-active,
+.pc-card-tabs-surface > .arco-tabs-header-nav .arco-tabs-header-title-active:hover {
+  z-index: 1;
+  height: var(--pc-tab-raised-height);
+  padding-top: calc(var(--pc-tab-raised-height) - var(--pc-tab-height));
+  background: linear-gradient(180deg, var(--color-bg-2) 0%, var(--pc-tab-surface) 100%);
+  color: rgb(var(--primary-6));
+  font-weight: 700;
+}
+
+.pc-card-tabs-surface .arco-tabs-header-title-active::before,
+.pc-card-tabs-surface .arco-tabs-header-title-active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: var(--pc-tab-curve);
+  height: var(--pc-tab-curve);
+  pointer-events: none;
+}
+
+.pc-card-tabs-surface .arco-tabs-header-title-active:not(:first-child)::before {
+  right: 100%;
+  background: radial-gradient(circle at 0 0, transparent calc(var(--pc-tab-curve) - 0.5px), var(--pc-tab-surface) var(--pc-tab-curve));
+}
+
+.pc-card-tabs-surface .arco-tabs-header-title-active:not(:last-child)::after {
+  left: 100%;
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--pc-tab-curve) - 0.5px), var(--pc-tab-surface) var(--pc-tab-curve));
+}
+
+.pc-card-tabs-surface > .arco-tabs-content {
+  padding: 16px var(--pc-tab-content-inline, 16px);
+  border: 0;
+  background: var(--pc-tab-surface);
+}
+
+.pc-card-tabs-surface .arco-tabs-header-title-text {
+  position: relative;
+}
+
+.pc-card-tabs-surface .arco-tabs-header-title-active .arco-tabs-header-title-text::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 24px;
+  height: 3px;
+  border-radius: var(--border-radius-large);
+  background: currentColor;
+  transform: translateX(-50%);
+  pointer-events: none;
+}

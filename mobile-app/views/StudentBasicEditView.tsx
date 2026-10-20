@@ -18,8 +18,8 @@ interface StudentBasicEditViewProps {
   onChange: (student: Student) => void | Promise<void>;
 }
 
-const fieldInputClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-sm font-medium text-[var(--tm-input-text)] outline-none transition-all placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
-const relationSelectClass = 'h-12 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-bg-surface)] px-4 pr-10 text-sm font-semibold text-[var(--tm-text-primary)] [-webkit-text-fill-color:var(--tm-text-primary)] opacity-100 outline-none transition-all focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+const fieldInputClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-sm font-medium text-[var(--tm-input-text)] outline-none transition-all placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const relationSelectClass = 'h-12 w-full appearance-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-bg-surface)] px-4 pr-10 text-sm font-semibold text-[var(--tm-text-primary)] [-webkit-text-fill-color:var(--tm-text-primary)] opacity-100 outline-none transition-all focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 const labelClass = `${phoneText.label} text-[var(--tm-text-tertiary)]`;
 const compactLabelClass = 'text-sm font-medium text-[var(--tm-text-tertiary)]';
 const editableRowLayoutClass = 'grid min-h-14 w-full grid-cols-[72px_minmax(0,1fr)] items-center gap-3 py-1.5 text-left';
@@ -384,7 +384,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
         </header>
 
         <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 no-scrollbar">
-          <MobileCard variant="hero" padding="lg" className="student-avatar-card text-center">
+          <MobileCard shape="subtle" variant="hero" padding="lg" className="student-avatar-card text-center">
             <button type="button" onClick={openAvatarSheet} className="group mx-auto block" aria-label="更换头像">
               <div className="relative mx-auto h-24 w-24 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                 <span className="block h-full w-full overflow-hidden rounded-full bg-[var(--tm-bg-surface)]">
@@ -401,7 +401,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
             </button>
           </MobileCard>
 
-          <MobileCard variant="card" padding="md" className="student-profile-fields-card">
+          <MobileCard shape="subtle" variant="card" padding="md" className="student-profile-fields-card">
             <div className="mb-2 flex h-8 items-center">
               <h2 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>基础资料</h2>
             </div>
@@ -421,7 +421,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
 
               <div className="grid min-h-14 grid-cols-[72px_minmax(0,1fr)] items-center gap-3 py-1.5">
                 <span id="student-gender-label" className={compactLabelClass}>性别</span>
-                <div className="ml-auto grid h-11 w-36 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] p-1" role="group" aria-labelledby="student-gender-label">
+                <div className="ml-auto grid h-11 w-36 grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] p-1" role="group" aria-labelledby="student-gender-label">
                   {[
                     { value: 'male', label: '男' },
                     { value: 'female', label: '女' },
@@ -431,7 +431,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                       type="button"
                       aria-pressed={draft.gender === option.value}
                       onClick={() => updateDraft(prev => ({ ...prev, gender: option.value as Student['gender'] }))}
-                      className={`min-h-9 rounded-[calc(var(--tm-radius-control)-4px)] text-sm font-semibold transition-[background-color,color,box-shadow,transform] active:scale-[0.98] ${draft.gender === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                      className={`min-h-9 rounded-[var(--tm-form-segment-active-radius)] text-sm font-semibold transition-[background-color,color,box-shadow,transform] active:scale-[0.98] ${draft.gender === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                     >
                       {option.label}
                     </button>
@@ -477,7 +477,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
             </div>
           </MobileCard>
 
-          <MobileCard variant="card" padding="md" className="student-guardian-card">
+          <MobileCard shape="subtle" variant="card" padding="md" className="student-guardian-card">
             <div className="mb-2 flex h-11 items-center justify-between">
               <h2 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>家长联系方式</h2>
               <button type="button" onClick={openAddContact} className="group flex h-11 items-center justify-center" aria-label="添加家长联系方式">
@@ -521,7 +521,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               type="button"
               disabled={!canSaveField}
               onClick={saveField}
-              className="h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+              className="h-12 w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
             >
               完成
             </button>
@@ -553,7 +553,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           title="选择班级"
           onClose={() => setShowClassPicker(false)}
         >
-          <div className="grid h-72 grid-cols-[92px_1fr] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]" aria-label="班级级联选择">
+          <div className="grid h-72 grid-cols-[92px_1fr] overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]" aria-label="班级级联选择">
             <div className="overflow-y-auto border-r border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-2 no-scrollbar" aria-label="左侧先选年级">
               {gradeOptions.map(grade => (
                 <button
@@ -561,7 +561,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                   type="button"
                   aria-pressed={classPickerGrade === grade}
                   onClick={() => setClassPickerGrade(grade)}
-                  className={`mb-1 flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-xs font-bold transition-all ${classPickerGrade === grade ? 'bg-[var(--tm-brand-primary)] text-white' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface)]'}`}
+                  className={`mb-1 flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] text-xs font-bold transition-all ${classPickerGrade === grade ? 'bg-[var(--tm-brand-primary)] text-white' : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface)]'}`}
                 >
                   {grade}
                 </button>
@@ -576,7 +576,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                     type="button"
                     onClick={() => selectClass(item)}
                     aria-pressed={isSelected}
-                    className={`flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control)] px-3 text-left text-sm active:bg-[var(--tm-bg-surface-soft)] ${isSelected ? 'font-semibold text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                    className={`flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control-compact)] px-3 text-left text-sm active:bg-[var(--tm-bg-surface-soft)] ${isSelected ? 'font-semibold text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                   >
                     <span>{getTeacherClassDisplayName(item, currentSpace)}</span>
                     {isSelected && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
@@ -598,7 +598,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                 type="button"
                 disabled={!canSaveContact}
                 onClick={saveContact}
-                className="h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+                className="h-12 w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
               >
                 {contactSheetMode === 'edit' ? '完成' : '添加'}
               </button>
@@ -676,7 +676,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
           </div>
         </MobileBottomSheet>
 
-        <MobileConfirmSheet
+        <MobileConfirmSheet shape="subtle"
           open={deleteContactIndex !== null}
           title={deletingContact ? `删除${getGuardianRelationLabel(deletingContact)} ${formatGuardianPhone(deletingContact.phone)}？` : '删除这条联系方式？'}
           description="删除后，该手机将无法查看学生报告"
@@ -695,14 +695,14 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               type="button"
               disabled={!pendingAvatar}
               onClick={confirmSystemAvatar}
-              className="mb-4 h-12 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+              className="mb-4 h-12 w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-sm font-bold text-[var(--tm-text-inverse)] active:scale-[0.98] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
             >
               使用此头像
             </button>
           ) : undefined}
         >
           <div className="sticky top-0 z-10 bg-[var(--tm-bg-surface)] pb-3">
-            <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] p-1" role="tablist" aria-label="头像来源">
+            <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] p-1" role="tablist" aria-label="头像来源">
               {[
                 { value: 'system', label: '系统头像' },
                 { value: 'upload', label: '上传头像' },
@@ -713,7 +713,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                   role="tab"
                   aria-selected={avatarSheetMode === option.value}
                   onClick={() => setAvatarSheetMode(option.value as AvatarSheetMode)}
-                  className={`rounded-[calc(var(--tm-radius-control)-4px)] text-sm font-semibold transition-all ${avatarSheetMode === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                  className={`rounded-[var(--tm-form-segment-active-radius)] text-sm font-semibold transition-all ${avatarSheetMode === option.value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                 >
                   {option.label}
                 </button>
@@ -736,7 +736,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                           aria-label={`选择${avatar.label}`}
                           aria-pressed={isSelected}
                           onClick={() => setPendingAvatar(avatar.src)}
-                          className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-inner)] border-2 bg-[var(--tm-bg-surface-soft)] transition-transform active:scale-95 ${isSelected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
+                          className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-card-compact)] border-2 bg-[var(--tm-bg-surface-soft)] transition-transform active:scale-95 ${isSelected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
                         >
                           <img src={avatar.src} alt="" className="h-full w-full object-cover" />
                           {isSelected && (
@@ -756,7 +756,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]"
+                className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]"
               >
                 <Camera className="h-5 w-5" />
                 拍照
@@ -764,7 +764,7 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
               <button
                 type="button"
                 onClick={() => albumInputRef.current?.click()}
-                className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]"
+                className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]"
               >
                 <Image className="h-5 w-5" />
                 从相册选择

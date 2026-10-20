@@ -382,7 +382,7 @@ const BottomSheet: React.FC<{
 const PrimaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...props }) => (
   <button
     type="button"
-    className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2 ${className}`}
+    className={`inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2 ${className}`}
     {...props}
   >
     {children}
@@ -392,7 +392,7 @@ const PrimaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = (
 const SecondaryButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ className = '', children, ...props }) => (
   <button
     type="button"
-    className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2 ${className}`}
+    className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2 ${className}`}
     {...props}
   >
     {children}
@@ -501,8 +501,8 @@ const AnswerContextMeta: React.FC<{
   </section>
 );
 
-const editorToolButton = 'flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-inner)] bg-transparent text-[length:var(--tm-font-size-badge)] font-semibold leading-none text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-35';
-const collectionActionTile = 'flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]';
+const editorToolButton = 'flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-control-compact)] bg-transparent text-[length:var(--tm-font-size-badge)] font-semibold leading-none text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-35';
+const collectionActionTile = 'flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]';
 
 const StepIndicator: React.FC<{ current: number }> = ({ current }) => (
   <div className="grid grid-cols-3 gap-2 px-5 py-4" aria-label={`创建进度，第${current}步，共3步`}>
@@ -578,10 +578,10 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
         <label htmlFor={['short_text', 'text', 'number', 'date'].includes(question.type) ? inputId : undefined} className="block text-[length:var(--tm-font-size-question-title)] font-bold leading-[1.45] text-[var(--tm-text-primary)]">
           {index + 1}. {question.title}{question.required && <span className="ml-1 text-[var(--tm-status-negative-strong)]" aria-label="必填">*</span>}
         </label>
-        {question.type === 'short_text' && <input id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
-        {question.type === 'text' && <textarea id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} rows={4} className="mt-3 min-h-[120px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 py-3 text-[length:var(--tm-font-size-control)] font-medium leading-6 text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
-        {question.type === 'number' && <input id={inputId} disabled={!editable} type="number" inputMode="decimal" min={settings.minValue} max={settings.maxValue} step={settings.numberFormat === 'decimal-1' ? 0.1 : settings.numberFormat === 'decimal-2' ? 0.01 : 1} value={typeof answer === 'number' || typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
-        {question.type === 'date' && <input id={inputId} disabled={!editable} type={settings.dateFormat === 'year' ? 'number' : settings.dateFormat === 'ym' ? 'month' : 'date'} inputMode={settings.dateFormat === 'year' ? 'numeric' : undefined} min={settings.dateFormat === 'year' ? 1900 : undefined} max={settings.dateFormat === 'year' ? 2100 : undefined} value={typeof answer === 'string' || typeof answer === 'number' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'short_text' && <input id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'text' && <textarea id={inputId} disabled={!editable} value={typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} rows={4} className="mt-3 min-h-[120px] w-full resize-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 py-3 text-[length:var(--tm-font-size-control)] font-medium leading-6 text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'number' && <input id={inputId} disabled={!editable} type="number" inputMode="decimal" min={settings.minValue} max={settings.maxValue} step={settings.numberFormat === 'decimal-1' ? 0.1 : settings.numberFormat === 'decimal-2' ? 0.01 : 1} value={typeof answer === 'number' || typeof answer === 'string' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
+        {question.type === 'date' && <input id={inputId} disabled={!editable} type={settings.dateFormat === 'year' ? 'number' : settings.dateFormat === 'ym' ? 'month' : 'date'} inputMode={settings.dateFormat === 'year' ? 'numeric' : undefined} min={settings.dateFormat === 'year' ? 1900 : undefined} max={settings.dateFormat === 'year' ? 2100 : undefined} value={typeof answer === 'string' || typeof answer === 'number' ? answer : ''} onChange={event => onAnswerChange(question.id, event.target.value)} className="mt-3 h-[52px] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100" />}
         {(question.type === 'single' || question.type === 'multiple') && (
           <div className="mt-3 grid grid-cols-2 gap-2" role="group" aria-label={question.title}>
             {question.options.map(option => {
@@ -589,7 +589,7 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
               const maxReached = question.type === 'multiple' && !selected && selectedOptions.length >= (settings.maxSelections ?? question.options.length);
               const showCustomInput = selected && question.customAnswerOptions?.includes(option);
               return (
-                <div key={option} className={`overflow-hidden rounded-[var(--tm-radius-control)] border ${selected ? 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
+                <div key={option} className={`overflow-hidden rounded-[var(--tm-radius-control-compact)] border ${selected ? 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
                   <button
                     type="button"
                     disabled={!editable || maxReached}
@@ -618,7 +618,7 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
                         onChange={event => onAnswerChange(question.id, { selectedOptions, customText: { ...customText, [option]: event.target.value } })}
                         placeholder="请补充填写"
                         aria-label={`${option}补充内容`}
-                        className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)]"
+                        className="h-11 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-control)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)]"
                       />
                     </div>
                   )}
@@ -641,7 +641,7 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
     return (
       <section>
         {section?.label && <h2 className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{section.label}</h2>}
-        <section className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+        <section className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {renderQuestion(activeQuestion, activeQuestionIndex)}
         </section>
       </section>
@@ -649,11 +649,11 @@ const StudentCollectionForm: React.FC<StudentCollectionFormProps> = ({
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-[var(--tm-layout-card-gap)]">
       {getStudentCollectionQuestionGroups(record).map(questionGroup => (
         <div key={questionGroup.id}>
           {questionGroup.label && <h2 className="mb-2 px-1 text-[length:var(--tm-font-size-form-group-label)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{questionGroup.label}</h2>}
-          <section className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+          <section className="divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
             {questionGroup.questions.map(({ question, index }) => renderQuestion(question, index))}
           </section>
         </div>
@@ -1736,7 +1736,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="问卷采集" onBack={onBack} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
-          <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="采集状态">
+          <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="采集状态">
             {([['active', '收集中'], ['ended', '已结束']] as const).map(([value, label]) => (
               <button
                 key={value}
@@ -1746,7 +1746,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 onClick={() => setListFilter(value)}
                 className="flex h-11 items-center p-1 text-[length:var(--tm-font-size-compact)] font-semibold"
               >
-                <span className={`flex h-9 w-full items-center justify-center rounded-[calc(var(--tm-radius-control)-4px)] transition-all ${listFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>
+                <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-form-segment-active-radius)] transition-all ${listFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>
                   {label}
                 </span>
               </button>
@@ -1758,7 +1758,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               <button
                 type="button"
                 onClick={() => setPageMode('archived-list')}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-glass)]"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control-compact)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-glass)]"
               >
                 <Archive className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
                 已归档
@@ -1766,7 +1766,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             </div>
           )}
 
-          <section className={`${listFilter === 'ended' && archivedRecords.length > 0 ? 'mt-1' : 'mt-3'} grid grid-cols-2 gap-3`}>
+          <section className={`${listFilter === 'ended' && archivedRecords.length > 0 ? 'mt-1' : 'mt-3'} grid grid-cols-2 gap-[var(--tm-layout-card-gap)]`}>
             {filteredRecords.map(record => {
               const mode = getQuestionnaireCollectionMode(record);
               const modeMeta = collectionModeMeta[mode];
@@ -1784,7 +1784,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                     type="button"
                     onClick={() => openListRecordActions(record)}
                     aria-label={`打开采集操作：${record.title}`}
-                    className="relative flex min-h-[156px] w-full cursor-pointer flex-col overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-3 text-left [box-shadow:var(--tm-shadow-card-on-white)] transition-[scale,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.97] active:bg-[var(--tm-bg-surface-soft)]"
+                    className="relative flex min-h-[156px] w-full cursor-pointer flex-col overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-3 text-left [box-shadow:var(--tm-shadow-card-on-white)] transition-[scale,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.97] active:bg-[var(--tm-bg-surface-soft)]"
                   >
                     <span className={`pointer-events-none absolute inset-x-3 top-0 h-[3px] rounded-b-full ${modeMeta.accentClass}`} aria-hidden="true" />
                     <div className="line-clamp-2 min-h-11 text-pretty pt-1 text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]">{record.title}</div>
@@ -1854,7 +1854,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
       <PageHeader title="待我填写" onBack={initialMode === 'assigned' ? onBack : () => setPageMode('list')} />
       <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-4 no-scrollbar">
-        <section className="space-y-2.5">
+        <section className="space-y-[var(--tm-layout-card-gap)]">
           {assignedRecords.map(record => {
             const myRecords = getStudentCollectionRecordsForTeacher(record, teacherId, teacherName);
             const completed = myRecords.filter(item => item.status === 'completed').length;
@@ -1864,7 +1864,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 key={record.id}
                 type="button"
                 onClick={() => openRecord(record, 'assigned-list')}
-                className="relative min-h-[96px] w-full overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[scale,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]"
+                className="relative min-h-[96px] w-full overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[scale,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]"
               >
                 <span className="pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-r-full bg-[var(--tm-audience-student-primary)]" aria-hidden="true" />
                 <div className="line-clamp-2 text-pretty text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]">{record.title}</div>
@@ -1894,7 +1894,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
       <PageHeader title="已归档" onBack={() => { setListFilter('ended'); setPageMode('list'); }} />
       <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 pt-4 no-scrollbar">
-        <section className="space-y-2.5">
+        <section className="space-y-[var(--tm-layout-card-gap)]">
           {archivedRecords.map(record => {
             const mode = getQuestionnaireCollectionMode(record);
             const modeMeta = collectionModeMeta[mode];
@@ -1910,7 +1910,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 key={record.id}
                 type="button"
                 onClick={() => openRecord(record)}
-                className="relative min-h-[92px] w-full cursor-pointer overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[scale,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]"
+                className="relative min-h-[92px] w-full cursor-pointer overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-4 text-left [box-shadow:var(--tm-shadow-card)] transition-[scale,background-color,box-shadow] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]"
               >
                 <span className={`pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-r-full ${modeMeta.accentClass}`} aria-hidden="true" />
                 <div className="line-clamp-2 text-pretty text-[length:var(--tm-font-size-card-title)] font-bold leading-[22px] text-[var(--tm-text-primary)]">{record.title}</div>
@@ -2049,7 +2049,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <StepIndicator current={createStep} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-28 no-scrollbar">
           {createStep === 1 && (
-            <div className="space-y-4">
+            <div className="space-y-[var(--tm-layout-card-gap)]">
               <section className="-mx-5 bg-[var(--tm-bg-surface)] px-5 py-4">
                 <MobileDocumentTitleInput id="survey-title" ariaLabel="采集标题" value={draftTitle} maxLength={40} onChange={setDraftTitle} placeholder={titlePlaceholder} error={stepOneValidationAttempt > 0 ? stepOneTitleError : undefined} />
                 <div className="mt-[var(--tm-space-4)]">
@@ -2058,7 +2058,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 </div>
               </section>
               {effectiveGrowthFields.length > 0 && (
-                <section className="overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]" aria-label="记录日期">
+                <section className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]" aria-label="记录日期">
                   <button
                     id="growth-record-date"
                     type="button"
@@ -2078,6 +2078,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 </section>
               )}
               <FormBuilder
+                shape="subtle"
                 layoutMode={draftLayoutMode}
                 sections={draftSections}
                 fields={builderFields}
@@ -2095,6 +2096,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   render: (close, sectionId) => (
                     <div>
                       <GrowthFieldCategoryPicker
+                        shape="subtle"
                         fields={availableGrowthFieldOptions}
                         isSelected={field => effectiveGrowthFields.includes(field.key)}
                         getFieldHint={field => field.unit}
@@ -2108,7 +2110,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                             : [...fields, field.key]);
                         }}
                       />
-                      <PrimaryButton onClick={close} className="mt-4 w-full">完成</PrimaryButton>
+                      <PrimaryButton onClick={close} className="mt-[var(--tm-layout-card-gap)] w-full">完成</PrimaryButton>
                     </div>
                   ),
                 }}
@@ -2140,7 +2142,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                     <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{allScopeLabel}</span>
                     <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{targets.length}名学生</span>
                   </button>
-                  <div className="h-[420px] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]">
+                  <div className="h-[420px] overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]">
                     <MobileClassCascadePicker
                       groups={gradeGroups.map(group => ({ gradeLabel: group.gradeLevel, classes: group.classes }))}
                       selectedClassIds={selectedClassIds}
@@ -2161,8 +2163,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           )}
 
           {createStep === 3 && (
-            <div className="space-y-4">
-              <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+            <div className="space-y-[var(--tm-layout-card-gap)]">
+              <section className="rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
                 <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{draftTitle}</h2>
                 {draftDescription && <p className="mt-2 text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{draftDescription}</p>}
                 <div className="mt-3 inline-flex min-h-7 items-center gap-1.5 rounded-full bg-[var(--tm-bg-surface-muted)] px-2.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-secondary)]">
@@ -2179,7 +2181,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       </span>
                     </div>
                     {archiveTargetPlan && (
-                      <div className={`mt-3 grid gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-center ${archiveTargetPlan.pendingStudentNos.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                      <div className={`mt-3 grid gap-2 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-center ${archiveTargetPlan.pendingStudentNos.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <div><div className="text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">{archiveTargetPlan.createStudentNos.length}</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">建立档案</div></div>
                         <div><div className="text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-text-primary)]">{archiveTargetPlan.updateStudentNos.length}</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">更新档案</div></div>
                         {archiveTargetPlan.pendingStudentNos.length > 0 && <div><div className="text-[length:var(--tm-font-size-card-title)] font-bold tabular-nums text-[var(--tm-brand-reward-strong)]">{archiveTargetPlan.pendingStudentNos.length}</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">已有待填写</div></div>}
@@ -2196,7 +2198,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 </div>
               </section>
               {isTeacherRespondent && (
-                <section className="overflow-hidden rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+                <section className="overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                   <button type="button" onClick={() => setShowAssignmentSheet(true)} className="flex min-h-[58px] w-full items-center justify-between gap-4 px-4 text-left transition-colors active:bg-[var(--tm-bg-surface-soft)]">
                     <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">填写分工</span>
                     <span className="flex min-w-0 items-center gap-1.5 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
@@ -2206,7 +2208,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   </button>
                 </section>
               )}
-              {!isTeacherRespondent && <section className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+              {!isTeacherRespondent && <section className="rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
                 <div className="flex min-h-11 items-center justify-between gap-4">
                   <div><div className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-primary)]">完成时间</div><div className="mt-0.5 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">选填</div></div>
                   <button
@@ -2224,11 +2226,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   </button>
                 </div>
                 {hasSuggestedDeadline && (
-                  <input aria-label="完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+                  <input aria-label="完成时间" type="datetime-local" value={suggestedDeadline} onChange={event => setSuggestedDeadline(event.target.value)} className="mt-3 h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
                 )}
               </section>}
               {!isTeacherRespondent && unreachableCount > 0 && (
-                <section className="flex min-h-11 items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-brand-reward)]/20 bg-[var(--tm-brand-reward-soft)] px-4 py-3">
+                <section className="flex min-h-11 items-center gap-3 rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-brand-reward)]/20 bg-[var(--tm-brand-reward-soft)] px-4 py-3">
                   <UsersRound className="h-5 w-5 shrink-0 text-[var(--tm-brand-reward-strong)]" />
                   <div className="text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-brand-reward-strong)]">{unreachableCount}名学生未绑定家长</div>
                 </section>
@@ -2242,11 +2244,11 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <button type="button" disabled={isArchiveCollection || builderFields.length === 0 && draftSections.length === 0} onClick={() => setShowOutlineSheet(true)} className={editorToolButton} aria-label="大纲"><ListTree className="h-4.5 w-4.5" /><span>大纲</span></button>
             <button type="button" onClick={() => setShowAppearanceSheet(true)} className={editorToolButton} aria-label="风格"><Palette className="h-4.5 w-4.5" /><span>风格</span></button>
             <button type="button" disabled={isArchiveCollection} onClick={() => setShowBasicSettingsSheet(true)} className={editorToolButton} aria-label="设置"><Settings className="h-4.5 w-4.5" /><span>设置</span></button>
-            <button type="button" onClick={openCreatePreview} className="inline-flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]">预览</button>
+            <button type="button" onClick={openCreatePreview} className="inline-flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]">预览</button>
             <button
               type="button"
               onClick={createStep === 3 ? () => setShowPublishConfirm(true) : advanceCreateStep}
-              className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)]"
+              className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)]"
             >
               {createStep === 3 ? '完成' : '下一步'}
             </button>
@@ -2256,6 +2258,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <MobileBottomSheet open={showOutlineSheet} title="大纲" onClose={() => setShowOutlineSheet(false)}>
           <div style={editorThemeStyle}>
             <FormOutlineSorter
+              shape="subtle"
               layoutMode={draftLayoutMode}
               sections={draftSections}
               fields={builderFields}
@@ -2269,7 +2272,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <div className="pb-2" style={editorThemeStyle}>
             <section>
               <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">主题风格</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
                 {questionnaireThemeOptions.map(theme => {
                   const selected = draftThemeId === theme.id;
                   return (
@@ -2278,9 +2281,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       type="button"
                       aria-pressed={selected}
                       onClick={() => setDraftThemeId(theme.id)}
-                      className={`flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-control)] px-3 text-left transition ${selected ? 'bg-[var(--tm-brand-primary-soft)] ring-2 ring-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                      className={`flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-3 text-left transition ${selected ? 'bg-[var(--tm-brand-primary-soft)] ring-2 ring-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
-                      <span className="h-8 w-8 shrink-0 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)]" style={{ backgroundColor: theme.swatch }} />
+                      <span className="h-8 w-8 shrink-0 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-subtle)]" style={{ backgroundColor: theme.swatch }} />
                       <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{theme.label}</span>
                       {selected && <Check className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary-strong)]" />}
                     </button>
@@ -2288,9 +2291,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 })}
               </div>
             </section>
-            <section className="mt-6">
+            <section className="mt-[var(--tm-layout-card-gap)]">
               <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">采集头图</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
                 {questionnaireHeaderImageOptions.map(option => {
                   const selected = draftHeaderImageId === option.id;
                   return (
@@ -2300,7 +2303,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                       aria-label={`选择采集头图：${option.label}`}
                       aria-pressed={selected}
                       onClick={() => setDraftHeaderImageId(option.id)}
-                      className={`relative overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                      className={`relative overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
                       {option.image
                         ? <img src={option.image} alt="" className="aspect-[16/7] w-full object-cover" />
@@ -2323,7 +2326,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
         <BottomSheet open={showAssignmentSheet} label="填写分工" onDismiss={() => setShowAssignmentSheet(false)}>
           <h2 className="text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">填写分工</h2>
-          <div className="mt-4 overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+          <div className="mt-[var(--tm-layout-card-gap)] overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
             {([['creator', '我来填写'], ['homeroom', '各班班主任']] as const).map(([value, label]) => {
               const selected = studentAssignmentMode === value;
               return (
@@ -2348,7 +2351,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             aria-label="记录日期"
             value={draftGrowthRecordDate}
             onChange={event => setDraftGrowthRecordDate(event.target.value)}
-            className="mt-4 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+            className="mt-4 h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
           />
           <PrimaryButton disabled={!draftGrowthRecordDate} onClick={() => setShowGrowthDateSheet(false)} className="mt-4 w-full">完成</PrimaryButton>
         </BottomSheet>
@@ -2370,7 +2373,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           onBack={() => setPageMode(assignedContext ? 'assigned-list' : record.status === 'archived' ? 'archived-list' : 'list')}
         />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
-          <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+          <section className="mt-4 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <h2 className="text-balance text-[length:var(--tm-font-size-section-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{record.title}</h2>
@@ -2387,7 +2390,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             <div className="mt-2"><ProgressBar value={completion} tone={record.status === 'ended' || record.status === 'archived' ? 'neutral' : 'positive'} /></div>
           </section>
 
-          <div className="mt-4">{renderStudentRecords(record, assignedContext)}</div>
+          <div className="mt-[var(--tm-layout-card-gap)]">{renderStudentRecords(record, assignedContext)}</div>
         </main>
 
         <BottomSheet open={!assignedContext && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
@@ -2426,8 +2429,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div>
         <div className={assignedContext ? 'sticky top-0 z-20 -mx-1 bg-[var(--tm-bg-page-glass)] px-1 pb-3 backdrop-blur-md' : ''}>
-          <MobileSearchInput value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="text-[length:var(--tm-font-size-compact)]" />
+          <MobileSearchInput shape="subtle" value={studentRecordSearch} onChange={event => setStudentRecordSearch(event.target.value)} placeholder="搜索学生" aria-label="搜索学生" className="text-[length:var(--tm-font-size-compact)]" />
           <CompactSegmentedControl
+            shape="subtle"
             value={studentRecordFilter}
             items={studentRecordFilterOptions}
             onChange={setStudentRecordFilter}
@@ -2436,7 +2440,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             className="mt-2"
           />
         </div>
-        <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+        <section className="mt-[var(--tm-layout-card-gap)] overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {visibleRecords.map(item => {
             const resultRecord = item.status === 'completed'
               ? getQuestionnaireResultRecords(record).find(result => result.studentNo === item.studentNo)
@@ -2572,8 +2576,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     const pending = Math.max(0, reachable - completed);
     const unreachable = activeTargets.length - reachable;
     return (
-      <div className="space-y-3">
-        <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+      <div className="space-y-[var(--tm-layout-card-gap)]">
+        <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
           <div className="flex items-end justify-between gap-4">
             <div>
               <div className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">完成情况</div>
@@ -2587,7 +2591,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <div className="mt-3"><ProgressBar value={completion} tone={record.status === 'ended' ? 'neutral' : 'positive'} /></div>
         </section>
         {record.status === 'active' && isQuestionnaireOverdue(record) && (
-          <button type="button" onClick={() => requestCloseRecord(record)} className="flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-reward-soft)] px-4 text-left active:bg-[var(--tm-brand-reward-soft)]">
+          <button type="button" onClick={() => requestCloseRecord(record)} className="flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-reward-soft)] px-4 text-left active:bg-[var(--tm-brand-reward-soft)]">
             <CalendarDays className="h-4 w-4 shrink-0 text-[var(--tm-brand-reward-strong)]" />
             <span className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-reward-strong)]">已到完成时间</span>
             <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-brand-reward-strong)]">结束收集</span>
@@ -2610,13 +2614,14 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div>
         <CompactSegmentedControl
+          shape="subtle"
           value={responseFilter}
           items={responseFilterOptions}
           onChange={setResponseFilter}
           ariaLabel="答卷状态"
           fullWidth
         />
-        <section className="mt-4 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+        <section className="mt-[var(--tm-layout-card-gap)] overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
           {rows.map(row => {
             const isCompleted = 'completedAt' in row;
             const displayClassName = getClassDisplayName(row.classId, row.className);
@@ -2646,12 +2651,12 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
   const renderAnalysis = (record: QuestionnaireRecord) => {
     const resultRecords = getQuestionnaireResultRecords(record);
     return (
-      <div className="space-y-3">
+      <div className="space-y-[var(--tm-layout-card-gap)]">
         {record.questions.map((question, questionIndex) => {
         const answers = resultRecords.map(item => item.answers[question.id]).filter(answer => answer !== undefined && answer !== '');
         if (question.type === 'multi_fill') {
           return (
-            <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+            <section key={question.id} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
               <div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">{questionIndex + 1} · {questionTypeMeta[question.type].label}</div>
               <h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3>
               <div className="mt-3 divide-y divide-[var(--tm-border-subtle)]">
@@ -2669,10 +2674,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                         {showEffectiveCount && <div className="shrink-0 text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">有效回答 {subFieldAnswers.length}</div>}
                       </div>
                       {visibleAnswers.length > 0
-                        ? <div className="mt-2 space-y-2">{visibleAnswers.map((answer, index) => <div key={`${subField.id}-${index}`} className={`rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-text-secondary)] ${showAllInline ? '' : 'line-clamp-3'}`}>{answer}</div>)}</div>
+                        ? <div className="mt-2 space-y-2">{visibleAnswers.map((answer, index) => <div key={`${subField.id}-${index}`} className={`rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-text-secondary)] ${showAllInline ? '' : 'line-clamp-3'}`}>{answer}</div>)}</div>
                         : <div className="mt-2 py-2 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">暂无回答</div>}
                       {!showAllInline && (
-                        <button type="button" onClick={() => openQuestionResponses(question.id, subField.id)} className="mt-2 flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)]">
+                        <button type="button" onClick={() => openQuestionResponses(question.id, subField.id)} className="mt-2 flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control-compact)] px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)]">
                           查看全部回答<ChevronRight className="h-4 w-4" />
                         </button>
                       )}
@@ -2690,7 +2695,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           const visibleAnswers = showAllInline ? textAnswers : textAnswers.slice(-2).reverse();
           const showEffectiveCount = textAnswers.length !== resultRecords.length;
           return (
-            <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+            <section key={question.id} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">{questionIndex + 1} · {questionTypeMeta[question.type].label}</div>
                 {showEffectiveCount && <div className="shrink-0 text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">有效回答 {textAnswers.length}</div>}
@@ -2705,10 +2710,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 </div>
               )}
               {visibleAnswers.length > 0
-                ? <div className="mt-3"><div className="mb-2 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{showAllInline ? '回答' : '最近回答'}</div><div className="space-y-2">{visibleAnswers.map((answer, index) => <div key={`${question.id}-${index}`} className={`rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-text-secondary)] ${showAllInline ? '' : 'line-clamp-3'}`}>{answer}</div>)}</div></div>
+                ? <div className="mt-3"><div className="mb-2 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">{showAllInline ? '回答' : '最近回答'}</div><div className="space-y-2">{visibleAnswers.map((answer, index) => <div key={`${question.id}-${index}`} className={`rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-text-secondary)] ${showAllInline ? '' : 'line-clamp-3'}`}>{answer}</div>)}</div></div>
                 : <div className="mt-3 py-3 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">暂无回答</div>}
               {!showAllInline && (
-                <button type="button" onClick={() => openQuestionResponses(question.id)} className="mt-3 flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)]">
+                <button type="button" onClick={() => openQuestionResponses(question.id)} className="mt-3 flex min-h-11 w-full items-center justify-between rounded-[var(--tm-radius-control-compact)] px-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-[transform,background-color] active:scale-[0.96] active:bg-[var(--tm-brand-primary-soft)]">
                   查看全部回答<ChevronRight className="h-4 w-4" />
                 </button>
               )}
@@ -2723,7 +2728,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         )).length);
         const ratingAverage = question.type === 'rating' && answers.length > 0 ? (answers.reduce<number>((sum, answer) => sum + Number(answer), 0) / answers.length).toFixed(1) : null;
         return (
-          <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+          <section key={question.id} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
             <div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">{questionIndex + 1} · {questionTypeMeta[question.type].label}</div>
             <h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3>
             {ratingAverage && <div className="mt-3 flex items-baseline gap-2"><span className="text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]">{ratingAverage}</span><span className="text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">平均分 / {options.length}</span></div>}
@@ -2742,7 +2747,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
 
   const renderData = (record: QuestionnaireRecord) => {
     return (
-      <div className="space-y-5">
+      <div className="space-y-[var(--tm-layout-card-gap)]">
         {renderDataSummary(record)}
         <section>
           <h3 className="mb-3 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">题目数据</h3>
@@ -2759,7 +2764,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden pb-8">
         <PageHeader title="采集详情" onBack={() => setPageMode(activeRecord.status === 'archived' ? 'archived-list' : 'list')} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
-          <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+          <section className="mt-4 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <h2 className="text-balance text-[length:var(--tm-font-size-section-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{activeRecord.title}</h2>
@@ -2777,14 +2782,15 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             )}
           </section>
           <CompactSegmentedControl
+            shape="subtle"
             value={detailTab}
             items={detailTabOptions}
             onChange={setDetailTab}
             ariaLabel="采集详情视图"
             fullWidth
-            className="sticky top-0 z-20 -mx-1 mt-4 backdrop-blur"
+            className="sticky top-0 z-20 -mx-1 mt-[var(--tm-layout-card-gap)] backdrop-blur"
           />
-          <div className="mt-4">{detailTab === 'data' ? renderData(activeRecord) : renderResponses(activeRecord)}</div>
+          <div className="mt-[var(--tm-layout-card-gap)]">{detailTab === 'data' ? renderData(activeRecord) : renderResponses(activeRecord)}</div>
         </main>
         <BottomSheet open={canManageActiveRecord && showRecordMenu} label="采集操作" onDismiss={() => setShowRecordMenu(false)}>
           {activeRecord.status === 'archived' && <button type="button" onClick={restoreActiveRecord} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary-strong)]"><ArchiveRestore className="h-5 w-5" />恢复到已结束</button>}
@@ -2816,7 +2822,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="答卷详情" onBack={() => setPageMode('detail')} />
-        <main className="min-h-0 flex-1 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar">
+        <main className="min-h-0 flex-1 touch-pan-y space-y-[var(--tm-layout-card-gap)] overflow-y-auto overscroll-contain px-5 py-4 no-scrollbar">
           <header className="pb-2">
             <h1 className="text-pretty text-[length:var(--tm-font-size-document-title)] font-bold leading-8 text-[var(--tm-text-primary)]">{activeRecord.title}</h1>
             {activeRecord.description && <p className="mt-2 whitespace-pre-wrap break-words text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-[22px] text-[var(--tm-text-secondary)]">{activeRecord.description}</p>}
@@ -2832,7 +2838,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </header>
           {activeRecord.questions.map((question, index) => {
             const answer = activeResultRecord.answers[question.id];
-            return <section key={question.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]"><div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">第{index + 1}题 · {questionTypeMeta[question.type].label}</div><h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3><div className="mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{formatQuestionnaireAnswer(answer, question)}</div></section>;
+            return <section key={question.id} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]"><div className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary-strong)]">第{index + 1}题 · {questionTypeMeta[question.type].label}</div><h3 className="mt-2 text-balance text-[length:var(--tm-font-size-body)] font-bold leading-5 text-[var(--tm-text-primary)]">{question.title}</h3><div className="mt-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-pretty text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-secondary)]">{formatQuestionnaireAnswer(answer, question)}</div></section>;
           })}
         </main>
       </div>
@@ -2881,10 +2887,10 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           </section>
           <div className="sticky top-0 z-20 -mx-1 mt-4 bg-[var(--tm-bg-page-glass)] px-1 py-3 backdrop-blur-md">
             <div className={`grid gap-2 ${classOptions.length > 1 ? 'grid-cols-[minmax(0,1fr)_120px]' : 'grid-cols-1'}`}>
-              <MobileSearchInput value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="text-[length:var(--tm-font-size-compact)]" />
+              <MobileSearchInput shape="subtle" value={questionResponseSearch} onChange={event => { setQuestionResponseSearch(event.target.value); setVisibleQuestionResponseCount(20); }} placeholder="搜索回答或学生" aria-label="搜索回答或学生" className="text-[length:var(--tm-font-size-compact)]" />
               {classOptions.length > 1 && (
                 <label className="relative block">
-                  <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-input-text)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]">
+                  <select value={questionResponseClass} onChange={event => { setQuestionResponseClass(event.target.value); setVisibleQuestionResponseCount(20); }} aria-label="按班级筛选回答" className="h-11 w-full appearance-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] pl-3 pr-8 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-input-text)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]">
                     <option value="all">全部班级</option>
                     {classOptions.map(className => <option key={className} value={className}>{className}</option>)}
                   </select>
@@ -2893,9 +2899,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               )}
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-[var(--tm-layout-card-gap)]">
             {visibleRows.map(row => (
-              <article key={row.id} className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+              <article key={row.id} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
                 <p className="text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">{row.answer}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">
                   <span>{row.studentName}</span><span aria-hidden="true">·</span><span>{row.className}</span><span aria-hidden="true">·</span><span>{row.submittedAt}</span>
@@ -2912,7 +2918,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
             )}
           </div>
           {filteredRows.length > visibleRows.length && (
-            <button type="button" onClick={() => setVisibleQuestionResponseCount(count => count + 20)} className="mt-4 min-h-11 w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-card)] active:scale-[0.96]">加载更多</button>
+            <button type="button" onClick={() => setVisibleQuestionResponseCount(count => count + 20)} className="mt-4 min-h-11 w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-card)] active:scale-[0.96]">加载更多</button>
           )}
         </main>
       </div>
@@ -3028,7 +3034,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           if (shouldReturn) onBack();
         }}
       >
-        <div className="overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
+        <div className="overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]">
           {([['teacher', '老师填写', '由老师逐个学生填写'], ['guardian', '家长填写', '发送给家长填写']] as const).map(([role, label, description]) => {
             const RoleIcon = role === 'teacher' ? UserRoundCheck : UsersRound;
             return (
@@ -3038,7 +3044,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 onClick={() => chooseRespondentRole(role)}
                 className="flex min-h-[72px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] px-4 text-left last:border-b-0 active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]">
                   <RoleIcon className="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -3053,7 +3059,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       </MobileBottomSheet>
       <MobileBottomSheet open={showDraftRecoverySheet} title="继续编辑" onClose={() => setShowDraftRecoverySheet(false)}>
         <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">发现一份未完成的采集</h3>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
           <SecondaryButton onClick={restartCurrentDraft}>重新创建</SecondaryButton>
           <PrimaryButton onClick={continueCurrentDraft}>继续编辑</PrimaryButton>
         </div>
@@ -3063,9 +3069,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <button
           type="button"
           onClick={() => startCreate(undefined, pendingCreateRespondentRole)}
-          className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-left active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
+          className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-left active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-brand-primary)]"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><FileText className="h-5 w-5" /></span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]"><FileText className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1">
             <span className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">从空白创建</span>
             <span className="mt-0.5 block text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">自由添加普通题目和成长数据</span>
@@ -3077,7 +3083,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           {availableArchiveTemplates.length > 0 && <span className="text-[length:var(--tm-font-size-badge)] font-medium tabular-nums text-[var(--tm-text-tertiary)]">{availableArchiveTemplates.length}份</span>}
         </div>
         {availableArchiveTemplates.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
             {availableArchiveTemplates.map(template => {
               const inputCount = template.growthFields.length + template.fields.length;
               const headerImage = getQuestionnaireHeaderImage(template.appearance.headerImageId);
@@ -3087,7 +3093,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                   key={template.id}
                   type="button"
                   onClick={() => startCreate(undefined, pendingCreateRespondentRole, template.id)}
-                  className="min-w-0 overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-fast)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
+                  className="min-w-0 overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition-[transform,box-shadow] [transition-duration:var(--tm-duration-fast)] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
                 >
                   {headerImage
                     ? <img src={headerImage} alt="" className="block aspect-[16/7] w-full object-cover" />
@@ -3101,9 +3107,9 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               );
             })}
           </div>
-        ) : <div className="flex min-h-[60px] items-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)] [box-shadow:var(--tm-shadow-card-on-white)]">暂无已启用档案</div>}
+        ) : <div className="flex min-h-[60px] items-center rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)] [box-shadow:var(--tm-shadow-card-on-white)]">暂无已启用档案</div>}
       </MobileBottomSheet>
-      <MobileConfirmSheet
+      <MobileConfirmSheet shape="subtle"
         open={showPublishConfirm}
         title="确认发布问卷？"
         description="发布后，问卷内容和学生范围将不能编辑。请确认无误后再发布。"
@@ -3112,7 +3118,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         onClose={() => setShowPublishConfirm(false)}
         onConfirm={completePublishQuestionnaire}
       />
-      <MobileConfirmSheet
+      <MobileConfirmSheet shape="subtle"
         open={Boolean(closeConfirmRecord)}
         title="确认结束收集？"
         description="结束后将停止继续填写；若仍有未完成内容，可以重新开放。"
@@ -3123,6 +3129,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         onConfirm={completeCloseRecord}
       />
       <MobileQrInviteSheet
+        shape="subtle"
         open={Boolean(inviteRecord)}
         title="邀请家长填写"
         itemTitle={inviteRecord?.title ?? ''}

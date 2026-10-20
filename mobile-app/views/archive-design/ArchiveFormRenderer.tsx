@@ -11,10 +11,16 @@ import {
   type ArchiveGrowthFieldConfig,
   type ArchiveTemplateSnapshot,
 } from '../../../shared/studentArchiveStore';
-import { inputClass, readonlyFieldClass, sectionSurface } from './archivePagePrimitives';
+import {
+  inputClass as defaultInputClass,
+  readonlyFieldClass as defaultReadonlyFieldClass,
+  sectionSurface as defaultSectionSurface,
+  subtleArchivePageStyles,
+} from './archivePagePrimitives';
 import { normalizeFormFieldSettings } from '../../../shared/formDefinition';
 
 interface ArchiveFormRendererBaseProps {
+  shape?: 'default' | 'subtle';
   definition: Pick<ArchiveTemplateSnapshot, 'layoutMode' | 'sections' | 'fields' | 'growthFields'>;
   renderGrowthField?: (field: ArchiveGrowthFieldConfig, number: number) => React.ReactNode;
   isGrowthFieldFilled?: (field: ArchiveGrowthFieldConfig) => boolean;
@@ -39,7 +45,13 @@ type ArchiveFormRendererProps = ArchiveFormRendererBaseProps & (
 );
 
 const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
-  const { definition } = props;
+  const { definition, shape = 'default' } = props;
+  const { inputClass, readonlyFieldClass, sectionSurface } = shape === 'subtle'
+    ? subtleArchivePageStyles
+    : { inputClass: defaultInputClass, readonlyFieldClass: defaultReadonlyFieldClass, sectionSurface: defaultSectionSurface };
+  const controlRadiusClass = shape === 'subtle'
+    ? 'rounded-[var(--tm-radius-control-compact)]'
+    : 'rounded-[var(--tm-radius-control)]';
   const previewMode = props.mode === 'preview';
   const readonlyMode = props.mode === 'readonly';
   const answers = previewMode ? {} : props.answers;
@@ -69,7 +81,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
         return (
           <div className="flex flex-wrap items-center gap-1.5">
             {Array.from({ length: max - min + 1 }, (_, index) => min + index).map(value => (
-              <span key={value} className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)]">
+              <span key={value} className={`flex h-10 w-10 items-center justify-center ${controlRadiusClass} border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-tertiary)]`}>
                 <Star className="h-4 w-4" />
               </span>
             ))}
@@ -80,7 +92,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
         return (
           <div className="space-y-2">
             {(field.subFields ?? []).map((subField, subFieldIndex) => (
-              <div key={subField.id} className="flex min-h-12 items-center justify-between gap-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">
+              <div key={subField.id} className={`flex min-h-12 items-center justify-between gap-2.5 ${controlRadiusClass} border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]`}>
                 <span className="min-w-0 flex-1">{subField.label || `填空项${subFieldIndex + 1}`}</span>
                 <span className="shrink-0 text-[var(--tm-input-placeholder)]">请输入</span>
               </div>
@@ -91,7 +103,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
       return (
         <div className="space-y-2">
           {field.options.map((option, optionIndex) => (
-            <div key={`${field.id}-${optionIndex}`} className="flex min-h-12 items-center gap-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
+            <div key={`${field.id}-${optionIndex}`} className={`flex min-h-12 items-center gap-2.5 ${controlRadiusClass} border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]`}>
               <span className={`h-5 w-5 shrink-0 border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] ${field.type === 'single' ? 'rounded-full' : 'rounded-[5px]'}`} aria-hidden="true" />
               <span className="min-w-0 flex-1">{option}</span>
               {field.customAnswerOptions?.includes(option) && (
@@ -126,7 +138,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
                 aria-pressed={selected}
                 aria-label={`${value}分`}
                 onClick={() => updateAnswers({ ...answers, [field.semanticKey]: String(value) })}
-                className={`flex min-h-12 items-center justify-center gap-1 rounded-[var(--tm-radius-control)] border transition ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
+                className={`flex min-h-12 items-center justify-center gap-1 ${controlRadiusClass} border transition ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
               >
                 <Star className={`h-4 w-4 ${selected ? 'fill-current' : ''}`} />
                 <span className="text-[length:var(--tm-font-size-badge)] font-semibold">{value}</span>
@@ -199,7 +211,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
           const showCustomInput = selected && field.customAnswerOptions?.includes(option);
           const maxReached = field.type === 'multiple' && !selected && selectedOptions.length >= (settings.maxSelections ?? field.options.length);
           return (
-            <div key={`${field.id}-${optionIndex}`} className={`overflow-hidden rounded-[var(--tm-radius-control)] border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
+            <div key={`${field.id}-${optionIndex}`} className={`overflow-hidden ${controlRadiusClass} border ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)]'}`}>
               <button type="button" role={field.type === 'single' ? 'radio' : 'checkbox'} aria-checked={selected} disabled={maxReached} onClick={() => toggleOption(option)} className={`flex min-h-12 w-full items-center gap-2.5 px-3 text-left text-[length:var(--tm-font-size-compact)] font-medium disabled:opacity-45 ${selected ? 'text-[var(--tm-brand-primary-strong)]' : 'text-[var(--tm-text-secondary)]'}`}>
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center border ${field.type === 'single' ? 'rounded-full' : 'rounded-[5px]'} ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-transparent'}`} aria-hidden="true">
                   {field.type === 'single' ? <span className="h-2 w-2 rounded-full bg-current" /> : <Check className="h-3.5 w-3.5" />}
@@ -279,7 +291,7 @@ const ArchiveFormRenderer: React.FC<ArchiveFormRendererProps> = props => {
   }
 
   return (
-    <section className="space-y-3">
+    <section className={shape === 'subtle' ? 'space-y-[var(--tm-layout-card-gap)]' : 'space-y-3'}>
       {definition.sections.map(section => {
         const items = contentItems.filter(item => item.sectionId === section.id);
         const completed = previewMode ? 0 : items.filter(item => item.kind === 'growth'

@@ -467,7 +467,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
           </div>
           <div className="grid grid-cols-3 gap-[var(--tm-space-2)]" aria-label="待识别图片列表">
             {stagedImages.map((imageItem, index) => (
-              <figure key={imageItem.id} className="relative overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)]" style={{ aspectRatio: '3 / 4' }}>
+              <figure key={imageItem.id} className="relative overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)]" style={{ aspectRatio: '3 / 4' }}>
                 <img src={imageItem.previewUrl} alt={`待识别图片${index + 1}`} className="h-full w-full object-cover" />
                 <button type="button" onClick={() => setStagedImages(current => current.filter(item => item.id !== imageItem.id))} className="absolute right-1 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--tm-mask)] text-[var(--tm-text-inverse)]" aria-label={`移除第${index + 1}张图片`}><X className="h-4 w-4" /></button>
                 <figcaption className="absolute bottom-1 left-1 flex h-6 min-w-6 items-center justify-center rounded-[var(--tm-radius-badge)] bg-[var(--tm-bg-surface-glass)] px-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-primary)]">{index + 1}</figcaption>
@@ -476,7 +476,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
           </div>
         </main>
         <footer className="shrink-0 bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
-          <button type="button" onClick={startRecognition} className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">开始识别（{stagedImages.length}张）</button>
+          <button type="button" onClick={startRecognition} className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)]">开始识别（{stagedImages.length}张）</button>
         </footer>
         <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={event => stageFiles(event.target.files, 'camera')} />
         <input ref={galleryInputRef} type="file" accept="image/*" multiple className="hidden" onChange={event => stageFiles(event.target.files, 'gallery')} />
@@ -490,15 +490,15 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
         {renderHeader('作业结果', () => setActiveAssignmentDetailId(null))}
         <main className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[var(--tm-space-5)] pt-[var(--tm-space-3)] no-scrollbar">
-          <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
+          <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
             <strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{getDraftClassLabel(activeDraft) || '待匹配班级'} · {activeDraft.subject || '待补充学科'}</strong>
             <div className="mt-[var(--tm-space-3)] grid grid-cols-2 gap-[var(--tm-space-2)]">
-              <input aria-label="作业日期" type="date" value={activeAssignmentDetail.date} onChange={event => updateAssignment(activeAssignmentDetail.id, item => ({ ...item, date: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
-              <input aria-label="作业主题" value={activeAssignmentDetail.title} onChange={event => updateAssignment(activeAssignmentDetail.id, item => ({ ...item, title: event.target.value }))} placeholder="作业主题" className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
+              <input aria-label="作业日期" type="date" value={activeAssignmentDetail.date} onChange={event => updateAssignment(activeAssignmentDetail.id, item => ({ ...item, date: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
+              <input aria-label="作业主题" value={activeAssignmentDetail.title} onChange={event => updateAssignment(activeAssignmentDetail.id, item => ({ ...item, title: event.target.value }))} placeholder="作业主题" className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
             </div>
           </section>
 
-          <section className="mt-[var(--tm-space-3)] overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]" aria-label="学生作业结果">
+          <section className="mt-[var(--tm-layout-card-gap)] overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]" aria-label="学生作业结果">
             {activeAssignmentDetail.results.map((resultItem, resultIndex) => (
               <div key={resultItem.studentId} className={`grid min-h-[60px] grid-cols-[104px_minmax(0,1fr)] items-center gap-[var(--tm-space-2)] px-[var(--tm-space-2)] py-[var(--tm-space-2)] ${resultIndex > 0 ? 'border-t border-[var(--tm-border-subtle)]' : ''}`}>
                 <div className="flex min-w-0 items-center gap-[var(--tm-space-2)]">
@@ -523,8 +523,8 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent">
         {renderHeader('识别结果', () => setActiveDraftId(null))}
         <main className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[var(--tm-space-5)] pt-[var(--tm-space-3)] no-scrollbar">
-          <section className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
-            <span className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)]">
+          <section className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
+            <span className="flex h-16 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)]">
               {activeDraft.previewUrl ? <img src={activeDraft.previewUrl} alt="作业表原图" className="h-full w-full object-cover" /> : <FileImage className="h-6 w-6 text-[var(--tm-text-tertiary)]" />}
             </span>
             <div className="min-w-0 flex-1">
@@ -535,6 +535,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
 
           {reviewTabsVisible && (
             <CompactSegmentedControl
+              shape="subtle"
               value={reviewMode}
               items={[{ value: 'issues', label: `待核对 ${unresolvedIssues.length}` }, { value: 'all', label: '完整结果' }]}
               onChange={value => setReviewMode(value as 'issues' | 'all')}
@@ -545,9 +546,9 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
           )}
 
           {reviewMode === 'issues' && reviewTabsVisible && (
-            <section className="mt-[var(--tm-space-3)] space-y-[var(--tm-space-2)]" aria-label="待核对项">
+            <section className="mt-[var(--tm-layout-card-gap)] space-y-[var(--tm-layout-list-gap-compact)]" aria-label="待核对项">
               {unresolvedIssues.length === 0 && (
-                <div className="flex min-h-[144px] flex-col items-center justify-center rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)]">
+                <div className="flex min-h-[144px] flex-col items-center justify-center rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)]">
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><Check className="h-5 w-5" /></span>
                   <strong className="mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">已完成核对</strong>
                 </div>
@@ -559,7 +560,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                   .find(roster => roster.classId === assignment?.classId)
                   ?.students.filter(student => student.status === 'active') ?? [];
                 return (
-                  <div key={issue.id} className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
+                  <div key={issue.id} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
                     <div className="flex gap-[var(--tm-space-2)]">
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tm-status-negative)]" />
                       <div className="min-w-0 flex-1">
@@ -569,20 +570,20 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                         )}
                         {issue.type === 'class_mismatch' && (
                           <div className="mt-[var(--tm-space-2)] flex gap-[var(--tm-space-2)]">
-                            <select aria-label="选择班级" value={classMatchSelections[issue.id] ?? ''} onChange={event => setClassMatchSelections(current => ({ ...current, [issue.id]: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 flex-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
+                            <select aria-label="选择班级" value={classMatchSelections[issue.id] ?? ''} onChange={event => setClassMatchSelections(current => ({ ...current, [issue.id]: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 flex-1 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
                               <option value="">选择班级</option>
                               {currentRosters.map(roster => <option key={roster.id} value={roster.id}>{getRosterClassLabel(roster)}</option>)}
                             </select>
-                            <button type="button" disabled={!classMatchSelections[issue.id]} onClick={() => matchDraftToRoster(issue.id, classMatchSelections[issue.id])} className="h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-disabled)]">匹配</button>
+                            <button type="button" disabled={!classMatchSelections[issue.id]} onClick={() => matchDraftToRoster(issue.id, classMatchSelections[issue.id])} className="h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-disabled)]">匹配</button>
                           </div>
                         )}
                         {issue.type === 'student_mismatch' && assignment && issue.studentId && (
                           <div className="mt-[var(--tm-space-2)] flex gap-[var(--tm-space-2)]">
-                            <select aria-label="选择学生" value={studentMatchSelections[issue.id] ?? ''} onChange={event => setStudentMatchSelections(current => ({ ...current, [issue.id]: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 flex-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
+                            <select aria-label="选择学生" value={studentMatchSelections[issue.id] ?? ''} onChange={event => setStudentMatchSelections(current => ({ ...current, [issue.id]: event.target.value }))} className="h-[var(--tm-size-touch)] min-w-0 flex-1 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
                               <option value="">选择学生</option>
                               {classStudents.map(student => <option key={student.studentId} value={student.studentId}>{student.studentNo} {student.name}</option>)}
                             </select>
-                            <button type="button" disabled={!studentMatchSelections[issue.id]} onClick={() => matchDraftStudent(issue.id, assignment.id, issue.studentId!, studentMatchSelections[issue.id])} className="h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-disabled)]">匹配</button>
+                            <button type="button" disabled={!studentMatchSelections[issue.id]} onClick={() => matchDraftStudent(issue.id, assignment.id, issue.studentId!, studentMatchSelections[issue.id])} className="h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-disabled)]">匹配</button>
                           </div>
                         )}
                         {issue.type === 'missing_metadata' && <button type="button" onClick={() => setActiveAssignmentDetailId(issue.assignmentId ?? null)} className="mt-[var(--tm-space-2)] min-h-[var(--tm-size-touch)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">进入补全</button>}
@@ -597,23 +598,23 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
 
           {(reviewMode === 'all' || !reviewTabsVisible) && (
             <>
-              <section className="mt-[var(--tm-space-3)] grid grid-cols-2 gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
+              <section className="mt-[var(--tm-layout-card-gap)] grid grid-cols-2 gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]">
                 <label className="block min-w-0">
                   <span className="mb-[var(--tm-space-1)] block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">班级</span>
-                  <select aria-label="修改班级" value={currentRosters.find(roster => roster.classId === activeDraft.assignments[0]?.classId)?.id ?? ''} onChange={event => requestDraftRosterChange(event.target.value)} className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
+                  <select aria-label="修改班级" value={currentRosters.find(roster => roster.classId === activeDraft.assignments[0]?.classId)?.id ?? ''} onChange={event => requestDraftRosterChange(event.target.value)} className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]">
                     <option value="">选择班级</option>
                     {currentRosters.map(roster => <option key={roster.id} value={roster.id}>{getRosterClassLabel(roster)}</option>)}
                   </select>
                 </label>
                 <label className="block min-w-0">
                   <span className="mb-[var(--tm-space-1)] block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">学科</span>
-                  <input aria-label="修改学科" value={activeDraft.subject} onChange={event => updateDraftSubject(activeDraft.id, event.target.value)} placeholder="学科" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
+                  <input aria-label="修改学科" value={activeDraft.subject} onChange={event => updateDraftSubject(activeDraft.id, event.target.value)} placeholder="学科" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)]" />
                 </label>
               </section>
-              <section className="mt-[var(--tm-space-3)] space-y-[var(--tm-space-3)]" aria-label="完整识别结果">
+              <section className="mt-[var(--tm-layout-card-gap)] space-y-[var(--tm-layout-card-gap)]" aria-label="完整识别结果">
                 {activeDraft.assignments.filter(assignment => !skippedAssignmentIds.has(assignment.id)).map(assignment => (
-                  <button key={assignment.id} type="button" onClick={() => setActiveAssignmentDetailId(assignment.id)} className="flex min-h-[72px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-left [box-shadow:var(--tm-shadow-card)]">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><FileText className="h-5 w-5" /></span>
+                  <button key={assignment.id} type="button" onClick={() => setActiveAssignmentDetailId(assignment.id)} className="flex min-h-[72px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-left [box-shadow:var(--tm-shadow-card)]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><FileText className="h-5 w-5" /></span>
                     <span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{assignment.title || '待补充作业主题'}</strong><span className="mt-1 block text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{assignment.date || '待补充日期'} · {assignment.results.length}人</span></span>
                     <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-disabled)]" />
                   </button>
@@ -628,8 +629,8 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
           onClose={() => setPendingRosterId(null)}
           footer={(
             <div className="grid grid-cols-2 gap-[var(--tm-space-2)]">
-              <button type="button" onClick={() => setPendingRosterId(null)} className="h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)]">取消</button>
-              <button type="button" onClick={() => pendingRosterId && selectDraftRoster(activeDraft.id, pendingRosterId)} className="h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)]">重新匹配</button>
+              <button type="button" onClick={() => setPendingRosterId(null)} className="h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)]">取消</button>
+              <button type="button" onClick={() => pendingRosterId && selectDraftRoster(activeDraft.id, pendingRosterId)} className="h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)]">重新匹配</button>
             </div>
           )}
         >
@@ -645,18 +646,18 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
       {renderHeader('作业录入', onBack)}
       <main className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(96px+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] no-scrollbar">
         <div className="mb-[var(--tm-space-2)] flex justify-end">
-          <button type="button" onClick={() => setTemplateSheetOpen(true)} className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+          <button type="button" onClick={() => setTemplateSheetOpen(true)} className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
             <FileText className="h-4 w-4" />
             下载导入模版
           </button>
         </div>
-        <div className="space-y-[var(--tm-space-3)]">
+        <div className="space-y-[var(--tm-layout-card-gap)]">
           {drafts.map(draft => {
             const issueCount = draft.issues.filter(issue => !issue.resolved).length;
             return (
-              <article key={draft.id} className="flex min-h-[88px] w-full items-center overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+              <article key={draft.id} className="flex min-h-[88px] w-full items-center overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
                 <button type="button" onClick={() => openDraft(draft)} className="flex min-w-0 flex-1 items-center gap-[var(--tm-space-3)] p-[var(--tm-space-3)] pr-[var(--tm-space-1)] text-left" aria-label={`查看${getDraftClassLabel(draft) || '待匹配班级'}${draft.subject || '待补充学科'}识别结果`}>
-                  <span className="flex h-[68px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)]">
+                  <span className="flex h-[68px] w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)]">
                     {draft.previewUrl ? <img src={draft.previewUrl} alt="" className="h-full w-full object-cover" /> : <FileImage className="h-6 w-6 text-[var(--tm-text-tertiary)]" />}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -665,7 +666,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                     <span className={`mt-1 block text-[length:var(--tm-font-size-compact)] font-semibold ${issueCount > 0 ? 'text-[var(--tm-status-negative)]' : 'text-[var(--tm-status-positive-strong)]'}`}>{issueCount > 0 ? `${issueCount}项待核对` : '已录入'}</span>
                   </span>
                 </button>
-                <button type="button" onClick={() => setActionDraftId(draft.id)} className="mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`${getDraftClassLabel(draft) || '当前'}识别任务更多操作`} title="更多操作"><MoreHorizontal className="h-5 w-5" /></button>
+                <button type="button" onClick={() => setActionDraftId(draft.id)} className="mr-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label={`${getDraftClassLabel(draft) || '当前'}识别任务更多操作`} title="更多操作"><MoreHorizontal className="h-5 w-5" /></button>
               </article>
             );
           })}
@@ -678,11 +679,11 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
           )}
         </div>
       </main>
-      <button type="button" onClick={() => setUploadSheetOpen(true)} className="absolute bottom-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] right-[var(--tm-space-4)] flex h-14 items-center justify-center gap-2 rounded-full bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)] active:scale-95"><FileImage className="h-5 w-5" />识别作业表</button>
+      <button type="button" onClick={() => setUploadSheetOpen(true)} className="absolute bottom-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] right-[var(--tm-space-4)] flex h-14 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)] active:scale-95"><FileImage className="h-5 w-5" />识别作业表</button>
       <MobileBottomSheet open={uploadSheetOpen} title="识别作业表" onClose={() => setUploadSheetOpen(false)} contentTone="plain">
-        <div className="space-y-[var(--tm-space-2)] pt-[var(--tm-space-3)]">
-          <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex min-h-[60px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card-on-white)]"><span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><Camera className="h-5 w-5" /></span><strong className="text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">拍照</strong></button>
-          <button type="button" onClick={() => galleryInputRef.current?.click()} className="flex min-h-[60px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card-on-white)]"><span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><Image className="h-5 w-5" /></span><strong className="text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">从相册选择</strong></button>
+        <div className="space-y-[var(--tm-layout-list-gap-compact)] pt-[var(--tm-space-3)]">
+          <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex min-h-[60px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card-on-white)]"><span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><Camera className="h-5 w-5" /></span><strong className="text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">拍照</strong></button>
+          <button type="button" onClick={() => galleryInputRef.current?.click()} className="flex min-h-[60px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-left [box-shadow:var(--tm-shadow-card-on-white)]"><span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><Image className="h-5 w-5" /></span><strong className="text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">从相册选择</strong></button>
         </div>
       </MobileBottomSheet>
       <MobileBottomSheet
@@ -700,7 +701,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
           </header>
         ) : undefined}
         footer={templatePreviewPageSize ? (
-          <button type="button" onClick={() => downloadPrintTemplate(templatePreviewPageSize)} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2">
+          <button type="button" onClick={() => downloadPrintTemplate(templatePreviewPageSize)} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2">
             <Printer className="h-5 w-5" aria-hidden="true" />下载 {templatePreviewPageSize} 模版
           </button>
         ) : undefined}
@@ -716,10 +717,10 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-[var(--tm-space-3)] pt-[var(--tm-space-3)]">
+          <div className="space-y-[var(--tm-layout-card-gap)] pt-[var(--tm-space-3)]">
             {templatePageSizes.map(pageSize => (
-              <article key={pageSize} className="flex min-h-[124px] items-stretch gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card-on-white)]">
-                <button type="button" onClick={() => previewTemplate(pageSize)} className="relative w-[128px] shrink-0 overflow-hidden rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]" style={{ aspectRatio: '3508 / 2480' }} aria-label={`预览${pageSize}模板`}>
+              <article key={pageSize} className="flex min-h-[124px] items-stretch gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card-on-white)]">
+                <button type="button" onClick={() => previewTemplate(pageSize)} className="relative w-[128px] shrink-0 overflow-hidden rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]" style={{ aspectRatio: '3508 / 2480' }} aria-label={`预览${pageSize}模板`}>
                   <img src={templatePreviewUrls?.[pageSize]} alt="" className="h-full w-full object-contain" aria-hidden="true" />
                   <span className="absolute bottom-[var(--tm-space-1)] right-[var(--tm-space-1)] flex h-6 items-center gap-1 rounded-[var(--tm-radius-badge)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]"><Maximize2 className="h-3 w-3" aria-hidden="true" />预览</span>
                 </button>
@@ -728,7 +729,7 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
                     <h3 className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{pageSize} 横向</h3>
                     <p className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{HOMEWORK_TEMPLATE_CAPACITY[pageSize]}人 · {templateSequenceRange[pageSize]}</p>
                   </div>
-                  <button type="button" onClick={() => downloadPrintTemplate(pageSize)} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"><Printer className="h-4 w-4" aria-hidden="true" />下载 {pageSize} 模版</button>
+                  <button type="button" onClick={() => downloadPrintTemplate(pageSize)} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"><Printer className="h-4 w-4" aria-hidden="true" />下载 {pageSize} 模版</button>
                 </div>
               </article>
             ))}
@@ -737,13 +738,13 @@ const HomeworkBatchImportView: React.FC<HomeworkBatchImportViewProps> = ({
       </MobileBottomSheet>
       <MobileBottomSheet open={Boolean(actionDraft)} title="识别任务操作" onClose={() => setActionDraftId(null)} contentTone="plain">
         <div className="pt-[var(--tm-space-3)]">
-          <button type="button" onClick={() => { if (actionDraft) setDeleteDraftId(actionDraft.id); setActionDraftId(null); }} className="flex min-h-[60px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-left text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-card-on-white)] active:bg-[var(--tm-status-negative-soft)]">
-            <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-soft)]"><Trash2 className="h-5 w-5" /></span>
+          <button type="button" onClick={() => { if (actionDraft) setDeleteDraftId(actionDraft.id); setActionDraftId(null); }} className="flex min-h-[60px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-left text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-card-on-white)] active:bg-[var(--tm-status-negative-soft)]">
+            <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-negative-soft)]"><Trash2 className="h-5 w-5" /></span>
             <strong className="text-[length:var(--tm-font-size-body)]">删除识别任务</strong>
           </button>
         </div>
       </MobileBottomSheet>
-      <MobileConfirmSheet
+      <MobileConfirmSheet shape="subtle"
         open={Boolean(deleteDraft)}
         title="删除识别任务"
         description={`删除后，将同时撤销${deleteDraft ? getDraftClassLabel(deleteDraft) || '该班级' : '该班级'}本次识别产生的${deleteDraft?.assignments.length ?? 0}次作业。`}

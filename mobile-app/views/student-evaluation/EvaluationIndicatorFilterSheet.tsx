@@ -70,7 +70,7 @@ const EvaluationIndicatorFilterSheet: React.FC<EvaluationIndicatorFilterSheetPro
         <button
           type="button"
           onClick={() => applyPath(draftPath)}
-          className="mb-3 min-h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[14px] font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]"
+          className="mb-3 min-h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[14px] font-semibold text-[var(--tm-text-inverse)] active:scale-[0.98]"
         >
           按“{selectedLabel}”筛选
         </button>
@@ -80,7 +80,7 @@ const EvaluationIndicatorFilterSheet: React.FC<EvaluationIndicatorFilterSheetPro
         <button
           type="button"
           onClick={() => applyPath([])}
-          className={`flex min-h-[var(--tm-size-touch)] w-full items-center justify-between rounded-[var(--tm-radius-control)] px-3 text-left transition-colors ${value.length === 0
+          className={`flex min-h-[var(--tm-size-touch)] w-full items-center justify-between rounded-[var(--tm-radius-control-compact)] px-3 text-left transition-colors ${value.length === 0
             ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
             : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
         >
@@ -124,7 +124,7 @@ const EvaluationIndicatorFilterSheet: React.FC<EvaluationIndicatorFilterSheetPro
                 type="button"
                 onClick={() => chooseOption(option)}
                 aria-label={`选择${levelLabels[activeDepth]}${option.label}，${option.count}条评价`}
-                className={`flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 rounded-[var(--tm-radius-control)] px-3 text-left transition-colors ${selected
+                className={`flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 rounded-[var(--tm-radius-control-compact)] px-3 text-left transition-colors ${selected
                   ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
                   : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
               >

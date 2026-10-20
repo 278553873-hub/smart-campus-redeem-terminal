@@ -19,8 +19,9 @@ const CardLevelDisplaySettings: React.FC<CardLevelDisplaySettingsProps> = ({
   levelForm,
   onChange,
 }) => (
-  <div role="group" aria-label="等级展示设置" className="space-y-[var(--tm-space-1)]">
+  <div role="group" aria-label="等级展示设置" className="space-y-[var(--tm-layout-list-gap-compact)]">
     <MobileSettingsSwitchRow
+      shape="subtle"
       label="显示等级"
       checked={showLevel}
       onChange={nextShowLevel => onChange({ showLevel: nextShowLevel, levelForm })}
@@ -32,6 +33,7 @@ const CardLevelDisplaySettings: React.FC<CardLevelDisplaySettingsProps> = ({
           等级形式
         </div>
         <CompactSegmentedControl
+          shape="subtle"
           value={levelForm}
           items={LEVEL_FORM_OPTIONS}
           onChange={nextLevelForm => onChange({ showLevel, levelForm: nextLevelForm })}

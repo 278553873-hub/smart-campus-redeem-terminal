@@ -59,7 +59,6 @@ export default function TeacherCampaignPreview({ campaign }: TeacherCampaignPrev
                         onCloseKeyboard={() => undefined}
                         onCameraClick={() => undefined}
                         onVoicePointerDown={() => undefined}
-                        onVoiceContextMenu={event => event.preventDefault()}
                         onKeyboardClick={() => undefined}
                     />
 

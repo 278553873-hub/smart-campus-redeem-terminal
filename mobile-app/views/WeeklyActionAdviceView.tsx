@@ -132,7 +132,7 @@ const InsufficientContent: React.FC<{
             </section>
 
             {visibleRequirementCount > 0 && (
-                <section className="waa-card-enter mt-6 rounded-[var(--tm-radius-card)] border border-[var(--tm-assistant-role-border)] bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
+                <section className="waa-card-enter mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-assistant-role-border)] bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
                     <h2 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">上周数据</h2>
                     <div className="mt-1 divide-y divide-slate-100">
                         <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
@@ -292,9 +292,9 @@ const WeeklyActionAdviceView: React.FC<WeeklyActionAdviceViewProps> = ({
                     loading ? (
                         <AnalysisProgress visibleStepCount={visibleStepCount} />
                     ) : reportResolution.document ? (
-                        <AssistantReportCards document={reportResolution.document} className="mt-[var(--tm-space-4)]" />
+                        <AssistantReportCards shape="subtle" document={reportResolution.document} className="mt-[var(--tm-layout-card-gap)]" />
                     ) : (
-                        <AssistantReportContractError onRetry={onRetry} />
+                        <AssistantReportContractError shape="subtle" onRetry={onRetry} />
                     )
                 ) : (
                     <InsufficientContent

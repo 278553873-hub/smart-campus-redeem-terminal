@@ -6,14 +6,15 @@ interface StudentHorizontalCardProps {
   student: Student;
   avatarSrc?: string;
   action?: React.ReactNode;
+  shape?: 'default' | 'subtle';
 }
 
 /**
  * 横版学生卡片：一行展示头像、姓名与学号，右侧承载该场景的操作入口。
  * 用于更新人脸等需要逐生操作的列表；头像缺省时回退中性占位图标。
  */
-const StudentHorizontalCard: React.FC<StudentHorizontalCardProps> = ({ student, avatarSrc, action }) => (
-  <article className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-control)]">
+const StudentHorizontalCard: React.FC<StudentHorizontalCardProps> = ({ student, avatarSrc, action, shape = 'default' }) => (
+  <article style={shape === 'subtle' ? { borderRadius: 'var(--tm-radius-card-compact)' } : undefined} className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-control)]">
     <div className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">
       {avatarSrc
         ? <img src={avatarSrc} alt="" className="h-10 w-10 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" />

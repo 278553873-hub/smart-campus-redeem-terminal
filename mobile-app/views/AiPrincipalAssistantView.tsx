@@ -195,16 +195,16 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
                     />
                 </section>
 
-                <section className="assistant-agent-glass assistant-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="校长助理分析能力">
-                    <div className="mx-3 space-y-2 pb-2">
+                <section className="assistant-agent-glass assistant-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card-compact)] p-2" aria-label="校长助理分析能力">
+                    <div className="mx-3 space-y-[var(--tm-layout-card-gap)] pb-2">
                         {visibleAssistantOptions.map(item => (
                             <button
                                 key={item.title}
                                 type="button"
                                 onClick={() => handleOption(item)}
-                                className="flex min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] pl-3 pr-3.5 text-left [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                                className="flex min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] pl-3 pr-3.5 text-left [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
                             >
-                                <span className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ' + optionToneClass[item.tone]} aria-hidden="true">
+                                <span className={'flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ' + optionToneClass[item.tone]} aria-hidden="true">
                                     <item.icon className="h-[17px] w-[17px]" strokeWidth={2} />
                                 </span>
                                 <span className="min-w-0 flex-1 whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)]">{item.title}</span>
@@ -230,14 +230,14 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
                     draft={draft}
                     replying={isReplying}
                     suggestedQuestions={suggestedQuestions}
-                    placeholder="输入学校管理问题"
+                    placeholder="请输入"
                     onDraftChange={setDraft}
                     onSubmit={submitQuestion}
                 />
                 <p className="px-4 pb-[calc(6px+env(safe-area-inset-bottom))] pt-1 text-center text-[10px] leading-4 text-[var(--tm-text-disabled)]">内容由AI生成仅供参考。</p>
             </footer>
 
-            <MobileNoticeSheet
+            <MobileNoticeSheet shape="subtle"
                 open={Boolean(notice)}
                 title={notice?.title ?? ''}
                 message={notice?.message ?? ''}

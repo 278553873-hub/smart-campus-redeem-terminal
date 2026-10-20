@@ -1,3 +1,4 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from '../../components/GrowthCoinBranding';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, Eraser } from 'lucide-react';
 import { ASSETS } from '../assets/images';
@@ -7,7 +8,6 @@ import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileToast from '../components/ui/MobileToast';
-import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology';
 import {
   countActiveCoinLedgerEntries,
   filterCoinLedgerEntries,
@@ -38,6 +38,7 @@ const formatMonthLabel = (month: string) => {
 };
 
 const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ students, entries, onRevokeEntry, onBack }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const today = useMemo(() => new Date(), []);
   const todayKey = formatCoinLedgerDateKey(today);
   const [filter, setFilter] = useState<{ type: 'month'; month: string }>(() => ({ type: 'month', month: toMonthValue(new Date()) }));
@@ -150,13 +151,13 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
                       <span className="flex shrink-0 items-center gap-1">
                         <strong className={`flex items-center gap-1 text-[length:var(--tm-font-size-body)] font-semibold tabular-nums ${entry.revoked ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-chart-negative-text)]'}`}>
                           <span className="sr-only">{entry.type === 'redeem' ? '消耗' : '清空'}{formatCoinAmount(entry.totalAmount)}{GROWTH_COIN_TERMS.name}</span>
-                          <img src="/assets/coin.png" alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
+                          <GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
                           <span aria-hidden="true">-{formatCoinAmount(entry.totalAmount)}</span>
                         </strong>
                         {entry.revoked && <span className="shrink-0 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-tertiary)]">已撤回</span>}
                       </span>
                     </span>
-                    <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{getCoinLedgerEntryTitle(entry)}</span>
+                    <span className="mt-1 block truncate text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{getCoinLedgerEntryTitle(entry, GROWTH_COIN_TERMS.name)}</span>
                     <time dateTime={entry.time.replace(' ', 'T')} className="mt-1 block text-[length:var(--tm-font-size-meta)] tabular-nums text-[var(--tm-text-tertiary)]">{formatCoinLedgerTimeLabel(entry.time, todayKey)}</time>
                   </span>
                 </button>
@@ -168,7 +169,7 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
         )}
       </div>
 
-      <MobileDatePickerSheet
+      <MobileDatePickerSheet shape="subtle"
         open={sheetOpen}
         mode="month"
         monthSelection="wheel"
@@ -181,13 +182,13 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
 
       <MobileBottomSheet
         open={Boolean(detailEntry)}
-        title={detailEntry ? (detailEntry.type === 'clear' ? getCoinLedgerEntryTitle(detailEntry) : '兑换详情') : ''}
+        title={detailEntry ? (detailEntry.type === 'clear' ? getCoinLedgerEntryTitle(detailEntry, GROWTH_COIN_TERMS.name) : '兑换详情') : ''}
         onClose={() => setDetailEntryId(null)}
         footer={detailEntry && isCoinLedgerEntryRevocable(detailEntry, todayKey) ? (
           <button
             type="button"
             onClick={() => setShowRevokeConfirm(true)}
-            className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative-soft)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-status-negative-strong)] active:bg-[var(--tm-bg-surface-muted)]"
+            className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-negative)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-status-negative-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
           >
             撤回本次兑换
           </button>
@@ -195,15 +196,15 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
       >
         {detailEntry && (
           <div className="pb-2">
-            <div className="flex items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5">
+            <div className="flex items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5">
               <span className="min-w-0">
                 <span className="block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{detailEntry.type === 'redeem' ? '兑换商品' : '操作类型'}</span>
                 <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
-                  {getCoinLedgerEntryTitle(detailEntry)}
+                  {getCoinLedgerEntryTitle(detailEntry, GROWTH_COIN_TERMS.name)}
                 </span>
               </span>
               <strong className={`flex shrink-0 items-center gap-1 text-[length:var(--tm-font-size-body)] font-semibold tabular-nums ${detailEntry.revoked ? 'text-[var(--tm-text-tertiary)]' : 'text-[var(--tm-chart-negative-text)]'}`}>
-                <img src="/assets/coin.png" alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
+                <GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
                 <span aria-hidden="true">-{formatCoinAmount(detailEntry.totalAmount)}</span>
                 <span className="sr-only">共扣除{formatCoinAmount(detailEntry.totalAmount)}{GROWTH_COIN_TERMS.name}</span>
               </strong>
@@ -228,7 +229,7 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
                     {bankAmount > 0 ? (
                       <span className="flex shrink-0 flex-col items-end gap-0.5">
                         <strong className="flex items-center gap-1 text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-chart-negative-text)]">
-                          <img src="/assets/coin.png" alt="" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                          <GrowthCoinIcon alt="" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                           <span aria-hidden="true">-{formatCoinAmount(share.amount)}</span>
                           <span className="sr-only">{GROWTH_COIN_TERMS.available}扣除{formatCoinAmount(share.amount)}{GROWTH_COIN_TERMS.name}</span>
                         </strong>
@@ -239,7 +240,7 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
                       </span>
                     ) : (
                       <strong className="flex shrink-0 items-center gap-1 text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-chart-negative-text)]">
-                        <img src="/assets/coin.png" alt="" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                        <GrowthCoinIcon alt="" aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                         <span aria-hidden="true">-{formatCoinAmount(share.amount)}</span>
                         <span className="sr-only">扣除{formatCoinAmount(share.amount)}{GROWTH_COIN_TERMS.name}</span>
                       </strong>
@@ -269,7 +270,7 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
         )}
       </MobileBottomSheet>
 
-      <MobileConfirmSheet
+      <MobileConfirmSheet shape="subtle"
         open={showRevokeConfirm}
         tone="danger"
         title="撤回本次兑换"

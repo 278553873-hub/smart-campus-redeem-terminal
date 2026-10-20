@@ -1,9 +1,9 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 
 import React, { useState } from 'react';
 import { ArrowRight, AlertCircle } from 'lucide-react';
 import { Student } from '../types';
 import { EXCHANGE_RATE } from '../constants';
-import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 
 interface ExchangeViewProps {
   student: Student;
@@ -12,6 +12,7 @@ interface ExchangeViewProps {
 }
 
 const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const [amount, setAmount] = useState(0);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -41,7 +42,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
 
         <div className="text-center">
           <div className="text-[10px] font-black text-yellow-500 mb-1">预计获得{GROWTH_COIN_TERMS.name}</div>
-          <div className="text-5xl font-black text-yellow-500 leading-none"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {coinsGained}</div>
+          <div className="text-5xl font-black text-yellow-500 leading-none"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> {coinsGained}</div>
         </div>
       </div>
 
@@ -96,7 +97,7 @@ const ExchangeView: React.FC<ExchangeViewProps> = ({ student, onExchange }) => {
               </div>
               <div className="flex justify-between items-center bg-yellow-50 p-5 rounded-2xl border border-yellow-100">
                 <span className="text-yellow-600 font-bold">兑换获得{GROWTH_COIN_TERMS.name}</span>
-                <span className="text-2xl font-black text-yellow-600"><img src="/assets/coin.png" className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{coinsGained}</span>
+                <span className="text-2xl font-black text-yellow-600"><GrowthCoinIcon className="inline-block w-[1.1em] h-[1.1em] align-middle drop-shadow-sm mx-1 -translate-y-[1px]" alt="coin" /> +{coinsGained}</span>
               </div>
             </div>
 

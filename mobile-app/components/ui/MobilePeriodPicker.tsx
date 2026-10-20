@@ -12,6 +12,7 @@ export interface MobilePeriodOption {
 }
 
 interface MobilePeriodPickerProps {
+    shape?: 'default' | 'subtle';
     periods: MobilePeriodOption[];
     selectedPeriodId: string;
     onSelect: (periodId: string) => void;
@@ -40,8 +41,8 @@ const periodTypeLabels: Record<MobilePeriodType, string> = {
     term: '学期',
 };
 
-const pickerButtonClass = (selected: boolean, enabled: boolean) => (
-    `relative flex min-h-[58px] items-center justify-center rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[14px] font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] transition-[color,background-color] [transition-duration:var(--tm-duration-fast)] ${selected
+const pickerButtonClass = (selected: boolean, enabled: boolean, shape: 'default' | 'subtle') => (
+    `relative flex min-h-[58px] items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} px-[var(--tm-space-2)] text-[14px] font-semibold tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] transition-[color,background-color] [transition-duration:var(--tm-duration-fast)] ${selected
         ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]'
         : enabled
             ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]'
@@ -76,7 +77,7 @@ const PickerHeader = ({
     </div>
 );
 
-const MobilePeriodPicker: React.FC<MobilePeriodPickerProps> = ({ periods: inputPeriods, selectedPeriodId, onSelect }) => {
+const MobilePeriodPicker: React.FC<MobilePeriodPickerProps> = ({ periods: inputPeriods, selectedPeriodId, onSelect, shape = 'default' }) => {
     const periods = useMemo(() => [...inputPeriods].sort((a, b) => a.startDate.localeCompare(b.startDate)), [inputPeriods]);
     const selectedPeriod = periods.find(period => period.id === selectedPeriodId) ?? periods[periods.length - 1];
     const periodType = selectedPeriod?.type ?? periods[0]?.type ?? 'week';
@@ -117,7 +118,7 @@ const MobilePeriodPicker: React.FC<MobilePeriodPickerProps> = ({ periods: inputP
                 <div className="grid grid-cols-2 gap-[var(--tm-space-2)]" role="group" aria-label="周期范围">
                     {visiblePeriods.map(period => {
                         const selected = period.id === selectedPeriodId;
-                        return <button key={period.id} type="button" aria-pressed={selected} onClick={() => onSelect(period.id)} className={pickerButtonClass(selected, true)}>{formatWeekRange(period)}</button>;
+                        return <button key={period.id} type="button" aria-pressed={selected} onClick={() => onSelect(period.id)} className={pickerButtonClass(selected, true, shape)}>{formatWeekRange(period)}</button>;
                     })}
                 </div>
             </div>
@@ -141,7 +142,7 @@ const MobilePeriodPicker: React.FC<MobilePeriodPickerProps> = ({ periods: inputP
                         const period = periods.find(item => parseDate(item.startDate).getFullYear() === visibleYear && parseDate(item.startDate).getMonth() === monthIndex);
                         const selected = period?.id === selectedPeriodId;
                         return (
-                            <button key={monthIndex} type="button" disabled={!period} aria-pressed={selected} onClick={() => period && onSelect(period.id)} className={pickerButtonClass(Boolean(selected), Boolean(period))}>
+                            <button key={monthIndex} type="button" disabled={!period} aria-pressed={selected} onClick={() => period && onSelect(period.id)} className={pickerButtonClass(Boolean(selected), Boolean(period), shape)}>
                                 {monthIndex + 1}月
                             </button>
                         );
@@ -167,7 +168,7 @@ const MobilePeriodPicker: React.FC<MobilePeriodPickerProps> = ({ periods: inputP
                 {['第一学期', '第二学期'].map((label, index) => {
                     const period = termPeriods.find(item => item.label.includes(label));
                     const selected = period?.id === selectedPeriodId;
-                    return <button key={label} type="button" disabled={!period} aria-pressed={selected} onClick={() => period && onSelect(period.id)} className={`${pickerButtonClass(Boolean(selected), Boolean(period))} min-h-[72px]`}>{label}</button>;
+                    return <button key={label} type="button" disabled={!period} aria-pressed={selected} onClick={() => period && onSelect(period.id)} className={`${pickerButtonClass(Boolean(selected), Boolean(period), shape)} min-h-[72px]`}>{label}</button>;
                 })}
             </div>
         </div>

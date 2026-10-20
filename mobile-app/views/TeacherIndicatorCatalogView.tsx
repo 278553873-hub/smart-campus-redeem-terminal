@@ -16,7 +16,7 @@ interface TeacherIndicatorCatalogViewProps {
 
 interface SelectedIndicator {
   leaf: TeacherIndicatorLeaf;
-  path: [string, string, string];
+  path: string[];
 }
 
 const TeacherIndicatorCatalogView: React.FC<TeacherIndicatorCatalogViewProps> = ({ scope, onBack }) => {

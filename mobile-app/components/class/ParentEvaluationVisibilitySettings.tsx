@@ -13,6 +13,7 @@ interface ParentEvaluationVisibilitySettingsProps {
   readOnly?: boolean;
   readOnlyNotice?: string;
   showPreview?: boolean;
+  controlShape?: 'default' | 'subtle';
 }
 
 export interface ParentEvaluationVisibilityPreviewProps {
@@ -123,6 +124,7 @@ const ParentEvaluationVisibilitySettings: React.FC<ParentEvaluationVisibilitySet
   readOnly = false,
   readOnlyNotice,
   showPreview = true,
+  controlShape = 'default',
 }) => {
   const visibility = getParentEvaluationVisibilitySettings(settings);
 
@@ -140,7 +142,7 @@ const ParentEvaluationVisibilitySettings: React.FC<ParentEvaluationVisibilitySet
       {readOnly && (
         <div
           role="status"
-          className="mb-[var(--tm-space-4)] flex items-start gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]"
+          className="mb-[var(--tm-layout-card-gap)] flex items-start gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]"
         >
           <Shield className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" aria-hidden="true" />
           <div className="leading-snug">
@@ -162,6 +164,7 @@ const ParentEvaluationVisibilitySettings: React.FC<ParentEvaluationVisibilitySet
             items={VISIBILITY_OPTIONS}
             onChange={value => updateVisibility('positive', value)}
             ariaLabel="表扬家长端展示范围"
+            shape={controlShape}
             fullWidth
             semantics="group"
             motion="sliding"
@@ -181,6 +184,7 @@ const ParentEvaluationVisibilitySettings: React.FC<ParentEvaluationVisibilitySet
             items={VISIBILITY_OPTIONS}
             onChange={value => updateVisibility('negative', value)}
             ariaLabel="待改进家长端展示范围"
+            shape={controlShape}
             fullWidth
             semantics="group"
             motion="sliding"

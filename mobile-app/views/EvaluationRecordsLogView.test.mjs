@@ -43,7 +43,7 @@ assert.ok(classCascadeSource.includes('const classSelectionOptionClass =') && cl
 assert.ok(viewSource.includes('ariaLabel="评价记录时间范围"') && viewSource.includes('handleTimeRangeChange'), '评价明细应复用报告日期栏并按时间过滤。');
 assert.ok(viewSource.includes('<MobileBottomSheet') && !viewSource.includes('title="选择日期范围"') && !viewSource.includes('confirmLabel="应用日期"'), '自定义日期应通过公共底部抽屉渐进披露。');
 assert.ok(viewSource.includes('recordDay >= start && recordDay <= end'), '自定义日期应实际过滤记录，而不是仅改变选中状态。');
-assert.ok(viewSource.includes('<ol className="space-y-4"') && viewSource.includes('[box-shadow:var(--tm-shadow-card)]'), '评价记录应使用留白充足的独立轻量卡片展示。');
+assert.ok(viewSource.includes('<ol className="space-y-[var(--tm-layout-card-gap)]"') && viewSource.includes('[box-shadow:var(--tm-shadow-card)]'), '评价记录应使用间距统一的独立轻量卡片展示。');
 assert.ok(viewSource.includes('onClick={() => openRecordDetail(record)}') && viewSource.includes('{record.reason}') && viewSource.includes('formatScore(record.score)'), '评价卡片应可进入详情，并展示解析理由和两位小数得分。');
 assert.ok(viewSource.includes("const formatScore = (score: number) => `${score > 0 ? '+' : ''}${score.toFixed(2)}`;") && !viewSource.includes("${score.toFixed(2)}分`"), '加减分数值不应重复展示“分”单位。');
 assert.ok(viewSource.includes("selectedClassId === 'all' && (") && viewSource.includes('{record.className}</p>') && viewSource.includes('{record.operator}'), '未筛选具体班级时卡片应展示班级，并始终展示评价人。');
@@ -92,7 +92,7 @@ for (const required of [
   "activeRecord.sourceType === 'voice'",
   'playRecordAudio(activeRecord)',
   'activeRecord.audioTranscript ?? activeRecord.originalContent',
-  'rounded-[var(--tm-radius-control)]',
+  'rounded-[var(--tm-radius-control-compact)]',
   'border-[var(--tm-evaluation-source-border)]',
   'bg-[var(--tm-evaluation-source-bg)]',
 ]) {
@@ -154,7 +154,7 @@ assert.ok(
   '详情指标应使用11像素紧凑标签并完整保留三级路径。',
 );
 assert.ok(detailViewSource.includes('<p className="w-full') && !detailViewSource.includes('<div className="flex items-start gap-3">'), '原始记录正文应始终独占完整一行，不因语音控件改变宽度。');
-assert.ok(detailViewSource.includes('text-[var(--tm-evaluation-source-control-text)]') && detailViewSource.includes('flex h-7 items-center gap-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-bg-surface)]'), '语音播放键和秒数应使用已有数据蓝派生的紧凑描边圆角控件。');
+assert.ok(detailViewSource.includes('text-[var(--tm-evaluation-source-control-text)]') && detailViewSource.includes('flex h-7 items-center gap-1 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-bg-surface)]'), '语音播放键和秒数应使用已有数据蓝派生的紧凑描边圆角控件。');
 assert.ok(detailViewSource.includes('className="h-3 w-3 stroke-[2.25]"') && detailViewSource.includes('className="h-3 w-3 fill-current stroke-[1.5]"'), '播放与暂停图标应统一使用紧凑的12像素视觉尺寸。');
 assert.ok(!viewSource.includes('text-[24px] font-bold') && !viewSource.includes('>详细指标</h3>'), '评价详情不应保留过重的顶部得分或重复的详细指标标题。');
 const detailHeaderPosition = viewSource.indexOf('<header className="flex h-14');

@@ -195,7 +195,7 @@ const createRecordDraft = (record: EvaluationRecord): EvaluationRecordDraft => {
     };
 };
 
-const recordFieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+const recordFieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
 interface EvaluationIndicatorPathProps {
     indicatorPath: string;
@@ -473,7 +473,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 </div>
 
                 {filteredRecords.length > 0 ? (
-                    <ol className="space-y-4" aria-label={`${selectedScopeLabel}评价记录`}>
+                    <ol className="space-y-[var(--tm-layout-card-gap)]" aria-label={`${selectedScopeLabel}评价记录`}>
                         {filteredRecords.map(record => {
                             return (
                                 <li key={record.id}>
@@ -481,7 +481,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                         type="button"
                                         onClick={() => openRecordDetail(record)}
                                         aria-label={`查看${getRecordClassLabel(record)}评价详情，${formatScore(record.score)}`}
-                                        className="w-full rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                        className="w-full rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                     >
                                         {selectedClassId === 'all' && (
                                             <p className="truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{getRecordClassLabel(record)}</p>
@@ -546,7 +546,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                 setRecordEditScope(null);
                                 setRecordDraft(null);
                             }}
-                            className="flex min-h-12 items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                            className="flex min-h-12 items-center justify-center rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
                         >
                             取消
                         </button>
@@ -554,7 +554,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                             type="button"
                             disabled={recordDraftInvalid}
                             onClick={saveRecordChanges}
-                            className="flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]"
+                            className="flex min-h-12 items-center justify-center gap-1.5 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]"
                         >
                             <Check aria-hidden="true" className="h-4 w-4" />保存
                         </button>
@@ -562,10 +562,10 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 ) : undefined}
             >
                 {activeRecord && !isEditingRecord && (
-                    <div className="space-y-4">
+                    <div className="space-y-[var(--tm-layout-card-gap)]">
                         <section>
                             <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">AI识别</h3>
-                            <div className="mt-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 py-2.5">
+                            <div className="mt-2.5 rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 py-2.5">
                                 <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-1">
                                     <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">识别日期：</span>
                                     {canEditRecords ? (
@@ -573,7 +573,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                             type="button"
                                             onClick={() => startEditingRecord('date')}
                                             aria-label={`修改识别日期，当前${formatRecognitionDate(activeRecord.occurredAt)}`}
-                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                         >
                                             <time dateTime={toDateInputValue(activeRecord.occurredAt)} className="truncate text-[length:var(--tm-font-size-body)] font-semibold tabular-nums">{formatRecognitionDate(activeRecord.occurredAt)}</time>
                                             <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
@@ -589,7 +589,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                             type="button"
                                             onClick={() => startEditingRecord('class')}
                                             aria-label={`修改记录对象，当前${getRecordClassLabel(activeRecord)}`}
-                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-[var(--tm-evaluation-ai-editable-text)] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                         >
                                             <span className="truncate text-[length:var(--tm-font-size-body)] font-semibold">{getRecordClassLabel(activeRecord)}</span>
                                             <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
@@ -605,7 +605,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                             type="button"
                                             onClick={() => startEditingRecord('indicator')}
                                             aria-label="修改匹配指标"
-                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control-compact)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                         >
                                             <EvaluationIndicatorPath indicatorPath={activeRecord.indicatorPath} variant="compact-full" className="flex-1" />
                                             <Pencil aria-hidden="true" className="h-3 w-3 shrink-0 text-[var(--tm-evaluation-ai-editable-text)]" />
@@ -621,7 +621,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                             type="button"
                                             onClick={() => startEditingRecord('score')}
                                             aria-label={`修改得分，当前${formatScore(activeRecord.score)}`}
-                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-inner)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                            className="-mr-2 flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control-compact)] px-2 text-left active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                         >
                                             <strong className={`shrink-0 text-[length:var(--tm-font-size-body)] font-semibold leading-none tabular-nums ${activeRecord.score >= 0 ? 'text-[var(--tm-record-positive-text)]' : 'text-[var(--tm-record-negative-text)]'}`}>
                                                 {formatScore(activeRecord.score)}
@@ -643,7 +643,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
 
                         <section>
                             <h3 className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">原始记录</h3>
-                            <div className="mt-2.5 rounded-[var(--tm-radius-control)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-evaluation-source-bg)] px-3 py-2.5">
+                            <div className="mt-2.5 rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-evaluation-source-bg)] px-3 py-2.5">
                                 <p className="w-full text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{activeRecord.audioTranscript ?? activeRecord.originalContent}</p>
                                 <div className="mt-3 flex min-h-11 items-center justify-between gap-3">
                                     <div className="flex min-w-0 items-center gap-1.5 text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">
@@ -656,9 +656,9 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                                             type="button"
                                             onClick={() => playRecordAudio(activeRecord)}
                                             aria-label={`${playingRecordId === activeRecord.id ? '暂停' : '播放'}原始语音，${activeRecord.audioDuration}`}
-                                            className="-mr-1 flex h-11 shrink-0 items-center rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-evaluation-source-control-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                            className="-mr-1 flex h-11 shrink-0 items-center rounded-[var(--tm-radius-control-compact)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-evaluation-source-control-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                                         >
-                                            <span className="flex h-7 items-center gap-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-bg-surface)] px-2">
+                                            <span className="flex h-7 items-center gap-1 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-evaluation-source-border)] bg-[var(--tm-bg-surface)] px-2">
                                                 {playingRecordId === activeRecord.id ? <Pause aria-hidden="true" className="h-3 w-3 stroke-[2.25]" /> : <Play aria-hidden="true" className="h-3 w-3 fill-current stroke-[1.5]" />}
                                                 <span className="tabular-nums">{activeRecord.audioDuration}</span>
                                             </span>
@@ -741,13 +741,13 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                     <button
                         type="button"
                         onClick={applyClassFilter}
-                        className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition active:bg-[var(--tm-brand-primary-pressed)]"
+                        className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition active:bg-[var(--tm-brand-primary-pressed)]"
                     >
                         应用筛选
                     </button>
                 )}
             >
-                <div className="h-[420px] max-h-[58dvh] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]">
+                <div className="h-[420px] max-h-[58dvh] overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]">
                     <MobileClassCascadePicker
                         selectionMode="single"
                         groups={[
@@ -765,7 +765,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 </div>
             </MobileBottomSheet>
 
-            <MobileDatePickerSheet
+            <MobileDatePickerSheet shape="subtle"
                 open={showCustomDatePicker}
                 mode="range"
                 value={customRange}
@@ -774,7 +774,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 onClose={() => setShowCustomDatePicker(false)}
             />
 
-            <MobileConfirmSheet
+            <MobileConfirmSheet shape="subtle"
                 open={showDeleteConfirm && Boolean(activeRecord)}
                 title="删除评价"
                 description="删除后，该评价将不再计入班级得分和排行榜，且无法恢复。"

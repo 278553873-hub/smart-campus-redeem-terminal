@@ -14,6 +14,7 @@ interface MobileBottomSheetProps {
   footerLeading?: React.ReactNode;
   footerDivider?: boolean;
   header?: React.ReactNode;
+  titleContent?: React.ReactNode;
   headerAction?: {
     label: string;
     onClick: () => void;
@@ -44,6 +45,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   footerLeading,
   footerDivider = false,
   header,
+  titleContent,
   headerAction,
   showHandle = true,
   flushContentBottom = false,
@@ -178,7 +180,11 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
           {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}
           {header ?? (
             <header className="flex h-[var(--tm-sheet-header-height)] shrink-0 items-center justify-between px-[var(--tm-sheet-inline)]">
-              <h2 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] leading-6 font-semibold text-[var(--tm-text-primary)]">{title}</h2>
+              {titleContent ? (
+                <div className="min-w-0 flex-1 self-stretch">{titleContent}</div>
+              ) : (
+                <h2 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] leading-6 font-semibold text-[var(--tm-text-primary)]">{title}</h2>
+              )}
               <div className="-mr-2 flex shrink-0 items-center">
                 {headerAction && (
                   <button

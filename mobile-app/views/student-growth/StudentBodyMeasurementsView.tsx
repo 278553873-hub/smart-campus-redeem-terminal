@@ -25,11 +25,10 @@ import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import {
   BottomAction,
   PageHeader,
-  inputClass,
-  primaryButton,
-  secondaryButton,
-  sectionSurface,
+  subtleArchivePageStyles,
 } from '../archive-design/archivePagePrimitives';
+
+const { inputClass, primaryButton, secondaryButton, sectionSurface } = subtleArchivePageStyles;
 
 type PageMode = 'list' | 'detail' | 'form';
 
@@ -70,7 +69,7 @@ const recordToInput = (record: StudentGrowthDataRecord): StudentGrowthDataInput 
 });
 
 const fieldLabelClass = 'mb-2 block text-[13px] font-semibold text-[var(--tm-text-secondary)]';
-const metricIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]';
+const metricIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]';
 const BODY_GROWTH_FIELD_KEYS: GrowthInputFieldKey[] = ['height_cm', 'weight_kg'];
 const bodyGrowthFields = BODY_GROWTH_FIELD_KEYS
   .map(key => getGrowthFieldDefinition(key))
@@ -285,7 +284,7 @@ const StudentBodyMeasurementsView: React.FC<StudentBodyMeasurementsViewProps> = 
     return (
       <div className="relative flex h-full min-h-0 flex-col bg-transparent">
         <PageHeader title="成长数据详情" onBack={() => setPageMode('list')} />
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-24 pt-3 no-scrollbar">
+        <div className="min-h-0 flex-1 space-y-[var(--tm-layout-card-gap)] overflow-y-auto px-4 pb-24 pt-3 no-scrollbar">
           <section className={`${sectionSurface} overflow-hidden`}>
             <div className="flex items-start justify-between px-4 pb-3 pt-4">
               <div><h2 className="text-[17px] font-bold text-[var(--tm-text-primary)]">{activeRecord.recordedAt}</h2><p className="mt-1 text-xs font-medium text-[var(--tm-text-tertiary)]">{activeRecord.sourceLabel}</p></div>
@@ -309,7 +308,7 @@ const StudentBodyMeasurementsView: React.FC<StudentBodyMeasurementsViewProps> = 
           <button type="button" onClick={openEdit} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-sm font-semibold text-[var(--tm-text-primary)]"><Pencil className="h-5 w-5 text-[var(--tm-text-tertiary)]" />修正本次记录</button>
           <button type="button" onClick={() => setShowRecordMenu(false)} className={`${secondaryButton} mt-4 w-full`}>取消</button>
         </MobileBottomSheet>
-        {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-inner)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+        {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
       </div>
     );
   }
@@ -326,7 +325,7 @@ const StudentBodyMeasurementsView: React.FC<StudentBodyMeasurementsViewProps> = 
                 {latestMetrics.map(item => <div key={item.key} className="min-w-0 px-1"><div className="truncate text-[19px] font-bold tabular-nums text-[var(--tm-text-primary)]">{item.formattedValue}</div><div className="mt-1 truncate text-xs text-[var(--tm-text-secondary)]">{item.label}</div><div className="mt-1 text-[10px] text-[var(--tm-text-tertiary)]">{item.recordedAt.slice(5)}</div></div>)}
               </div>
             </section>
-            <div className="mb-2 mt-5 flex min-h-11 items-center justify-between"><h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">历史记录</h2>{canEdit && <button type="button" onClick={openCreate} className="flex min-h-11 items-center gap-1.5 rounded-full px-2 text-[13px] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />新增记录</button>}</div>
+            <div className="mb-2 mt-[var(--tm-layout-card-gap)] flex min-h-11 items-center justify-between"><h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">历史记录</h2>{canEdit && <button type="button" onClick={openCreate} className="flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control-compact)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />新增记录</button>}</div>
             <section className={`${sectionSurface} divide-y divide-[var(--tm-border-subtle)] px-4`}>
               {sortedRecords.map(record => <button key={record.id} type="button" onClick={() => { setActiveRecordId(record.id); setPageMode('detail'); }} className="flex min-h-[76px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"><span className={metricIconClass}>{sourceIcon(record.sourceType)}</span><span className="min-w-0 flex-1"><span className="block text-[14px] font-bold text-[var(--tm-text-primary)]">{record.recordedAt}</span><span className="mt-1 block truncate text-xs font-medium text-[var(--tm-text-secondary)]">{recordSummary(record)}</span></span><ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" /></button>)}
             </section>
@@ -344,7 +343,7 @@ const StudentBodyMeasurementsView: React.FC<StudentBodyMeasurementsViewProps> = 
       >
         {renderGrowthFormFields()}
       </MobileBottomSheet>
-      {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-inner)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+      {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
     </div>
   );
 };

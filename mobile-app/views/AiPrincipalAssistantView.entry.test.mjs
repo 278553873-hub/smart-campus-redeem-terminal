@@ -66,8 +66,8 @@ forbidText(viewSource, 'teacher-assistant-page', '校长助理不应再把渐变
 requireText(viewSource, 'var(--tm-assistant-role-primary)', '校长助理交互状态应引用由校长助理主题注入的角色主色。');
 requireText(viewSource, 'text-[17px] font-bold', '开场白应使用与班主任助理一致的标题字号。');
 requireText(viewSource, 'assistant-agent-glass assistant-context-card', '三个报告入口应放进与班主任助理同一套玻璃卡容器。');
-requireText(viewSource, 'mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2', '报告入口卡应与班主任助理的能力卡片同尺寸、同叠压方式。');
-requireText(viewSource, 'min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)]', '三个报告入口应改为单行紧凑入口，不再写第二行说明。');
+requireText(viewSource, 'mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card-compact)] p-2', '报告入口卡应与班主任助理的能力卡片同尺寸、同叠压方式。');
+requireText(viewSource, 'min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-card-compact)]', '三个报告入口应改为单行紧凑入口，不再写第二行说明。');
 requireText(assetsSource, 'ai-principal-assistant-character.png', '应接入女性 AI 校长助理形象资源。');
 requireText(assetsSource, 'ai-principal-assistant-icon.png', '应接入校长助理入口图标资源。');
 requireText(viewSource, 'ASSETS.MANAGEMENT.AI_PRINCIPAL_ASSISTANT_CHARACTER', '子页面顶部应使用校长助理形象。');
@@ -97,9 +97,9 @@ requireText(viewSource, 'askPrincipalAssistantQuestion', '自由提问应交给�
 requireText(viewSource, 'getPrincipalAssistantSnapshot', '回答应基于学校数据快照。');
 requireText(viewSource, 'PRINCIPAL_ASSISTANT_FOLLOW_UP_QUESTIONS', '回答后应按回答口径更新三条建议问题。');
 requireText(viewSource, 'PRINCIPAL_ASSISTANT_SUGGESTED_QUESTIONS', '新会话应给出固定的建议问题。');
-requireText(viewSource, 'space-y-2 pb-2', '三个报告入口应按班主任助理的间距成组排布。');
-requireText(composerSource, '按住说话', '语音输入应支持按住说话。');
-requireText(composerSource, 'AutoResizeTextarea', '文字输入应支持自动增高。');
+requireText(viewSource, 'space-y-[var(--tm-layout-card-gap)] pb-2', '三个报告入口应按班主任助理的间距成组排布。');
+requireText(composerSource, 'useHoldToTalk', '助理应使用公共按住说话会话。');
+requireText(composerSource, 'MobileInputComposer', '文字输入与其他页面复用公共面板。');
 requireText(composerSource, 'AssistantSuggestedQuestions', '输入控件上方应展示建议问题。');
 requireText(suggestedSource, 'touch-pan-x', '建议问题应支持横向滑动。');
 requireText(threadSource, 'assistant-agent-glass', '对话内容应使用助理主题的玻璃气泡。');

@@ -53,7 +53,7 @@ const improvingRecordAnalysis = recordAnalysis({
     benchmarks: gradeBenchmarks(82, 18),
 });
 assert.deepEqual(improvingRecordAnalysis, {
-    summary: '正向记录占比较上周期上升',
+    summary: '本周期以正向评价记录为主',
     supplement: '正负向记录构成与年级参照接近',
 });
 assertTwoPartAnalysis(improvingRecordAnalysis, '评价记录占比上升');
@@ -73,7 +73,7 @@ assert.equal(
 assert.equal(recordAnalysis({
     current: { positive: 180, negative: 40 },
     previous: { positive: 90, negative: 10 },
-}).summary, '正向记录占比较上周期下降', '正负向条数都增加时仍应按正向占比判断');
+}).summary, '本周期以正向评价记录为主', '总结仅描述本期记录构成');
 
 assert.deepEqual(recordAnalysis({
     current: { positive: 0, negative: 0, coveredStudents: 0 },
@@ -81,33 +81,23 @@ assert.deepEqual(recordAnalysis({
     summary: '本周期暂无正负向评价记录',
     supplement: '建议积累有方向的评价记录后再查看分布',
 });
-assert.equal(recordAnalysis({ current: { positive: 20, negative: 9 } }).summary, '当前记录较少，暂不判断趋势');
+assert.equal(recordAnalysis({ current: { positive: 20, negative: 9 } }).summary, '当前记录较少，暂不判断分布特点');
 assert.equal(recordAnalysis({
     current: { positive: 6000, negative: 4000, coveredStudents: 4999, totalStudents: 10000 },
-}).summary, '当前覆盖范围有限，暂不判断趋势');
+}).summary, '当前覆盖范围有限，暂不判断分布特点');
 assert.equal(recordAnalysis({
     current: { positive: 6000, negative: 4000, coveredStudents: 5000, totalStudents: 10000 },
     previous: { positive: 6000, negative: 4000, coveredStudents: 5000, totalStudents: 10000 },
     benchmarks: gradeBenchmarks(6000, 4000, { coveredStudents: 5000, totalStudents: 10000 }),
-}).summary, '正负向记录构成变化不大');
-assert.equal(recordAnalysis({ previous: { sourceKey: 'mine' } }).summary, '上周期口径不同，暂不比较趋势');
-assert.equal(recordAnalysis({ previous: { periodDays: 6 } }).summary, '上周期口径不同，暂不比较趋势');
-assert.equal(recordAnalysis({ previous: { positive: 0, negative: 0, coveredStudents: 0 } }).summary, '上周期暂无可比记录');
-assert.equal(recordAnalysis({ previous: { positive: 20, negative: 9 } }).summary, '上周期记录较少，暂不比较趋势');
-assert.equal(recordAnalysis({ previous: { coveredStudents: 19, totalStudents: 40 } }).summary, '上周期覆盖有限，暂不比较趋势');
-
-for (const [currentPositive, previousPositive, expected] of [
-    [60, 50, '正向记录占比较上周期明显上升'],
-    [60, 55, '正向记录占比较上周期上升'],
-    [60, 56, '正负向记录构成变化不大'],
-    [50, 55, '正向记录占比较上周期下降'],
-    [50, 60, '正向记录占比较上周期明显下降'],
+}).summary, '本周期以正向评价记录为主');
+for (const previous of [
+    { sourceKey: 'mine' }, { periodDays: 6 }, { positive: 0, negative: 0 },
+    { positive: 99, negative: 1 }, { positive: 1, negative: 99 },
 ]) {
-    assert.equal(recordAnalysis({
-        current: { positive: currentPositive, negative: 100 - currentPositive },
-        previous: { positive: previousPositive, negative: 100 - previousPositive },
-    }).summary, expected, `周期变化边界 ${currentPositive - previousPositive} 个百分点归属错误`);
+    assert.equal(recordAnalysis({ previous }).summary, '本周期以正向评价记录为主', '历史数据不影响本期总结');
 }
+assert.equal(recordAnalysis({ current: { positive: 50, negative: 50 } }).summary, '本周期正负向记录数量相同');
+assert.equal(recordAnalysis({ current: { positive: 30, negative: 70 } }).summary, '本周期以负向评价记录为主');
 
 assert.equal(recordAnalysis({
     current: { positive: 70, negative: 30 },
@@ -153,8 +143,8 @@ assert.deepEqual(getRecordDistributionComparisonRows({
     gradeAveragePositive: 396,
     gradeAverageNegative: 87,
 }), [
-    { key: 'positive', label: '正向事件', tone: 'positive', current: 375, previous: 265, gradeAverage: 396 },
-    { key: 'negative', label: '负向事件', tone: 'negative', current: 72, previous: 84, gradeAverage: 87 },
+    { key: 'positive', label: '正向事件', tone: 'positive', current: 375, gradeAverage: 396 },
+    { key: 'negative', label: '负向事件', tone: 'negative', current: 72, gradeAverage: 87 },
 ]);
 
 const scoreItem = (id, label, eventCount, addScore, deductScore) => ({
@@ -171,17 +161,17 @@ const closeScores = getEducationScoreAnalysis([
     scoreItem('b', '求知', 15, 95, 10),
 ]);
 assert.deepEqual(closeScores, {
-    summary: '各维度累计净分接近',
+    summary: '各维度总分接近',
     supplement: '各维度累计待改进接近',
 });
-assertTwoPartAnalysis(closeScores, '累计净分处于容差内');
+assertTwoPartAnalysis(closeScores, '总分处于容差内');
 
 const differentScores = getEducationScoreAnalysis([
     scoreItem('a', '崇德', 15, 100, 10),
     scoreItem('b', '求知', 15, 94, 10),
 ]);
 assert.deepEqual(differentScores, {
-    summary: '崇德累计净分最高，求知最低',
+    summary: '崇德总分最高，求知最低',
     supplement: '各维度累计待改进接近',
 });
 
@@ -209,7 +199,7 @@ const allNegativeScores = getEducationScoreAnalysis([
     scoreItem('a', '崇德', 15, 0, 40),
     scoreItem('b', '求知', 15, 0, 30),
 ]);
-assert.equal(allNegativeScores.summary, '求知累计净分最高，崇德最低', '全负净分应按真实数值排序');
+assert.equal(allNegativeScores.summary, '求知总分最高，崇德最低', '全负总分应按真实数值排序');
 assert.equal(allNegativeScores.supplement, '崇德累计待改进最多，可查看对应评价事件');
 
 assert.equal(getEducationScoreAnalysis([
@@ -224,7 +214,7 @@ assert.equal(getEducationScoreAnalysis([
 assert.equal(getEducationScoreAnalysis([{
     ...scoreItem('a', '崇德', 30, 40, 5),
     netScore: 999,
-}]).summary, '图表数据暂不可用', '净分汇总关系错误必须触发异常兜底');
+}]).summary, '图表数据暂不可用', '总分汇总关系错误必须触发异常兜底');
 
 const sixDimensionScores = Array.from({ length: 6 }, (_, index) => scoreItem(
     `score-${index}`,

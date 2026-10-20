@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { Award, BriefcaseBusiness, GraduationCap, UserRound } from 'lucide-react';
-import { MobileCard } from '../components/ui/MobileCard';
-import TextSelectionControl from '../components/ui/TextSelectionControl';
+import React, { useRef, useState } from 'react';
+import { Award, BookOpen, BriefcaseBusiness, ChevronRight, GraduationCap, HeartHandshake, Sprout, SlidersHorizontal, UserRound, UsersRound, X } from 'lucide-react';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import ArchiveTimeline from './ArchiveTimeline';
 import { DIMENSIONS, type DevelopmentIndicator, type DevelopmentRecord, type TeacherDossier } from './data';
-import { effectiveRecords, indicatorScore, inPeriod, teacherScore } from './domain';
-import { bodyClass, EmptyState, metaClass, Metric, RecordList, RowButton, Section, SelectButton } from './ui';
+import { indicatorScore, inPeriod } from './domain';
+import { recordLevel } from './recordLevels';
+import { bodyClass, EmptyState, metaClass } from './ui';
+import ArchiveCover from './ArchiveCover';
+import { ARCHIVE_TONES } from './archiveAppearance';
+import './archive.css';
 
 export type ProfilePart = 'basic' | 'positions' | 'qualifications' | 'experience';
 export const PROFILE_PARTS = [
@@ -21,19 +25,42 @@ export function ProfileDetails({ teacher, part }: { teacher: TeacherDossier; par
 }
 interface ArchiveViewProps {
   teacher: TeacherDossier; indicators: DevelopmentIndicator[]; records: DevelopmentRecord[]; periodId: string;
-  teacherNames: Record<string, string>; onProfile: (part: ProfilePart) => void; onRecord: (record: DevelopmentRecord) => void;
-  onFilter: () => void; filterLabel: string; filterIndicator: string; filterLevel: string; filterCategory: string; onIndicator: (id: string) => void; onEvaluate?: () => void;
+  onProfile: (part: ProfilePart) => void; onRecord: (record: DevelopmentRecord) => void;
+  onFilter: () => void; filterLabel: string; filterIndicator: string; filterLevel: string; filterCategory: string; onIndicator: (id: string) => void; onClearFilters: () => void; onEvaluate?: () => void;
 }
-export default function ArchiveView({ teacher, indicators, records, periodId, teacherNames, onProfile, onRecord, onFilter, filterLabel, filterIndicator, filterLevel, filterCategory, onIndicator, onEvaluate }: ArchiveViewProps) {
+export default function ArchiveView({ teacher, indicators, records, periodId, onProfile, onRecord, onFilter, filterLabel, filterIndicator, filterLevel, filterCategory, onIndicator, onClearFilters, onEvaluate }: ArchiveViewProps) {
   const [view, setView] = useState<'timeline' | 'indicator'>('timeline');
+  const growthSection = useRef<HTMLElement>(null);
   const allRecords = records.filter(r => r.teacherId === teacher.id && r.status !== 'withdrawn' && inPeriod(r, periodId));
-  const filteredRecords = allRecords.filter(r => (!filterIndicator || r.indicatorId === filterIndicator) && (!filterLevel || r.level === filterLevel) && (!filterCategory || r.category === filterCategory));
-  const approved = effectiveRecords(records, periodId, teacher.id);
-  return <div className="space-y-4">
-    <MobileCard><div className="flex items-start gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-group-title)] font-bold text-[var(--tm-brand-primary)]" aria-hidden="true">{teacher.name.slice(-2)}</div><div className="min-w-0 flex-1"><h2 className="text-[length:var(--tm-font-size-group-title)] font-bold">{teacher.name}</h2><p className={`mt-1 ${metaClass}`}>{teacher.subject} · {teacher.grade} · {teacher.title}</p><p className={metaClass}>{teacher.school}</p></div>{onEvaluate && <button type="button" onClick={onEvaluate} className="min-h-[var(--tm-size-touch)] shrink-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]">记录表现</button>}</div><div className="mt-4 grid grid-cols-4 gap-1">{PROFILE_PARTS.map(({ id, name, icon: Icon }) => <button type="button" key={id} onClick={() => onProfile(id)} className="flex min-h-[var(--tm-size-touch)] flex-col items-center justify-center gap-2 py-2 text-[length:var(--tm-font-size-meta)]"><Icon size={20} className="text-[var(--tm-action-icon-neutral)]" aria-hidden="true" /><span>{name}</span></button>)}</div></MobileCard>
-    <MobileCard><div className="flex items-start justify-between"><Metric label="本期积分" value={teacherScore(indicators, records, teacher.id, periodId)} unit="分" /><Metric label="已通过记录" value={approved.length} unit="条" /></div><p className={`mt-3 ${metaClass}`}>基础分{indicators.reduce((sum, i) => sum + i.base, 0)}分，待审核记录尚未计分。</p><div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-3">{DIMENSIONS.map(name => <div key={name} className="flex items-center justify-between gap-1 text-[length:var(--tm-font-size-compact)]"><span className="text-[var(--tm-text-secondary)]">{name}</span><span className="font-semibold tabular-nums">{indicators.filter(i => i.dimension === name).reduce((sum, i) => sum + indicatorScore(i, records, teacher.id, periodId), 0)}</span></div>)}</div></MobileCard>
-    <Section title="成长记录" action={<SelectButton onClick={onFilter} label="筛选成长记录">{filterLabel}</SelectButton>}><TextSelectionControl<'timeline' | 'indicator'> value={view} onChange={setView} items={[{ value: 'timeline', label: '时光轴' }, { value: 'indicator', label: '按指标' }]} ariaLabel="成长记录查看方式" />
-      {view === 'timeline' ? <RecordList records={filteredRecords} teacherNames={teacherNames} indicatorNames={Object.fromEntries(indicators.map(i => [i.id, i.name]))} onOpen={onRecord} /> : <MobileCard>{indicators.filter(i => !filterIndicator || i.id === filterIndicator).map(indicator => <RowButton key={indicator.id} onClick={() => { setView('timeline'); onIndicator(indicator.id); }} description={`${filteredRecords.filter(r => r.indicatorId === indicator.id).length}条记录 · ${indicatorScore(indicator, records, teacher.id, periodId)}分`}>{indicator.name}</RowButton>)}{!indicators.length && <EmptyState />}</MobileCard>}
-    </Section>
+  const filteredRecords = allRecords.filter(r => (!filterIndicator || r.indicatorId === filterIndicator) && (!filterLevel || recordLevel(r, indicators.find(i => i.id === r.indicatorId)) === filterLevel) && (!filterCategory || r.category === filterCategory));
+  const hasFilters = !!(filterIndicator || filterLevel || filterCategory);
+  const visibleIndicators = indicators.filter(i => !filterIndicator || i.id === filterIndicator);
+  const dimensionIcons = [HeartHandshake, BookOpen, Sprout, UsersRound];
+  const tones = ARCHIVE_TONES;
+  return <div className="td-archive">
+    <ArchiveCover teacher={teacher} indicators={indicators} records={records} periodId={periodId} onEvaluate={onEvaluate} />
+    <nav aria-label="教师资料" className="td-profile-links">
+      {PROFILE_PARTS.map(({ id, name, icon: Icon }, index) => <button type="button" key={id} onClick={() => onProfile(id)} className="td-profile-link"><span className={`td-profile-icon td-tone-${tones[index]}`}><Icon size={23} strokeWidth={1.6} aria-hidden="true" /></span><span>{name}</span></button>)}
+    </nav>
+    <section ref={growthSection} aria-label="成长记录" className="td-growth-section">
+      <div className="td-growth-toolbar">
+        <h2>成长记录</h2>
+        <CompactSegmentedControl<'timeline' | 'indicator'> value={view} onChange={setView} items={[{ value: 'timeline', label: '时光轴' }, { value: 'indicator', label: '按指标' }]} density="compact" motion="sliding" ariaLabel="成长记录查看方式" />
+        <button type="button" onClick={onFilter} aria-label="筛选成长记录" aria-haspopup="dialog" data-active={hasFilters} className="td-growth-filter"><SlidersHorizontal size={18} aria-hidden="true" /></button>
+      </div>
+      {hasFilters && <div className="td-growth-active-filter"><button type="button" onClick={onClearFilters} aria-label="清除成长记录筛选"><span>{filterLabel}</span><X size={14} className="shrink-0" aria-hidden="true" /></button><span role="status">{filteredRecords.length}条</span></div>}
+      {view === 'timeline' ? <ArchiveTimeline records={filteredRecords} indicators={indicators} filtered={hasFilters} onOpen={onRecord} /> : <div className="td-indicator-groups">
+        {DIMENSIONS.map((dimension, index) => {
+          const items = visibleIndicators.filter(item => item.dimension === dimension);
+          if (!items.length) return null;
+          const Icon = dimensionIcons[index];
+          return <section key={dimension} aria-label={dimension} className="td-indicator-group">
+            <div className={`td-indicator-heading td-tone-${tones[index]}`}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /><h3>{dimension}</h3><span>{items.length}项指标</span></div>
+            {items.map(indicator => <button type="button" className="td-indicator-row" key={indicator.id} onClick={() => { setView('timeline'); onIndicator(indicator.id); requestAnimationFrame(() => growthSection.current?.scrollIntoView({ block: 'start' })); }}><span>{indicator.name}<small>{filteredRecords.filter(r => r.indicatorId === indicator.id).length}条记录</small></span><strong>{indicatorScore(indicator, records, teacher.id, periodId)}<small>分</small></strong><ChevronRight size={16} aria-hidden="true" /></button>)}
+          </section>;
+        })}
+        {!visibleIndicators.length && <EmptyState title="暂无匹配指标" />}
+      </div>}
+    </section>
   </div>;
 }

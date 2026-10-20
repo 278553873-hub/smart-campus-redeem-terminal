@@ -92,7 +92,7 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                     )
                 )}
 
-                <section className="space-y-5" aria-label="往期评价复盘列表">
+                <section className="space-y-[var(--tm-layout-card-gap)]" aria-label="往期评价复盘列表">
                     {yearGroups.map((group) => (
                         <section key={group.year} aria-labelledby={`review-year-${group.year}`}>
                             <div className="relative flex h-6 items-center pl-5">
@@ -100,14 +100,14 @@ const TeacherEvaluationReviewHistoryView: React.FC<TeacherEvaluationReviewHistor
                                 <h2 id={`review-year-${group.year}`} className="text-[13px] font-semibold text-slate-500">{group.year}年</h2>
                             </div>
 
-                            <div className="relative mt-2 space-y-3 pl-5">
+                            <div className="relative mt-2 space-y-[var(--tm-layout-card-gap)] pl-5">
                                 <span className="absolute -top-5 bottom-9 left-[5px] w-px bg-slate-200" aria-hidden="true" />
                                 {group.reports.map((report) => (
                                     <button
                                         key={report.id}
                                         type="button"
                                         onClick={() => setSelectedReport(report)}
-                                        className="waa-card-enter relative flex min-h-[72px] w-full items-center gap-3 rounded-[20px] border border-white/90 bg-white/94 px-4 py-3 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.30)] ring-1 ring-slate-100/70"
+                                        className="waa-card-enter relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] border border-white/90 bg-white/94 px-4 py-3 text-left shadow-[0_18px_42px_-34px_rgba(35,96,145,0.30)] ring-1 ring-slate-100/70"
                                         aria-label={`${group.year}年${formatReviewMonthLabel(report.reviewMonth)}`}
                                     >
                                         <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-white bg-cyan-300 shadow-[0_0_0_1px_rgba(30,154,170,0.18)]" aria-hidden="true" />

@@ -57,7 +57,7 @@ interface LeaderReportViewProps {
 
 type PercentageLevel = 'low' | 'medium' | 'high';
 
-const reportCardClassName = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]';
+const reportCardClassName = 'rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]';
 const reportSectionActionClassName = '-my-2 flex min-h-[var(--tm-size-touch)] shrink-0 items-center gap-1.5 whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]';
 
 const ReportSectionAction = ({
@@ -113,6 +113,7 @@ const ReportTypeTabs = ({
     onChange: (value: ReportTab) => void;
 }) => (
     <CompactSegmentedControl
+        shape="subtle"
         value={value}
         items={reportTypeTabs}
         onChange={onChange}
@@ -233,10 +234,10 @@ const MetricUnit = ({
     const numberReplayKey = showProgress ? animationKey : `${animationKey ?? label}-value`;
 
     return (
-        <div className="min-w-0 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-3.5">
+        <div className="min-w-0 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-3.5">
             <div className="flex items-center justify-between gap-2">
                 <div className="truncate text-xs font-medium text-[var(--tm-text-secondary)]">{label}</div>
-                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${theme.icon}`}>
+                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${theme.icon}`}>
                     <Icon className="h-4 w-4" />
                 </div>
             </div>
@@ -304,7 +305,7 @@ const TeacherRow: React.FC<TeacherRowProps> = ({
     rank,
     showAward,
 }) => (
-    <div className="grid min-h-[48px] grid-cols-[minmax(0,1fr)_56px_52px_56px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
+    <div className="grid min-h-[48px] grid-cols-[minmax(0,1fr)_56px_52px_56px] items-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{teacher.name}</span>
             {showAward && <TeacherRankBadge rank={rank} />}
@@ -516,7 +517,7 @@ const getIndicatorUsageItems = (
 };
 
 const IndicatorUsageRow = ({ item }: { item: IndicatorUsageListItem }) => (
-    <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2">
+    <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2">
         <div className="min-w-0 truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{item.path}</div>
         <div className={`w-14 shrink-0 text-right text-xl font-black tabular-nums ${item.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{item.count}</div>
     </div>
@@ -541,13 +542,13 @@ const SegmentedTabs = <T extends string>({
     onChange: (value: T) => void;
     tabs: { key: T; label: string }[];
 }) => (
-    <div className="flex rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-muted)] p-1">
+    <div className="flex rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-1">
         {tabs.map(tab => (
             <button
                 key={tab.key}
                 type="button"
                 onClick={() => onChange(tab.key)}
-                className={`min-h-[34px] rounded-[var(--tm-radius-control)] px-3 text-sm font-semibold transition-all ${value === tab.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                className={`min-h-[34px] rounded-[var(--tm-form-segment-active-radius)] px-3 text-sm font-semibold transition-all ${value === tab.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
             >
                 {tab.label}
             </button>
@@ -574,7 +575,7 @@ const EventDistributionTabs = ({
 }) => <SegmentedTabs value={value} onChange={onChange} tabs={eventDistributionTabs} />;
 
 const TeacherScoreRow: React.FC<{ item: LeaderReportTeacherScoreSummary; rank?: number }> = ({ item, rank }) => (
-    <div className="grid min-h-[44px] grid-cols-[minmax(0,1.1fr)_56px_56px_64px] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
+    <div className="grid min-h-[44px] grid-cols-[minmax(0,1.1fr)_56px_56px_64px] items-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-xs">
         <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[15px] font-medium text-[var(--tm-text-primary)]">{item.teacherName}</span>
             <TeacherRankBadge rank={rank} />
@@ -929,7 +930,7 @@ const FiveEducationBarChart = ({
                     {toolbar}
                 </div>
             )}
-            <div className="mt-3 rounded-3xl px-2 pb-2 pt-3">
+            <div className="mt-3 rounded-[var(--tm-radius-card-compact)] px-2 pb-2 pt-3">
                 <div ref={chartRef} className="h-56 w-full" />
                 {!chartReady && (
                     <div className="-mt-56 flex h-56 items-center justify-center text-xs text-[var(--tm-text-secondary)]">图表加载中...</div>
@@ -1111,7 +1112,7 @@ const FiveEducationDonutChart = ({
                     {toolbar}
                 </div>
             )}
-            <div className="mt-3 rounded-3xl px-3 pb-3 pt-3">
+            <div className="mt-3 rounded-[var(--tm-radius-card-compact)] px-3 pb-3 pt-3">
                 <div className="relative h-56 w-full">
                     <div ref={chartRef} className="h-56 w-full" />
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
@@ -1133,7 +1134,7 @@ const FiveEducationDonutChart = ({
                                 showDonutTip(item.key);
                             }}
                             aria-label={`查看${item.name}事件占比`}
-                            className={`flex min-w-0 items-center justify-between gap-2 rounded-2xl px-3 py-2 text-left text-xs transition-colors active:bg-[var(--tm-bg-surface-muted)] ${selectedDonutKey === item.key ? 'bg-[var(--tm-bg-surface-soft)] ring-1 ring-[var(--tm-border-subtle)]' : 'bg-transparent'}`}
+                            className={`flex min-w-0 items-center justify-between gap-2 rounded-[var(--tm-radius-card-compact)] px-3 py-2 text-left text-xs transition-colors active:bg-[var(--tm-bg-surface-muted)] ${selectedDonutKey === item.key ? 'bg-[var(--tm-bg-surface-soft)] ring-1 ring-[var(--tm-border-subtle)]' : 'bg-transparent'}`}
                         >
                             <div className="flex min-w-0 items-center gap-2">
                                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: fiveEducationColors[item.key] }} />
@@ -1182,7 +1183,7 @@ const IndicatorUsageSummaryCard = ({
                 <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">指标使用情况</h2>
                 <ReportSectionAction label="查看完整名单" onClick={onViewAll} />
             </div>
-            <div className="mt-[var(--tm-report-card-content-gap)] space-y-3 rounded-3xl">
+            <div className="mt-[var(--tm-report-card-content-gap)] space-y-3 rounded-[var(--tm-radius-card-compact)]">
                 {coverageItems.map(item => (
                     <React.Fragment key={item.key}>
                         <IndicatorCoverageChartRow item={item} />
@@ -1205,7 +1206,7 @@ const IndicatorCoverageChartRow = ({
     const tone = getCoveragePercentageTone(item.coverageRate);
 
     return (
-        <div className={`rounded-2xl p-3 ${tone.shell}`}>
+        <div className={`rounded-[var(--tm-radius-card-compact)] p-3 ${tone.shell}`}>
             <div className="flex items-start justify-between gap-3">
                 <div>
                     <div className={`text-[13px] font-semibold ${tone.text}`}>{item.label}</div>
@@ -1284,7 +1285,7 @@ const IndicatorUsageSheet = ({
                         return level === 'second' ? (
                             <section key={group.id} className="space-y-2">
                                 {secondItems.map(second => (
-                                    <div key={second.id} className="flex min-h-[44px] items-center justify-between gap-3 rounded-xl bg-[var(--tm-bg-surface)] px-3 py-2.5">
+                                    <div key={second.id} className="flex min-h-[44px] items-center justify-between gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-3 py-2.5">
                                         <div className="min-w-0 truncate text-[15px] font-semibold text-[var(--tm-text-primary)]">{second.name}</div>
                                         <div className={`w-14 shrink-0 text-right text-xl font-black tabular-nums ${second.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{second.count}</div>
                                     </div>
@@ -1304,7 +1305,7 @@ const IndicatorUsageSheet = ({
                                             </div>
                                             <div className="space-y-1.5">
                                                 {thirdItems.map(third => (
-                                                    <div key={third.id} className="flex min-h-[38px] items-center justify-between gap-3 rounded-xl bg-[var(--tm-bg-surface)] px-3 py-2">
+                                                    <div key={third.id} className="flex min-h-[38px] items-center justify-between gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-3 py-2">
                                                         <div className="min-w-0 truncate text-sm font-semibold text-[var(--tm-text-primary)]">{third.name}</div>
                                                         <div className={`w-14 shrink-0 text-right text-lg font-black tabular-nums ${third.count > 0 ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-disabled)]'}`}>{third.count}</div>
                                                     </div>
@@ -1340,7 +1341,7 @@ const GradeChartViewport = ({
     const scrollable = gradeCount > GRADE_CHART_VISIBLE_ITEM_COUNT;
 
     return (
-        <div className="rounded-3xl pb-2 pt-3">
+        <div className="rounded-[var(--tm-radius-card-compact)] pb-2 pt-3">
             <div
                 role="region"
                 aria-label={scrollable ? `${label}，可左右滑动查看全部年级` : label}
@@ -1547,7 +1548,7 @@ const ClassCoverageRow: React.FC<{ item: LeaderReportClassCoverage }> = ({ item 
     const tone = getCoveragePercentageTone(percent);
 
     return (
-        <div className="rounded-2xl bg-white/80 p-3">
+        <div className="rounded-[var(--tm-radius-card-compact)] bg-white/80 p-3">
             <div className="flex items-center justify-between gap-3">
                 <div className="text-[15px] font-medium text-[var(--tm-text-primary)]">{item.name}</div>
                 <div className="text-sm font-semibold text-[var(--tm-text-secondary)]">{percent}%</div>
@@ -1892,7 +1893,7 @@ const ClassCoverageChart = ({ classes, animationKey }: { classes: LeaderReportCl
     }, [dataAnimationKey, displayedProgress, chartReady, sortedClasses]);
 
     return (
-        <div className={`rounded-3xl px-2 pb-2 pt-3 ${shouldScroll ? 'overflow-x-auto no-scrollbar' : 'overflow-hidden'}`}>
+        <div className={`rounded-[var(--tm-radius-card-compact)] px-2 pb-2 pt-3 ${shouldScroll ? 'overflow-x-auto no-scrollbar' : 'overflow-hidden'}`}>
             <div ref={chartRef} className="h-56" style={{ width: shouldScroll ? `${chartWidth}px` : '100%' }} />
             {!chartReady && (
                 <div className="flex h-56 items-center justify-center text-xs text-[var(--tm-text-secondary)]">图表加载中...</div>
@@ -2042,7 +2043,7 @@ const ClassEvaluationRecordsChart = ({ classes, animationKey }: { classes: Leade
     }, [dataAnimationKey, displayedProgress, chartReady, sortedClasses]);
 
     return (
-        <div className={`rounded-3xl px-2 pb-2 pt-3 ${shouldScroll ? 'overflow-x-auto no-scrollbar' : 'overflow-hidden'}`}>
+        <div className={`rounded-[var(--tm-radius-card-compact)] px-2 pb-2 pt-3 ${shouldScroll ? 'overflow-x-auto no-scrollbar' : 'overflow-hidden'}`}>
             <div ref={chartRef} className="h-56" style={{ width: shouldScroll ? `${chartWidth}px` : '100%' }} />
             {!chartReady && (
                 <div className="flex h-56 items-center justify-center text-xs text-[var(--tm-text-secondary)]">图表加载中...</div>
@@ -2217,9 +2218,9 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                     )}
                 </div>
 
-                <div className="space-y-[var(--tm-report-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-report-card-gap)]">
+                <div className="space-y-[var(--tm-space-3)] px-[var(--tm-report-page-inline)] pt-[var(--tm-space-3)]">
                     {isLoading && (
-                        <div className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-3 text-center text-xs text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card)]">数据加载中...</div>
+                        <div className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-3 text-center text-xs text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card)]">数据加载中...</div>
                     )}
                     {activeReportTab === 'teacher' ? (
                     <>
@@ -2258,7 +2259,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                                 <Info className="h-4 w-4" />
                             </button>
                             {showEvaluationRecordsHelp && (
-                                <div className="pointer-events-none absolute left-0 top-9 z-20 w-56 rounded-2xl bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl">
+                                <div className="pointer-events-none absolute left-0 top-9 z-20 w-56 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl">
                                     按学生明细记录统计，即如果老师记录“2023级1班全体同学积极参加运动会”，且2023级1班有30名学生。那么评价数是30。
                                 </div>
                             )}
@@ -2281,18 +2282,18 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                         <ReportSectionAction label="查看全部" onClick={() => setFullRankingType(rankingTab)} />
                     </div>
                     <div className="mb-3">
-                        <div className="inline-flex rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-muted)] p-1">
+                        <div className="inline-flex rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-1">
                             <button
                                 type="button"
                                 onClick={() => setRankingTab('active')}
-                                className={`min-h-[36px] rounded-[var(--tm-radius-control)] px-4 text-sm font-semibold transition-all ${rankingTab === 'active' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                className={`min-h-[36px] rounded-[var(--tm-form-segment-active-radius)] px-4 text-sm font-semibold transition-all ${rankingTab === 'active' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                             >
                                 积极使用
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setRankingTab('low')}
-                                className={`min-h-[36px] rounded-[var(--tm-radius-control)] px-4 text-sm font-semibold transition-all ${rankingTab === 'low' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-secondary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                className={`min-h-[36px] rounded-[var(--tm-form-segment-active-radius)] px-4 text-sm font-semibold transition-all ${rankingTab === 'low' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-secondary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                             >
                                 使用较少
                             </button>
@@ -2324,7 +2325,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
 
                     </>
                 ) : (
-                    <section className="space-y-[var(--tm-report-card-gap)]">
+                    <section className="space-y-[var(--tm-space-3)]">
                         <FiveEducationBarChart
                             title="五育得分对比图"
                             yAxisName={fiveEducationScoreYAxisNameMap[fiveEducationScoreMetric]}
@@ -2361,7 +2362,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                 </div>
             </div>
 
-            <MobileDatePickerSheet
+            <MobileDatePickerSheet shape="subtle"
                 open={showCustomDateSheet}
                 mode="range"
                 value={{ start: draftDateRange.startDate, end: draftDateRange.endDate }}

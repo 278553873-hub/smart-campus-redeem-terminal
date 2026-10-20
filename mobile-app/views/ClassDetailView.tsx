@@ -69,7 +69,7 @@ interface ClassDetailViewProps {
 const GroupAvatar: React.FC<{ avatarKey?: StudentGroupAvatarKey; index?: number; size?: 'card' | 'sheet' }> = ({ avatarKey, index = 0, size = 'card' }) => {
     const avatar = getStudentGroupAvatarOption(avatarKey, index);
     return (
-        <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] ${size === 'sheet' ? 'h-14 w-14' : 'h-11 w-11'}`} aria-hidden="true">
+        <span className={`flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] ${size === 'sheet' ? 'h-14 w-14' : 'h-11 w-11'}`} aria-hidden="true">
             <img src={avatar.src} alt="" className="h-full w-full object-cover" decoding="async" />
         </span>
     );
@@ -119,7 +119,7 @@ const ClassDetailMultiSelectButton: React.FC<ClassDetailMultiSelectButtonProps> 
     <button
         type="button"
         onClick={onClick}
-        className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}
+        className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control-compact)] px-2.5 text-[13px] font-semibold ${active ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}
     >
         {active ? '取消' : '多选'}
     </button>
@@ -1120,8 +1120,8 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             onToggleSelectionMode();
                         }}
                     />
-                    {!isSelectionMode && activeStudents.length > 0 && (canConfigureCardDisplay || canResetStudentEvaluationCounts) && (
-                        <button type="button" onClick={() => setMoreActionTarget('student')} aria-label="学生更多操作" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]">
+                    {!isSelectionMode && (
+                        <button type="button" onClick={() => setMoreActionTarget('student')} aria-label="学生更多操作" aria-haspopup="dialog" aria-expanded={moreActionTarget === 'student'} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]">
                             <MenuIcon className="h-5 w-5" />
                         </button>
                     )}
@@ -1138,6 +1138,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     const performance = getDisplayedStudentPerformance(student);
                     return (
                         <StudentRosterCard
+                            shape="subtle"
                             key={student.id}
                             student={student}
                             index={index}
@@ -1152,6 +1153,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 })}
                 {canAddStudent && !isStudentSelectionActive && !hasSearchQuery && (
                     <StudentRosterAddCard
+                        shape="subtle"
                         displaySettings={studentCardDisplaySettings}
                         onClick={onAddStudent}
                     />
@@ -1247,7 +1249,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                     aria-label={isGroupSelectionActive
                                         ? `${isSelected ? '取消选择' : '选择'}${group.name}`
                                         : `查看${group.name}`}
-                                    className="relative flex min-h-[76px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)]"
+                                    className="relative flex min-h-[76px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)]"
                                 >
                                     <GroupAvatar avatarKey={group.avatarKey} index={index} />
                                     <span className="min-w-0 flex-1">
@@ -1283,7 +1285,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             <button
                                 type="button"
                                 onClick={handleStartAddStudentGroup}
-                                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)]"
+                                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)]"
                             >
                                 <PlusIcon className="h-4 w-4" />
                                 添加小组
@@ -1296,7 +1298,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         <button
                             type="button"
                             onClick={handleStartFirstGrouping}
-                            className="flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)]"
+                            className="flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)]"
                         >
                             <PlusIcon className="h-4 w-4" />
                             开始分组
@@ -1359,7 +1361,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         type="button"
                         onClick={handleOpenRecountConfirmation}
                         disabled={recountSelectedCount === 0}
-                        className="pointer-events-auto mx-auto flex min-h-[var(--tm-recount-bottom-action-height)] w-full max-w-[var(--tm-recount-bottom-action-max-width)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:[box-shadow:var(--tm-shadow-control)]"
+                        className="pointer-events-auto mx-auto flex min-h-[var(--tm-recount-bottom-action-height)] w-full max-w-[var(--tm-recount-bottom-action-max-width)] items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)] disabled:[box-shadow:var(--tm-shadow-control)]"
                     >
                         {`重新计数（${recountSelectedCount}）`}
                     </button>
@@ -1372,11 +1374,16 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onClose={() => setMoreActionTarget(null)}
             >
                 <div className="space-y-1 pb-2">
+                    {moreActionTarget === 'student' && !canConfigureCardDisplay && !canResetStudentEvaluationCounts && (
+                        <p role="status" className="px-3 py-4 text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">
+                            当前暂无可用操作
+                        </p>
+                    )}
                     {canConfigureCardDisplay && moreActionTarget && (
                         <button
                             type="button"
                             onClick={() => handleOpenCardDisplaySettings(moreActionTarget)}
-                            className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"
+                            className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"
                         >
                             <EyeIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
                             {moreActionTarget === 'group' ? '小组卡片展示' : '学生卡片展示'}
@@ -1389,7 +1396,8 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         <button
                             type="button"
                             onClick={() => handleStartRecountSelection(moreActionTarget)}
-                            className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"
+                            disabled={moreActionTarget === 'student' && activeStudents.length === 0}
+                            className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)] disabled:opacity-50"
                         >
                             <RetryIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
                             重新计数
@@ -1403,7 +1411,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 title={cardDisplayTarget === 'group' ? '小组卡片展示' : '学生卡片展示'}
                 onClose={() => setCardDisplayTarget(null)}
             >
-                <div className="space-y-[var(--tm-space-4)] pb-2">
+                <div className="space-y-[var(--tm-layout-card-gap)] pb-2">
                     {cardDisplayTarget === 'student' ? (
                         <>
                             <CardLevelDisplaySettings
@@ -1440,7 +1448,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 footer={(
                     <div className="relative">
                         <MobileActionToast message={recountConfirmationNotice} />
-                        <button type="button" onClick={handleConfirmRecount} disabled={recountCountdown > 0} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                        <button type="button" onClick={handleConfirmRecount} disabled={recountCountdown > 0} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
                             {recountCountdown > 0 ? `${recountCountdown}秒后可确认` : '确认重新计数'}
                         </button>
                     </div>
@@ -1450,7 +1458,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     <p className="text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">
                         重新计数以后，卡片上的数字将清零。已有的评价记录、积分等不受影响。
                     </p>
-                    <label className="flex min-h-11 select-none items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]">
+                    <label className="flex min-h-11 select-none items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]">
                         <input
                             type="checkbox"
                             checked={recountAcknowledged}
@@ -1473,7 +1481,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             const isCurrent = plan.id === activeGroupPlan?.id;
                             const isOwned = plan.ownerName === currentTeacherName;
                             return (
-                                <div key={plan.id} className="flex min-h-[68px] items-center rounded-[var(--tm-radius-control)]">
+                                <div key={plan.id} className="flex min-h-[68px] items-center rounded-[var(--tm-radius-control-compact)]">
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -1503,7 +1511,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             );
                         })}
                     </div>
-                    <button type="button" onClick={groupPlans.length > 0 ? handleStartNewGrouping : handleStartFirstGrouping} className="mt-2 flex min-h-[52px] w-full items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)]">
+                    <button type="button" onClick={groupPlans.length > 0 ? handleStartNewGrouping : handleStartFirstGrouping} className="mt-2 flex min-h-[52px] w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)]">
                         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-white"><PlusIcon className="h-4 w-4" /></span>
                         {groupPlans.length > 0 ? '新建另一套分组' : '开始分组'}
                     </button>
@@ -1511,16 +1519,16 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             </MobileBottomSheet>
 
             <MobileBottomSheet open={showNewGroupNameSheet} title="新建另一套分组" onClose={handleCloseNewGroupingDetails} footerDivider={false} footer={(
-                <button type="button" onClick={handleCreateNamedGrouping} disabled={!newGroupName.trim() || !newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
+                <button type="button" onClick={handleCreateNamedGrouping} disabled={!newGroupName.trim() || !newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
             )}>
                 <div className="space-y-4 py-2">
                     <label className="block">
                         <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">分组方案名称</span>
-                        <input value={newGroupName} onChange={event => setNewGroupName(event.target.value)} maxLength={20} placeholder="例如：数学分组" aria-label="分组方案名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                        <input value={newGroupName} onChange={event => setNewGroupName(event.target.value)} maxLength={20} placeholder="例如：数学分组" aria-label="分组方案名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
                     </label>
                     <label className="block">
                         <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">第一个小组名称</span>
-                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：数学1组" aria-label="第一个小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                        <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：数学1组" aria-label="第一个小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
                     </label>
                 </div>
             </MobileBottomSheet>
@@ -1531,12 +1539,12 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onClose={handleCloseStudentGroupNameSheet}
                 footerDivider={false}
                 footer={(
-                    <button type="button" onClick={handleConfirmStudentGroupName} disabled={!newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
+                    <button type="button" onClick={handleConfirmStudentGroupName} disabled={!newStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
                 )}
             >
                 <label className="block py-2">
                     <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
-                    <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：语文1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+                    <input value={newStudentGroupName} onChange={event => setNewStudentGroupName(event.target.value)} maxLength={20} placeholder="例如：语文1组" aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
                 </label>
             </MobileBottomSheet>
 
@@ -1566,7 +1574,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 footer={(
                     <div className="relative">
                         <MobileActionToast message={studentSelectionMoveNotice} />
-                        <button type="button" onClick={handleFinishGrouping} disabled={!draftActiveGroup?.memberIds.length} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                        <button type="button" onClick={handleFinishGrouping} disabled={!draftActiveGroup?.memberIds.length} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
                             {draftActiveGroup?.memberIds.length
                                 ? `完成（${draftActiveGroup.memberIds.length}人${addGroupMovedStudentCount > 0 ? `，含移动${addGroupMovedStudentCount}人` : ''}）`
                                 : '完成'}
@@ -1605,11 +1613,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     </header>
                 )}
                 footer={groupDetailMode === 'settings' ? (
-                    <button type="button" onClick={handleSaveStudentGroupSettings} disabled={!renameStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+                    <button type="button" onClick={handleSaveStudentGroupSettings} disabled={!renameStudentGroupName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
                         保存
                     </button>
                 ) : isActiveGroupPlanOwnedByCurrentTeacher ? (
-                    <button type="button" onClick={handleStartAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)]">
+                    <button type="button" onClick={handleStartAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)]">
                         调整学生
                     </button>
                 ) : undefined}
@@ -1641,6 +1649,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                     const performance = getDisplayedStudentPerformance(student);
                                     return (
                                         <StudentRosterCard
+                                            shape="subtle"
                                             key={student.id}
                                             student={student}
                                             index={index}
@@ -1672,7 +1681,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                             onClick={() => setStudentGroupAvatarKey(preset.key)}
                                             aria-pressed={selected}
                                             aria-label={`${selected ? '已选择' : '选择'}${preset.label}小组头像`}
-                                            className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-inner)] border-2 bg-[var(--tm-bg-surface-soft)] ${selected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
+                                            className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-card-compact)] border-2 bg-[var(--tm-bg-surface-soft)] ${selected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
                                         >
                                             <img src={preset.src} alt="" className="h-full w-full object-cover" decoding="async" />
                                             {selected && (
@@ -1688,7 +1697,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                         <section className="bg-[var(--tm-bg-surface)] px-4 py-4">
                             <label className="block">
                                 <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">小组名称</span>
-                                <input value={renameStudentGroupName} onChange={event => setRenameStudentGroupName(event.target.value)} maxLength={20} aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none" />
+                                <input value={renameStudentGroupName} onChange={event => setRenameStudentGroupName(event.target.value)} maxLength={20} aria-label="小组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none" />
                             </label>
                         </section>
                     </div>
@@ -1721,7 +1730,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 footer={(
                     <div className="relative">
                         <MobileActionToast message={studentSelectionMoveNotice} />
-                        <button type="button" onClick={handleSaveAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)]">
+                        <button type="button" onClick={handleSaveAdjustStudentGroup} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)]">
                             {`保存（${adjustStudentGroupMemberIds.size}人${adjustStudentGroupMovedStudentCount > 0 ? `，含移动${adjustStudentGroupMovedStudentCount}人` : ''}）`}
                         </button>
                     </div>
@@ -1730,11 +1739,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
 
             <MobileBottomSheet open={Boolean(groupPlanActionTarget)} title={groupPlanActionTarget?.name || '分组管理'} onClose={() => setGroupPlanActionTarget(null)}>
                 <div className="space-y-1 pb-2">
-                    <button type="button" onClick={handleStartRenameGroupPlan} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
+                    <button type="button" onClick={handleStartRenameGroupPlan} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">
                         <EditIcon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />
                         重命名
                     </button>
-                    <button type="button" onClick={handleRequestDeleteGroupPlan} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative)]">
+                    <button type="button" onClick={handleRequestDeleteGroupPlan} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-3 text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-status-negative)]">
                         <DeleteIcon className="h-5 w-5 text-[var(--tm-action-icon-danger)]" />
                         删除这套分组
                     </button>
@@ -1742,15 +1751,15 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             </MobileBottomSheet>
 
             <MobileBottomSheet open={Boolean(renameGroupPlanTarget)} title="重命名分组" onClose={() => setRenameGroupPlanTarget(null)} footerDivider={false} footer={(
-                <button type="button" onClick={handleConfirmRenameGroupPlan} disabled={!renameGroupPlanName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">保存</button>
+                <button type="button" onClick={handleConfirmRenameGroupPlan} disabled={!renameGroupPlanName.trim()} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">保存</button>
             )}>
                 <label className="block py-2">
                     <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">分组名称</span>
-                    <input value={renameGroupPlanName} onChange={event => setRenameGroupPlanName(event.target.value)} maxLength={20} aria-label="新的分组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none" />
+                    <input value={renameGroupPlanName} onChange={event => setRenameGroupPlanName(event.target.value)} maxLength={20} aria-label="新的分组名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none" />
                 </label>
             </MobileBottomSheet>
 
-            <MobileConfirmSheet
+            <MobileConfirmSheet shape="subtle"
                 open={Boolean(deleteGroupPlanTarget)}
                 title={`删除“${deleteGroupPlanTarget?.name || ''}”？`}
                 description={`其中的${deleteGroupPlanTarget?.groups.length || 0}个小组将一起删除，学生信息不会受到影响。`}
@@ -1760,7 +1769,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onConfirm={handleConfirmDeleteGroupPlan}
             />
 
-            <MobileConfirmSheet
+            <MobileConfirmSheet shape="subtle"
                 open={Boolean(dissolveStudentGroupTarget)}
                 title={`解散“${dissolveStudentGroupTarget?.name || ''}”？`}
                 description={`组内${dissolveStudentGroupTarget?.memberIds.length || 0}名学生将变为未分组，学生信息不会删除。`}
@@ -1770,7 +1779,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onConfirm={handleConfirmDissolveStudentGroup}
             />
 
-            <MobileConfirmSheet
+            <MobileConfirmSheet shape="subtle"
                 open={showDiscardGroupingConfirm}
                 title="放弃本次创建？"
                 description="已完成的分组内容不会保存。"

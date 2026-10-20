@@ -9,6 +9,7 @@ interface MobileRadioOptionCardProps {
   /** 说明支持带图标的富文本，例如金额前挂金币或银行图标。 */
   description: React.ReactNode;
   selected: boolean;
+  shape?: 'default' | 'subtle';
   onSelect: () => void;
 }
 
@@ -19,6 +20,7 @@ const MobileRadioOptionCard: React.FC<MobileRadioOptionCardProps> = ({
   title,
   description,
   selected,
+  shape = 'default',
   onSelect,
 }) => (
   <button
@@ -29,6 +31,7 @@ const MobileRadioOptionCard: React.FC<MobileRadioOptionCardProps> = ({
     aria-labelledby={tag ? `${id}-tag ${id}-title` : `${id}-title`}
     aria-describedby={`${id}-description`}
     onClick={onSelect}
+    style={shape === 'subtle' ? { borderRadius: 'var(--tm-radius-card-compact)' } : undefined}
     className={`flex w-full items-start gap-[var(--tm-space-3)] rounded-[var(--tm-selection-card-radius)] border bg-[var(--tm-selection-card-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-3)] text-left text-[var(--tm-selection-card-title-text)] [box-shadow:var(--tm-selection-card-shadow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 ${selected
       ? 'border-[var(--tm-selection-card-selected-border)] bg-[var(--tm-selection-card-selected-bg)]'
       : 'border-[var(--tm-selection-card-border)]'}`}

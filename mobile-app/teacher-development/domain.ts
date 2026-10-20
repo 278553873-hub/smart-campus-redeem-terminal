@@ -1,4 +1,6 @@
 import { DIMENSIONS, IMAGE_SAMPLES, PERIODS, TEACHERS, type DevelopmentIndicator, type DevelopmentRecord, type EvaluationRole, type RecordInputType } from './data';
+import { extractIndicatorFields, indicatorFields, makeFieldSnapshot, validFieldValue } from './indicatorFields';
+import { ruleUsesLevels } from './recordLevels';
 export const inPeriod = (record: DevelopmentRecord, periodId: string) => {
   if (periodId === 'all') return true;
   const period = PERIODS.find(item => item.id === periodId);
@@ -54,10 +56,15 @@ export function recognizeRecord(input: RecognitionInput, indicators: Development
   if (!PERIODS.some(p => date >= p.start && date <= p.end)) return { ok: false, question: '该日期不在已配置的考核周期内，请核对发生日期。' };
   const keyText = input.text.replace(/\s|[，。、“”]/g, '');
   if (existing.some(r => r.teacherId === teacherId && r.status !== 'withdrawn' && r.indicatorId === indicator.id && r.date === date && r.text.replace(/\s|[，。、“”]/g, '') === keyText)) return { ok: false, question: '这件事已经记录过，可到原记录补充材料。' };
-  const level = ['国家级', '省级', '区县级', '市级', '集团级', '校级'].find(l => input.text.includes(l));
+  if (!indicator.distinguishLevels && ruleUsesLevels(indicator.rule)) return { ok: false, question: '该指标未区分等级，但评分标准包含等级条件。请联系管理者调整指标设置，本次尚未提交。' };
+  const fields = indicatorFields(indicator);
+  const details = extractIndicatorFields(input.text, fields);
+  const missing = fields.filter(field => field.required && !validFieldValue(field, details[field.key]));
+  if (missing.length) return { ok: false, question: `请补充或核对${missing.map(field => field.label).join('、')}，本次尚未提交。` };
+  const level = typeof details.level === 'string' ? details.level : undefined;
   let delta = indicator.delta;
-  if (indicator.id === 'C09' && !(level === '市级' && /结题/.test(input.text) && /主持/.test(input.text))) delta = 0;
-  if (indicator.id === 'C12' && !(level === '区县级' && /公开课/.test(input.text) && /执教/.test(input.text))) delta = 0;
+  if (indicator.id === 'C09' && !(details.category === '课题研究' && level === '市级' && details.stage === '结题' && details.contribution === '主持人')) delta = 0;
+  if (indicator.id === 'C12' && !(level === '区级' && /公开课/.test(input.text) && details.contribution === '执教人')) delta = 0;
   if (['C04', 'C05', 'C11'].includes(indicator.id) && inputType !== 'image') delta = 0;
   const completed = !/尚未|未完成|没有完成|计划|准备|拟参加|将参加/.test(input.text);
   if (['C06', 'C07', 'C08'].includes(indicator.id) && (!completed || !/完成|已参加|参加了|已改进|改进了|已沟通|沟通了|与.+沟通/.test(input.text))) delta = 0;
@@ -71,10 +78,12 @@ export function recognizeRecord(input: RecognitionInput, indicators: Development
   if (unverified) return { ok: false, question: '请先核实事实，再填写核实依据。仅有投诉不能提交扣分评价，本次尚未提交。' };
   const id = `event-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   return { ok: true, record: {
-    id, teacherId: teacherId!, authorId: input.actorId, text: input.text.trim(), title: input.text.trim().replace(new RegExp(`^${TEACHERS.find(t => t.id === teacherId)!.name}(老师)?[，,：:]?`), '').slice(0, 40), indicatorId: indicator.id, date,
-    category: indicator.id === 'C09' && /论文|专著/.test(input.text) ? '论文专著' : indicator.category,
-    level, stage: /结题/.test(input.text) ? '结题' : /立项/.test(input.text) ? '立项' : undefined,
-    contribution: /主持/.test(input.text) ? '主持人' : /执教/.test(input.text) ? '执教人' : /参与/.test(input.text) ? '参与人' : undefined,
+    id, teacherId: teacherId!, authorId: input.actorId, text: input.text.trim(), title: input.text.trim().replace(new RegExp(`^${TEACHERS.find(t => t.id === teacherId)!.name}(老师)?[，,：:]?`), '').slice(0, 40), indicatorId: indicator.id, date, recordedAt: new Date().toISOString(),
+    category: typeof details.category === 'string' ? details.category : indicator.fields.some(field => field.key === 'category') ? undefined : indicator.category,
+    level, stage: typeof details.stage === 'string' ? details.stage : undefined,
+    contribution: typeof details.contribution === 'string' ? details.contribution : undefined,
+    fieldSnapshot: makeFieldSnapshot(indicator, details),
+    distinguishLevels: indicator.distinguishLevels,
     delta, status: indicator.requiresReview ? 'pending' : 'approved', requiresReview: indicator.requiresReview,
     rule: delta === 0 ? '未命中已配置的计分条件，仅归档。' : indicator.rule,
     inputType, imageSampleId: inputType === 'image' ? input.imageSampleId : undefined,

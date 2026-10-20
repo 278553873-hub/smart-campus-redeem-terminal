@@ -1,0 +1,73 @@
+.mobile-card-tab-bar {
+  --card-tab-curve: var(--tm-form-card-radius);
+  display: grid;
+  width: 100%;
+  align-items: flex-end;
+  height: calc(var(--tm-selection-touch-height) + var(--tm-space-1));
+  background: transparent;
+}
+
+.mobile-card-tab-bar__tab {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: var(--tm-selection-touch-height);
+  height: var(--tm-selection-touch-height);
+  padding: 0 var(--tm-space-2);
+  border: 0;
+  border-radius: var(--card-tab-curve) var(--card-tab-curve) 0 0;
+  background: var(--tm-bg-surface-muted);
+  color: var(--tm-text-secondary);
+  font-size: var(--tm-font-size-body);
+  white-space: nowrap;
+}
+
+.mobile-card-tab-bar__tab[aria-selected='true'] {
+  z-index: 1;
+  height: calc(var(--tm-selection-touch-height) + var(--tm-space-1));
+  /* 加高的4像素留在顶部，文字及短标记保持与未选中项相同的基线。 */
+  padding-top: var(--tm-space-1);
+  /* 选中页签顶部为白色，底部过渡到共同底板，与圆弧自然衔接。 */
+  background: linear-gradient(180deg, var(--tm-bg-surface) 0%, var(--tm-bg-surface-soft) 100%);
+  color: var(--tm-brand-primary);
+}
+
+/* 下侧的反向圆角延伸进相邻页签，选中面与下面的底板成为连续轮廓。 */
+.mobile-card-tab-bar__tab[aria-selected='true']::before,
+.mobile-card-tab-bar__tab[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: var(--card-tab-curve);
+  height: var(--card-tab-curve);
+  pointer-events: none;
+}
+
+.mobile-card-tab-bar__tab[aria-selected='true']:not(:first-child)::before {
+  right: 100%;
+  background: radial-gradient(circle at 0 0, transparent calc(var(--card-tab-curve) - 0.5px), var(--tm-bg-surface-soft) var(--card-tab-curve));
+}
+
+.mobile-card-tab-bar__tab[aria-selected='true']:not(:last-child)::after {
+  left: 100%;
+  background: radial-gradient(circle at 100% 0, transparent calc(var(--card-tab-curve) - 0.5px), var(--tm-bg-surface-soft) var(--card-tab-curve));
+}
+
+.mobile-card-tab-bar__label {
+  position: relative;
+  display: inline-block;
+}
+
+/* 标记收在文字下方，保留页签与底板的连续背景。 */
+.mobile-card-tab-bar__tab[aria-selected='true'] .mobile-card-tab-bar__label::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: var(--tm-selection-underline-width);
+  height: var(--tm-selection-underline-height);
+  border-radius: var(--tm-form-control-radius);
+  background: currentColor;
+  transform: translateX(-50%);
+  pointer-events: none;
+}

@@ -7,6 +7,7 @@ export interface StudentTimeRangeOption {
 }
 
 interface StudentTimeRangeSelectorProps {
+  shape?: 'default' | 'subtle';
   value: string;
   options: StudentTimeRangeOption[];
   onChange: (value: string) => void;
@@ -14,6 +15,7 @@ interface StudentTimeRangeSelectorProps {
 }
 
 const StudentTimeRangeSelector: React.FC<StudentTimeRangeSelectorProps> = ({
+  shape = 'default',
   value,
   options,
   onChange,
@@ -25,7 +27,7 @@ const StudentTimeRangeSelector: React.FC<StudentTimeRangeSelectorProps> = ({
       value={value}
       onChange={event => onChange(event.target.value)}
       aria-label={ariaLabel}
-      className="h-11 w-full appearance-none rounded-[var(--tm-radius-control)] border border-transparent bg-[var(--tm-bg-surface)] pl-10 pr-10 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none focus-visible:bg-[var(--tm-bg-surface)]"
+      className={`h-11 w-full appearance-none ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} border border-transparent bg-[var(--tm-bg-surface)] pl-10 pr-10 text-[13px] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none focus-visible:bg-[var(--tm-bg-surface)]`}
     >
       {options.map(option => (
         <option key={option.value} value={option.value}>{option.label}</option>

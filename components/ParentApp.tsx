@@ -1,3 +1,5 @@
+import { DEMO_COIN_SCHOOL_ID, resolveCoinSchoolId } from '../shared/growthCoinBranding';
+import { GrowthCoinIcon, GrowthCoinScope, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
@@ -23,7 +25,6 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 import {
   DEMO_SELF_SCORE,
   DEMO_SELF_SCORE_REWARD,
@@ -738,6 +739,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
     [activeChildId, childrenList]
   );
+  const coinSchoolId = activeChild ? resolveCoinSchoolId(activeChild.schoolCode) : DEMO_COIN_SCHOOL_ID;
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms(coinSchoolId);
   const exchangePasswordChild = useMemo(
     () => childrenList.find(child => child.id === exchangePasswordChildId) ?? null,
     [childrenList, exchangePasswordChildId],
@@ -1444,7 +1447,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
         <section className="flex min-h-10 items-center gap-2.5 px-4 pb-3 pt-1" aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-brand-reward-soft)]">
-            <img src="/assets/coin.png" className="h-4 w-4" alt="" />
+            <GrowthCoinIcon className="h-4 w-4" alt="" />
           </span>
           <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-2">
             <div className="flex min-w-0 items-baseline gap-1.5">
@@ -2391,13 +2394,13 @@ const ParentApp: React.FC<ParentAppProps> = ({
             <span className="shrink-0 pr-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-primary)]">{GROWTH_COIN_TERMS.name}</span>
             <div className="flex flex-1 items-center justify-center gap-1.5">
               <span className="text-[length:var(--pm-font-size-body)] font-bold">{GROWTH_COIN_TERMS.available}</span>
-              <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
+              <GrowthCoinIcon alt="" className="h-4 w-4 shrink-0" />
               <span className="tabular-nums text-[16px] font-bold leading-none">{formatCoin(activeChild.availableCoins)}</span>
             </div>
             <div className="h-5 w-px bg-[var(--pm-border-subtle)]" aria-hidden="true" />
             <div className="flex flex-1 items-center justify-center gap-1.5">
               <span className="text-[length:var(--pm-font-size-body)] font-bold">{GROWTH_COIN_TERMS.saved}</span>
-              <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
+              <GrowthCoinIcon alt="" className="h-4 w-4 shrink-0" />
               <span className="tabular-nums text-[16px] font-bold leading-none">{formatCoin(activeChild.bankBalance)}</span>
             </div>
           </div>
@@ -2512,7 +2515,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
                       <div className="min-h-[56px] rounded-[var(--pm-radius-control)] bg-[var(--pm-bg-surface)] px-3 py-2 [box-shadow:var(--pm-shadow-control)]">
                         <div className="text-[length:var(--pm-font-size-meta)] font-bold leading-none text-[var(--pm-text-tertiary)]">本金</div>
                         <div className="mt-1 flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold leading-none text-[var(--pm-text-primary)]">
-                          <img src="/assets/coin.png" alt="" className="h-4 w-4 shrink-0" />
+                          <GrowthCoinIcon alt="" className="h-4 w-4 shrink-0" />
                           <span>{formatCoin(deposit.amount)}</span>
                         </div>
                       </div>
@@ -2604,11 +2607,11 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 </div>
                 <div className="flex items-center justify-between gap-3 py-2 text-[length:var(--pm-font-size-body)] font-bold">
                   <span className="text-[var(--pm-text-tertiary)]">投入本金</span>
-                  <span className="flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-text-primary)]"><img src="/assets/coin.png" alt="" className="h-5 w-5" />{amount}</span>
+                  <span className="flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-text-primary)]"><GrowthCoinIcon alt="" className="h-5 w-5" />{amount}</span>
                 </div>
                 <div className="flex items-center justify-between gap-3 py-2 text-[length:var(--pm-font-size-body)] font-bold">
                   <span className="text-[var(--pm-text-tertiary)]">预期利息</span>
-                  <span className="flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-brand-primary-strong)]"><img src="/assets/coin.png" alt="" className="h-5 w-5" />+{projectedInterest}</span>
+                  <span className="flex items-center gap-1 tabular-nums text-[length:var(--pm-font-size-value)] font-bold text-[var(--pm-brand-primary-strong)]"><GrowthCoinIcon alt="" className="h-5 w-5" />+{projectedInterest}</span>
                 </div>
                 <div className="mt-2 border-t border-dashed border-[var(--pm-border-control)] pt-3 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)]">
                   到期时间：{selectedBankScheme.type === 'current' ? '随时取出' : formatDate(Date.now() + selectedBankScheme.days * 86400000)}
@@ -2641,7 +2644,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
               </div>
               <div className="border-t border-dashed border-[var(--pm-border-control)] pt-3 flex justify-between text-[length:var(--pm-font-size-card-title)] font-bold">
                 <span className="text-[var(--pm-text-secondary)]">到账金额</span>
-                <span className="flex items-center gap-1 tabular-nums text-[var(--pm-text-primary)]"><img src="/assets/coin.png" alt="" className="h-4 w-4" />{formatCoin(withdrawDetails?.withdrawalTotal ?? 0)}</span>
+                <span className="flex items-center gap-1 tabular-nums text-[var(--pm-text-primary)]"><GrowthCoinIcon alt="" className="h-4 w-4" />{formatCoin(withdrawDetails?.withdrawalTotal ?? 0)}</span>
               </div>
             </div>
             <ParentPrimaryButton type="button" onClick={() => withdrawDeposit(withdrawTarget)} fullWidth className="mt-4 h-[52px] text-[16px]">
@@ -2955,6 +2958,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   return (
+    <GrowthCoinScope schoolId={coinSchoolId}>
     <div
       className="flex h-[100dvh] w-screen items-center justify-center bg-[var(--pm-bg-page)] p-4 font-sans"
       style={{ ...parentMobileCssVariables, '--evaluation-score-negative': evaluationScoreSemantic.negative } as React.CSSProperties}
@@ -2980,6 +2984,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
         </div>
       </PhoneMockup>
     </div>
+    </GrowthCoinScope>
   );
 };
 

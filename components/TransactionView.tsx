@@ -1,3 +1,4 @@
+import { GrowthCoinIcon } from './GrowthCoinBranding';
 import React, { useState } from 'react';
 import { ArrowLeft, Clock, ShoppingBag, TrendingUp, Landmark, Sparkles } from 'lucide-react';
 import { Student, TransactionRecord } from '../types';
@@ -220,7 +221,7 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
                         <div className={`shrink-0 font-black text-lg font-[NumberFont] flex items-center gap-1 leading-none ${tx.type === 'income' ? 'text-green-500' : 'text-slate-700'}`}>
                           {tx.type === 'income' ? '+' : '-'}
                           <span>{formatCoin(tx.amount)}</span>
-                          <img src="/assets/coin.png" className="h-[0.9em] w-[0.9em]" alt="成长币" />
+                          <GrowthCoinIcon className="h-[0.9em] w-[0.9em]" alt="成长币" />
                         </div>
                       </div>
                       <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-500">{tx.detail}</p>

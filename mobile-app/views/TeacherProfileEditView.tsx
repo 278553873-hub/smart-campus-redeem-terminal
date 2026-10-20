@@ -315,7 +315,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 )}
             >
                 <div className="flex min-h-[420px] flex-col gap-3 py-1">
-                <div className={`${isTeaching ? 'h-[270px] shrink-0' : 'min-h-0 flex-1'} overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]`}>
+                <div className={`${isTeaching ? 'h-[270px] shrink-0' : 'min-h-0 flex-1'} overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)]`}>
                     <MobileClassCascadePicker
                         groups={gradeOptions.map(grade => ({ gradeLabel: grade, classes: classesByGrade[grade] || [] }))}
                         selectedClassIds={selectedClassIds}
@@ -335,7 +335,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                     type="button"
                                     onClick={() => setSelectedSubject(subject)}
                                     aria-pressed={selectedSubject === subject}
-                                    className={`flex min-h-11 items-center justify-center rounded-[var(--tm-radius-control)] border px-2 text-xs font-semibold transition-colors ${selectedSubject === subject ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
+                                    className={`flex min-h-11 items-center justify-center rounded-[var(--tm-radius-control-compact)] border px-2 text-xs font-semibold transition-colors ${selectedSubject === subject ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`}
                                 >
                                     {subject}
                                 </button>
@@ -404,11 +404,11 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const renderAvatarSheet = () => (
         <MobileBottomSheet open title="更换头像" onClose={() => setMode('idle')}>
             <div className="space-y-2 pb-1">
-                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]">
+                <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] px-4 text-left font-semibold text-[var(--tm-brand-primary-pressed)] active:bg-[var(--tm-brand-primary-soft-strong)]">
                     <Camera className="h-5 w-5" aria-hidden="true" />
                     拍照
                 </button>
-                <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]">
+                <button type="button" onClick={() => albumInputRef.current?.click()} className="flex h-14 w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-4 text-left font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)]">
                     <Image className="h-5 w-5" aria-hidden="true" />
                     从相册选择
                 </button>
@@ -464,7 +464,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     }}
                     autoFocus
                     maxLength={maxLength}
-                    className="mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-sm font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
+                    className="mt-2 h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-sm font-medium text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]"
                     aria-label={label}
                 />
             </label>
@@ -498,8 +498,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 <div className="h-11 w-11" aria-hidden="true" />
             </header>
 
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 no-scrollbar">
-                <MobileCard variant="hero" padding="lg" className="teacher-avatar-card text-center">
+            <div className="min-h-0 flex-1 space-y-[var(--tm-layout-card-gap)] overflow-y-auto px-5 py-4 no-scrollbar">
+                <MobileCard shape="subtle" variant="hero" padding="lg" className="teacher-avatar-card text-center">
                     <button type="button" onClick={() => setMode('avatar')} className="group mx-auto block" aria-label="更换头像">
                         <div className="relative mx-auto h-24 w-24 rounded-full bg-[linear-gradient(145deg,var(--tm-bg-surface),var(--tm-brand-primary-soft-strong),var(--tm-brand-secondary-soft))] p-[3px] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                             <span className="block h-full w-full overflow-hidden rounded-full bg-[var(--tm-bg-surface)]">
@@ -512,7 +512,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     </button>
                 </MobileCard>
 
-                <MobileCard variant="card" padding="md" className="teacher-basic-info-card">
+                <MobileCard shape="subtle" variant="card" padding="md" className="teacher-basic-info-card">
                     <div className="mb-2 flex h-8 items-center">
                         <h2 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>基础资料</h2>
                     </div>
@@ -552,7 +552,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                     </div>
                 </MobileCard>
 
-                <MobileCard variant="card" padding="md" className="teacher-teaching-card">
+                <MobileCard shape="subtle" variant="card" padding="md" className="teacher-teaching-card">
                     <div className="mb-2 flex h-11 items-center justify-between">
                         <h2 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>任教信息</h2>
                         <button type="button" onClick={() => openTeachingEditor()} className="group flex h-11 items-center justify-center" aria-label="添加任教信息">
@@ -579,7 +579,7 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                 </MobileCard>
 
                 {showManagementResponsibilities && (
-                    <MobileCard variant="card" padding="md" className="teacher-management-card">
+                    <MobileCard shape="subtle" variant="card" padding="md" className="teacher-management-card">
                         <div className="mb-2 flex h-8 items-center">
                             <h2 className={`${phoneText.sectionTitle} text-[var(--tm-text-primary)]`}>管理职责</h2>
                         </div>

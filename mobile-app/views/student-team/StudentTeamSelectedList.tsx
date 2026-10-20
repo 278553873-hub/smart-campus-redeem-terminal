@@ -37,9 +37,9 @@ const StudentTeamSelectedList: React.FC<StudentTeamSelectedListProps> = ({ selec
       </button>
 
       <MobileBottomSheet open={open} title="已选名单" onClose={() => setOpen(false)}>
-        <div className="space-y-2 pb-2">
+        <div className="space-y-[var(--tm-layout-list-gap-compact)] pb-2">
           {selectedStudents.map(student => (
-            <div key={student.id} className="flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3">
+            <div key={student.id} className="flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-3">
               <span className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]">{student.avatar && <img src={student.avatar} alt="" className="h-full w-full object-cover" decoding="async" />}</span>
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-[var(--tm-space-1)]">

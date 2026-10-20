@@ -89,7 +89,7 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
       />
 
       <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-10 pt-4">
-        <section className="space-y-6" aria-label={historyListLabel[kind]}>
+        <section className="space-y-[var(--tm-layout-card-gap)]" aria-label={historyListLabel[kind]}>
           {groups.map((group) => (
             <section key={group.key} aria-labelledby={`principal-history-${kind}-${group.key}`}>
               <div className="relative flex h-6 items-center pl-5">
@@ -97,14 +97,14 @@ const PrincipalReportHistoryView: React.FC<PrincipalReportHistoryViewProps> = ({
                 <h2 id={`principal-history-${kind}-${group.key}`} className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">{group.label}</h2>
               </div>
 
-              <div className="relative mt-2 space-y-3 pl-5">
+              <div className="relative mt-2 space-y-[var(--tm-layout-card-gap)] pl-5">
                 <span className="absolute -top-5 bottom-9 left-[5px] w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
                 {group.reports.map((report) => (
                   <button
                     key={report.id}
                     type="button"
                     onClick={() => setSelectedReport(report)}
-                    className="relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985] active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
+                    className="relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.985] active:bg-[var(--tm-role-principal-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-role-principal-primary)]"
                   >
                     <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[var(--tm-bg-page)] bg-[var(--tm-role-principal-soft-strong)]" aria-hidden="true" />
                     <span className="min-w-0 flex-1">

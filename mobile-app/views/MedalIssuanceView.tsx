@@ -168,6 +168,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
       <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(var(--tm-size-touch)+var(--tm-space-8)+var(--tm-space-8)+var(--tm-space-4))] no-scrollbar">
         <div className="sticky top-0 z-30 -mx-[var(--tm-space-4)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] pb-[var(--tm-space-3)] pt-[var(--tm-space-4)]">
           <CompactSegmentedControl
+            shape="subtle"
             value={scope}
             onChange={handleScopeChange}
             ariaLabel="奖章分类"
@@ -184,7 +185,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         </div>
 
         {scope === 'platform' && (
-          <div className="space-y-5" aria-label="平台奖章分类">
+          <div className="space-y-[var(--tm-layout-card-gap)]" aria-label="平台奖章分类">
             {PLATFORM_MEDAL_GROUPS.map(group => (
               <section key={group.id} aria-labelledby={`medal-group-${group.id}`}>
                 <h2 id={`medal-group-${group.id}`} className="mb-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{group.label}</h2>
@@ -192,7 +193,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
                   {group.medals.map(medal => {
                   const selected = selectedMedalIds.has(medal.id);
                   const medalCardClassName = [
-                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
+                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-card-compact)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
                   ].join(' ');
                   return (
                     <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
@@ -216,7 +217,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
           {medals.map(medal => {
             const selected = selectedMedalIds.has(medal.id);
             const medalCardClassName = [
-              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-inner)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
+              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-card-compact)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
             ].filter(Boolean).join(' ');
             return (
               <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
@@ -242,7 +243,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
             <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-[var(--tm-text-secondary)] no-scrollbar">{selectedMedalNames}</span>
           </div>
         )}
-        <button type="button" disabled={selectedMedalIds.size === 0} onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
+        <button type="button" disabled={selectedMedalIds.size === 0} onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
       </footer>
 
       <MobileStudentPickerSheet
@@ -262,7 +263,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
           onToggle: toggleAllStudents,
         }}
         footer={(
-          <button type="button" disabled={selectedStudentIds.size === 0} onClick={() => setSheetMode('confirm')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+          <button type="button" disabled={selectedStudentIds.size === 0} onClick={() => setSheetMode('confirm')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
             {selectedStudentIds.size > 0 ? `颁发奖章（${selectedStudentIds.size}人）` : '颁发奖章'}
           </button>
         )}
@@ -270,8 +271,8 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
 
       <MobileBottomSheet open={sheetMode === 'confirm'} title="确认发放" onClose={() => setSheetMode(null)} footer={(
         <div className="grid grid-cols-2 gap-[var(--tm-space-3)]">
-          <button type="button" onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"><ChevronLeft className="h-4 w-4" />返回修改</button>
-          <button type="button" onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)]"><Award className="h-[18px] w-[18px]" />确认发放</button>
+          <button type="button" onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"><ChevronLeft className="h-4 w-4" />返回修改</button>
+          <button type="button" onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)]"><Award className="h-[18px] w-[18px]" />确认发放</button>
         </div>
       )}>
         <div className="space-y-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
@@ -302,21 +303,21 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
       </MobileBottomSheet>
 
       <MobileBottomSheet open={showCreateMedal} title="新增班级奖章" onClose={() => setShowCreateMedal(false)} footer={(
-        <button type="button" disabled={!newMedalName.trim()} onClick={createClassMedal} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">保存奖章</button>
+        <button type="button" disabled={!newMedalName.trim()} onClick={createClassMedal} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">保存奖章</button>
       )}>
-        <div className="space-y-4">
+        <div className="space-y-[var(--tm-form-section-gap)]">
           <label className="block space-y-2">
             <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">奖章名称</span>
-            <input value={newMedalName} onChange={event => setNewMedalName(event.target.value)} maxLength={12} placeholder="请输入奖章名称" aria-label="奖章名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+            <input value={newMedalName} onChange={event => setNewMedalName(event.target.value)} maxLength={12} placeholder="请输入奖章名称" aria-label="奖章名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
           </label>
           <fieldset className="space-y-2">
             <legend className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">选择图标</legend>
             <div className="grid grid-cols-5 gap-2">
               {PLATFORM_MEDALS.map(platformMedal => {
                 const selected = !newMedalUploadedIcon && selectedNewMedal.id === platformMedal.id;
-                return <button key={platformMedal.id} type="button" aria-label={`选择${platformMedal.name}图标`} aria-pressed={selected} onClick={() => { setNewMedalIconId(platformMedal.id); setNewMedalUploadedIcon(null); }} className={`flex min-h-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] px-1 ${selected ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}><MedalIconView icon={resolveMedalIcon(platformMedal.id, platformMedal.icon)} className="h-9 w-9" /></button>;
+                return <button key={platformMedal.id} type="button" aria-label={`选择${platformMedal.name}图标`} aria-pressed={selected} onClick={() => { setNewMedalIconId(platformMedal.id); setNewMedalUploadedIcon(null); }} className={`flex min-h-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control-compact)] px-1 ${selected ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}><MedalIconView icon={resolveMedalIcon(platformMedal.id, platformMedal.icon)} className="h-9 w-9" /></button>;
               })}
-              <label className={`relative flex min-h-[var(--tm-size-touch)] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-control)] px-1 text-[var(--tm-text-secondary)] ${newMedalUploadedIcon ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}>
+              <label className={`relative flex min-h-[var(--tm-size-touch)] cursor-pointer flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-control-compact)] px-1 text-[var(--tm-text-secondary)] ${newMedalUploadedIcon ? 'bg-[var(--tm-brand-reward-soft)] ring-2 ring-inset ring-[var(--tm-brand-reward)]' : 'bg-[var(--tm-bg-surface-soft)]'}`}>
                 {newMedalUploadedIcon ? <img src={newMedalUploadedIcon} alt="已上传图标" className="h-9 w-9 object-contain" /> : <ImagePlus className="h-5 w-5" aria-hidden="true" />}
                 <span className="text-[10px] font-semibold leading-4">上传图片</span>
                 <input type="file" accept="image/*" className="sr-only" aria-label="上传奖章图标" onChange={event => handleMedalIconUpload(event.target.files?.[0])} />
@@ -326,7 +327,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         </div>
       </MobileBottomSheet>
 
-      {feedback && <div role="status" className="pointer-events-none absolute inset-x-4 top-[calc(var(--tm-size-touch)+var(--tm-space-4))] z-50 flex min-h-[var(--tm-size-touch)] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-tooltip)] px-4 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)]"><Check className="h-4 w-4" />{feedback}</div>}
+      {feedback && <div role="status" className="pointer-events-none absolute inset-x-4 top-[calc(var(--tm-size-touch)+var(--tm-space-4))] z-50 flex min-h-[var(--tm-size-touch)] items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-chart-tooltip)] px-4 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)]"><Check className="h-4 w-4" />{feedback}</div>}
     </div>
   );
 };

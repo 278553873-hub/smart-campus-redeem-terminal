@@ -65,27 +65,27 @@ const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, currentS
 
       <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         <div className="px-[var(--tm-space-4)] pt-[var(--tm-space-3)]">
-          <div className="flex items-center justify-between rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
+          <div className="flex items-center justify-between rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
             <div className="min-w-0"><h2 className="truncate text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{getTeacherClassDisplayName(classInfo, currentSpace)}</h2><p className="mt-[var(--tm-space-1)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">共 {students.length} 名学生</p></div>
             <span className="rounded-full bg-[var(--tm-brand-primary-soft)] px-[var(--tm-space-3)] py-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-primary)]">6位数字</span>
           </div>
         </div>
 
         <div className="sticky top-0 z-20 bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-3)]">
-          <MobileSearchInput value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="搜索姓名或学号" aria-label="搜索学生" />
+          <MobileSearchInput shape="subtle" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="搜索姓名或学号" aria-label="搜索学生" />
         </div>
 
-        <div className="space-y-[var(--tm-space-2)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">
+        <div className="space-y-[var(--tm-layout-list-gap-compact)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">
           {filteredStudents.map(student => (
-            <article key={student.id} className="rounded-[var(--tm-radius-card)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-control)]">
+            <article key={student.id} className="rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-control)]">
               <div className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)]">
                 {student.avatar ? <img src={student.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--tm-brand-primary-soft)] font-semibold text-[var(--tm-brand-primary)]">{student.name.slice(0, 1)}</span>}
                 <div className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{student.name}</strong><small className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{student.studentNo ?? student.id}</small></div>
 
                 {editingId === student.id ? (
                   <div className="flex items-center gap-[var(--tm-space-1)]">
-                    <input autoFocus inputMode="numeric" maxLength={6} value={tempPassword} onChange={event => { setTempPassword(event.target.value.replace(/\D/g, '')); setValidationMessage(''); }} className="h-[var(--tm-size-touch)] w-[86px] rounded-[var(--tm-radius-control)] border border-[var(--tm-input-focus-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-input-text)] outline-none ring-2 ring-[var(--tm-input-focus-ring)]" aria-label={`修改${student.name}兑换密码`} />
-                    <button type="button" onClick={savePassword} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]" aria-label="保存密码"><Check className="h-[18px] w-[18px]" /></button>
+                    <input autoFocus inputMode="numeric" maxLength={6} value={tempPassword} onChange={event => { setTempPassword(event.target.value.replace(/\D/g, '')); setValidationMessage(''); }} className="h-[var(--tm-size-touch)] w-[86px] rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-focus-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-2)] text-center text-[length:var(--tm-font-size-body)] font-semibold tabular-nums text-[var(--tm-input-text)] outline-none ring-2 ring-[var(--tm-input-focus-ring)]" aria-label={`修改${student.name}兑换密码`} />
+                    <button type="button" onClick={savePassword} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]" aria-label="保存密码"><Check className="h-[18px] w-[18px]" /></button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-[var(--tm-space-1)]">
@@ -93,12 +93,12 @@ const BankPasswordView: React.FC<BankPasswordViewProps> = ({ classInfo, currentS
                     <PasswordRevealButton
                       visible={student.showPassword}
                       onToggle={() => setStudents(current => current.map(item => item.id === student.id ? { ...item, showPassword: !item.showPassword } : item))}
-                      className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
+                      className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
                       size={18}
                       hideLabel={`隐藏${student.name}兑换密码`}
                       revealLabel={`查看${student.name}兑换密码`}
                     />
-                    <button type="button" onClick={() => startEditing(student)} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft-strong)]" aria-label={`修改${student.name}兑换密码`}><Edit3 className="h-[18px] w-[18px]" /></button>
+                    <button type="button" onClick={() => startEditing(student)} className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft-strong)]" aria-label={`修改${student.name}兑换密码`}><Edit3 className="h-[18px] w-[18px]" /></button>
                   </div>
                 )}
               </div>

@@ -24,15 +24,12 @@ export interface RecordDistributionBenchmarkInput extends RecordDistributionPeri
 export interface RecordDistributionAnalysisInput {
     currentClassId: string;
     current: RecordDistributionPeriodInput;
-    previous: RecordDistributionPeriodInput;
     gradeBenchmarks: RecordDistributionBenchmarkInput[];
 }
 
 export interface RecordDistributionComparisonInput {
     positive: number;
     negative: number;
-    previousPositive: number;
-    previousNegative: number;
     gradeAveragePositive: number;
     gradeAverageNegative: number;
 }
@@ -42,7 +39,6 @@ export interface RecordDistributionComparisonRow {
     label: string;
     tone: 'positive' | 'negative';
     current: number;
-    previous: number;
     gradeAverage: number;
 }
 
@@ -151,29 +147,13 @@ const isRecordPeriodSufficient = (input: RecordDistributionPeriodInput) => (
     && getStudentCoverage(input) >= MIN_STUDENT_COVERAGE
 );
 
-const getRecordTrendSummary = (
-    current: RecordDistributionPeriodInput,
-    previous: RecordDistributionPeriodInput,
-) => {
-    const currentTotal = getDirectionalTotal(current);
-    const previousTotal = getDirectionalTotal(previous);
-
-    if (currentTotal === 0) return '本周期暂无正负向评价记录';
-    if (currentTotal < MIN_COMPARABLE_RECORDS) return '当前记录较少，暂不判断趋势';
-    if (getStudentCoverage(current) < MIN_STUDENT_COVERAGE) return '当前覆盖范围有限，暂不判断趋势';
-    if (current.periodDays !== previous.periodDays || current.sourceKey !== previous.sourceKey) {
-        return '上周期口径不同，暂不比较趋势';
-    }
-    if (previousTotal === 0) return '上周期暂无可比记录';
-    if (previousTotal < MIN_COMPARABLE_RECORDS) return '上周期记录较少，暂不比较趋势';
-    if (getStudentCoverage(previous) < MIN_STUDENT_COVERAGE) return '上周期覆盖有限，暂不比较趋势';
-
-    const difference = getPositiveShare(current) - getPositiveShare(previous);
-    if (difference >= SIGNIFICANT_SHARE_CHANGE - COMPARISON_EPSILON) return '正向记录占比较上周期明显上升';
-    if (difference >= BASIC_SHARE_CHANGE - COMPARISON_EPSILON) return '正向记录占比较上周期上升';
-    if (difference > -BASIC_SHARE_CHANGE + COMPARISON_EPSILON) return '正负向记录构成变化不大';
-    if (difference > -SIGNIFICANT_SHARE_CHANGE + COMPARISON_EPSILON) return '正向记录占比较上周期下降';
-    return '正向记录占比较上周期明显下降';
+const getRecordCurrentSummary = (current: RecordDistributionPeriodInput) => {
+    const total = getDirectionalTotal(current);
+    if (total === 0) return '本周期暂无正负向评价记录';
+    if (total < MIN_COMPARABLE_RECORDS) return '当前记录较少，暂不判断分布特点';
+    if (getStudentCoverage(current) < MIN_STUDENT_COVERAGE) return '当前覆盖范围有限，暂不判断分布特点';
+    if (current.positive === current.negative) return '本周期正负向记录数量相同';
+    return current.positive > current.negative ? '本周期以正向评价记录为主' : '本周期以负向评价记录为主';
 };
 
 const getRecordBenchmarkSupplement = (
@@ -235,7 +215,6 @@ export const getRecordDistributionComparisonRows = (
         label: '正向事件',
         tone: 'positive',
         current: input.positive,
-        previous: input.previousPositive,
         gradeAverage: input.gradeAveragePositive,
     },
     {
@@ -243,7 +222,6 @@ export const getRecordDistributionComparisonRows = (
         label: '负向事件',
         tone: 'negative',
         current: input.negative,
-        previous: input.previousNegative,
         gradeAverage: input.gradeAverageNegative,
     },
 ];
@@ -254,14 +232,13 @@ export const getRecordDistributionAnalysis = (
     if (
         !isNonEmptyString(input.currentClassId)
         || !isValidRecordPeriod(input.current)
-        || !isValidRecordPeriod(input.previous)
         || !Array.isArray(input.gradeBenchmarks)
     ) {
         return DATA_UNAVAILABLE;
     }
 
     return {
-        summary: getRecordTrendSummary(input.current, input.previous),
+        summary: getRecordCurrentSummary(input.current),
         supplement: getRecordBenchmarkSupplement(input.currentClassId, input.current, input.gradeBenchmarks),
     };
 };
@@ -339,12 +316,12 @@ export const getEducationScoreAnalysis = (
     const netRange = highestNet.value - lowestNet.value;
     const highestNetLabels = highestNet.items.map(item => item.label);
     const lowestNetLabels = lowestNet.items.map(item => item.label);
-    const detailedScoreSummary = `${formatLabels(highestNetLabels)}累计净分最高，${formatLabels(lowestNetLabels)}最低`;
+    const detailedScoreSummary = `${formatLabels(highestNetLabels)}总分最高，${formatLabels(lowestNetLabels)}最低`;
     const summary = netRange <= netTolerance
-        ? '各维度累计净分接近'
+        ? '各维度总分接近'
         : getTextLength(detailedScoreSummary) <= 30
             ? detailedScoreSummary
-            : `${formatCompactLabels(highestNetLabels)}累计净分最高，${formatCompactLabels(lowestNetLabels)}最低`;
+            : `${formatCompactLabels(highestNetLabels)}总分最高，${formatCompactLabels(lowestNetLabels)}最低`;
 
     const highestDeduction = getExtremeItems(items, item => item.deductScore, 'max');
     const lowestDeduction = getExtremeItems(items, item => item.deductScore, 'min');

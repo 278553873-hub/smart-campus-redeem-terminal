@@ -127,6 +127,7 @@ export type TeacherMoreToolId =
     | 'questionnaire'
     | 'weeklyDutySchedule'
     | 'parentEvaluationVisibility'
+    | 'reportManagement'
     | 'archiveDesign'
     | 'subjectManagement'
     | 'departmentManagement'
@@ -171,6 +172,7 @@ const ALL_MORE_TOOLS: TeacherMoreToolId[] = [
     'questionnaire',
     'weeklyDutySchedule',
     'parentEvaluationVisibility',
+    'reportManagement',
     'archiveDesign',
     'subjectManagement',
     'departmentManagement',

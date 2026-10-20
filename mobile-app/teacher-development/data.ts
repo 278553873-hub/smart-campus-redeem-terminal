@@ -1,11 +1,16 @@
+import { INDICATOR_FIELD_PRESETS, withRecordFields, type IndicatorField, type RecordFieldSnapshot } from './indicatorFields';
+
 export type EvaluationRole = 'teacher' | 'manager';
 export type RecordInputType = 'text' | 'voice' | 'image';
 export const DEMO_TODAY = '2026-10-15';
+export const SELF_COMMUNICATION_EXAMPLE = '今天，我与刘甜家长沟通学生学习习惯。';
 export type RecordStatus = 'approved' | 'pending' | 'returned' | 'withdrawn';
 export interface DevelopmentIndicator {
   id: string; name: string; dimension: string; definition: string;
   roles: EvaluationRole[]; requiresReview: boolean; base: number; upper: number; lower: number;
   rule: string; delta: number; keywords: string[]; category?: string;
+  distinguishLevels: boolean;
+  fieldVersion: number; fields: IndicatorField[];
 }
 export interface TeacherDossier {
   id: string; name: string; subject: string; grade: string; title: string; education: string;
@@ -16,16 +21,18 @@ export interface TeacherDossier {
 }
 export interface DevelopmentRecord {
   id: string; teacherId: string; authorId: string; text: string; title: string; indicatorId: string;
-  date: string; category?: string; level?: string; stage?: string; contribution?: string;
+  date: string; recordedAt?: string; category?: string; level?: string; stage?: string; contribution?: string;
   delta: number; status: RecordStatus; requiresReview: boolean; rule: string;
   inputType: RecordInputType; imageSampleId?: string; note?: string; reviewerId?: string; history: string[];
+  fieldSnapshot?: RecordFieldSnapshot;
+  distinguishLevels?: boolean;
 }
 export const SCHOOL = '玉林中学';
 export const PERIODS = [
   { id: '2026-autumn', label: '2026—2027 第一学期', start: '2026-09-01', end: '2027-01-31' },
   { id: '2026-spring', label: '2025—2026 第二学期', start: '2026-02-01', end: '2026-08-31' },
 ];
-export const INDICATORS: DevelopmentIndicator[] = [
+const INDICATOR_PRESETS: Omit<DevelopmentIndicator, 'fields' | 'fieldVersion' | 'distinguishLevels'>[] = [
   { id: 'C01', name: '履职尽责', dimension: '师德师风', definition: '履行教育教学职责，遵守课堂及岗位要求。', roles: ['manager'], requiresReview: false, base: 10, upper: 10, lower: 0, rule: '经核实，无故缺课或课堂播放与教学无关内容并影响教学，扣3分。', delta: -3, keywords: ['无故缺课', '追星', '歌星', '与教学无关'] },
   { id: 'C02', name: '关爱学生', dimension: '师德师风', definition: '尊重学生人格，平等关爱并保护学生。', roles: ['manager'], requiresReview: false, base: 10, upper: 10, lower: 0, rule: '经核实公开辱骂学生，扣3分。', delta: -3, keywords: ['辱骂', '体罚'] },
   { id: 'C03', name: '廉洁诚信', dimension: '师德师风', definition: '廉洁从教，真实提供工作及成果材料。', roles: ['manager'], requiresReview: false, base: 10, upper: 10, lower: 0, rule: '经核实冒用他人证书，扣5分；关联成果另行撤销。', delta: -5, keywords: ['冒用', '造假'] },
@@ -39,6 +46,7 @@ export const INDICATORS: DevelopmentIndicator[] = [
   { id: 'C11', name: '工作引领', dimension: '协作贡献', definition: '完成带教或工作室引领等任务。', roles: ['teacher', 'manager'], requiresReview: true, base: 5, upper: 10, lower: 0, rule: '完成约定带教任务，有任务记录及受助反馈，加2分。', delta: 2, keywords: ['带教', '工作室', '引领'], category: '工作引领' },
   { id: 'C12', name: '示范服务', dimension: '协作贡献', definition: '开展公开课、讲座分享或教育服务。', roles: ['teacher', 'manager'], requiresReview: true, base: 5, upper: 10, lower: 0, rule: '区县级公开课完成证明，本人为执教人，加2分。', delta: 2, keywords: ['公开课', '讲座', '献课'], category: '讲座献课' },
 ];
+export const INDICATORS: DevelopmentIndicator[] = INDICATOR_PRESETS.map(indicator => ({ ...indicator, distinguishLevels: ['C07', 'C09', 'C12'].includes(indicator.id), fieldVersion: 2, fields: structuredClone(INDICATOR_FIELD_PRESETS[indicator.id] ?? []) }));
 export const DIMENSIONS = [...new Set(INDICATORS.map(item => item.dimension))];
 export const TEACHERS: TeacherDossier[] = [
   { id: 't1', name: '张敏', subject: '语文', grade: '高一', title: '一级教师', education: '硕士研究生', major: '学科教学（语文）', joined: '2018-08', teachingSince: '2014-09', school: SCHOOL,
@@ -57,11 +65,11 @@ export const TEACHERS: TeacherDossier[] = [
 ];
 const seed = (id: string, teacherId: string, indicatorId: string, title: string, date: string, status: RecordStatus = 'approved', extra: Partial<DevelopmentRecord> = {}): DevelopmentRecord => {
   const indicator = INDICATORS.find(item => item.id === indicatorId)!;
-  return { id, inputType: 'text', teacherId, authorId: teacherId, text: title, title, indicatorId, date, category: indicator.category, delta: indicator.delta, status, requiresReview: indicator.requiresReview, rule: indicator.rule, history: [indicator.requiresReview ? '教师提交记录' : 'AI匹配规则，免审自动生效'], ...(status === 'approved' && indicator.requiresReview ? { reviewerId: 't2', history: ['教师提交记录', '管理者审核通过'] } : {}), ...extra };
+  return withRecordFields({ id, inputType: 'text', teacherId, authorId: teacherId, text: title, title, indicatorId, date, recordedAt: `${date}T14:00:00+08:00`, category: indicator.category, delta: indicator.delta, status, requiresReview: indicator.requiresReview, rule: indicator.rule, history: [indicator.requiresReview ? '教师提交记录' : 'AI匹配规则，免审自动生效'], ...(status === 'approved' && indicator.requiresReview ? { reviewerId: 't2', history: ['教师提交记录', '管理者审核通过'] } : {}), ...extra }, indicator);
 };
 export const INITIAL_RECORDS: DevelopmentRecord[] = [
-  seed('r1', 't1', 'C07', '完成新课程教学研修', '2026-10-12', 'approved', { contribution: '参训教师', text: '今天，我完成了校级新课程教学研修，学到了几种课堂提问的方法。', level: '校级' }),
-  seed('r2', 't1', 'C06', '与家长沟通学生学习习惯', '2026-10-09', 'approved', { inputType: 'voice', text: '今天，我与刘甜家长沟通学生学习习惯，商量了每天阅读二十分钟的安排。' }),
+  seed('r1', 't1', 'C07', '完成新课程教学研修', '2026-10-12', 'approved', { text: '今天，我完成了校级新课程教学研修，学到了几种课堂提问的方法。', level: '校级' }),
+  seed('r2', 't1', 'C06', '与家长沟通学生学习习惯', '2026-10-09', 'approved', { inputType: 'voice', text: SELF_COMMUNICATION_EXAMPLE }),
   seed('r3', 't1', 'C09', '项目化学习课题结题', '2026-10-08', 'pending', { inputType: 'image', imageSampleId: 'research', level: '市级', stage: '结题', contribution: '主持人', text: '张敏主持的市级项目化学习课题于2026年10月8日结题。' }),
   seed('r4', 't1', 'C12', '区县级阅读教学公开课', '2026-09-22', 'approved', { inputType: 'image', imageSampleId: 'lesson', level: '区县级', contribution: '执教人' }),
   seed('r5', 't1', 'C08', '优化阅读课堂提问策略', '2026-09-15', 'approved', { text: '今天，我完成了阅读课堂提问策略的教研改进，先让学生交流，再进行全班分享。' }),

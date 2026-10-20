@@ -37,13 +37,10 @@ import { saveStudentGrowthDataRecord } from '../../../shared/studentGrowthStore'
 import {
   BottomAction,
   BottomSheet,
-  inputClass,
   pageBackground,
   PageHeader,
-  primaryButton,
-  readonlyFieldClass,
-  sectionSurface,
   Toast,
+  subtleArchivePageStyles,
 } from './archivePagePrimitives';
 import ArchiveFormRenderer from './ArchiveFormRenderer';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
@@ -62,6 +59,8 @@ interface StudentArchiveViewProps {
   getStudentsForClass: (classId: string) => Student[];
   onOpenPendingCollection: (recordId: string) => void;
 }
+
+const { inputClass, primaryButton, readonlyFieldClass, sectionSurface } = subtleArchivePageStyles;
 
 type PageMode = 'root' | 'fill' | 'detail';
 
@@ -342,7 +341,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
       <PageHeader title="学生成长档案" onBack={onBack} />
       <div className="flex-1 overflow-y-auto px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
         {currentArchives.length > 0 ? (
-          <div className="space-y-2.5">
+          <div className="space-y-[var(--tm-layout-card-gap)]">
             {currentArchives.map(archive => (
               <button
                 key={archive.templateId}
@@ -350,7 +349,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
                 onClick={() => archive.draft ? openDraft(archive.draft) : archive.snapshot && openSnapshot(archive.snapshot)}
                 className={`${sectionSurface} flex min-h-[82px] w-full items-center gap-3 px-4 text-left transition active:scale-[0.985]`}
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]">
                   <BookOpenCheck className="h-4.5 w-4.5" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -389,14 +388,15 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
               <img src={headerImage} alt="" className="block h-full w-full object-cover" />
             </div>
           )}
-          <div className={`${sectionSurface} mb-4 flex min-h-12 items-center justify-between gap-4 px-4 py-3`}>
+          <div className={`${sectionSurface} mb-[var(--tm-layout-card-gap)] flex min-h-12 items-center justify-between gap-4 px-4 py-3`}>
             <span className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数据更新日期</span>
             <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{activeDraft.dataUpdatedAt}</span>
           </div>
           {(activeTemplate.fields.length > 0 || activeTemplate.growthFields.length > 0) && (
-            <div className="mt-5">
+            <div className="mt-[var(--tm-layout-card-gap)]">
               <h2 className="mb-3 px-1 text-[15px] font-bold text-[var(--tm-text-primary)]">档案内容</h2>
               <ArchiveFormRenderer
+              shape="subtle"
                 definition={activeTemplate}
                 answers={answers}
                 onAnswersChange={setAnswers}
@@ -456,7 +456,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
           )}
           <section className={`${sectionSurface} p-4`}>
             <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><History className="h-5 w-5" /></span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]"><History className="h-5 w-5" /></span>
               <div className="min-w-0 flex-1">
                 <h2 className="text-[16px] font-bold text-[var(--tm-text-primary)]">{activeSnapshot.templateName}</h2>
                 <p className="mt-1.5 text-[12px] font-medium text-[var(--tm-text-secondary)]">数据更新于 {activeSnapshot.dataUpdatedAt}</p>
@@ -464,8 +464,9 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
             </div>
           </section>
 
-          <section className="mt-4">
+          <section className="mt-[var(--tm-layout-card-gap)]">
             <ArchiveFormRenderer
+              shape="subtle"
               definition={template}
               mode="readonly"
               answers={activeSnapshot.answers}
@@ -521,7 +522,7 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
                 type="button"
                 disabled={disabled}
                 onClick={() => chooseArchiveTemplate(template.id)}
-                className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.97] disabled:opacity-55 disabled:active:scale-100"
+                className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.97] disabled:opacity-55 disabled:active:scale-100"
               >
                 {headerImage ? (
                   <img src={headerImage} alt="" className="block aspect-[16/7] w-full object-cover" />

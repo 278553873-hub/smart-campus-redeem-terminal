@@ -71,7 +71,7 @@ assert.match(viewSource, /grid-cols-4/, '奖章网格应优先一排展示四个
 assert.equal((viewSource.match(/grid grid-flow-row grid-cols-4 gap-x-\[var\(--tm-space-2\)\] gap-y-\[var\(--tm-space-3\)\]/g) ?? []).length, 2, '平台奖章与班级奖章均应使用8像素横向、12像素纵向间距。');
 assert.match(viewSource, /border border-transparent/, '奖章网格项应保持稳定占位，但不使用红色选中边框。');
 assert.equal((viewSource.match(/medalCardClassName = \[[\s\S]{0,400}?bg-\[var\(--tm-bg-surface\)\]/g) ?? []).length, 2, '平台奖章与班级奖章均应使用 Token 化白色圆角底。');
-assert.equal((viewSource.match(/medalCardClassName = \[[\s\S]{0,300}?rounded-\[var\(--tm-radius-inner\)\]/g) ?? []).length, 2, '平台奖章与班级奖章应复用16像素内容卡片圆角。');
+assert.equal((viewSource.match(/medalCardClassName = \[[\s\S]{0,300}?rounded-\[var\(--tm-radius-card-compact\)\]/g) ?? []).length, 2, '平台奖章与班级奖章应复用12像素内容卡片圆角。');
 assert.doesNotMatch(viewSource, /selected \? 'border-\[var\(--tm-brand-primary\)\]'/, '奖章选中态不应使用整张卡片红色边框。');
 assert.equal((viewSource.match(/MobileSelectionIndicator selected=\{selected\} showUnselected=\{false\} className="absolute -right-1 -top-1 z-20"/g) ?? []).length, 2, '平台奖章与班级奖章的选中标记均应定位在整张卡片右上角。');
 assert.doesNotMatch(viewSource, /<MedalIconView[^>]+\/><MobileSelectionIndicator/, '奖章选中标记不应继续以图标容器为定位参照。');

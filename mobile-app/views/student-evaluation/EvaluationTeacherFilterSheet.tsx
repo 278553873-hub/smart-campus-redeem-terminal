@@ -40,7 +40,7 @@ const EvaluationTeacherFilterSheet: React.FC<EvaluationTeacherFilterSheetProps> 
     onClose();
   };
 
-  const optionClass = (selected: boolean) => `flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 rounded-[var(--tm-radius-control)] px-3 text-left transition-colors ${selected
+  const optionClass = (selected: boolean) => `flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-3 rounded-[var(--tm-radius-control-compact)] px-3 text-left transition-colors ${selected
     ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
     : 'text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]'}`;
 

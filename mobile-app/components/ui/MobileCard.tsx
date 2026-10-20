@@ -9,6 +9,7 @@ interface MobileCardProps {
   variant?: MobileCardVariant;
   padding?: MobileCardPadding;
   className?: string;
+  shape?: 'default' | 'subtle';
 }
 
 const variantClass: Record<MobileCardVariant, string> = {
@@ -32,6 +33,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
   variant = 'card',
   padding = 'md',
   className = '',
+  shape = 'default',
 }) => {
-  return <div className={`${variantClass[variant]} ${paddingClass[padding]} ${className}`}>{children}</div>;
+  return <div style={shape === 'subtle' ? { borderRadius: 'var(--tm-radius-card-compact)' } : undefined} className={`${variantClass[variant]} ${paddingClass[padding]} ${className}`}>{children}</div>;
 };

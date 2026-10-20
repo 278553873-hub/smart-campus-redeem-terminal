@@ -99,13 +99,13 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
         <button
           type="button"
           onClick={() => setShowStudentScanSheet(true)}
-          className="flex min-h-[var(--tm-size-touch)] w-full items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card-ambient)] transition-[transform,background-color] active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
+          className="flex min-h-[var(--tm-size-touch)] w-full items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card-ambient)] transition-[transform,background-color] active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
         >
           <ScanLine className="h-5 w-5" aria-hidden="true" />
           扫码识别表格
         </button>
 
-        <div className="mt-[var(--tm-space-4)] space-y-[var(--tm-space-2)]">
+        <div className="mt-[var(--tm-space-3)] space-y-[var(--tm-space-2)]">
           {studentInputRows.map((row, index) => {
             const studentNoError = row.studentNo.trim() && duplicateStudentNumbers.has(row.studentNo.trim());
             const hasStudentData = Boolean(row.name.trim() || row.studentNo.trim());
@@ -113,7 +113,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
             return (
               <div
                 key={row.id}
-                className="relative rounded-[var(--tm-radius-inner)] bg-[var(--tm-compact-editor-row-bg)] p-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-card-ambient)]"
+                className="relative rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-compact-editor-row-bg)] p-[var(--tm-space-2)] [box-shadow:var(--tm-shadow-card-ambient)]"
               >
                 {canRemoveRow && (
                   <CompactRemoveButton
@@ -129,7 +129,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
                     placeholder="姓名"
                     aria-label={`第${index + 1}名学生姓名`}
                     aria-required="true"
-                    className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-0"
+                    className="h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-0"
                   />
                   <input
                     value={row.studentNo}
@@ -139,7 +139,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
                     aria-required="true"
                     aria-invalid={Boolean(studentNoError)}
                     inputMode="numeric"
-                    className={`h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control)] border bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:ring-0 ${studentNoError ? 'border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-compact-editor-control-border)] focus:border-[var(--tm-input-focus-border)]'}`}
+                    className={`h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control-compact)] border bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:ring-0 ${studentNoError ? 'border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-compact-editor-control-border)] focus:border-[var(--tm-input-focus-border)]'}`}
                   />
                   <button
                     type="button"
@@ -148,7 +148,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
                     aria-pressed={row.gender === 'male'}
                     className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] justify-self-center items-center justify-center transition-transform active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
                   >
-                    <span className={`flex h-9 w-[38px] items-center justify-center rounded-[var(--tm-radius-control)] border text-[length:var(--tm-font-size-body)] font-semibold transition-[background-color,border-color,color,box-shadow] ${row.gender === 'male' ? 'border-[var(--tm-gender-male-selection-bg)] bg-[var(--tm-gender-male-selection-bg)] text-[var(--tm-compact-editor-selected-text)] [box-shadow:var(--tm-shadow-control)]' : 'border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]'}`} aria-hidden="true">
+                    <span className={`flex h-9 w-[38px] items-center justify-center rounded-[var(--tm-radius-control-compact)] border text-[length:var(--tm-font-size-body)] font-semibold transition-[background-color,border-color,color,box-shadow] ${row.gender === 'male' ? 'border-[var(--tm-gender-male-selection-bg)] bg-[var(--tm-gender-male-selection-bg)] text-[var(--tm-compact-editor-selected-text)] [box-shadow:var(--tm-shadow-control)]' : 'border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]'}`} aria-hidden="true">
                       男
                     </span>
                   </button>
@@ -159,7 +159,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
                     aria-pressed={row.gender === 'female'}
                     className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] justify-self-center items-center justify-center transition-transform active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
                   >
-                    <span className={`flex h-9 w-[38px] items-center justify-center rounded-[var(--tm-radius-control)] border text-[length:var(--tm-font-size-body)] font-semibold transition-[background-color,border-color,color,box-shadow] ${row.gender === 'female' ? 'border-[var(--tm-gender-female-selection-bg)] bg-[var(--tm-gender-female-selection-bg)] text-[var(--tm-compact-editor-selected-text)] [box-shadow:var(--tm-shadow-control)]' : 'border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]'}`} aria-hidden="true">
+                    <span className={`flex h-9 w-[38px] items-center justify-center rounded-[var(--tm-radius-control-compact)] border text-[length:var(--tm-font-size-body)] font-semibold transition-[background-color,border-color,color,box-shadow] ${row.gender === 'female' ? 'border-[var(--tm-gender-female-selection-bg)] bg-[var(--tm-gender-female-selection-bg)] text-[var(--tm-compact-editor-selected-text)] [box-shadow:var(--tm-shadow-control)]' : 'border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]'}`} aria-hidden="true">
                       女
                     </span>
                   </button>
@@ -182,7 +182,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
         <button
           type="button"
           onClick={addStudentInputRow}
-          className="mt-[var(--tm-space-5)] flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
+          className="mt-[var(--tm-space-3)] flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"
         >
           添加一名
         </button>
@@ -193,7 +193,7 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
           type="button"
           onClick={handleSubmit}
           disabled={!canSubmitStudents}
-          className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
+          className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
         >
           完成
         </button>
@@ -214,14 +214,14 @@ const AddStudentView: React.FC<AddStudentViewProps> = ({ existingStudents, onBac
           <button
             type="button"
             onClick={fillStudentsFromScannedTable}
-            className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
+            className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2"
           >
             开始识别
           </button>
         )}
       >
         <div className="flex flex-col items-center py-[var(--tm-space-5)] text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
+          <span className="flex h-14 w-14 items-center justify-center rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
             <ScanLine className="h-7 w-7" aria-hidden="true" />
           </span>
           <p className="mt-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-secondary)]">

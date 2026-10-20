@@ -1,3 +1,5 @@
+import { getEffectiveGrowthCoinConfig } from '../shared/growthCoinRuleSchedule';
+import { getGrowthCoinMode, getScoreCoinRuleSummary } from '../shared/growthCoinRules';
 import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan, type CoinIssuanceConfig } from './types';
 import { getClassBudgetTotal, isCoinIssuanceEligible, normalizeMinimumEvaluationCount } from './domain/campusCoinIssuance';
 import { ASSETS } from './assets/images';
@@ -99,11 +101,12 @@ export const DEFAULT_COIN_ISSUANCE_CONFIG: CoinIssuanceConfig = {
 
 export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   student: Student,
-  issuanceConfig: CoinIssuanceConfig = DEFAULT_COIN_ISSUANCE_CONFIG,
+  savedIssuanceConfig: CoinIssuanceConfig = DEFAULT_COIN_ISSUANCE_CONFIG,
   classStudentCount = 60,
   // 由结算接口按当前班级和周期传入，Mock 默认按 1 次评价演示可发放状态。
   periodEvaluationCount = 1,
 ): CampusCoinDetail => {
+  const issuanceConfig = getEffectiveGrowthCoinConfig(savedIssuanceConfig);
   const seed = student.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const balance = 320 + (seed % 80);
   const basePerformance = 100 + (seed % 25);
@@ -120,7 +123,7 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   const normalizedPeriodEvaluationCount = Math.max(0, Math.floor(periodEvaluationCount));
   const minimumEvaluationCount = normalizeMinimumEvaluationCount(issuanceConfig.minimumEvaluationCount);
   const isEligible = isCoinIssuanceEligible({
-    enabled: issuanceConfig.enabled,
+    enabled: issuanceConfig.enabled && getGrowthCoinMode(issuanceConfig) === 'periodic',
     periodEvaluationCount: normalizedPeriodEvaluationCount,
     minimumEvaluationCount,
   });
@@ -196,6 +199,7 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
       },
     ],
     settlementEstimate: {
+      scoreRuleSummary: getGrowthCoinMode(issuanceConfig) === 'score' ? getScoreCoinRuleSummary(issuanceConfig) : undefined,
       enabled: issuanceConfig.enabled,
       eligible: isEligible,
       period: issuanceConfig.period,

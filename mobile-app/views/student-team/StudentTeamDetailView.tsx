@@ -139,7 +139,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
               <button type="button" onClick={() => toggleGender('female')} aria-label={isFemaleQuickSelectionActive ? '取消全选女生' : '全选女生'} aria-pressed={isFemaleQuickSelectionActive} className="flex h-11 w-11 shrink-0 items-center justify-center"><span className={`flex h-8 w-10 items-center justify-center rounded-full border transition-colors [transition-duration:var(--tm-duration-standard)] [box-shadow:var(--tm-shadow-control)] ${isFemaleQuickSelectionActive ? 'border-[var(--tm-gender-female-selection-bg)] bg-[var(--tm-gender-female-selection-bg)] text-white' : 'border-[var(--tm-border-subtle)] bg-white text-[var(--tm-gender-female)]'}`}><FemaleIcon className="h-4 w-4" /></span></button>
             </>
           )}
-          <button type="button" onClick={() => { if (!isSelectionMode) setQuery(''); onToggleSelectionMode(); }} className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 text-[13px] font-semibold ${isSelectionMode ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}>{isSelectionMode ? '取消' : '多选'}</button>
+          <button type="button" onClick={() => { if (!isSelectionMode) setQuery(''); onToggleSelectionMode(); }} className={`min-h-11 shrink-0 rounded-[var(--tm-radius-control-compact)] px-2.5 text-[13px] font-semibold ${isSelectionMode ? 'text-[var(--tm-text-secondary)]' : 'text-[var(--tm-text-primary)]'}`}>{isSelectionMode ? '取消' : '多选'}</button>
           {!isSelectionMode && students.length > 0 && (
             <button type="button" onClick={() => setShowMore(true)} aria-label="学生更多操作" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] active:text-[var(--tm-text-primary)]">
               <MenuIcon className="h-5 w-5" />
@@ -150,7 +150,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
 
       <main className="min-h-0 flex-1 overflow-y-auto px-3 pb-40 pt-3 no-scrollbar">
         {shouldGroupByClass ? (
-          <div className="space-y-4">
+          <div className="space-y-[var(--tm-layout-card-gap)]">
             {visibleClassSections.map((section, index) => (
               <section key={section.label} aria-labelledby={`team-class-section-${index}`}>
                 <div className="flex min-h-10 items-center justify-between px-1">
@@ -160,6 +160,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
                 <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
                   {section.entries.map(({ student, index }) => (
                     <StudentRosterCard
+                      shape="subtle"
                       key={student.id}
                       student={student}
                       index={index}
@@ -178,6 +179,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
           <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
             {visibleStudents.map((student, index) => (
               <StudentRosterCard
+                shape="subtle"
                 key={student.id}
                 student={student}
                 index={index}
@@ -198,12 +200,12 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
 
       <MobileBottomSheet open={showMore} title="更多操作" onClose={() => setShowMore(false)}>
         <div className="space-y-1 pb-2">
-          <button type="button" onClick={() => { setShowMore(false); setShowCardSettings(true); }} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-3 text-left text-[14px] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]"><Eye className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />学生卡片展示</button>
+          <button type="button" onClick={() => { setShowMore(false); setShowCardSettings(true); }} className="flex min-h-[56px] w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] px-3 text-left text-[14px] font-semibold text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]"><Eye className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" />学生卡片展示</button>
         </div>
       </MobileBottomSheet>
 
       <MobileBottomSheet open={showCardSettings} title="学生卡片展示" onClose={() => setShowCardSettings(false)}>
-        <div className="space-y-[var(--tm-space-4)] pb-2">
+        <div className="space-y-[var(--tm-layout-card-gap)] pb-2">
           <CardLevelDisplaySettings
             showLevel={displaySettings.showLevel}
             levelForm={displaySettings.levelForm}

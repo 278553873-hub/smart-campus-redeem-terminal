@@ -19,9 +19,9 @@ interface ClassInviteFlowProps {
   onClose: () => void;
 }
 
-const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]';
-const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]';
-const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
+const actionClass = 'flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]';
+const iconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]';
+const primaryButtonClass = 'flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]';
 
 const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, classInfo, getClassLabel = item => item.name, studentTeam, inviterName, schoolName, onClose }) => {
   const [step, setStep] = useState<InviteStep>('methods');
@@ -77,13 +77,13 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
     <>
       <MobileBottomSheet open={open && !wechatShareOpen} title={sheetTitle} onClose={closeFlow}>
         {step !== 'methods' && (
-          <button type="button" onClick={backToMethods} className="mb-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control)] pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
+          <button type="button" onClick={backToMethods} className="mb-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">
             <ChevronLeft className="h-4 w-4" />返回邀请方式
           </button>
         )}
 
         {step === 'methods' && (
-          <div className="space-y-[var(--tm-space-2)]">
+          <div className="space-y-[var(--tm-layout-list-gap-compact)]">
             {audience === 'teacher' && (
               <button type="button" onClick={() => setWechatShareOpen(true)} className={actionClass}>
                 <span className={iconClass}><MessageCircle className="h-[18px] w-[18px]" /></span>
@@ -104,12 +104,12 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
 
         {step === 'qr' && (
           <div>
-            <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] text-center">
+            <div className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] text-center">
               <div className="text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">{audience === 'teacher' ? '加入AI素养评价' : '绑定学生'}</div>
-              <img src={qrAsset} alt={audience === 'teacher' ? 'AI素养评价小程序二维码' : '素养指南针小程序二维码'} className="mx-auto mt-[var(--tm-space-4)] aspect-square w-40 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] object-contain p-[var(--tm-space-3)]" />
+              <img src={qrAsset} alt={audience === 'teacher' ? 'AI素养评价小程序二维码' : '素养指南针小程序二维码'} className="mx-auto mt-[var(--tm-space-4)] aspect-square w-40 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] object-contain p-[var(--tm-space-3)]" />
               <p className="mt-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{qrText}</p>
             </div>
-            <a href={qrAsset} download={`${targetName}-${audience === 'teacher' ? '老师' : '家长'}邀请.png`} className={`${primaryButtonClass} mt-[var(--tm-space-4)]`}>
+            <a href={qrAsset} download={`${targetName}-${audience === 'teacher' ? '老师' : '家长'}邀请.png`} className={`${primaryButtonClass} mt-[var(--tm-layout-card-gap)]`}>
               <Download className="h-[18px] w-[18px]" />保存图片
             </a>
           </div>
@@ -117,9 +117,9 @@ const ClassInviteFlow: React.FC<ClassInviteFlowProps> = ({ open, audience, class
 
         {step === 'link' && (
           <div>
-            <div className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{inviteText}</div>
+            <div className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] leading-6 text-[var(--tm-text-secondary)]">{inviteText}</div>
             <div className="mt-[var(--tm-space-3)] text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{schoolName}</div>
-            <button type="button" onClick={handleCopy} className={`${primaryButtonClass} mt-[var(--tm-space-4)]`}>
+            <button type="button" onClick={handleCopy} className={`${primaryButtonClass} mt-[var(--tm-layout-card-gap)]`}>
               {copySuccess ? <Check className="h-[18px] w-[18px]" /> : <Copy className="h-[18px] w-[18px]" />}
               {copySuccess ? '已复制邀请文案' : '复制邀请文案'}
             </button>

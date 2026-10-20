@@ -34,7 +34,7 @@
 
 .teacher-record-soft-dock {
   background: var(--tm-bg-surface-glass);
-  border-radius: var(--tm-radius-card);
+  border-radius: var(--tm-radius-card-compact);
   box-shadow: var(--tm-shadow-floating);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);

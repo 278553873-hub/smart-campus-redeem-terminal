@@ -263,17 +263,17 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
           <Plus className="h-4 w-4" aria-hidden="true" />添加学生
         </button>
       </div>
-      <div className="space-y-[var(--tm-space-2)]">
+      <div className="space-y-[var(--tm-layout-list-gap-compact)]">
         {rosterIds.filter(id => selectedIds.has(id)).map(id => {
           const student = getStudentLabelById(id);
           return (
-            <div key={id} className="flex min-h-[72px] items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-3 py-2 [box-shadow:var(--tm-shadow-card-ambient)]">
+            <div key={id} className="flex min-h-[72px] items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-3 py-2 [box-shadow:var(--tm-shadow-card-ambient)]">
               <img src={student?.avatar || ASSETS.AVATAR.GENERIC_BOY} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)]">{student?.name ?? '学生'}</span>
                 <span className="mt-0.5 block truncate text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{student?.classLabel}</span>
               </div>
-              <button type="button" onClick={() => toggleStudent(id)} aria-label={`移除${student?.name ?? '学生'}`} className="min-h-11 min-w-11 shrink-0 rounded-[var(--tm-radius-control)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative)]">移除</button>
+              <button type="button" onClick={() => toggleStudent(id)} aria-label={`移除${student?.name ?? '学生'}`} className="min-h-11 min-w-11 shrink-0 rounded-[var(--tm-radius-control-compact)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-status-negative)]">移除</button>
             </div>
           );
         })}
@@ -297,7 +297,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
             {adjustmentRoster}
           </main>
           <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
-            <button type="button" disabled={!hasMemberChanges} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]">
+            <button type="button" disabled={!hasMemberChanges} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]">
               保存修改
             </button>
           </footer>
@@ -331,21 +331,21 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
           />
         ) : undefined}
         footer={!isClassPickerPage && (
-          <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+          <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
             {primaryLabel}
           </button>
         )}
       >
         {page === 'details' && (
-          <div className="space-y-5 py-2">
+          <div className="space-y-[var(--tm-form-section-gap)] py-2">
             <label className="block">
               <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">名称</span>
-              <input value={name} onChange={event => setName(event.target.value)} maxLength={30} placeholder="例如：篮球社" aria-label="名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
+              <input value={name} onChange={event => setName(event.target.value)} maxLength={30} placeholder="例如：篮球社" aria-label="名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]" />
             </label>
 
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-2 block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">头像</legend>
-              <button type="button" onClick={() => setAvatarPickerOpen(true)} className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+              <button type="button" onClick={() => setAvatarPickerOpen(true)} className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                 <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                   <img src={getStudentTeamAvatarImage(avatarKey)} alt="" className="h-full w-full object-cover" aria-hidden="true" />
                 </span>
@@ -359,7 +359,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
 
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-2 block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">谁可以看到</legend>
-              <div className="mt-3 grid gap-2.5" role="radiogroup" aria-label="团队可见范围">
+              <div className="mt-3 grid gap-[var(--tm-form-option-gap)]" role="radiogroup" aria-label="团队可见范围">
                 {[
                   {
                     value: 'collaborators' as const,
@@ -381,6 +381,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
                   const selected = visibility === option.value;
                   return (
                     <MobileRadioOptionCard
+                      shape="subtle"
                       key={option.value}
                       id={option.id}
                       tag={option.tag}
@@ -405,6 +406,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
               <div className="mt-[var(--tm-space-2)] flex items-center gap-2">
                 <div className="min-w-0 flex-1">
                   <CompactSegmentedControl
+                    shape="subtle"
                     value={memberScope}
                     items={[
                       { value: 'authorized', label: '我的班级' },
@@ -486,13 +488,13 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
       />
 
       <MobileBottomSheet open={avatarPickerOpen} title="选择头像" onClose={() => setAvatarPickerOpen(false)}>
-        <div className="space-y-4 pb-2">
+        <div className="space-y-[var(--tm-form-section-gap)] pb-2">
           {Array.from(new Set(studentTeamAvatarOptions.map(option => option.category))).map(category => (
             <fieldset key={category} className="m-0 border-0 p-0">
               <legend className="mb-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{category}</legend>
               <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={`${category}头像`}>
                 {studentTeamAvatarOptions.filter(option => option.category === category).map(option => (
-                  <button key={option.key} type="button" role="radio" aria-checked={avatarKey === option.key} aria-label={`选择${option.label}头像`} onClick={() => { setAvatarKey(option.key); setAvatarPickerOpen(false); }} className="relative flex min-h-20 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                  <button key={option.key} type="button" role="radio" aria-checked={avatarKey === option.key} aria-label={`选择${option.label}头像`} onClick={() => { setAvatarKey(option.key); setAvatarPickerOpen(false); }} className="relative flex min-h-20 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                     <img src={option.src} alt={option.label} className="h-16 w-16 rounded-full object-cover" />
                     {avatarKey === option.key && <span className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]"><Check className="h-3.5 w-3.5" aria-hidden="true" /></span>}
                   </button>

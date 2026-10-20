@@ -4,12 +4,27 @@ import MobileToast from '../../components/ui/MobileToast';
 
 // 页面容器保持透明，顶部氛围光由屏幕级背景（TeacherMobileScreenBackground）统一提供。
 export const pageBackground = 'bg-transparent';
-export const sectionSurface = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
-export const primaryButton = 'inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none';
-export const secondaryButton = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45';
+const sectionSurfaceBase = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
+export const sectionSurface = `rounded-[var(--tm-radius-card)] ${sectionSurfaceBase}`;
+const primaryButtonBase = 'inline-flex min-h-[52px] items-center justify-center gap-2 bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none';
+export const primaryButton = `rounded-[var(--tm-radius-control)] ${primaryButtonBase}`;
+const secondaryButtonBase = 'inline-flex min-h-11 items-center justify-center gap-2 border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-45';
+export const secondaryButton = `rounded-[var(--tm-radius-control)] ${secondaryButtonBase}`;
 export const iconButton = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)]';
-export const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
-export const readonlyFieldClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium';
+const inputClassBase = 'w-full border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+export const inputClass = `rounded-[var(--tm-radius-control)] ${inputClassBase}`;
+const readonlyFieldBase = 'w-full border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium';
+
+export const readonlyFieldClass = `rounded-[var(--tm-radius-control)] ${readonlyFieldBase}`;
+
+// 克制形态只供已迁移页面显式接入，其他档案页面继续沿用默认导出。
+export const subtleArchivePageStyles = {
+  readonlyFieldClass: `rounded-[var(--tm-radius-control-compact)] ${readonlyFieldBase}`,
+  sectionSurface: `rounded-[var(--tm-radius-card-compact)] ${sectionSurfaceBase}`,
+  primaryButton: `rounded-[var(--tm-radius-control-compact)] ${primaryButtonBase}`,
+  secondaryButton: `rounded-[var(--tm-radius-control-compact)] ${secondaryButtonBase}`,
+  inputClass: `rounded-[var(--tm-radius-control-compact)] ${inputClassBase}`,
+} as const;
 
 export const PageHeader: React.FC<{ title: string; onBack: () => void; action?: React.ReactNode }> = ({ title, onBack, action }) => (
   <header className="sticky top-0 z-40 flex h-11 shrink-0 items-center justify-between bg-[var(--tm-bg-surface-glass)] pl-4 [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))] backdrop-blur-md">

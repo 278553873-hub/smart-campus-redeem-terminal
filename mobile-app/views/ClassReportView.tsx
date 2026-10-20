@@ -1,3 +1,6 @@
+import { classReportColorPreviewStyle } from '../styles/teacherMobileTokens';
+import ReportSectionLayout from '../components/report/ReportSectionLayout';
+import type { ClassReportOutlineItem } from '../../shared/classReportOutline';
 import MobileDatePickerSheet, { type MobileDateRange } from '../components/ui/MobileDatePickerSheet';
 import { currentTermToDateRange, localToday } from '../components/ui/mobileDatePickerModel';
 import React, { useCallback, useId, useMemo, useRef, useState } from 'react';
@@ -5,12 +8,8 @@ import {
     ArrowDownNarrowWide,
     ArrowUpDown,
     ArrowUpNarrowWide,
-    CalendarRange,
-    ChevronDown,
     ChevronRight,
-    ChevronUp,
     Info,
-    PencilLine,
     Quote,
     Triangle,
 } from 'lucide-react';
@@ -21,7 +20,7 @@ import PillSelectionControl from '../components/ui/PillSelectionControl';
 import ClassReportIndicatorDrilldown, {
     type ClassReportIndicatorDrilldownMode,
 } from '../components/report/ClassReportIndicatorDrilldown';
-import RecordDistributionComparison, { RecordDistributionDetails } from '../components/report/RecordDistributionComparison';
+import RecordDistributionComparison from '../components/report/RecordDistributionComparison';
 import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
 import {
     TeacherReportBarChart,
@@ -32,8 +31,6 @@ import {
 import {
     getEducationEventAnalysis,
     getEducationScoreAnalysis,
-    getRecordDistributionAnalysis,
-    getRecordDistributionComparisonRows,
     getRecordDistributionOverview,
     type ClassReportChartAnalysis,
 } from '../domain/classReportChartSummary';
@@ -45,8 +42,9 @@ import {
     type StudentCoverageSortKey,
 } from '../domain/classStudentCoverage';
 import {
-    formatReportSourceRecordCount,
-    formatReportSourceRecordCountAria,
+    formatReportSourceEvaluationCount,
+    formatReportSourceEvaluationCountAria,
+    getReportEvaluationCount,
     getPeriodForDays,
     getReportSourceRecordCount,
     getReportSourceOptions,
@@ -61,6 +59,7 @@ import { buildClassReportIndicatorTree } from '../domain/classReportIndicatorTre
 import { ClassInfo, Student } from '../types';
 
 interface ClassReportViewProps {
+    outline?: ClassReportOutlineItem[];
     classInfo: ClassInfo;
     students: Student[];
     currentTeacherName: string;
@@ -89,21 +88,25 @@ const timeRangeTabs: { key: TimeRange; label: string }[] = [
     { key: 'custom', label: '自定义' },
 ];
 
-const cardClass = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
+const cardClass = 'rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]';
 
 interface ReportSectionProps {
     id: string;
     title: string;
     children: React.ReactNode;
     action?: React.ReactNode;
+    titleAccessory?: React.ReactNode;
 }
 
-const ReportSection = ({ id, title, children, action }: ReportSectionProps) => (
+const ReportSection = ({ id, title, children, action, titleAccessory }: ReportSectionProps) => (
     <section aria-labelledby={id} className={`${cardClass} p-[var(--tm-report-card-padding)]`}>
         <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-6 items-center justify-between gap-3">
-            <h2 id={id} className="text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
-                {title}
-            </h2>
+            <div className="flex min-w-0 items-center gap-1">
+                <h2 id={id} className="text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
+                    {title}
+                </h2>
+                {titleAccessory}
+            </div>
             {action}
         </div>
         {children}
@@ -114,7 +117,7 @@ const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
     <div
         role="note"
         aria-label="数据解析"
-        className="relative mt-3 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3 py-3"
+        className="relative mt-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-3"
     >
         <Triangle
             aria-hidden="true"
@@ -139,9 +142,16 @@ const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
     </div>
 );
 
+const formatCustomRangeLabel = (start: string, end: string) => {
+    const [startYear, startMonth, startDay] = start.split('-').map(Number);
+    const [endYear, endMonth, endDay] = end.split('-').map(Number);
+    const endYearLabel = startYear === endYear ? '' : `${endYear}年`;
+    return `${startYear}年${startMonth}月${startDay}日 至 ${endYearLabel}${endMonth}月${endDay}日`;
+};
+
 const reportOverviewHints = {
-    evaluationCount: '老师发起评价行为的次数。发起 1 次评价计 1 次，无论评价对象是 1 人还是多人。示例：评价全班 50 人 = 1 次。',
-    recordCount: '评价后生成的成长记录数。1 名学生 = 1 条。示例：评价全班 50 人 = 50 条。',
+    evaluationCount: '发起评价的次数。无论评价对象是1人还是多人，评价1次算1次。示例：全班50人积极参与体育锻炼，只记为1次评价。',
+    recordCount: '评价后生成的成长记录数。1名学生算1次。示例：全班50人积极参与体育锻炼，记为50条记录。',
 } as const;
 
 const StatCell = ({
@@ -152,7 +162,7 @@ const StatCell = ({
     hintAlign = 'left',
 }: {
     label: string;
-    value: number;
+    value: number | string;
     unit: string;
     hint?: string;
     hintAlign?: 'left' | 'center';
@@ -176,7 +186,7 @@ const StatCell = ({
                         onKeyDown={(event) => {
                             if (event.key === 'Escape') setHintOpen(false);
                         }}
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:bg-[var(--tm-bg-surface-muted)] active:text-[var(--tm-text-primary)]"
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:text-[var(--tm-text-primary)]"
                     >
                         <Info aria-hidden="true" className="h-3.5 w-3.5" />
                     </button>
@@ -190,7 +200,7 @@ const StatCell = ({
                 <div
                     id={hintId}
                     role="tooltip"
-                    className={`absolute top-10 z-20 w-56 rounded-2xl bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white shadow-xl ${hintAlign === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'}`}
+                    className={`absolute top-10 z-20 w-56 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white ${hintAlign === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'}`}
                 >
                     {hint}
                 </div>
@@ -246,8 +256,43 @@ const FocusStudentList = ({ rows, tone, onSelectStudent }: FocusStudentListProps
     </ol>
 );
 
+interface ScoreRankingRow {
+    student: Student;
+    net: number;
+    progress: number;
+}
+
+const ScoreRankingList = ({ rows, rankingMode, onSelectStudent }: {
+    rows: ScoreRankingRow[];
+    rankingMode: RankingMode;
+    onSelectStudent: (student: Student) => void;
+}) => (
+    <ol>
+        {rows.map((row, index) => {
+            const score = rankingMode === 'net' ? row.net : row.progress;
+            return (
+                <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
+                    <button
+                        type="button"
+                        onClick={() => onSelectStudent(row.student)}
+                        className="grid min-h-11 w-full grid-cols-[28px_1fr_auto] items-center gap-2 rounded-[8px] px-2 text-left transition active:bg-[var(--tm-bg-surface-soft)]"
+                    >
+                        <MobileRankingBadge rank={index + 1} />
+                        <span className="truncate text-[var(--tm-font-size-body)] font-medium">{row.student.name}</span>
+                        <span className={`text-[var(--tm-font-size-body)] font-semibold ${score >= 0
+                            ? 'text-[var(--tm-chart-positive-text)]'
+                            : 'text-[var(--tm-chart-negative-text)]'}`}>
+                            {score >= 0 ? '+' : ''}{score}
+                        </span>
+                    </button>
+                </li>
+            );
+        })}
+    </ol>
+);
+
 const coverageSortColumns: { key: StudentCoverageSortKey; label: string }[] = [
-    { key: 'evaluationCount', label: '评价次数' },
+    { key: 'evaluationCount', label: '记录条数' },
     { key: 'teacherCount', label: '评价老师数' },
 ];
 
@@ -260,7 +305,7 @@ const StudentCoverageList = ({
 }: StudentCoverageListProps) => (
     <div>
         <div
-            className="grid min-h-[var(--tm-size-touch)] grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)] items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-compact)] font-semibold"
+            className="grid min-h-[var(--tm-size-touch)] grid-cols-[minmax(0,1fr)_var(--tm-report-coverage-evaluation-column)_var(--tm-report-coverage-teacher-column)] items-center overflow-hidden rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-compact)] font-semibold"
             aria-label="学生覆盖排序"
         >
             <span role="columnheader" className="pl-[var(--tm-report-coverage-name-inset)] text-[var(--tm-text-primary)]">学生姓名</span>
@@ -316,7 +361,7 @@ const StudentCoverageList = ({
                                 <span className="truncate">{row.student.name}</span>
                             </button>
                             <span
-                                aria-label={`评价${row.evaluationCount}次`}
+                                aria-label={`${row.evaluationCount}条记录`}
                                 className={`flex h-[var(--tm-report-coverage-value-height)] items-center justify-center text-[length:var(--tm-font-size-compact)] tabular-nums ${
                                     evaluationMissing
                                         ? 'font-semibold text-[var(--tm-status-negative-strong)]'
@@ -344,6 +389,7 @@ const StudentCoverageList = ({
 );
 
 const ClassReportView: React.FC<ClassReportViewProps> = ({
+    outline,
     classInfo,
     students,
     currentTeacherName,
@@ -357,10 +403,10 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const [rankingMode, setRankingMode] = useState<RankingMode>('net');
     const [activeEducation, setActiveEducation] = useState<EducationKey>('all');
     const [showAllRanking, setShowAllRanking] = useState(false);
+    const [showRankingHelp, setShowRankingHelp] = useState(false);
     const [coverageSortKey, setCoverageSortKey] = useState<StudentCoverageSortKey>('evaluationCount');
     const [coverageSortDirection, setCoverageSortDirection] = useState<StudentCoverageSortDirection>('asc');
     const [showAllCoverage, setShowAllCoverage] = useState(false);
-    const [showRecordDistributionDetails, setShowRecordDistributionDetails] = useState(false);
     const [indicatorDrilldown, setIndicatorDrilldown] = useState<{
         mode: ClassReportIndicatorDrilldownMode;
         initialPath: string[];
@@ -369,8 +415,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         score: null,
         event: null,
     });
-    const [isFilterPinned, setIsFilterPinned] = useState(false);
     const [resolvedReportPeriod, setResolvedReportPeriod] = useState<ReportPeriodKey>('week');
+    const [isReportScrolled, setIsReportScrolled] = useState(false);
     const sourceScrollerRef = useRef<HTMLDivElement>(null);
 
     const totalStudents = students.length || classInfo.studentCount;
@@ -385,9 +431,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             ? periodMultiplier[resolvedReportPeriod]
             : Math.max(0.2, appliedCustomRange.days / 7)
         : periodMultiplier[timeRange];
-    const selectedPeriodDays = timeRange === 'custom'
-        ? appliedCustomRange?.days ?? ({ day: 1, week: 7, month: 30, semester: 126 } as const)[resolvedReportPeriod]
-        : ({ day: 1, week: 7, month: 30, semester: 126 } as const)[timeRange];
     const currentPeriodRecordCount = Math.max(0, Math.round(447 * selectedPeriodMultiplier));
     const reportSourceOptions = useMemo(
         () => getReportSourceOptions(resolvedReportPeriod).map(source => ({
@@ -404,9 +447,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             ? currentPeriodRecordCount
             : activeReportSource.recordCount;
         // 评价次数按“1 次评价平均覆盖 2 名学生”从记录条数折算，保证评价次数不超过记录条数。
-        const evaluationCount = totalRecords === 0
-            ? 0
-            : Math.max(1, Math.ceil(totalRecords / 2));
+        const evaluationCount = getReportEvaluationCount(totalRecords);
         const positiveRecords = Math.round(totalRecords * 0.84);
         const negativeRecords = totalRecords - positiveRecords;
         const coverageBase = activeReportSource.key === 'all'
@@ -416,28 +457,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 : Math.min(0.82, 0.38 + selectedPeriodMultiplier * 0.12 + activeReportSource.recordShare * 0.5);
         const coveredStudents = Math.min(totalStudents, Math.round(totalStudents * coverageBase));
         const previousRecords = Math.max(0, Math.round(totalRecords * 0.78));
-        const previousPositiveRecords = Math.round(previousRecords * 0.76);
-        const previousNegativeRecords = previousRecords - previousPositiveRecords;
-        const gradeAverageRecords = Math.max(0, Math.round(totalRecords * 1.08));
-        const gradeAveragePositiveRecords = Math.round(gradeAverageRecords * 0.82);
-        const gradeAverageNegativeRecords = gradeAverageRecords - gradeAveragePositiveRecords;
-        const previousCovered = Math.max(0, Math.min(totalStudents, coveredStudents - Math.max(0, Math.round(totalStudents * 0.04))));
-        const gradeBenchmarkCoveredStudents = gradeAverageRecords === 0
-            ? 0
-            : Math.min(totalStudents, Math.max(Math.ceil(totalStudents * 0.5), coveredStudents));
-        const gradeBenchmarks = [0.8, 0.82, 0.84].map((positiveShare, index) => {
-            const positive = Math.round(gradeAverageRecords * positiveShare);
-            return {
-                classId: `grade-peer-${index + 1}`,
-                positive,
-                negative: gradeAverageRecords - positive,
-                coveredStudents: gradeBenchmarkCoveredStudents,
-                totalStudents,
-                periodDays: selectedPeriodDays,
-                sourceKey: activeReportSource.key,
-            };
-        });
-
         const indicatorTree = buildClassReportIndicatorTree(classReportIndicatorDemoPaths, totalRecords);
         const educationEvents = indicatorTree.map((node, index) => ({
             key: node.id,
@@ -454,14 +473,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             evaluationCount,
             positiveRecords,
             negativeRecords,
-            previousPositiveRecords,
-            previousNegativeRecords,
-            gradeAveragePositiveRecords,
-            gradeAverageNegativeRecords,
             coveredStudents,
             previousRecords,
-            previousCovered,
-            gradeBenchmarks,
             dataMultiplier,
             indicatorTree,
             educationEvents,
@@ -469,16 +482,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
             deductScores,
             netScores,
         };
-    }, [activeReportSource, currentPeriodRecordCount, selectedPeriodDays, selectedPeriodMultiplier, totalStudents]);
-
-    const recordDistributionRows = useMemo(() => getRecordDistributionComparisonRows({
-        positive: reportData.positiveRecords,
-        negative: reportData.negativeRecords,
-        previousPositive: reportData.previousPositiveRecords,
-        previousNegative: reportData.previousNegativeRecords,
-        gradeAveragePositive: reportData.gradeAveragePositiveRecords,
-        gradeAverageNegative: reportData.gradeAverageNegativeRecords,
-    }), [reportData]);
+    }, [activeReportSource, currentPeriodRecordCount, selectedPeriodMultiplier, totalStudents]);
 
     const recordDistributionOverview = useMemo(() => getRecordDistributionOverview({
         positive: reportData.positiveRecords,
@@ -490,27 +494,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         { name: '待改进', values: reportData.deductScores, color: 'negative' },
         { name: '总分', values: reportData.netScores, color: 'data' },
     ], [reportData]);
-
-    const recordDistributionAnalysis = useMemo(() => getRecordDistributionAnalysis({
-        currentClassId: classInfo.id,
-        current: {
-            positive: reportData.positiveRecords,
-            negative: reportData.negativeRecords,
-            coveredStudents: reportData.coveredStudents,
-            totalStudents,
-            periodDays: selectedPeriodDays,
-            sourceKey: activeReportSource.key,
-        },
-        previous: {
-            positive: reportData.previousPositiveRecords,
-            negative: reportData.previousNegativeRecords,
-            coveredStudents: reportData.previousCovered,
-            totalStudents,
-            periodDays: selectedPeriodDays,
-            sourceKey: activeReportSource.key,
-        },
-        gradeBenchmarks: reportData.gradeBenchmarks,
-    }), [activeReportSource.key, classInfo.id, reportData, selectedPeriodDays, totalStudents]);
 
     const educationScoreAnalysis = useMemo(() => getEducationScoreAnalysis(
         reportData.indicatorTree.map((item, index) => ({
@@ -582,7 +565,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         setIndicatorDrilldown({ mode, initialPath: [selectedNode.id] });
     }, [lastIndicatorRootByMode, reportData.indicatorTree]);
 
-    const visibleRankingRows = showAllRanking ? rankingRows : rankingRows.slice(0, 10);
+    const visibleRankingRows = rankingRows.slice(0, 10);
     const studentCoverageRows = useMemo(() => buildStudentCoverageRows({
         students,
         coveredStudentCount: reportData.coveredStudents,
@@ -606,10 +589,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         setCoverageSortKey(nextSortKey);
         setCoverageSortDirection('asc');
     };
-    const handleReportScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-        const nextPinned = event.currentTarget.scrollTop > 12;
-        setIsFilterPinned(current => (current === nextPinned ? current : nextPinned));
-    }, []);
 
     const centerSourceAfterPeriodChange = (sourceKey: ReportSourceKey) => {
         requestAnimationFrame(() => {
@@ -657,18 +636,9 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         : resolvedReportPeriod;
     const reportKey = `${reportSourceKey}-${appliedPeriodKey}`;
     return (
-        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
-            <div className="min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
-                <header className={`sticky top-0 z-30 border-b bg-[var(--tm-page-plain-content-bg)] transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
-                    isFilterPinned
-                        ? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'
-                        : 'border-transparent'
-                }`}>
-                    <div className={`px-[var(--tm-report-page-inline)] transition-[padding] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${
-                        isFilterPinned
-                            ? 'py-[var(--tm-report-filter-padding-pinned)]'
-                            : 'pb-[var(--tm-report-filter-padding-bottom)] pt-[var(--tm-report-filter-padding-top)]'
-                    }`}>
+        <div style={classReportColorPreviewStyle} className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
+                <header className={`z-30 shrink-0 border-b bg-[var(--tm-page-plain-content-bg)] ${isReportScrolled ? 'border-[var(--tm-border-subtle)]' : 'border-transparent'}`}>
+                    <div className="px-[var(--tm-report-page-inline)]">
                         <div>
                             <ReportDateRangeTabs
                                 value={timeRange}
@@ -678,30 +648,18 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                 className="-mx-[var(--tm-report-page-inline)]"
                             />
                             {timeRange === 'custom' && appliedCustomRange && (
-                                <div
-                                    aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}`}
-                                    className="-mx-[var(--tm-report-page-inline)] flex h-[var(--tm-report-custom-range-height)] items-center justify-between gap-0.5 bg-[var(--tm-bg-surface-soft)] px-[var(--tm-report-page-inline)]"
+                                <button
+                                    type="button"
+                                    onClick={openCustomDatePicker}
+                                    aria-label={`当前自定义日期范围：${appliedCustomRange.start}至${appliedCustomRange.end}，修改日期`}
+                                    aria-haspopup="dialog"
+                                    className="-mx-[var(--tm-report-page-inline)] flex min-h-[var(--tm-report-custom-range-height)] w-[calc(100%+var(--tm-report-page-inline)*2)] items-center gap-x-[var(--tm-space-2)] bg-[var(--tm-bg-surface)] pl-[var(--tm-report-custom-range-inline-start)] pr-[var(--tm-report-page-inline)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
                                 >
-                                    <div className="flex min-w-0 items-center gap-1">
-                                        <CalendarRange aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[var(--tm-text-secondary)]" />
-                                        <span className="shrink-0 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
-                                            自定义时间：
-                                        </span>
-                                        <strong className="truncate text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-text-primary)]">
-                                            {appliedCustomRange.start} 至 {appliedCustomRange.end}
-                                        </strong>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={openCustomDatePicker}
-                                        aria-label="修改自定义日期范围"
-                                        className="relative flex h-8 shrink-0 items-center gap-0.5 rounded-full bg-[var(--tm-bg-surface)] px-1.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition-[color,scale] [transition-duration:var(--tm-duration-standard)] after:absolute after:-inset-y-1.5 after:inset-x-0 active:scale-[0.96] active:text-[var(--tm-text-primary)] motion-reduce:transform-none"
-                                    >
-                                        修改日期
-                                        <PencilLine aria-hidden="true" className="h-3 w-3" />
-                                    </button>
-                                </div>
+                                    <span className="min-w-0 flex-1 text-right text-[length:var(--tm-font-size-body)] font-medium tabular-nums text-[var(--tm-text-primary)]">
+                                        {formatCustomRangeLabel(appliedCustomRange.start, appliedCustomRange.end)}
+                                    </span>
+                                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--tm-text-secondary)]" />
+                                </button>
                             )}
                         </div>
                         <div
@@ -714,8 +672,9 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                 {reportSourceOptions.map(item => {
                                     const selected = reportSourceKey === item.key;
                                     const isTeacherSource = item.key !== 'all';
-                                    const displayedRecordCount = formatReportSourceRecordCount(item.recordCount);
-                                    const accessibleRecordCount = formatReportSourceRecordCountAria(item.recordCount);
+                                    const evaluationCount = getReportEvaluationCount(item.recordCount);
+                                    const displayedEvaluationCount = formatReportSourceEvaluationCount(evaluationCount);
+                                    const accessibleEvaluationCount = formatReportSourceEvaluationCountAria(evaluationCount);
 
                                     return (
                                         <button
@@ -727,26 +686,23 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                             aria-label={item.key === 'all'
                                                 ? item.label
                                                 : item.key === 'mine'
-                                                    ? `我的记录，${currentTeacherName}，${accessibleRecordCount}`
-                                                    : `${item.label}，${accessibleRecordCount}`}
+                                                    ? `我的记录，${currentTeacherName}，${accessibleEvaluationCount}`
+                                                    : `${item.label}，${accessibleEvaluationCount}`}
                                             data-report-source-key={item.key}
-                                            onClick={() => {
-                                                setReportSourceKey(item.key);
-                                                centerSourceAfterPeriodChange(item.key);
-                                            }}
+                                            onClick={() => setReportSourceKey(item.key)}
                                             className="flex h-[var(--tm-size-touch)] shrink-0 items-center whitespace-nowrap text-[length:var(--tm-font-size-compact)]"
                                         >
-                                            <span className={`inline-flex h-[var(--tm-report-source-pill-height)] items-center rounded-full transition-[background-color,color,box-shadow,scale] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] motion-reduce:transform-none ${
+                                            <span className={`inline-flex h-[var(--tm-report-source-pill-height)] items-center rounded-full px-[var(--tm-report-source-pill-inline)] font-semibold transition-[background-color,color,box-shadow] [transition-duration:var(--tm-duration-standard)] ${
                                                 selected
-                                                    ? 'bg-[var(--tm-brand-primary)] px-[var(--tm-report-source-pill-inline)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'
-                                                    : 'px-[var(--tm-report-source-item-inline)] font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'
+                                                    ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-brand-primary-pressed)]'
+                                                    : 'text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'
                                             }`}>
                                                 {item.label}
                                                 {isTeacherSource && (
                                                     <span className={`ml-0.5 text-[length:var(--tm-font-size-badge)] font-medium tabular-nums ${
                                                         selected ? 'text-[var(--tm-text-inverse)]' : 'text-[var(--tm-text-tertiary)]'
                                                     }`}>
-                                                        ({displayedRecordCount})
+                                                        ({displayedEvaluationCount})
                                                     </span>
                                                 )}
                                             </span>
@@ -758,10 +714,15 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     </div>
                 </header>
 
+            <div className="min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={event => {
+                const scrolled = event.currentTarget.scrollTop > 0;
+                setIsReportScrolled(current => current === scrolled ? current : scrolled);
+            }}>
             <div
                 id="class-report-content"
-                className="space-y-[var(--tm-report-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-report-card-gap)]"
+                className="space-y-[var(--tm-layout-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-space-3)]"
             >
+                <ReportSectionLayout outline={outline}>
                 <ReportSection id="class-report-overview-title" title="概况">
                     <div className="grid grid-cols-3 gap-3">
                         <StatCell
@@ -780,29 +741,14 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         />
                         <StatCell
                             label="覆盖学生"
-                            value={reportData.coveredStudents}
+                            value={`${coveredStudentCount}/${totalStudents}`}
                             unit="人"
                         />
                     </div>
                 </ReportSection>
 
-                <ReportSection
-                    id="record-distribution-title"
-                    title="评价记录分布"
-                    action={(
-                        <button
-                            type="button"
-                            onClick={() => setShowRecordDistributionDetails(true)}
-                            className="-my-2 flex min-h-[var(--tm-size-touch)] items-center gap-0.5 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-brand-primary)] transition active:text-[var(--tm-brand-primary-pressed)]"
-                            aria-label="查看评价记录对比详情"
-                        >
-                            对比详情
-                            <ChevronRight aria-hidden="true" className="h-4 w-4" />
-                        </button>
-                    )}
-                >
+                <ReportSection id="record-distribution-title" title="评价记录分布">
                     <RecordDistributionComparison overview={recordDistributionOverview} />
-                    <ChartAnalysis {...recordDistributionAnalysis} />
                 </ReportSection>
 
                 <ReportSection
@@ -820,14 +766,23 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         </button>
                     )}
                 >
-                    <TeacherReportBarChart
-                        ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的表扬、待改进与总分对比`}
-                        categories={reportData.indicatorTree.map(item => item.label)}
-                        series={educationScoreSeries}
-                        optionKey={`scores-${reportKey}`}
-                        className="h-64"
-                        onCategorySelect={label => openIndicatorDrilldown('score', label)}
-                    />
+                    <div
+                        role="region"
+                        aria-label="五育得分分布，可左右滑动查看全部指标"
+                        tabIndex={0}
+                        className="overflow-x-auto overscroll-x-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                    >
+                        <div style={{ minWidth: `max(100%, calc(${reportData.indicatorTree.length} * var(--tm-report-score-category-width) + var(--tm-report-score-axis-space)))` }}>
+                            <TeacherReportBarChart
+                                ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的表扬、待改进与总分对比`}
+                                categories={reportData.indicatorTree.map(item => item.label)}
+                                series={educationScoreSeries}
+                                optionKey={`scores-${reportKey}`}
+                                className="h-64"
+                                onCategorySelect={label => openIndicatorDrilldown('score', label)}
+                            />
+                        </div>
+                    </div>
                     <ChartAnalysis {...educationScoreAnalysis} />
                 </ReportSection>
 
@@ -860,51 +815,34 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     <ChartAnalysis {...educationEventAnalysis} />
                 </ReportSection>
 
-                <ReportSection id="ranking-title" title="积分排行">
+                <ReportSection id="ranking-title" title="得分排行" titleAccessory={(
+                    <button type="button" onClick={() => setShowRankingHelp(true)} aria-label="查看得分排行与进步幅度说明" aria-haspopup="dialog"
+                        className="relative -my-2 flex h-[var(--tm-size-touch)] w-5 shrink-0 items-center justify-start text-[var(--tm-text-tertiary)] after:absolute after:inset-y-0 after:left-0 after:w-[var(--tm-size-touch)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                        <Info aria-hidden="true" className="h-3.5 w-3.5" />
+                    </button>
+                )}>
                     <div>
                         <CompactSegmentedControl
+                            shape="subtle"
                             value={rankingMode}
                             items={[
                                 { value: 'net', label: '总分' },
                                 { value: 'progress', label: '进步幅度' },
                             ]}
                             onChange={setRankingMode}
-                            ariaLabel="积分排行类型"
+                            ariaLabel="得分排行类型"
                             className="mb-3"
                         />
-                        <ol id="class-ranking-list">
-                            {visibleRankingRows.map((row, index) => (
-                                <li key={row.student.id} className="border-b border-[var(--tm-border-subtle)] last:border-0">
-                                    <button
-                                        type="button"
-                                        onClick={() => onSelectStudent(row.student)}
-                                        className="grid min-h-11 w-full grid-cols-[28px_1fr_auto] items-center gap-2 rounded-[8px] px-2 text-left transition active:bg-[var(--tm-bg-surface-soft)]"
-                                    >
-                                        <MobileRankingBadge rank={index + 1} />
-                                        <span className="truncate text-[var(--tm-font-size-body)] font-medium">{row.student.name}</span>
-                                        <span className={`text-[var(--tm-font-size-body)] font-semibold ${
-                                            (rankingMode === 'net' ? row.net : row.progress) >= 0
-                                                ? 'text-[var(--tm-chart-positive-text)]'
-                                                : 'text-[var(--tm-chart-negative-text)]'
-                                        }`}>
-                                            {rankingMode === 'net'
-                                                ? `${row.net >= 0 ? '+' : ''}${row.net}`
-                                                : `${row.progress >= 0 ? '+' : ''}${row.progress}`}
-                                        </span>
-                                    </button>
-                                </li>
-                            ))}
-                        </ol>
+                        <ScoreRankingList rows={visibleRankingRows} rankingMode={rankingMode} onSelectStudent={onSelectStudent} />
                         {rankingRows.length > 10 && (
                             <button
                                 type="button"
-                                onClick={() => setShowAllRanking(value => !value)}
-                                aria-expanded={showAllRanking}
-                                aria-controls="class-ranking-list"
-                                className="mt-2 flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition active:bg-[var(--tm-bg-surface-muted)]"
+                                onClick={() => setShowAllRanking(true)}
+                                aria-haspopup="dialog"
+                                className="mt-1 flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-1 text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]"
                             >
-                                {showAllRanking ? '收起排行' : `查看全部${rankingRows.length}名`}
-                                {showAllRanking ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                {`查看全部${rankingRows.length}名学生`}
+                                <ChevronRight aria-hidden="true" className="h-4 w-4" />
                             </button>
                         )}
                     </div>
@@ -921,7 +859,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         />
 
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="min-w-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-positive-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">
+                            <div className="min-w-0 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-chart-positive-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">
                                 <div className="flex h-10 items-center justify-between gap-0.5 border-b border-[var(--tm-border-subtle)] text-[var(--tm-chart-positive-text)]">
                                     <span className="min-w-0 whitespace-nowrap">
                                         <span className="text-[length:var(--tm-font-size-body)] font-bold">表扬TOP10</span>
@@ -930,7 +868,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                 </div>
                                 <FocusStudentList rows={focusRows.positive} tone="positive" onSelectStudent={onSelectStudent} />
                             </div>
-                            <div className="min-w-0 rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-negative-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">
+                            <div className="min-w-0 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-chart-negative-soft)] px-[var(--tm-space-1)] py-[var(--tm-space-2)]">
                                 <div className="flex h-10 items-center justify-between gap-0.5 border-b border-[var(--tm-border-subtle)] text-[var(--tm-chart-negative-text)]">
                                     <span className="min-w-0 whitespace-nowrap">
                                         <span className="text-[length:var(--tm-font-size-body)] font-bold">待改进TOP10</span>
@@ -973,10 +911,11 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         </button>
                     )}
                 </ReportSection>
+                </ReportSectionLayout>
             </div>
             </div>
 
-            <MobileDatePickerSheet
+            <MobileDatePickerSheet shape="subtle"
                 open={showCustomDatePicker}
                 mode="range"
                 value={customRange}
@@ -985,15 +924,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 onClose={() => setShowCustomDatePicker(false)}
             />
 
-            <MobileBottomSheet
-                open={showRecordDistributionDetails}
-                title="评价记录对比"
-                onClose={() => setShowRecordDistributionDetails(false)}
-            >
-                <RecordDistributionDetails rows={recordDistributionRows} />
-            </MobileBottomSheet>
-
             <ClassReportIndicatorDrilldown
+                colorStyle={classReportColorPreviewStyle}
                 open={indicatorDrilldown != null}
                 mode={indicatorDrilldown?.mode ?? 'score'}
                 roots={reportData.indicatorTree}
@@ -1004,6 +936,31 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     [indicatorDrilldown?.mode ?? 'score']: rootId,
                 }))}
             />
+
+            <MobileBottomSheet open={showRankingHelp} title="得分排行说明" onClose={() => setShowRankingHelp(false)}>
+                <div className="space-y-4 text-[length:var(--tm-font-size-body)] leading-relaxed text-[var(--tm-text-primary)]">
+                    <p>总分＝当前时间范围内的加分－扣分，按总分从高到低排序。</p>
+                    <p>进步幅度＝本期总分－上期总分，按增加的分数从高到低排序，表示分数差值。</p>
+                    <p>示例：本期总分80分，上期总分60分，进步幅度为+20分。</p>
+                </div>
+            </MobileBottomSheet>
+
+            <MobileBottomSheet open={showAllRanking} title="全部得分排行" onClose={() => setShowAllRanking(false)}>
+                <div style={classReportColorPreviewStyle}>
+                <CompactSegmentedControl
+                    shape="subtle"
+                    value={rankingMode}
+                    items={[{ value: 'net', label: '总分' }, { value: 'progress', label: '进步幅度' }]}
+                    onChange={setRankingMode}
+                    ariaLabel="完整得分排行类型"
+                    className="mb-3"
+                />
+                <ScoreRankingList rows={rankingRows} rankingMode={rankingMode} onSelectStudent={student => {
+                    setShowAllRanking(false);
+                    onSelectStudent(student);
+                }} />
+                </div>
+            </MobileBottomSheet>
 
             <MobileBottomSheet
                 open={showAllCoverage}

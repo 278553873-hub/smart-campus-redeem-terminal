@@ -32,7 +32,7 @@ export const StudentTeamPhotoRecognitionButton: React.FC<{ onClick: () => void }
   <button
     type="button"
     onClick={onClick}
-    className="flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[13px] font-semibold text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]"
+    className="flex min-h-11 shrink-0 items-center justify-center gap-1 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-3 text-[13px] font-semibold text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)] active:bg-[var(--tm-bg-surface-soft)]"
   >
     <Camera className="h-4 w-4" aria-hidden="true" />
     拍照识别
@@ -156,7 +156,7 @@ const StudentTeamPhotoRecognitionFlow: React.FC<StudentTeamPhotoRecognitionFlowP
             { label: '拍照', icon: Camera, onClick: () => setStep('capture') },
             { label: '从相册选择', icon: Image, onClick: () => albumInputRef.current?.click() },
           ].map(({ label, icon: Icon, onClick }) => (
-            <button key={label} type="button" onClick={onClick} className="flex min-h-14 w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+            <button key={label} type="button" onClick={onClick} className="flex min-h-14 w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-left text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
               <Icon className="h-5 w-5 text-[var(--tm-action-icon-neutral)]" aria-hidden="true" />
               {label}
             </button>
@@ -203,7 +203,7 @@ const StudentTeamPhotoRecognitionFlow: React.FC<StudentTeamPhotoRecognitionFlowP
       )}
 
       {step === 'review' && (
-        <main className="min-h-0 flex-1 space-y-[var(--tm-space-4)] overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-3 py-[var(--tm-space-4)] no-scrollbar">
+        <main className="min-h-0 flex-1 space-y-[var(--tm-layout-card-gap)] overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-3 py-[var(--tm-space-4)] no-scrollbar">
           {toConfirmItems.length > 0 && (
             <section>
               <h3 className="mb-2 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">核对名单（{toConfirmItems.length}）</h3>
@@ -223,7 +223,7 @@ const StudentTeamPhotoRecognitionFlow: React.FC<StudentTeamPhotoRecognitionFlowP
               <h3 className="mb-2 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">未匹配（{unmatchedItems.length}）</h3>
               <div className="px-[var(--tm-space-2)]">
                 {unmatchedItems.map(item => (
-                  <div key={item.key} className="flex items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-3 py-2.5">
+                  <div key={item.key} className="flex items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-3 py-2.5">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--tm-status-negative-soft)] text-[var(--tm-status-negative-strong)]">
                       <AlertCircle className="h-[18px] w-[18px]" />
                     </span>
@@ -231,7 +231,7 @@ const StudentTeamPhotoRecognitionFlow: React.FC<StudentTeamPhotoRecognitionFlowP
                       <span className="block truncate text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{item.name}</span>
                       <span className="block text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">未查到该学生</span>
                     </span>
-                    <button type="button" onClick={() => ignoreUnmatched(item.key)} className="min-h-11 min-w-11 shrink-0 rounded-[var(--tm-radius-control)] px-2.5 py-1.5 text-[13px] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">忽略</button>
+                    <button type="button" onClick={() => ignoreUnmatched(item.key)} className="min-h-11 min-w-11 shrink-0 rounded-[var(--tm-radius-control-compact)] px-2.5 py-1.5 text-[13px] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">忽略</button>
                   </div>
                 ))}
               </div>
@@ -242,10 +242,10 @@ const StudentTeamPhotoRecognitionFlow: React.FC<StudentTeamPhotoRecognitionFlowP
       {isReview && (
         <footer className="shrink-0 bg-[var(--tm-bg-surface)] px-4 pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-3">
         <div className="space-y-[var(--tm-space-2)]">
-          <button type="button" disabled={confirmedIds.size === 0} onClick={handleConfirm} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
+          <button type="button" disabled={confirmedIds.size === 0} onClick={handleConfirm} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
             确认添加 {confirmedIds.size} 人
           </button>
-          <button type="button" onClick={handleRetake} className="flex min-h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
+          <button type="button" onClick={handleRetake} className="flex min-h-11 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
             {albumPreview ? '重新选择图片' : '重新拍照'}
           </button>
         </div>

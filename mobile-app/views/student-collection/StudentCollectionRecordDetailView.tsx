@@ -45,7 +45,7 @@ const StudentCollectionRecordDetailView: React.FC<StudentCollectionRecordDetailV
       </header>
 
       <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-8 no-scrollbar">
-        <section className="mt-4 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+        <section className="mt-4 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
           <h2 className="text-balance text-[18px] font-bold leading-6 text-slate-950">{item.title}</h2>
           {item.description && <p className="mt-1 line-clamp-2 text-pretty text-[13px] font-medium leading-5 text-slate-500">{item.description}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[12px] font-medium text-slate-500">
@@ -57,7 +57,7 @@ const StudentCollectionRecordDetailView: React.FC<StudentCollectionRecordDetailV
           </div>
         </section>
 
-        <section className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-[20px] bg-white shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_2px_8px_-4px_rgba(15,23,42,0.10),0_12px_24px_-20px_rgba(35,96,145,0.18)]">
+        <section className="mt-[var(--tm-layout-card-gap)] divide-y divide-slate-100 overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-white shadow-[0_0_0_1px_rgba(15,23,42,0.04),0_2px_8px_-4px_rgba(15,23,42,0.10),0_12px_24px_-20px_rgba(35,96,145,0.18)]">
           {item.questions.map((question, index) => {
             const answer = formatQuestionnaireAnswer(item.answers[question.id], question);
             const empty = answer === '未填写';

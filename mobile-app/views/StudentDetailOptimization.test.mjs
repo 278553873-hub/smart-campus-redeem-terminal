@@ -200,7 +200,7 @@ requireText(dashboardSource, '<StudentDetailHeader title="学生详情"', '学�
 requireText(dashboardSource, 'text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]', '学生详情标题应居中并使用教师端标题字号与文字 Token。');
 requireText(dashboardSource, '[padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]', '学生详情标题栏应避让微信右上角胶囊安全区。');
 requireText(dashboardSource, 'h-[var(--tm-size-touch)] w-[var(--tm-size-touch)]', '学生详情返回按钮应保持 44 像素触控区域。');
-requireText(dashboardSource, 'mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card)]', '学生基本信息应与白色标题栏保持间距，并呈现为有左右留白的独立卡片。');
+requireText(dashboardSource, 'mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card-compact)]', '学生基本信息应与白色标题栏保持间距，并呈现为有左右留白的独立卡片。');
 const studentProfileBackgroundToken = tokenSource.match(/'--tm-student-detail-profile-bg': ([^\n]+)/)?.[1] ?? '';
 requireText(studentProfileBackgroundToken, 'var(--tm-bg-surface-glass)', '学生信息卡背景 Token 应继承教师端轻玻璃表面。');
 if (dashboardSource.includes('mt-4 text-xs font-medium text-slate-500')) {
@@ -622,8 +622,8 @@ requireText(coinDetailSource, 'bg-[var(--tm-brand-reward-soft)]', '结算预估�
 requireText(coinDetailSource, "item.type === 'income' ? 'bg-[var(--tm-brand-reward-soft)]' : 'bg-[var(--tm-brand-primary-soft)]'", '流水图标应按收入和支出使用有限的语义色。');
 requireText(coinDetailSource, 'overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)]', '校园币明细应使用浅灰页面底承托白色内容卡片。');
 requireText(coinDetailSource, 'id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center px-[var(--tm-space-4)]', '账户概览标题应纳入账户卡片头部。');
-requireText(coinDetailSource, 'overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]', '账户资产与结算预估应组成一张由浅灰页面承托的语义卡片。');
-requireText(coinDetailSource, 'p-[var(--tm-space-2)] pb-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]', '收支卡应以 8px 内缩匹配 20px 外圆角与 12px 控件圆角。');
+requireText(coinDetailSource, 'overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]', '账户资产与结算预估应组成一张由浅灰页面承托的语义卡片。');
+requireText(coinDetailSource, 'p-[var(--tm-space-2)] pb-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]', '收支卡应保留 8px 基础内缩，不随圆角调整而压缩内容。');
 requireText(coinDetailSource, 'className="flex min-h-[var(--tm-size-touch)] items-center justify-between px-[var(--tm-space-2)]">\n                <h2 id="coin-flow-title"', '收支明细标题和年份筛选应纳入同一卡片头部，并与流水内容保持 16px 视觉对齐。');
 requireText(coinDetailSource, 'flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]', '结算预估应使用单行横向摘要，减少板块占高。');
 requireText(coinDetailSource, 'bg-[var(--tm-filter-bg)]', '年份筛选的默认和有值状态应使用透明筛选表面 Token。');
@@ -635,14 +635,15 @@ const coinYearSelect = coinDetailSource.match(/<select[\s\S]*?<\/select>/)?.[0] 
 if (coinYearSelect.includes('focus-visible:ring')) {
   throw new Error('手机端年份下拉聚焦时不应增加描边或焦点环。');
 }
-requireText(compactSegmentSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-selection-segment-track-bg)]', '收入和支出按钮的焦点边界应匹配分段控件圆角。');
+requireText(coinDetailSource, 'shape="subtle"', '收支分段应显式接入8像素控件形态。');
+requireText(compactSegmentSource, "borderRadius: 'var(--tm-form-control-radius)'", '分段轨道应消费统一控件圆角令牌。');
 requireText(compactSegmentSource, 'transition-[background-color,color,box-shadow]', '收入和支出选中态只应过渡实际变化的属性。');
 requireText(compactSegmentSource, 'active:scale-[0.96]', '校园币分段控件应提供克制的手机端按压反馈。');
 if (coinDetailSource.includes('] transition [transition-duration:')) {
   throw new Error('校园币页面不得使用监听全部属性的 transition 简写。');
 }
 requireText(coinDetailSource, 'className="divide-y divide-[var(--tm-border-subtle)]"', '月度流水应在白色板块内使用连续列表。');
-if (coinDetailSource.includes('divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card)]')) {
+if (coinDetailSource.includes('divide-y divide-[var(--tm-border-subtle)] overflow-hidden rounded-[var(--tm-radius-card-compact)]')) {
   throw new Error('通栏白色收支板块内不应继续嵌套月度流水卡片。');
 }
 for (const redundantGrayBand of [

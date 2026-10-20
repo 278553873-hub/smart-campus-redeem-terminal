@@ -1,3 +1,4 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from '../../components/GrowthCoinBranding';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, Clock, Eraser, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import { ASSETS } from '../assets/images';
@@ -7,7 +8,6 @@ import TextSelectionControl from '../components/ui/TextSelectionControl';
 import { CampusCoinDetail, Student } from '../types';
 import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
-import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology';
 import { formatCampusCoinFlowTime, getCampusCoinIssueDetail } from '../domain/campusCoinFlow';
 
 interface StudentCoinDetailViewProps {
@@ -74,6 +74,7 @@ const formatMonthLabel = (monthKey: string) => {
 };
 
 const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, coinDetail, onBack }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const { issueRecords, consumeRecords, settlementEstimate } = coinDetail;
   const [activeFilter, setActiveFilter] = useState<FlowFilter>('income');
   const [activeYear, setActiveYear] = useState<string>(() => {
@@ -98,14 +99,14 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
     const expenseItems = consumeRecords.map(record => ({
       id: record.id,
       categoryLabel: categoryLabels[record.category],
-      detail: record.category === 'manual_clear' ? record.productName : `${record.productName} ×${record.quantity}`,
+      detail: record.category === 'manual_clear' ? record.productName.replaceAll('成长币', GROWTH_COIN_TERMS.name) : `${record.productName} ×${record.quantity}`,
       amount: record.amount,
       time: record.time,
       type: 'expense' as const,
       category: record.category,
     }));
     return [...incomeItems, ...expenseItems].sort((a, b) => b.time.localeCompare(a.time));
-  }, [consumeRecords, issueRecords]);
+  }, [consumeRecords, issueRecords, GROWTH_COIN_TERMS.name]);
 
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -157,11 +158,11 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
         <section className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pb-[var(--tm-space-8)] no-scrollbar" aria-label={`${student.name}的${GROWTH_COIN_TERMS.name}收支记录`}>
           <section className="pt-[var(--tm-space-4)]" aria-labelledby="coin-overview-title">
-            <div className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+            <div className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
               <h2 id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
               <section className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)] px-[var(--tm-space-4)]" aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-reward-soft)]">
-                  <img src="/assets/coin.png" className="h-4 w-4" alt="" />
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-reward-soft)]">
+                  <GrowthCoinIcon className="h-4 w-4" alt="" />
                 </span>
                 <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)]">
                   <div className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
@@ -178,13 +179,17 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
               <section
                 className="bg-[var(--tm-brand-reward-soft)] px-[var(--tm-space-4)]"
-                aria-label={settlementEstimate.enabled
+                aria-label={settlementEstimate.enabled && settlementEstimate.scoreRuleSummary ? settlementEstimate.scoreRuleSummary : settlementEstimate.enabled
                   ? (settlementEstimate.eligible
                     ? `${estimateTitle}${formatCoinAmount(settlementEstimate.estimatedTotal)}${GROWTH_COIN_TERMS.name}`
                     : `本周期评价次数不足，达到${settlementEstimate.minimumEvaluationCount}次后发放`)
                   : '学校暂未开启自动发放'}
               >
-                {settlementEstimate.enabled && settlementEstimate.eligible ? (
+                {settlementEstimate.enabled && settlementEstimate.scoreRuleSummary ? (
+                  <p className="py-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">
+                    {settlementEstimate.scoreRuleSummary}
+                  </p>
+                ) : settlementEstimate.enabled && settlementEstimate.eligible ? (
                   <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between gap-[var(--tm-space-3)]">
                     <div className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
                       <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">{estimateTitle}</span>
@@ -215,8 +220,8 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
             </div>
           </section>
 
-          <section className="mt-[var(--tm-space-4)]" aria-labelledby="coin-flow-title">
-            <div className="overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-2)] pb-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
+          <section className="mt-[var(--tm-layout-card-gap)]" aria-labelledby="coin-flow-title">
+            <div className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-2)] pb-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
               <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between px-[var(--tm-space-2)]">
                 <h2 id="coin-flow-title" className="text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">收支明细</h2>
                 <label className="relative shrink-0">
@@ -224,7 +229,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                     value={activeYear}
                     onChange={event => setActiveYear(event.target.value)}
                     aria-label="筛选流水年份"
-                    className="h-[var(--tm-size-touch)] appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] pl-[var(--tm-space-3)] pr-9 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]"
+                    className="h-[var(--tm-size-touch)] appearance-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] pl-[var(--tm-space-3)] pr-9 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]"
                   >
                     {yearOptions.map(year => <option key={year} value={year}>{year}年</option>)}
                   </select>
@@ -233,6 +238,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
               </div>
 
               <CompactSegmentedControl
+                shape="subtle"
                 value={activeFilter}
                 items={flowFilterOptions}
                 onChange={selectFilter}
@@ -267,7 +273,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                       <div className="divide-y divide-[var(--tm-border-subtle)]">
                         {group.items.map(item => (
                           <div key={item.id} className="flex min-h-[92px] items-start gap-[var(--tm-space-3)] py-[var(--tm-space-3)]">
-                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] ${item.type === 'income' ? 'bg-[var(--tm-brand-reward-soft)]' : 'bg-[var(--tm-brand-primary-soft)]'}`}>
+                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${item.type === 'income' ? 'bg-[var(--tm-brand-reward-soft)]' : 'bg-[var(--tm-brand-primary-soft)]'}`}>
                               {getFlowIcon(item.category, item.type)}
                             </span>
                             <div className="min-w-0 flex-1">

@@ -46,6 +46,23 @@ const CARD_ICONS: Record<string, IconType> = {
   concerns: CircleAlert,
 };
 
+type ReportShape = 'default' | 'subtle';
+
+const reportShapes = {
+  default: {
+    card: 'rounded-[var(--tm-radius-card)]',
+    inner: 'rounded-[var(--tm-radius-inner)]',
+    control: 'rounded-[var(--tm-radius-control)]',
+    gap: 'space-y-[var(--tm-report-card-gap)]',
+  },
+  subtle: {
+    card: 'rounded-[var(--tm-radius-card-compact)]',
+    inner: 'rounded-[var(--tm-radius-card-compact)]',
+    control: 'rounded-[var(--tm-radius-control-compact)]',
+    gap: 'space-y-[var(--tm-layout-card-gap)]',
+  },
+} as const;
+
 interface EvidenceState {
   title: string;
   rows: Array<{ label: string; value: string }>;
@@ -64,19 +81,20 @@ const CardShell: React.FC<{
   title: string;
   children: React.ReactNode;
   emphasized?: boolean;
-}> = ({ cardKey, title, children, emphasized = false }) => {
+  shape: ReportShape;
+}> = ({ cardKey, title, children, emphasized = false, shape }) => {
   const Icon = CARD_ICONS[cardKey] ?? Sparkles;
 
   return (
     <section
-      className={`waa-card-enter rounded-[var(--tm-radius-card)] border bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)] ${
+      className={`waa-card-enter ${reportShapes[shape].card} border bg-[var(--tm-bg-surface-glass)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)] ${
         emphasized
           ? 'border-[var(--tm-assistant-role-border)]'
           : 'border-transparent'
       }`}
     >
       <header className="flex items-center gap-[var(--tm-space-3)]">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-assistant-role-soft)] text-[var(--tm-assistant-role-text)]">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center ${reportShapes[shape].control} bg-[var(--tm-assistant-role-soft)] text-[var(--tm-assistant-role-text)]`}>
           <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} aria-hidden="true" />
         </span>
         <h2 className="min-w-0 text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
@@ -88,19 +106,19 @@ const CardShell: React.FC<{
   );
 };
 
-const SummaryCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'summary' }>; title: string }> = ({ card, title }) => (
-  <CardShell cardKey={card.key} title={title} emphasized>
+const SummaryCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'summary' }>; title: string; shape: ReportShape }> = ({ card, title, shape }) => (
+  <CardShell shape={shape} cardKey={card.key} title={title} emphasized>
     <p className="whitespace-pre-line text-[length:var(--tm-font-size-body)] leading-7 text-[var(--tm-text-secondary)]">
       {card.body}
     </p>
   </CardShell>
 );
 
-const MetricsCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'metrics' }>; title: string }> = ({ card, title }) => (
-  <CardShell cardKey={card.key} title={title}>
+const MetricsCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'metrics' }>; title: string; shape: ReportShape }> = ({ card, title, shape }) => (
+  <CardShell shape={shape} cardKey={card.key} title={title}>
     <div className="grid grid-cols-2 gap-[var(--tm-space-2)]">
       {card.items.map(item => (
-        <div key={item.label} className="min-h-[112px] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]">
+        <div key={item.label} className={`min-h-[112px] ${reportShapes[shape].inner} bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]`}>
           <p className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-tertiary)]">{item.label}</p>
           <p className="mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-metric)] font-bold tabular-nums text-[var(--tm-text-primary)]">
             {item.value}
@@ -117,8 +135,8 @@ const MetricsCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'metric
   </CardShell>
 );
 
-const ActionsCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'actions' }>; title: string }> = ({ card, title }) => (
-  <CardShell cardKey={card.key} title={title} emphasized>
+const ActionsCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'actions' }>; title: string; shape: ReportShape }> = ({ card, title, shape }) => (
+  <CardShell shape={shape} cardKey={card.key} title={title} emphasized>
     <ol className="divide-y divide-[var(--tm-border-subtle)]">
       {card.items.map((item, index) => (
         <li key={item.id} className="grid grid-cols-[24px_minmax(0,1fr)] gap-[var(--tm-space-3)] py-[var(--tm-space-3)] first:pt-0 last:pb-0">
@@ -145,9 +163,10 @@ const ActionsCard: React.FC<{ card: Extract<AssistantReportCard, { kind: 'action
 const InsightsCard: React.FC<{
   card: Extract<AssistantReportCard, { kind: 'insights' | 'practices' }>;
   title: string;
+  shape: ReportShape;
   onOpenEvidence: (item: AssistantReportInsight) => void;
-}> = ({ card, title, onOpenEvidence }) => (
-  <CardShell cardKey={card.key} title={title}>
+}> = ({ card, title, shape, onOpenEvidence }) => (
+  <CardShell shape={shape} cardKey={card.key} title={title}>
     <div className="divide-y divide-[var(--tm-border-subtle)]">
       {card.items.map((item, index) => {
         const evidenceRows = getEvidenceRows(item);
@@ -180,9 +199,10 @@ const InsightsCard: React.FC<{
 interface AssistantReportCardsProps {
   document: AssistantReportDocument;
   className?: string;
+  shape?: ReportShape;
 }
 
-const AssistantReportCards: React.FC<AssistantReportCardsProps> = ({ document, className = '' }) => {
+const AssistantReportCards: React.FC<AssistantReportCardsProps> = ({ document, className = '', shape = 'default' }) => {
   const [evidence, setEvidence] = useState<EvidenceState | null>(null);
   const role = getAssistantReportRole(document.reportType);
   const titleByKey = useMemo(() => new Map(document.cards.map(card => [
@@ -199,13 +219,13 @@ const AssistantReportCards: React.FC<AssistantReportCardsProps> = ({ document, c
 
   return (
     <>
-      <div className={`space-y-[var(--tm-report-card-gap)] ${className}`}>
+      <div className={`${reportShapes[shape].gap} ${className}`}>
         {document.cards.map(card => {
           const title = titleByKey.get(card.key) ?? '';
-          if (card.kind === 'summary') return <SummaryCard key={card.key} card={card} title={title} />;
-          if (card.kind === 'metrics') return <MetricsCard key={card.key} card={card} title={title} />;
-          if (card.kind === 'actions') return <ActionsCard key={card.key} card={card} title={title} />;
-          return <InsightsCard key={card.key} card={card} title={title} onOpenEvidence={openEvidence} />;
+          if (card.kind === 'summary') return <SummaryCard shape={shape} key={card.key} card={card} title={title} />;
+          if (card.kind === 'metrics') return <MetricsCard shape={shape} key={card.key} card={card} title={title} />;
+          if (card.kind === 'actions') return <ActionsCard shape={shape} key={card.key} card={card} title={title} />;
+          return <InsightsCard shape={shape} key={card.key} card={card} title={title} onOpenEvidence={openEvidence} />;
         })}
       </div>
 

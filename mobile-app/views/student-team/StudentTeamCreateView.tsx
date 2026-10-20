@@ -174,15 +174,15 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
 
       <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
         {page === 'details' && (
-          <div className="space-y-[var(--tm-space-4)] bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-4)]">
-            <label className="block rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
+          <div className="space-y-[var(--tm-layout-card-gap)] bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] py-[var(--tm-space-4)]">
+            <label className="block rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
               <span className="mb-[var(--tm-space-2)] block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">名称</span>
-              <input value={name} onChange={event => setName(event.target.value)} maxLength={30} placeholder="例如：篮球社" aria-label="名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-standard)] placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]" />
+              <input value={name} onChange={event => setName(event.target.value)} maxLength={30} placeholder="例如：篮球社" aria-label="名称" className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-standard)] placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]" />
             </label>
 
-            <fieldset className="m-0 min-w-0 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
+            <fieldset className="m-0 min-w-0 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-space-4)] [box-shadow:var(--tm-shadow-card)]">
               <legend className="mb-[var(--tm-space-2)] block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">头像</legend>
-              <button type="button" onClick={() => setAvatarPickerOpen(true)} className="flex min-h-[72px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+              <button type="button" onClick={() => setAvatarPickerOpen(true)} className="flex min-h-[72px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                 <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                   <img src={selectedAvatarSrc} alt="" className="h-full w-full object-cover" aria-hidden="true" />
                 </span>
@@ -196,7 +196,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
 
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-[var(--tm-space-2)] block p-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">谁可以看到</legend>
-              <div className="grid gap-[var(--tm-space-2)]" role="radiogroup" aria-label="团队可见范围">
+              <div className="grid gap-[var(--tm-form-option-gap)]" role="radiogroup" aria-label="团队可见范围">
                 {[
                   {
                     value: 'collaborators' as const,
@@ -216,6 +216,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                   },
                 ].map(option => (
                   <MobileRadioOptionCard
+                    shape="subtle"
                     key={option.value}
                     id={option.id}
                     tag={option.tag}
@@ -237,6 +238,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
               <div className="flex items-center gap-2">
                 <div className="min-w-0 flex-1">
                   <CompactSegmentedControl
+                    shape="subtle"
                     value={memberScope}
                     items={[
                       { value: 'authorized', label: '我的班级' },
@@ -253,7 +255,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
 
               {memberScope === 'authorized' && classes.length > 0 && (
                 <>
-                  <button type="button" onClick={() => setClassPickerOpen(true)} aria-label="选择班级" className="mt-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                  <button type="button" onClick={() => setClassPickerOpen(true)} aria-label="选择班级" className="mt-[var(--tm-space-2)] flex min-h-[var(--tm-size-touch)] w-full items-center justify-between gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                     <span className="min-w-0 truncate text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-secondary)]">
                       {gradeClasses.find(item => item.id === activeClassId) ? getClassLabel(gradeClasses.find(item => item.id === activeClassId)!) : activeGrade}
                     </span>
@@ -301,13 +303,13 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
       </main>
 
       <MobileBottomSheet open={avatarPickerOpen} title="选择头像" onClose={() => setAvatarPickerOpen(false)}>
-        <div className="space-y-4 pb-2">
+        <div className="space-y-[var(--tm-form-section-gap)] pb-2">
           {Array.from(new Set(studentTeamAvatarOptions.map(option => option.category))).map(category => (
             <fieldset key={category} className="m-0 border-0 p-0">
               <legend className="mb-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">{category}</legend>
               <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={`${category}头像`}>
                 {studentTeamAvatarOptions.filter(option => option.category === category).map(option => (
-                  <button key={option.key} type="button" role="radio" aria-checked={avatarKey === option.key} aria-label={`选择${option.label}头像`} onClick={() => { setAvatarKey(option.key); setAvatarPickerOpen(false); }} className="relative flex min-h-20 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
+                  <button key={option.key} type="button" role="radio" aria-checked={avatarKey === option.key} aria-label={`选择${option.label}头像`} onClick={() => { setAvatarKey(option.key); setAvatarPickerOpen(false); }} className="relative flex min-h-20 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
                     <img src={option.src} alt={option.label} className="h-16 w-16 rounded-full object-cover" />
                     {avatarKey === option.key && <span className="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]"><Check className="h-3.5 w-3.5" aria-hidden="true" /></span>}
                   </button>
@@ -348,7 +350,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
       )}
 
       <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
-        <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[background-color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2">
+        <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[background-color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2">
           {primaryLabel}
         </button>
       </footer>

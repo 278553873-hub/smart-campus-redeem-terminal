@@ -31,7 +31,7 @@ assert.match(background, /var\(--tm-glow-primary\)/);
 assert.match(background, /var\(--tm-glow-secondary\)/);
 
 assert.match(app, /<TeacherRecordInputBar/);
-assert.match(inputBar, /rounded-\[var\(--tm-radius-card\)\] bg-white/);
+assert.match(inputBar, /\$\{panelRadius\} bg-white/);
 assert.match(inputBar, /\[box-shadow:var\(--tm-shadow-floating\)\]/);
 assert.match(inputBar, /'按住说话'/);
 assert.doesNotMatch(inputBar, /border-\[|border-[#\s]/);

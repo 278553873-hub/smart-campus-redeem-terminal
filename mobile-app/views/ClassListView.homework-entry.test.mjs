@@ -34,7 +34,7 @@ assert.match(homeworkSource, /selectedDateAssignments/, '选择日期后应展�
 assert.match(homeworkSource, /assignmentCount > 0[\s\S]*rounded-\[4px\][\s\S]*\{assignmentCount\}/, '有作业的日期应使用圆角矩形直接展示作业次数。');
 assert.doesNotMatch(homeworkSource, /getDateMarkerTone|getAssignmentCompletionCount|tm-status-positive/, '日历次数不应再用颜色表达登记完成情况。');
 assert.match(homeworkSource, />新增作业</, '日历卡片底部应只保留明确的新增作业入口。');
-assert.match(homeworkSource, /selectedDateAssignments\.length > 0[\s\S]*space-y-\[var\(--tm-space-2\)\][\s\S]*selectedDateAssignments\.map\(assignment =>[\s\S]*rounded-\[var\(--tm-radius-card\)\][\s\S]*\[box-shadow:var\(--tm-shadow-card\)\]/, '当天每次作业都应使用一张独立卡片展示。');
+assert.match(homeworkSource, /selectedDateAssignments\.length > 0[\s\S]*space-y-\[var\(--tm-layout-list-gap-compact\)\][\s\S]*selectedDateAssignments\.map\(assignment =>[\s\S]*rounded-\[var\(--tm-radius-card-compact\)\][\s\S]*\[box-shadow:var\(--tm-shadow-card\)\]/, '当天每次作业都应使用一张独立卡片展示。');
 assert.doesNotMatch(homeworkSource, /selectedDateAssignments\.map\(\(assignment, index\)[\s\S]*border-t/, '当天多次作业不应继续合并在一张卡片内用分隔线区分。');
 assert.match(homeworkSource, /onClick=\{\(\) => startEdit\(assignment\)\}/, '点击任意作业记录应进入该次作业编辑。');
 assert.match(homeworkSource, /<Pencil[\s\S]*aria-hidden="true"/, '作业记录行应使用编辑图标明确操作结果。');
@@ -49,7 +49,7 @@ assert.doesNotMatch(homeworkSource, /studentGroupSize|学生分组|第\{group\.l
 assert.match(homeworkSource, /<HomeworkStatusButtonGroup/, '手工作业录入应复用共享五档等级控件。');
 assert.match(statusGroupSource, /HOMEWORK_STATUS_VALUES\.map/, '共享等级控件应来自统一的五档业务枚举。');
 assert.match(statusGroupSource, /size\?: 'default' \| 'compact'/, '共享等级控件应提供可见尺寸与触控尺寸分离的紧凑规格。');
-assert.match(statusGroupSource, /size === 'compact'[\s\S]*h-9[\s\S]*rounded-\[8px\]/, '紧凑等级色块应保持36像素高度和8像素圆角。');
+assert.match(statusGroupSource, /size === 'compact'[\s\S]*h-9[\s\S]*rounded-\[var\(--tm-radius-control-compact\)\]/, '紧凑等级色块应保持36像素高度和8像素圆角。');
 assert.match(homeworkSource, /ariaLabel="全班批量设置作业等级"[\s\S]*size="compact"/, '全班批量设置应使用紧凑等级色块。');
 assert.match(homeworkSource, /ariaLabel=\{`设置\$\{result\.studentName\}作业等级`\} showAllTones \/>/, '学生逐行等级应继续使用默认可见高度。');
 assert.match(homeworkSource, /showAllTones/, '批量与逐人登记都应直观展示五档语义颜色。');

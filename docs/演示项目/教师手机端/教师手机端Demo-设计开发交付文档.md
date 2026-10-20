@@ -236,6 +236,7 @@
 | 屏幕背景 | `mobile-app/components/TeacherMobileScreenBackground.tsx` | 氛围背景、纯色分层背景、学生详情沉浸背景 |
 | 班级来源 | `mobile-app/components/ClassSourceTrigger.tsx`、`HomeroomClassPickerSheet.tsx` | 记录、班级、我的及报告上下文 |
 | 底部导航 | `mobile-app/components/TeacherFluidGlassNav.tsx` | 记录、班级、我的 |
+| 语音与文字输入 | `mobile-app/components/ui/MobileInputComposer.tsx` | 记录页、班主任助理、校长助理；拍照与阴影按参数配置，可在「UI改造 → 公共组件 → 语音与文字输入」预览与查看入参 |
 | 通用卡片 | `mobile-app/components/ui/MobileCard.tsx` | 普通、抬升、AI、指标等卡片 |
 | 底部抽屉 | `mobile-app/components/ui/MobileBottomSheet.tsx` | 筛选、选择、低频编辑、详情披露 |
 | 提示抽屉 | `mobile-app/components/ui/MobileNoticeSheet.tsx` | 需要用户知晓但不要求复杂决策的提示 |

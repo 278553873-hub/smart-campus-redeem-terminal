@@ -10,5 +10,5 @@ export const toMobilePeriodOptions = (periods: MoralEducationPeriodOption[]) => 
 export default function ReportPeriodCalendar({ periods, selectedPeriodId, onSelect }: {
     periods: MoralEducationPeriodOption[]; selectedPeriodId: string; onSelect: (id: string) => void;
 }) {
-    return <MobilePeriodPicker periods={toMobilePeriodOptions(periods)} selectedPeriodId={selectedPeriodId} onSelect={onSelect} />;
+    return <MobilePeriodPicker shape="subtle" periods={toMobilePeriodOptions(periods)} selectedPeriodId={selectedPeriodId} onSelect={onSelect} />;
 }

@@ -1,3 +1,4 @@
+import { GrowthCoinIcon } from './GrowthCoinBranding';
 
 import React, { useState } from 'react';
 import {
@@ -287,7 +288,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
 
                         <div className="flex flex-col items-center justify-center flex-1 py-4">
                             <h3 className="text-[3.5rem] leading-none font-black text-orange-500 tracking-tighter flex items-center justify-center gap-3">
-                                <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em] -translate-y-[2px]" alt="coin" />
+                                <GrowthCoinIcon className="w-[0.9em] h-[0.9em] -translate-y-[2px]" alt="coin" />
                                 <span className="font-[NumberFont]">{formatFixedCoin(uiState.coinsBase + uiState.coinsBonus)}</span>
                             </h3>
                         </div>
@@ -296,7 +297,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                             <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/80 rounded-2xl py-1.5 px-3 border border-orange-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                                 <span className="text-[12px] text-orange-700 font-bold mb-0.5">成长奖励</span>
                                 <div className="text-orange-500 font-black text-[16px] font-[NumberFont] flex items-center justify-center gap-1">
-                                    <img src="/assets/coin.png" className="w-[1.05em] h-[1.05em] -translate-y-[1px]" alt="coin" />
+                                    <GrowthCoinIcon className="w-[1.05em] h-[1.05em] -translate-y-[1px]" alt="coin" />
                                     <span>{formatFixedCoin(uiState.coinsBase)}</span>
                                 </div>
                             </div>
@@ -304,7 +305,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                             <div className="flex-1 h-full flex items-center justify-center flex-col bg-white/80 rounded-2xl py-1.5 px-3 border border-orange-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
                                 <span className="text-[12px] text-orange-700 font-bold mb-0.5">得分奖励</span>
                                 <div className="text-orange-500 font-black text-[16px] font-[NumberFont] flex items-center justify-center gap-1">
-                                    <img src="/assets/coin.png" className="w-[1.05em] h-[1.05em] -translate-y-[1px]" alt="coin" />
+                                    <GrowthCoinIcon className="w-[1.05em] h-[1.05em] -translate-y-[1px]" alt="coin" />
                                     <span>{formatFixedCoin(uiState.coinsBonus)}</span>
                                 </div>
                             </div>
@@ -407,7 +408,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                                                                             {item.coins > 0 ? (
                                                                                 <div className="text-orange-500 font-black text-[14px] flex items-center gap-1 justify-end">
                                                                                     <span className="text-[11px] font-bold font-sans text-slate-400">预估</span>
-                                                                                    <img src="/assets/coin.png" className="w-[0.95em] h-[0.95em] -translate-y-[1px]" alt="coin" />
+                                                                                    <GrowthCoinIcon className="w-[0.95em] h-[0.95em] -translate-y-[1px]" alt="coin" />
                                                                                     {formatFixedCoin(item.coins || 0)}
                                                                                 </div>
                                                                             ) : (
@@ -453,7 +454,7 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                                                     {selfItem.coins > 0 ? (
                                                         <div className="text-orange-500 font-black text-[14px] flex items-center gap-1 justify-end">
                                                             <span className="text-[11px] font-bold font-sans text-slate-400">预估</span>
-                                                            <img src="/assets/coin.png" className="w-[0.95em] h-[0.95em] -translate-y-[1px]" alt="coin" />
+                                                            <GrowthCoinIcon className="w-[0.95em] h-[0.95em] -translate-y-[1px]" alt="coin" />
                                                             {formatFixedCoin(selfItem.coins || 0)}
                                                         </div>
                                                     ) : (
@@ -534,11 +535,11 @@ const GrowthView: React.FC<GrowthViewProps> = ({ student, onBack, parentEvaluati
                         <div className="p-5 space-y-3 pb-8">
                             <div className="flex items-center justify-between p-3 rounded-xl bg-orange-50/50 border border-orange-100/50">
                                 <span className="text-sm font-bold text-slate-700">流动红旗</span>
-                                <span className="text-orange-500 font-black font-[NumberFont] flex items-center gap-1">+ <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> 5.00</span>
+                                <span className="text-orange-500 font-black font-[NumberFont] flex items-center gap-1">+ <GrowthCoinIcon className="w-[0.9em] h-[0.9em]" alt="coin" /> 5.00</span>
                             </div>
                             <div className="flex items-center justify-between p-3 rounded-xl bg-orange-50/50 border border-orange-100/50">
                                 <span className="text-sm font-bold text-slate-700">运动会拔河第一名</span>
-                                <span className="text-orange-500 font-black font-[NumberFont] flex items-center gap-1">+ <img src="/assets/coin.png" className="w-[0.9em] h-[0.9em]" alt="coin" /> 5.00</span>
+                                <span className="text-orange-500 font-black font-[NumberFont] flex items-center gap-1">+ <GrowthCoinIcon className="w-[0.9em] h-[0.9em]" alt="coin" /> 5.00</span>
                             </div>
                             <div className="text-center pt-2">
                                 <span className="text-xs text-slate-400 font-bold">由班主任分配发放</span>

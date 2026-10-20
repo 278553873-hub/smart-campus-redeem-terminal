@@ -54,6 +54,7 @@ import {
 import MobileBottomSheet from '../ui/MobileBottomSheet';
 import AutoResizeTextarea from '../ui/AutoResizeTextarea';
 import CompactSegmentedControl from '../ui/CompactSegmentedControl';
+import { formBuilderShapes, type FormBuilderShape } from './formBuilderShape';
 
 type FieldIcon = React.ComponentType<{ className?: string }>;
 
@@ -79,6 +80,7 @@ interface FormFieldPreviewMeta {
 }
 
 interface FormBuilderProps<TType extends string> extends FormBuilderValue<TType> {
+  shape?: FormBuilderShape;
   onChange: (value: FormBuilderValue<TType>) => void;
   fieldTypes: Array<FormFieldTypeOption<TType>>;
   createField: (type: TType, sectionId?: string) => ConfigurableFormField<TType>;
@@ -121,8 +123,8 @@ const defaultIconMap: Record<string, FieldIcon> = {
   date: CalendarDays,
 };
 
-const inputClass = 'w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
-const readonlyPreviewSurfaceClass = 'rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] text-[var(--tm-input-readonly-text)]';
+const inputBaseClass = 'w-full border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-shadow-control)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const readonlyPreviewBaseClass = 'border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] text-[var(--tm-input-readonly-text)]';
 const sectionDropId = (sectionId: string) => `form-section:${sectionId}`;
 const sectionSortId = (sectionId: string) => `form-section-sort:${sectionId}`;
 
@@ -220,19 +222,21 @@ const SortableFieldCard: React.FC<{
   );
 };
 
-const SectionDropZone: React.FC<{ sectionId: string; sortingEnabled: boolean; children: React.ReactNode }> = ({ sectionId, sortingEnabled, children }) => {
+const SectionDropZone: React.FC<{ shape: FormBuilderShape; sectionId: string; sortingEnabled: boolean; children: React.ReactNode }> = ({ shape, sectionId, sortingEnabled, children }) => {
+  const shapeClasses = formBuilderShapes[shape];
   const { isOver, setNodeRef } = useDroppable({ id: sectionDropId(sectionId), disabled: !sortingEnabled });
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-[var(--tm-radius-inner)] transition-colors ${isOver ? 'bg-[var(--tm-brand-primary-soft)]' : ''}`}
+      className={`${shapeClasses.inner} transition-colors ${isOver ? 'bg-[var(--tm-brand-primary-soft)]' : ''}`}
     >
       {children}
     </div>
   );
 };
 
-const SortableSectionRow: React.FC<{ section: FormSection }> = ({ section }) => {
+const SortableSectionRow: React.FC<{ section: FormSection; shape: FormBuilderShape }> = ({ section, shape }) => {
+  const shapeClasses = formBuilderShapes[shape];
   const {
     attributes,
     listeners,
@@ -246,7 +250,7 @@ const SortableSectionRow: React.FC<{ section: FormSection }> = ({ section }) => 
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 20 : undefined }}
-      className={`flex min-h-[56px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] ${isDragging ? 'opacity-[0.85] [box-shadow:var(--tm-shadow-sheet)]' : ''}`}
+      className={`flex min-h-[56px] items-center ${shapeClasses.row} bg-[var(--tm-bg-surface-soft)] ${isDragging ? 'opacity-[0.85] [box-shadow:var(--tm-shadow-sheet)]' : ''}`}
     >
       <button
         type="button"
@@ -264,6 +268,7 @@ const SortableSectionRow: React.FC<{ section: FormSection }> = ({ section }) => 
 };
 
 const FormBuilder = <TType extends string>({
+  shape = 'default',
   layoutMode,
   sections,
   fields,
@@ -291,6 +296,9 @@ const FormBuilder = <TType extends string>({
   sortingMode = 'inline',
   smartDefaultContent = false,
 }: FormBuilderProps<TType>) => {
+  const shapeClasses = formBuilderShapes[shape];
+  const inputClass = `${shapeClasses.control} ${inputBaseClass}`;
+  const readonlyPreviewSurfaceClass = `${shapeClasses.control} ${readonlyPreviewBaseClass}`;
   const [expandedFieldId, setExpandedFieldId] = useState('');
   const [typeSheetSectionId, setTypeSheetSectionId] = useState<string | null>(null);
   const [showMoreTypes, setShowMoreTypes] = useState(false);
@@ -587,7 +595,7 @@ const FormBuilder = <TType extends string>({
       return (
         <div className="mt-3 grid grid-cols-5 gap-2" aria-hidden="true">
           {Array.from({ length: max - min + 1 }, (_, offset) => min + offset).map(value => (
-            <span key={value} className="flex h-9 items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-text-secondary)]">{value}</span>
+            <span key={value} className={`flex h-9 items-center justify-center ${shapeClasses.control} border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-soft)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums text-[var(--tm-text-secondary)]`}>{value}</span>
           ))}
         </div>
       );
@@ -674,7 +682,7 @@ const FormBuilder = <TType extends string>({
         readOnly={readOnly}
         sortable={sortingMode === 'inline'}
         itemLabel={itemLabel}
-        className={`overflow-hidden rounded-[var(--tm-radius-card)] border bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)] transition-colors ${fieldError ? 'border-[var(--tm-status-negative-strong)]' : expanded ? 'border-[var(--tm-brand-primary)]' : 'border-transparent'}`}
+        className={`overflow-hidden ${shapeClasses.card} border bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)] transition-colors ${fieldError ? 'border-[var(--tm-status-negative-strong)]' : expanded ? 'border-[var(--tm-brand-primary)]' : 'border-transparent'}`}
         header={locked ? (
           <div className="flex min-h-[76px] items-center gap-2 px-3 py-3.5">
             <div className="min-w-0 flex-1">
@@ -720,7 +728,7 @@ const FormBuilder = <TType extends string>({
               aria-invalid={Boolean(fieldError?.label)}
               aria-describedby={fieldError?.label ? `form-field-${field.id}-error` : undefined}
               className={`w-full min-h-11 max-h-[84px] resize-none py-2 text-[length:var(--tm-font-size-body)] font-medium leading-5 outline-none transition-[border-color,border-width,background-color,color] placeholder:text-[var(--tm-text-tertiary)] ${fixedContent
-                ? 'cursor-default rounded-[var(--tm-radius-control)] border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3 text-[var(--tm-input-readonly-text)]'
+                ? `cursor-default ${shapeClasses.control} border border-[var(--tm-input-readonly-border)] bg-[var(--tm-input-readonly-bg)] px-3 text-[var(--tm-input-readonly-text)]`
                 : `border-0 border-b bg-transparent px-0 text-[var(--tm-text-primary)] focus:ring-0 ${fieldError?.label ? 'border-[var(--tm-status-negative-strong)] focus:border-[var(--tm-status-negative-strong)]' : 'border-[var(--tm-input-border)] focus:border-[var(--tm-input-focus-border)]'}`}`}
             />
             {!fixedContent && fieldError?.label && <p id={`form-field-${field.id}-error`} className="mt-1.5 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{fieldError.label}</p>}
@@ -745,7 +753,7 @@ const FormBuilder = <TType extends string>({
                   return (
                     <div key={`${field.id}-${optionIndex}`}>
                       <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold text-[var(--tm-text-secondary)]">{optionIndex + 1}</span>
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold text-[var(--tm-text-secondary)]">{optionIndex + 1}</span>
                         <input
                           id={optionInputId}
                           value={optionValue}
@@ -801,7 +809,7 @@ const FormBuilder = <TType extends string>({
                   {(field.subFields ?? []).map((subField, subFieldIndex) => (
                   <div key={subField.id} className="py-3 first:pt-1">
                     <div className="flex items-center gap-2">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold text-[var(--tm-text-secondary)]">{subFieldIndex + 1}</span>
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-badge)] font-bold text-[var(--tm-text-secondary)]">{subFieldIndex + 1}</span>
                       <input
                         id={`form-field-${field.id}-sub-field-${subFieldIndex}`}
                         value={subField.label}
@@ -858,7 +866,7 @@ const FormBuilder = <TType extends string>({
   };
 
   const renderFieldListItems = (items: Array<ConfigurableFormField<TType>>) => (
-    <div className="space-y-3">{items.map((field, index) => renderField(field, index))}</div>
+    <div className={shapeClasses.cardGap}>{items.map((field, index) => renderField(field, index))}</div>
   );
 
   const renderFieldList = (items: Array<ConfigurableFormField<TType>>) => sortingMode === 'inline' ? (
@@ -897,20 +905,20 @@ const FormBuilder = <TType extends string>({
   ) : renderFieldListItems(items);
 
   const renderGroupedSections = () => (
-    <div className="space-y-4">
+    <div className={shapeClasses.groupGap}>
       {sections.map((section, sectionIndex) => {
         const sectionFields = orderedFields.filter(field => field.sectionId === section.id);
         return (
-          <SectionDropZone key={section.id} sectionId={section.id} sortingEnabled={sortingMode === 'inline'}>
-            <div className="mb-3 flex min-h-[var(--tm-size-touch)] items-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-3">
+          <SectionDropZone shape={shape} key={section.id} sectionId={section.id} sortingEnabled={sortingMode === 'inline'}>
+            <div className={`mb-3 flex min-h-[var(--tm-size-touch)] items-center gap-2 ${shapeClasses.control} bg-[var(--tm-bg-surface-muted)] px-3`}>
               <span className="h-5 w-[3px] shrink-0 rounded-full bg-[var(--tm-brand-primary)]" aria-hidden="true" />
               <h3 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-group-title)] font-bold leading-6 text-[var(--tm-text-primary)]">{section.label}</h3>
               {!readOnly && <IconButton label={`分组更多操作：${section.label}`} onClick={() => setActiveSectionMenuId(section.id)}><MoreHorizontal className="h-5 w-5" /></IconButton>}
             </div>
-            <div className="min-h-2 space-y-3">
+            <div className={`min-h-2 ${shapeClasses.cardGap}`}>
               {sectionFields.map(field => renderField(field, (fieldNumberById.get(field.id) ?? 1) - 1))}
             </div>
-            {!readOnly && <button type="button" aria-label={`在${section.label}中添加${addButtonLabel ?? itemLabel}`} onClick={() => { setShowMoreTypes(false); setTypePickerTab('primary'); setTypeSheetSectionId(section.id); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-colors active:bg-[var(--tm-brand-primary-soft-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"><Plus className="h-4 w-4" />添加{addButtonLabel ?? itemLabel}到本组</button>}
+            {!readOnly && <button type="button" aria-label={`在${section.label}中添加${addButtonLabel ?? itemLabel}`} onClick={() => { setShowMoreTypes(false); setTypePickerTab('primary'); setTypeSheetSectionId(section.id); }} className={`mt-2 flex min-h-11 w-full items-center justify-center gap-2 ${shapeClasses.control} bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] transition-colors active:bg-[var(--tm-brand-primary-soft-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]`}><Plus className="h-4 w-4" />添加{addButtonLabel ?? itemLabel}到本组</button>}
             {sectionIndex < sections.length - 1 && <div className="mt-2 h-px bg-[var(--tm-border-subtle)]" />}
           </SectionDropZone>
         );
@@ -950,19 +958,20 @@ const FormBuilder = <TType extends string>({
         <section className="mt-2">
           {renderFieldList(fields)}
           {listError && <p id="form-builder-list-error" tabIndex={-1} className="mt-2 px-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{listError}</p>}
-          {!readOnly && <button type="button" onClick={() => { setShowMoreTypes(false); setTypePickerTab('primary'); setTypeSheetSectionId(''); }} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />添加{addButtonLabel ?? itemLabel}</button>}
+          {!readOnly && <button type="button" onClick={() => { setShowMoreTypes(false); setTypePickerTab('primary'); setTypeSheetSectionId(''); }} className={`mt-2 flex min-h-11 w-full items-center justify-center gap-2 ${shapeClasses.control} text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]`}><Plus className="h-4 w-4" />添加{addButtonLabel ?? itemLabel}</button>}
         </section>
       ) : (
         <section className="mt-2">
           {renderGroupedFieldList()}
           {listError && <p id="form-builder-list-error" tabIndex={-1} className="mt-2 px-1 text-[length:var(--tm-font-size-badge)] font-semibold text-[var(--tm-status-negative-strong)]">{listError}</p>}
-          {!readOnly && <button type="button" onClick={() => setSectionDraft({ id: createFormSectionId(), label: '' })} className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]"><FolderPlus className="h-4 w-4" />添加分组</button>}
+          {!readOnly && <button type="button" onClick={() => setSectionDraft({ id: createFormSectionId(), label: '' })} className={`mt-4 flex min-h-11 w-full items-center justify-center gap-2 ${shapeClasses.control} bg-[var(--tm-bg-surface-muted)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)]`}><FolderPlus className="h-4 w-4" />添加分组</button>}
         </section>
       )}
 
       <BottomSheet open={typeSheetSectionId !== null} label={typePickerTitle ?? `选择${itemLabel}类型`} onDismiss={() => setTypeSheetSectionId(null)}>
         {typePickerSecondaryTab && (
           <CompactSegmentedControl
+            shape={shape}
             value={typePickerTab}
             items={[
               { value: 'primary', label: typePickerPrimaryLabel },
@@ -975,7 +984,7 @@ const FormBuilder = <TType extends string>({
           />
         )}
         {typePickerTab === 'secondary' && typePickerSecondaryTab?.description && (
-          <div className="mb-3 flex items-start gap-2 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 text-[var(--tm-text-secondary)]">
+          <div className={`mb-3 flex items-start gap-2 ${shapeClasses.inner} bg-[var(--tm-bg-surface-soft)] px-3 py-2.5 text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 text-[var(--tm-text-secondary)]`}>
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
             <p>{typePickerSecondaryTab.description}</p>
           </div>
@@ -986,23 +995,23 @@ const FormBuilder = <TType extends string>({
               {visibleTypes.map(type => {
                 const TypeIcon = type.icon ?? defaultIconMap[type.value] ?? TextCursorInput;
                 return (
-                  <button key={type.value} type="button" onClick={() => addField(type.value)} className="flex min-h-[76px] items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-4 text-left active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]"><TypeIcon className="h-5 w-5" /></span>
+                  <button key={type.value} type="button" onClick={() => addField(type.value)} className={`flex min-h-[76px] items-center gap-3 ${shapeClasses.inner} bg-[var(--tm-bg-surface-soft)] px-4 text-left active:scale-[0.98] active:bg-[var(--tm-brand-primary-soft)]`}>
+                    <span className={`flex h-10 w-10 items-center justify-center ${shapeClasses.control} bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]`}><TypeIcon className="h-5 w-5" /></span>
                     <span className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{type.label}</span>
                   </button>
                 );
               })}
             </div>
-            {hasSecondaryTypes && <button type="button" onClick={() => setShowMoreTypes(value => !value)} className="mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-[var(--tm-radius-control)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]">{showMoreTypes ? '常用类型' : '更多类型'}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreTypes ? 'rotate-180' : ''}`} /></button>}
+            {hasSecondaryTypes && <button type="button" onClick={() => setShowMoreTypes(value => !value)} className={`mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 ${shapeClasses.control} text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]`}>{showMoreTypes ? '常用类型' : '更多类型'}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreTypes ? 'rotate-180' : ''}`} /></button>}
           </>
         ) : typePickerSecondaryTab.render(() => setTypeSheetSectionId(null), typeSheetSectionId || undefined)}
       </BottomSheet>
 
       <BottomSheet open={Boolean(activeField)} label={`${itemLabel}设置`} onDismiss={() => setActiveFieldMenuId('')}>
         {activeField && (
-          <div className="space-y-4 pb-2">
+          <div className={`${shapeClasses.groupGap} pb-2`}>
             {!activeFieldHasFixedContent && (activeField.type === 'multiple' || activeField.type === 'multiple-select') && (
-              <section className="divide-y divide-[var(--tm-border-subtle)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3">
+              <section className={`divide-y divide-[var(--tm-border-subtle)] ${shapeClasses.inner} bg-[var(--tm-bg-surface-soft)] px-3`}>
                 {([
                   ['minSelections', '最少选择', activeFieldSettings.minSelections ?? 1],
                   ['maxSelections', '最多选择', activeFieldSettings.maxSelections ?? activeField.options.length],
@@ -1020,7 +1029,7 @@ const FormBuilder = <TType extends string>({
             )}
 
             {!activeFieldHasFixedContent && activeField.type === 'rating' && (
-              <section className="divide-y divide-[var(--tm-border-subtle)] rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3">
+              <section className={`divide-y divide-[var(--tm-border-subtle)] ${shapeClasses.inner} bg-[var(--tm-bg-surface-soft)] px-3`}>
                 <div className="flex min-h-[60px] items-center justify-between gap-3">
                   <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">起始分</span>
                   <div className="flex items-center gap-1">
@@ -1043,8 +1052,8 @@ const FormBuilder = <TType extends string>({
             {!activeFieldHasFixedContent && activeField.type === 'date' && (
               <section>
                 <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">日期格式</div>
-                <div className="grid grid-cols-3 gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
-                  {([['ymd', '年-月-日'], ['ym', '年-月'], ['year', '年份']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.dateFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, dateFormat: value } })} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.dateFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
+                <div className={`grid grid-cols-3 gap-2 ${shapeClasses.control} bg-[var(--tm-bg-surface-muted)] p-1`}>
+                  {([['ymd', '年-月-日'], ['ym', '年-月'], ['year', '年份']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.dateFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, dateFormat: value } })} className={`min-h-11 ${shapeClasses.segmentActive} px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.dateFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
                 </div>
               </section>
             )}
@@ -1052,8 +1061,8 @@ const FormBuilder = <TType extends string>({
             {!activeFieldHasFixedContent && activeField.type === 'number' && (
               <section>
                 <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">数字格式</div>
-                <div className="grid grid-cols-3 gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
-                  {([['integer', '整数'], ['decimal-1', '1位小数'], ['decimal-2', '2位小数']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.numberFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, numberFormat: value } })} className={`min-h-11 rounded-[var(--tm-radius-control)] px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.numberFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
+                <div className={`grid grid-cols-3 gap-2 ${shapeClasses.control} bg-[var(--tm-bg-surface-muted)] p-1`}>
+                  {([['integer', '整数'], ['decimal-1', '1位小数'], ['decimal-2', '2位小数']] as const).map(([value, label]) => <button key={value} type="button" aria-pressed={activeFieldSettings.numberFormat === value} onClick={() => updateField(activeField.id, { settings: { ...activeFieldSettings, numberFormat: value } })} className={`min-h-11 ${shapeClasses.segmentActive} px-1 text-[length:var(--tm-font-size-meta)] font-semibold ${activeFieldSettings.numberFormat === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>{label}</button>)}
                 </div>
               </section>
             )}
@@ -1080,7 +1089,7 @@ const FormBuilder = <TType extends string>({
         {sectionDraft && (
           <>
             <label className="block text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">分组名称<input value={sectionDraft.label} onChange={event => setSectionDraft({ ...sectionDraft, label: event.target.value })} className={`${inputClass} mt-2 h-12`} /></label>
-            <button type="button" disabled={!sectionDraft.label.trim()} onClick={saveSection} className="mt-4 inline-flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] disabled:opacity-45">完成</button>
+            <button type="button" disabled={!sectionDraft.label.trim()} onClick={saveSection} className={`mt-4 inline-flex min-h-[52px] w-full items-center justify-center ${shapeClasses.control} bg-[var(--tm-brand-primary)] px-5 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] disabled:opacity-45`}>完成</button>
           </>
         )}
       </BottomSheet>
@@ -1088,8 +1097,8 @@ const FormBuilder = <TType extends string>({
       <BottomSheet open={showSectionSorter} label="分组排序" onDismiss={() => setShowSectionSorter(false)}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderSections}>
           <SortableContext items={sections.map(section => sectionSortId(section.id))} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
-              {sections.map(section => <SortableSectionRow key={section.id} section={section} />)}
+            <div className={shapeClasses.listGap}>
+              {sections.map(section => <SortableSectionRow shape={shape} key={section.id} section={section} />)}
             </div>
           </SortableContext>
         </DndContext>
@@ -1100,8 +1109,8 @@ const FormBuilder = <TType extends string>({
           <>
             <h2 className="text-center text-[length:var(--tm-font-size-section-title)] font-bold text-[var(--tm-text-primary)]">删除“{deleteTarget.label}”？</h2>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <button type="button" onClick={() => setDeleteTarget(null)} className="min-h-[52px] rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]">取消</button>
-              <button type="button" onClick={confirmDelete} className="min-h-[52px] rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)]">删除</button>
+              <button type="button" onClick={() => setDeleteTarget(null)} className={`min-h-[52px] ${shapeClasses.control} border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)]`}>取消</button>
+              <button type="button" onClick={confirmDelete} className={`min-h-[52px] ${shapeClasses.control} bg-[var(--tm-status-negative)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)]`}>删除</button>
             </div>
           </>
         )}

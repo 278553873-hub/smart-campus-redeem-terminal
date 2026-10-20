@@ -1,4 +1,4 @@
-import { INITIAL_RECORDS, type DevelopmentRecord } from './data';
+import { INITIAL_RECORDS, SELF_COMMUNICATION_EXAMPLE, TEACHERS, type DevelopmentRecord } from './data';
 
 type LegacyRecord = Omit<DevelopmentRecord, 'inputType'> & { inputType?: DevelopmentRecord['inputType']; evidence?: string };
 const legacyTexts: Record<string, string> = {
@@ -11,13 +11,26 @@ const legacyTexts: Record<string, string> = {
 
 /** 仅替换未编辑的旧预置输入；审核结果、计分和用户修改独立保留。 */
 export function migrateRecordInput(record: LegacyRecord): DevelopmentRecord {
-  const { evidence, ...saved } = record;
-  if (saved.inputType) return saved as DevelopmentRecord;
+  const { evidence, ...legacy } = record;
+  const template = INITIAL_RECORDS.find(item => item.id === legacy.id && item.teacherId === legacy.teacherId && item.date === legacy.date);
+  const eventTimestamp = legacy.id.match(/^event-(\d{13})-/)?.[1];
+  const saved = { ...legacy, recordedAt: legacy.recordedAt ?? (eventTimestamp ? new Date(Number(eventTimestamp)).toISOString() : template?.recordedAt) };
   const seed = INITIAL_RECORDS.find(item => item.id === saved.id);
-  if (seed && saved.text === legacyTexts[saved.id] && !saved.history.includes('修改后重新提交')) {
+  const previousCommunication = '今天，我与刘甜家长沟通学生学习习惯，商量了每天阅读二十分钟的安排。';
+  if (seed && saved.teacherId === seed.teacherId && saved.authorId === seed.authorId
+    && (saved.text === legacyTexts[saved.id] || (saved.id === 'r2' && saved.text === previousCommunication))
+    && !saved.history.includes('修改后重新提交')) {
     return { ...saved, text: seed.text, inputType: seed.inputType, imageSampleId: seed.imageSampleId,
       note: saved.id === 'r12' && saved.note === '材料未显示本人执教信息，请核对并更新证明后重新提交。' ? seed.note : saved.note };
   }
+  const teacher = TEACHERS.find(item => item.id === saved.teacherId);
+  const oldVoice = saved.text.match(/^(.+)老师于(20\d{2})年(\d{1,2})月(\d{1,2})日完成一次家校沟通，与家长沟通了学生的阅读习惯。$/);
+  if (oldVoice && saved.authorId === saved.teacherId && saved.indicatorId === 'C06'
+    && oldVoice[1] === teacher?.name
+    && `${oldVoice[2]}-${oldVoice[3].padStart(2, '0')}-${oldVoice[4].padStart(2, '0')}` === saved.date
+    && !saved.history.includes('修改后重新提交')) {
+    return { ...saved, inputType: 'voice', text: SELF_COMMUNICATION_EXAMPLE };
+  }
   // 无法确认旧图片内容时保留文字，避免用另一张演示图片替代用户录入。
-  return { ...saved, inputType: 'text' };
+  return { ...saved, inputType: saved.inputType ?? 'text' };
 }

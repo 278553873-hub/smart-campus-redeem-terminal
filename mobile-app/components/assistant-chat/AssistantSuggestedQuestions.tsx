@@ -7,12 +7,14 @@
 import React from 'react';
 
 interface AssistantSuggestedQuestionsProps {
+    shape?: 'default' | 'subtle';
     questions: readonly string[];
     disabled: boolean;
     onSelect: (question: string) => void;
 }
 
 const AssistantSuggestedQuestions: React.FC<AssistantSuggestedQuestionsProps> = ({
+    shape = 'default',
     questions,
     disabled,
     onSelect,
@@ -27,7 +29,7 @@ const AssistantSuggestedQuestions: React.FC<AssistantSuggestedQuestionsProps> = 
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelect(question)}
-                className="min-h-[var(--tm-size-touch)] shrink-0 whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-glass)] px-3 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                className={`min-h-[var(--tm-size-touch)] shrink-0 whitespace-nowrap ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} bg-[var(--tm-bg-surface-glass)] px-3 text-[12px] font-semibold text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]`}
                 aria-label={`快捷问题 ${index + 1}/${questions.length}：${question}`}
             >
                 {question}

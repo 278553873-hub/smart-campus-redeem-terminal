@@ -225,15 +225,15 @@ const StudentQuestionList: React.FC<{
     onSelect: (action: typeof STUDENT_EVALUATION_QUESTIONS[number]['action']) => void;
     className?: string;
 }> = ({ onSelect, className = '' }) => (
-    <section className={`relative z-10 space-y-2 ${className}`} aria-label="报告快捷入口">
+    <section className={`relative z-10 space-y-[var(--tm-layout-card-gap)] ${className}`} aria-label="报告快捷入口">
         {STUDENT_EVALUATION_QUESTIONS.map(item => (
             <button
                 key={item.label}
                 type="button"
                 onClick={() => onSelect(item.action)}
-                className="flex min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] pl-3 pr-3.5 text-left [box-shadow:var(--tm-shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                className="flex min-h-14 w-full items-center gap-2.5 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] pl-3 pr-3.5 text-left [box-shadow:var(--tm-shadow-control)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
             >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--tm-role-headteacher-soft)] text-[var(--tm-assistant-role-text)]" aria-hidden="true">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-role-headteacher-soft)] text-[var(--tm-assistant-role-text)]" aria-hidden="true">
                     <item.icon className="h-[17px] w-[17px]" strokeWidth={2} />
                 </span>
                 <span className="min-w-0 flex-1 whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)]">{item.label}</span>
@@ -305,7 +305,7 @@ const ClassEvaluationHistoryPage: React.FC<{
 
             </section>
 
-            <section className="mt-4 space-y-5" aria-label="往期班级周评报告">
+            <section className="mt-[var(--tm-layout-card-gap)] space-y-[var(--tm-layout-card-gap)]" aria-label="往期班级周评报告">
                 {monthGroups.length > 0 ? (
                     monthGroups.map(group => (
                         <section key={group.key} aria-labelledby={`history-month-${group.key}`}>
@@ -313,14 +313,14 @@ const ClassEvaluationHistoryPage: React.FC<{
                                 <span className="absolute left-0 h-3 w-3 rounded-full border-[3px] border-[var(--tm-assistant-role-soft-strong)] bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
                                 <h2 id={`history-month-${group.key}`} className="text-[13px] font-semibold text-[var(--tm-text-tertiary)]">{group.label}</h2>
                             </div>
-                            <div className="relative mt-2 space-y-3 pl-5">
+                            <div className="relative mt-2 space-y-[var(--tm-layout-card-gap)] pl-5">
                                 <span className="absolute -top-5 bottom-9 left-[5px] w-px bg-[var(--tm-border-subtle)]" aria-hidden="true" />
                                 {group.reports.map(report => (
                                     <button
                                         key={report.id}
                                         type="button"
                                         onClick={() => onOpenReport(report)}
-                                        className="assistant-agent-glass relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                                        className="assistant-agent-glass relative flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-4 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
                                     >
                                         <span className="absolute -left-[19px] top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[var(--tm-bg-surface)] bg-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
                                         <span className="min-w-0 flex-1">
@@ -399,7 +399,7 @@ const DimensionRankingTable: React.FC<{
     selectedDimension?: string;
 }> = ({ rankings, onSelect, selectedDimension }) => (
     <div className="px-3 pb-2">
-        <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-2 text-[10px] font-medium text-[var(--tm-text-tertiary)]">
+        <div className="grid min-h-8 grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-role-headteacher-glass-surface-strong)] px-2 text-[10px] font-medium text-[var(--tm-text-tertiary)]">
             <span>指标</span>
             <span className="text-center">分数/总分</span>
             <span className="text-center">年级排名</span>
@@ -411,7 +411,7 @@ const DimensionRankingTable: React.FC<{
                     key={item.dimension}
                     type="button"
                     onClick={() => onSelect(item.dimension)}
-                    className={'grid min-h-12 w-full grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control)] px-2 text-left focus-visible:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none ' + (selectedDimension === item.dimension ? 'bg-[var(--tm-role-headteacher-glass-surface-strong)]' : '')}
+                    className={'grid min-h-12 w-full grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control-compact)] px-2 text-left focus-visible:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none ' + (selectedDimension === item.dimension ? 'bg-[var(--tm-role-headteacher-glass-surface-strong)]' : '')}
                     aria-label={`${item.dimension}，${formatCompactScore(item.score)}/${formatCompactScore(item.maxScore)}分，年级第${item.gradeRank}名，全校第${item.schoolRank}名，查看待改进情况`}
                     aria-pressed={selectedDimension === item.dimension || undefined}
                 >
@@ -471,11 +471,11 @@ const WeekOverviewPanel: React.FC<{
     onOpenDetails,
     onOpenWeekDetail,
 }) => (
-    <section className="overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-data-surface)] [box-shadow:var(--tm-role-headteacher-data-shadow)]" aria-labelledby="week-data-title">
+    <section className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-role-headteacher-data-surface)] [box-shadow:var(--tm-role-headteacher-data-shadow)]" aria-labelledby="week-data-title">
         <div className="px-4 pb-3 pt-3">
             <div className="flex min-h-11 items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--tm-bg-surface)] text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)]" aria-hidden="true">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[var(--tm-assistant-role-text)] [box-shadow:var(--tm-shadow-control)]" aria-hidden="true">
                         <ChartNoAxesCombined className="h-[17px] w-[17px]" strokeWidth={2.1} />
                     </span>
                     <h2 id="week-data-title" className="shrink-0 text-balance text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">班级评比</h2>
@@ -483,7 +483,7 @@ const WeekOverviewPanel: React.FC<{
                 <button
                     type="button"
                     onClick={onOpenWeekDetail}
-                    className="flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control)] pl-2 pr-1.5 text-[11px] font-medium tabular-nums text-[var(--tm-text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                    className="flex min-h-11 min-w-0 items-center gap-1 rounded-[var(--tm-radius-control-compact)] pl-2 pr-1.5 text-[11px] font-medium tabular-nums text-[var(--tm-text-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
                     aria-label={'打开周数据页面，当前' + week.label}
                 >
                     <CalendarDays className="h-3.5 w-3.5 shrink-0" strokeWidth={2.1} aria-hidden="true" />
@@ -535,7 +535,7 @@ const WeekOverviewPanel: React.FC<{
                     <button
                         type="button"
                         onClick={onOpenDetails}
-                        className="flex min-h-11 items-center gap-1 rounded-[var(--tm-radius-control)] px-3 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
+                        className="flex min-h-11 items-center gap-1 rounded-[var(--tm-radius-control-compact)] px-3 text-[13px] font-semibold text-[var(--tm-assistant-role-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
                     >
                         查看评价明细
                         <ChevronRight className="h-4 w-4 translate-x-px" aria-hidden="true" />
@@ -578,7 +578,7 @@ const ClassContextPanel: React.FC<{
     onStudentQuestionSelect,
     getClassLabel,
 }) => (
-    <section className="assistant-agent-glass assistant-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card)] p-2" aria-label="当前班级数据与分析功能">
+    <section className="assistant-agent-glass assistant-context-card relative z-10 mx-4 -mt-5 overflow-hidden rounded-[var(--tm-radius-card-compact)] p-2" aria-label="当前班级数据与分析功能">
         {canSwitchClass && (
             <div className="mb-1 flex min-h-10 items-center px-3">
                 <AssistantClassSwitchButton
@@ -607,7 +607,7 @@ const ClassContextPanel: React.FC<{
 
         {showStudentEvaluation && (
             <StudentQuestionList
-                className={`mx-3 pb-2 ${showClassEvaluation ? 'mt-3' : ''}`}
+                className={`mx-3 pb-2 ${showClassEvaluation ? 'mt-[var(--tm-layout-card-gap)]' : ''}`}
                 onSelect={onStudentQuestionSelect}
             />
         )}
@@ -677,7 +677,7 @@ const WeekDataDetailPage: React.FC<{
                     </div>
                 </section>
 
-                <section className="assistant-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4" aria-label="周数据概览">
+                <section className="assistant-agent-glass mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-card-compact)] px-4 py-4" aria-label="周数据概览">
                     <dl className="grid grid-cols-3 gap-3">
                         <div>
                             <dt className="text-[11px] text-[var(--tm-text-tertiary)]">本周总分</dt>
@@ -694,11 +694,11 @@ const WeekDataDetailPage: React.FC<{
                     </dl>
                 </section>
 
-                <section className="mt-4" aria-labelledby="week-dimensions-title">
+                <section className="mt-[var(--tm-layout-card-gap)]" aria-labelledby="week-dimensions-title">
                     <div className="mb-2 px-1">
                         <h2 id="week-dimensions-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">分类数据</h2>
                     </div>
-                    <div className="assistant-agent-glass rounded-[var(--tm-radius-card)] pt-3">
+                    <div className="assistant-agent-glass rounded-[var(--tm-radius-card-compact)] pt-3">
                         <DimensionRankingTable
                             rankings={week.dimensionRankings}
                             selectedDimension={selectedRanking?.dimension}
@@ -707,11 +707,11 @@ const WeekDataDetailPage: React.FC<{
                     </div>
                 </section>
 
-                <section className="mt-4" aria-labelledby="week-records-title">
+                <section className="mt-[var(--tm-layout-card-gap)]" aria-labelledby="week-records-title">
                     <div className="mb-2 px-1">
                         <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">待改进明细</h2>
                     </div>
-                    <div className="assistant-agent-glass overflow-hidden rounded-[var(--tm-radius-card)]">
+                    <div className="assistant-agent-glass overflow-hidden rounded-[var(--tm-radius-card-compact)]">
                         <DimensionTabs
                             rankings={week.dimensionRankings}
                             selectedDimension={selectedRanking?.dimension ?? ''}
@@ -1003,11 +1003,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         : showStudentEvaluation
             ? '学生评价对话'
             : '班级评比对话';
-    const composerPlaceholder = showClassEvaluation && showStudentEvaluation
-        ? '输入问题'
-        : showStudentEvaluation
-            ? '输入学生评价问题'
-            : '输入班级评比问题';
 
     const handleClassSelect = (classId: string) => {
         onClassChange(classId);
@@ -1082,7 +1077,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     {isGenerating ? (
                         <AgentGenerationProgress visibleStepCount={generationStepCount} />
                     ) : activeReport ? (
-                        <div className="assistant-agent-glass mt-4 rounded-[var(--tm-radius-card)] px-4 py-4">
+                        <div className="assistant-agent-glass mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-card-compact)] px-4 py-4">
                             <WeeklyReportContent report={activeReport.report} />
                         </div>
                     ) : null}
@@ -1166,10 +1161,11 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
             <footer className="relative z-30 shrink-0 bg-transparent">
                 {(showClassEvaluation || showStudentEvaluation) && !activeReport && !isGenerating && !historyOpen && (
                     <AssistantComposer
+                        sessionKey={resolvedClassId}
                         draft={draft}
                         replying={isReplying}
                         suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}
-                        placeholder={composerPlaceholder}
+                        placeholder="请输入"
                         onDraftChange={setDraft}
                         onSubmit={submitQuestion}
                     />

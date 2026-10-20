@@ -94,7 +94,7 @@ export default function MobilePressHelp({ label, description }: { label: string;
                     ref={tooltipRef}
                     role="tooltip"
                     aria-hidden="true"
-                    className="pointer-events-none z-[1300] rounded-[var(--tm-radius-control)] bg-[var(--tm-chart-tooltip)] px-3 py-2 text-left text-[length:var(--tm-font-size-meta)] font-medium leading-relaxed text-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-floating)]"
+                    className="pointer-events-none z-[1300] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-chart-tooltip)] px-3 py-2 text-left text-[length:var(--tm-font-size-meta)] font-medium leading-relaxed text-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-floating)]"
                     style={{ position: root === document.body ? 'fixed' : 'absolute', ...position }}
                 >
                     {description}

@@ -7,7 +7,7 @@ import {
   FeaturePageBody,
   FeaturePanel,
   SwitchControl,
-  featurePrimaryButtonClass,
+  featureFormPrimaryButtonClass,
 } from './MeFeatureViews';
 import type {
   ParentEvaluationVisibilitySettings as VisibilitySettings,
@@ -53,14 +53,15 @@ export const ParentEvaluationVisibilityManagementView: React.FC<ParentEvaluation
 
   return (
     <FeaturePageBody
+      spacing="compact"
       footer={(
-        <button type="button" onClick={handleSave} className={featurePrimaryButtonClass}>
+        <button type="button" onClick={handleSave} className={featureFormPrimaryButtonClass}>
           保存
         </button>
       )}
     >
       {/* 1. 最上方单独的开关卡片，参考“货币发放”配置结构 */}
-      <FeaturePanel className="relative z-10 px-4 py-2" allowOverflow>
+      <FeaturePanel variant="form" className="relative z-10 px-4 py-2" allowOverflow>
         <div className="flex min-h-[60px] items-center justify-between gap-3">
           <div className="relative flex min-w-0 items-center gap-0">
             <span className="truncate text-[14px] font-bold text-[var(--tm-text-primary)]">
@@ -86,7 +87,7 @@ export const ParentEvaluationVisibilityManagementView: React.FC<ParentEvaluation
               <div
                 id={helpTooltipId}
                 role="tooltip"
-                className="pointer-events-none absolute left-0 top-full z-30 w-[260px] max-w-[calc(100vw-64px)] rounded-2xl bg-[var(--tm-text-primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-white shadow-[0_14px_32px_-20px_var(--tm-shadow-neutral-color)]"
+                className="pointer-events-none absolute left-0 top-full z-30 w-[260px] max-w-[calc(100vw-64px)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-text-primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-white shadow-[0_14px_32px_-20px_var(--tm-shadow-neutral-color)]"
               >
                 开启后，班主任可自主设置本班家长端展示规则；关闭后，全校统一按照本处设置的方案进行展示，不允许班主任私自调整
               </div>
@@ -101,7 +102,7 @@ export const ParentEvaluationVisibilityManagementView: React.FC<ParentEvaluation
       </FeaturePanel>
 
       {/* 2. 全校统一展示规则卡片，标题采用“货币发放”一致的 15px font-bold text-[var(--tm-text-primary)] */}
-      <FeaturePanel className="space-y-4 p-4">
+      <FeaturePanel variant="form" className="space-y-4 p-4">
         <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">
           全校统一展示规则
         </h2>
@@ -109,6 +110,7 @@ export const ParentEvaluationVisibilityManagementView: React.FC<ParentEvaluation
           settings={config.settings}
           onChange={handleSettingsChange}
           showPreview={false}
+          controlShape="subtle"
         />
       </FeaturePanel>
 

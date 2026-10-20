@@ -23,6 +23,7 @@ const StudentTermSelector: React.FC<StudentTermSelectorProps> = ({
   ariaLabel = '选择学期',
 }) => (
   <StudentTimeRangeSelector
+    shape="subtle"
     value={value}
     options={options.map(option => ({
       value: option.value,

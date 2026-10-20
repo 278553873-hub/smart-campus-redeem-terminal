@@ -4,6 +4,7 @@ import MobileBottomSheet from './MobileBottomSheet';
 
 interface MobileDangerConfirmSheetProps {
   open: boolean;
+  shape?: 'default' | 'subtle';
   title: string;
   description: string;
   confirmLabel: string;
@@ -21,6 +22,7 @@ interface MobileDangerConfirmSheetProps {
  */
 const MobileDangerConfirmSheet: React.FC<MobileDangerConfirmSheetProps> = ({
   open,
+  shape = 'default',
   title,
   description,
   confirmLabel,
@@ -83,19 +85,19 @@ const MobileDangerConfirmSheet: React.FC<MobileDangerConfirmSheetProps> = ({
             type="button"
             onClick={handleConfirm}
             disabled={countdown > 0}
-            className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+            className={`flex min-h-[52px] w-full items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]`}
           >
             {countdown > 0 ? `${countdown}秒后可确认` : confirmLabel}
           </button>
         </div>
       )}
     >
-      <div className="space-y-4 pb-2">
+      <div className={`pb-2 ${shape === 'subtle' ? 'space-y-[var(--tm-layout-card-gap)]' : 'space-y-4'}`}>
         <p className="text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">
           {description}
         </p>
         {children}
-        <label className="flex min-h-11 select-none items-center gap-3 rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]">
+        <label className={`flex min-h-11 select-none items-center gap-3 ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface-soft)] px-3 text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-primary)]`}>
           <input
             type="checkbox"
             checked={acknowledged}

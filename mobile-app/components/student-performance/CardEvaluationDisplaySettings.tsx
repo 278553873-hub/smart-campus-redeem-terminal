@@ -37,8 +37,9 @@ const CardEvaluationDisplaySettings: React.FC<CardEvaluationDisplaySettingsProps
   };
 
   return (
-    <div role="group" aria-label="表扬/待改进展示设置" className="space-y-[var(--tm-space-1)]">
+    <div role="group" aria-label="表扬/待改进展示设置" className="space-y-[var(--tm-layout-list-gap-compact)]">
       <MobileSettingsSwitchRow
+        shape="subtle"
         label="显示表扬/待改进"
         checked={settings.showEvaluation}
         onChange={showEvaluation => onChange({ ...settings, showEvaluation })}
@@ -51,6 +52,7 @@ const CardEvaluationDisplaySettings: React.FC<CardEvaluationDisplaySettingsProps
               显示内容
             </span>
             <CompactSegmentedControl
+              shape="subtle"
               value={contentMode}
               items={CONTENT_MODE_OPTIONS}
               onChange={handleContentModeChange}

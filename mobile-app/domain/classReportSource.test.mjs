@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import {
+  getReportEvaluationCount,
+  formatReportSourceEvaluationCount,
+  formatReportSourceEvaluationCountAria,
   formatReportSourceRecordCount,
   formatReportSourceRecordCountAria,
   getPeriodForDays,
@@ -80,3 +83,10 @@ assert.equal(getPeriodForDays(31), 'month');
 assert.equal(getPeriodForDays(32), 'semester');
 
 console.log('Class report source assertions passed');
+
+assert.equal(getReportEvaluationCount(0), 0, '无记录时评价次数为零');
+assert.equal(getReportEvaluationCount(188), 94, '来源评价次数与概况使用同一折算口径');
+assert.equal(getReportEvaluationCount(189), 95, '奇数记录条数应向上取整');
+assert.equal(formatReportSourceEvaluationCount(1000), '999+');
+assert.equal(formatReportSourceEvaluationCountAria(94), '94次评价');
+assert.equal(formatReportSourceEvaluationCountAria(1000), '999次评价以上');

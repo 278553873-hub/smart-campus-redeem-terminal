@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 
 interface MobileSearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   density?: 'compact' | 'standard';
+  shape?: 'default' | 'subtle';
   appearance?: 'outlined' | 'filled';
   fillTone?: 'soft' | 'surface';
   containerClassName?: string;
@@ -10,6 +11,7 @@ interface MobileSearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInpu
 
 const MobileSearchInput: React.FC<MobileSearchInputProps> = ({
   density = 'standard',
+  shape = 'default',
   appearance = 'outlined',
   fillTone = 'soft',
   containerClassName = '',
@@ -29,7 +31,7 @@ const MobileSearchInput: React.FC<MobileSearchInputProps> = ({
         type="search"
         className={`${compact
           ? 'h-9 rounded-full pl-9 pr-3 text-[13px]'
-          : 'h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] pl-10 pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)]'
+          : `h-[var(--tm-size-touch)] ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} pl-10 pr-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)]`
         } ${appearance === 'filled'
           ? `border-0 shadow-none ${fillTone === 'surface' ? 'bg-[var(--tm-bg-surface)]' : 'bg-[var(--tm-bg-surface-soft)]'}`
           : `border bg-[var(--tm-input-bg)] ${compact ? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]' : 'border-[var(--tm-input-border)]'}`

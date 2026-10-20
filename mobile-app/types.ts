@@ -1,3 +1,4 @@
+import type { GrowthCoinConfig } from '../shared/growthCoinRules';
 import type {
   ParentEvaluationVisibility,
   ParentEvaluationVisibilitySettings,
@@ -142,17 +143,11 @@ export interface CampusCoinConsumeRecord {
 export type CampusCoinSettlementPeriod = 'weekly' | 'monthly';
 export type CampusCoinBudgetMode = 'per_class' | 'per_student';
 
-export interface CoinIssuanceConfig {
-  enabled: boolean;
-  period: CampusCoinSettlementPeriod;
-  budgetMode: CampusCoinBudgetMode;
-  budgetAmount: number;
-  sunshineRatio: number;
-  /** 本结算周期内班级至少需要发起的评价次数。 */
-  minimumEvaluationCount: number;
-}
+export interface CoinIssuanceConfig extends GrowthCoinConfig {}
 
 export interface CampusCoinSettlementEstimate {
+  /** 加分就发时用一句话规则替代定期结算预估。 */
+  scoreRuleSummary?: string;
   enabled: boolean;
   eligible: boolean;
   period: CampusCoinSettlementPeriod;

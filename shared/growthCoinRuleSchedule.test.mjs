@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import { getEditableGrowthCoinConfig, getEffectiveGrowthCoinConfig, saveGrowthCoinRule } from './growthCoinRuleSchedule.ts';
+import { calculateScoreCoinAward } from './growthCoinRules.ts';
+
+const monday = new Date('2026-10-19T10:00:00+08:00');
+const old = { enabled: true, period: 'weekly', budgetMode: 'per_class', budgetAmount: 500, sunshineRatio: 60, minimumEvaluationCount: 1 };
+const snapshot = structuredClone(old);
+const next = { ...old, mode: 'score', scoreRule: { coinsPerPoint: 2, limitEnabled: true, limitPeriod: 'monthly', limitAmount: 80 } };
+const saved = saveGrowthCoinRule(old, next, monday);
+assert.equal(saved.config.pendingChange, undefined);
+assert.equal(saved.notice.headline, '立即生效');
+assert.deepEqual(getEffectiveGrowthCoinConfig(saved.config, monday), next, '切换方式立即生效');
+assert.equal(calculateScoreCoinAward(saved.config, 1, 0), 2, '新增加分立即使用新比例');
+assert.equal(calculateScoreCoinAward(saved.config, 1, 79), 1, '继续计入本周期已发额度');
+const lowerLimit = { ...next, scoreRule: { ...next.scoreRule, limitAmount: 20 } };
+const lowered = saveGrowthCoinRule(saved.config, lowerLimit, monday);
+assert.equal(calculateScoreCoinAward(lowered.config, 1, 79), 0, '降低上限不追扣已发币，也不继续发放');
+const periodic = saveGrowthCoinRule(next, { ...old, budgetAmount: 600 }, monday);
+assert.equal(periodic.config.budgetAmount, 600);
+assert.equal(periodic.notice.headline, '立即生效');
+assert.match(periodic.notice.detail, /下一次定期结算/);
+assert.equal(saveGrowthCoinRule(old, { ...old, enabled: false }, monday).config.enabled, false, '关闭立即生效');
+assert.equal(saveGrowthCoinRule({ ...old, enabled: false }, next, monday).config.enabled, true, '首次开启立即生效');
+assert.equal(saveGrowthCoinRule(old, old, monday).notice.headline, '继续使用当前规则');
+
+const legacy = { ...old, pendingChange: { effectiveAt: '2026-10-25T16:00:00.000Z', config: next } };
+assert.deepEqual(getEffectiveGrowthCoinConfig(legacy, monday), old, '旧版待生效配置不会被读取操作自动提前启用');
+assert.deepEqual(getEditableGrowthCoinConfig(legacy), next, '保留旧版尚未生效的修改');
+assert.deepEqual(saveGrowthCoinRule(legacy, getEditableGrowthCoinConfig(legacy), monday).config, next, '旧草稿重新保存立即应用并移除排期');
+assert.deepEqual(saveGrowthCoinRule(legacy, old, monday).config, old, '可以取消旧待生效修改');
+assert.deepEqual(getEffectiveGrowthCoinConfig(legacy, new Date('2026-10-26T00:00:00+08:00')), next, '继续兼容已到期的旧配置');
+assert.deepEqual(old, snapshot, '保存不改写原配置对象');
+console.log('成长币规则检查通过：即时生效、启停、比例和上限、周期结算提示、旧排期兼容');

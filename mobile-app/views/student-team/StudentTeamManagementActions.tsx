@@ -6,7 +6,7 @@ interface StudentTeamManagementActionsProps {
   onInvite: () => void;
 }
 
-const gridItemClass = 'group flex min-h-[var(--tm-action-grid-item-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] px-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]';
+const gridItemClass = 'group flex min-h-[var(--tm-action-grid-item-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] px-1 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]';
 
 const StudentTeamManagementActions: React.FC<StudentTeamManagementActionsProps> = ({ onEditMembers, onInvite }) => {
   const items = [

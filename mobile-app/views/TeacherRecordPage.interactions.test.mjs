@@ -37,7 +37,7 @@ forbidText(recordSource, '<div className="flex h-11 items-center justify-center"
 requireText(recordSource, '<span>指标</span>', '单一记录对象已隐含学生上下文，指标入口应使用精简文案。');
 requireText(recordSource, '{canRecordClass && (', '记录对象切换应只对支持记录班级的来源披露。');
 forbidText(recordSource, 'grid-cols-[224px_minmax(0,1fr)]', '移除来源后不应继续使用占满下一行的宽分段控件。');
-requireText(recordSource, 'items-center gap-0.5 rounded-[var(--tm-radius-control)]', '指标入口应在独立下一行保持左对齐。');
+requireText(recordSource, 'items-center gap-0.5 rounded-[var(--tm-radius-control-compact)]', '指标入口应在独立下一行保持左对齐。');
 requireText(recordSource, 'px-1 text-[14px] font-semibold text-[var(--tm-text-secondary)]', '指标入口应保持 14 像素半粗次级文字，清晰但不抢占高频输入控件层级。');
 requireText(recordSource, '<ChevronRightIcon className="h-3.5 w-3.5" />', '指标入口箭头应与主文字同色，不降低透明度。');
 forbidText(recordSource, 'text-[13px] font-medium text-[var(--tm-text-secondary)]', '指标入口不得回退为 13 像素中等字重。');
@@ -65,20 +65,16 @@ requireText(spaceAccessSource, "space.type === 'school' && space.classRecordEnab
 requireText(inputSource, "const shouldShowStudentContext = mode !== 'camera'", '拍照页应在无学生时隐藏学生占位文案。');
 forbidText(inputSource, '>{studentNameList || "未选择学生"}</span>', '拍照页不应无条件展示“未选择学生”。');
 
-requireText(inputBarSource, 'role="textbox"', '文字录入态应展示可见的输入区。');
-requireText(inputBarSource, "inputText || '输入记录内容'", '文字录入态应实时展示草稿或占位文案。');
-requireText(inputBarSource, 'rounded-[var(--tm-radius-card)] bg-white px-2.5 [box-shadow:var(--tm-shadow-floating)]', '悬浮录入条应使用独立白色面板和可生效的双层中性阴影。');
-requireText(tokenSource, "'--tm-shadow-floating': '0 -10px 24px -12px rgba(64, 60, 58, 0.18), 0 10px 28px -12px rgba(64, 60, 58, 0.18)'", '悬浮录入条阴影变量应同时提供向上分层和向下承托。');
+requireText(inputBarSource, '<MobileInputComposer', '记录输入必须与助理复用公共组件。');
+requireText(appSource, 'onInputChange={setInputText}', '公共输入应实时更新草稿。');
 forbidText(appSource, 'linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.9)_46%,#FFFFFF_100%)', '悬浮录入条不应用大面积白色渐变遮挡记录内容。');
 forbidText(appSource, 'mainBottomReserveClass', '悬浮录入条不应永久压缩页面主内容区。');
 requireText(recordSource, 'pb-44', '记录列表应通过尾部滚动留白保证最后一条可完整阅读。');
 requireText(classDetailSource, 'pb-40', '班级详情列表应通过尾部滚动留白保证末行可完整阅读。');
-requireText(keyboardSource, 'z-[80]', '模拟键盘应高于遮罩和底部导航。');
+forbidText(appSource, '<VirtualKeyboard', '记录页应使用公共输入的原生键盘。');
 requireText(appSource, 'if (!inputText.trim()) return;', '空文本不应触发解析。');
-requireText(inputBarSource, 'onPointerDown={onVoicePointerDown}', '语音主按钮应在录入条内响应按住手势。');
-requireText(appSource, 'onVoicePointerDown={event => beginVoiceRecording(event, targetIds)}', '记录页应向录入条注入当前对象的录音逻辑。');
-requireText(inputBarSource, "voicePressState === 'canceling' ? '松开取消' : '松开发送'", '语音主按钮应原位反馈松开发送和上移取消状态。');
-requireText(appSource, "handleAnalysisComplete({\n                type: 'voice'", '松开语音主按钮后应直接提交分析，不经过独立录音页。');
+requireText(appSource, 'voice={recordVoice}', '记录页应向公共输入传入演示评价会话。');
+requireText(appSource, 'createSession: callbacks =>', '评价演示的业务回调由会话适配器注入。');
 forbidText(appSource, "handleStartRecord(targetIds, 'voice')", '教师记录页的语音主按钮不得再跳转到全屏录音页。');
 
 for (const [targetSource, label] of [

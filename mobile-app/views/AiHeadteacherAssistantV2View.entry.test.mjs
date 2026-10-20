@@ -10,6 +10,8 @@ const classAssistantDomainSource = fs.readFileSync(new URL('../domain/classEvalu
 const conversationDomainSource = fs.readFileSync(new URL('../domain/headteacherAssistantConversation.ts', import.meta.url), 'utf8');
 // 对话气泡、输入控件与建议问题已收敛为公共组件，班主任助理与校长助理共用同一套实现。
 const chatComposerSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantComposer.tsx', import.meta.url), 'utf8');
+const inputComposerSource = fs.readFileSync(new URL('../components/ui/MobileInputComposer.tsx', import.meta.url), 'utf8');
+const holdSource = fs.readFileSync(new URL('../hooks/useHoldToTalk.ts', import.meta.url), 'utf8');
 const chatThreadSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantConversationThread.tsx', import.meta.url), 'utf8');
 const chatSuggestedSource = fs.readFileSync(new URL('../components/assistant-chat/AssistantSuggestedQuestions.tsx', import.meta.url), 'utf8');
 
@@ -61,12 +63,12 @@ requireText(viewSource, 'min-h-14 w-full items-center', '学生评价能力块�
 requireText(viewSource, 'whitespace-nowrap text-[length:var(--tm-font-size-body)] font-medium leading-5', '学生评价能力应使用舒展的正文级单行文字层级。');
 requireText(viewSource, 'assistant-agent-glass assistant-context-card', '班级上下文总卡应使用独立表面层级。');
 requireText(viewSource, 'bg-[var(--tm-role-headteacher-data-surface)] [box-shadow:var(--tm-role-headteacher-data-shadow)]', '本周数据应通过浅色表面和环境阴影与总卡建立清晰边界。');
-requireText(viewSource, 'rounded-[var(--tm-radius-card)] p-2', '总卡与内部内容应使用同心圆角和八像素间距。');
-requireText(viewSource, 'rounded-[var(--tm-radius-control)] bg-[var(--tm-role-headteacher-data-surface)]', '本周数据内卡应使用十二像素圆角。');
+requireText(viewSource, 'rounded-[var(--tm-radius-card-compact)] p-2', '总卡应使用十二像素圆角和八像素基础内边距。');
+requireText(viewSource, 'rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-role-headteacher-data-surface)]', '本周数据内卡应使用十二像素圆角。');
 requireText(viewSource, 'variant="quiet"', '概览态班级切换应使用弱化文字样式。');
 requireText(viewSource, '{canSwitchClass && (', '概览态只有存在多个带班班级时才应展示班级切换控件。');
 requireText(viewSource, '<div className="mx-2">', '本周数据卡应相对总卡主动缩进。');
-requireText(viewSource, 'className={`mx-3 pb-2 ${showClassEvaluation ? \'mt-3\' : \'\'}`}', '报告入口应比数据卡进一步缩进，并与总卡底边保留十六像素空间。');
+requireText(viewSource, 'className={`mx-3 pb-2 ${showClassEvaluation ? \'mt-[var(--tm-layout-card-gap)]\' : \'\'}`}', '报告入口应比数据卡进一步缩进，并与总卡底边保留十六像素空间。');
 for (const icon of ['ChartNoAxesCombined', 'Telescope', 'ScanSearch']) {
   requireText(viewSource, icon, `概览应使用语义图标：${icon}`);
 }
@@ -82,12 +84,12 @@ assert.ok(
   '学生评价问题应位于会话内容之前。',
 );
 requireText(viewSource, '<AssistantComposer', '底部应使用公共对话输入控件。');
-requireText(chatComposerSource, '<AutoResizeTextarea', '自由对话应使用自动增高文字输入框。');
-requireText(chatComposerSource, 'SpeechRecognitionConstructor', '自由对话应支持浏览器语音识别能力。');
-requireText(chatComposerSource, "'按住说话'", '底部输入区应提供语音输入。');
-requireText(chatComposerSource, 'aria-label="切换到文字输入"', '语音模式应能切换到文字输入。');
-requireText(chatComposerSource, 'aria-label="切换到语音输入"', '文字模式应能切换回语音输入。');
-requireText(chatComposerSource, 'aria-label="发送问题"', '文字模式应提供明确的发送入口。');
+requireText(chatComposerSource, '<MobileInputComposer', '自由对话必须复用统一输入面板。');
+requireText(holdSource, 'SpeechRecognition', '自由对话应支持浏览器语音识别能力。');
+requireText(inputComposerSource, "'按住说话'", '底部输入区应提供语音输入。');
+requireText(inputComposerSource, 'aria-label="切换到文字输入"', '语音模式应能切换到文字输入。');
+requireText(inputComposerSource, 'aria-label="切换到语音输入"', '文字模式应能切换回语音输入。');
+requireText(inputComposerSource, "sendLabel = '发送问题'", '文字模式应提供明确的发送入口。');
 assert.ok(!viewSource.includes('Camera'), '班主任 Agent 对话不应提供拍照入口。');
 assert.ok(!viewSource.includes('Plus'), '对话输入栏不应提供添加入口。');
 requireText(viewSource, '数据概览', '完整周报应先展示确定性数据统计。');
@@ -147,7 +149,7 @@ for (const question of ['班级评比主要在哪些方面待改进？', '班级
 requireText(viewSource, 'getInitialSuggestedQuestions', '页面应按学校开通能力取新会话建议问题。');
 requireText(viewSource, 'suggestedQuestions={messages.length > 0 ? followUpQuestions : OVERVIEW_RECOMMENDED_QUESTIONS}', '输入区应根据对话状态展示首轮建议或连续追问。');
 assert.ok(
-  chatComposerSource.indexOf('<AssistantSuggestedQuestions') < chatComposerSource.indexOf("{mode === 'voice' ? ("),
+  chatComposerSource.indexOf('<AssistantSuggestedQuestions') < chatComposerSource.indexOf('<MobileInputComposer'),
   '建议问题应位于语音或文字输入控件上方。',
 );
 requireText(chatSuggestedSource, 'touch-pan-x gap-2 overflow-x-auto overscroll-x-contain', '建议问题应支持单行左右滑动。');

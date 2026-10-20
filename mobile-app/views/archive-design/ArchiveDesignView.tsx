@@ -31,19 +31,15 @@ import MobileDocumentTitleInput from '../../components/ui/MobileDocumentTitleInp
 import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
 import { ASSETS } from '../../assets/images';
-import { phoneRadius } from '../../styles/teacherMobileTokens';
 import type { ConfigurableFormField } from '../../../shared/formDefinition';
 import {
   BottomAction,
   BottomSheet,
-  inputClass,
   pageBackground,
   PageHeader,
-  primaryButton,
-  secondaryButton,
-  sectionSurface,
   StatusPill,
   Toast,
+  subtleArchivePageStyles,
 } from './archivePagePrimitives';
 import {
   ARCHIVE_GROWTH_FIELD_GROUPS,
@@ -89,6 +85,8 @@ interface ArchiveDesignViewProps {
   getStudentsForClass: (classId: string) => Student[];
 }
 
+const { inputClass, primaryButton, secondaryButton, sectionSurface } = subtleArchivePageStyles;
+
 type PageMode = 'root' | 'template-editor';
 type TemplateEditorMode = 'create' | 'edit' | 'preview' | 'detail';
 
@@ -118,8 +116,8 @@ const templateStatusOrder: Record<ArchiveTemplate['status'], number> = {
   recommended: 4,
 };
 
-const archiveActionTile = 'flex min-h-[52px] w-full items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left text-[length:var(--tm-font-size-body)] font-semibold transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-muted)]';
-const editorToolButton = 'flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-inner)] bg-transparent text-[length:var(--tm-font-size-badge)] font-semibold leading-none text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-35';
+const archiveActionTile = 'flex min-h-[52px] w-full items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-3)] text-left text-[length:var(--tm-font-size-body)] font-semibold transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-muted)]';
+const editorToolButton = 'flex h-11 w-11 flex-col items-center justify-center gap-0.5 rounded-[var(--tm-radius-control-compact)] bg-transparent text-[length:var(--tm-font-size-badge)] font-semibold leading-none text-[var(--tm-text-secondary)] transition active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-35';
 
 const formatTemplateGradeScope = (gradeScopes: string[]) => {
   if (gradeScopes.length === 0) return '未设置年级';
@@ -454,6 +452,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
   const renderGrowthDataPicker = (close: () => void, sectionId?: string) => (
     <div>
       <GrowthFieldCategoryPicker
+        shape="subtle"
         fields={archiveGrowthFields}
         isSelected={field => Boolean(templateDraft?.growthFields.some(item => item.key === field.key))}
         onToggle={field => {
@@ -483,7 +482,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
     return (
       <section className="flex min-h-full flex-col">
         {school.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
             {school.map(template => {
               const meta = templateStatusMeta[template.status];
               const listHeaderImage = getArchiveHeaderImage(template.appearance);
@@ -677,8 +676,8 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
         <button type="button" disabled={builderFields.length === 0 && templateDraft.sections.length === 0} onClick={() => setShowOutlineSheet(true)} className={editorToolButton} aria-label="大纲"><ListTree className="h-4.5 w-4.5" /><span>大纲</span></button>
         <button type="button" onClick={() => setShowAppearanceSheet(true)} className={editorToolButton} aria-label="风格"><Palette className="h-4.5 w-4.5" /><span>风格</span></button>
         <button type="button" onClick={() => setShowBasicSettingsSheet(true)} className={editorToolButton} aria-label="设置"><Settings className="h-4.5 w-4.5" /><span>设置</span></button>
-        <button type="button" onClick={openEditorPreview} className="inline-flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]">预览</button>
-        <button type="button" onClick={finishEditor} className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)]">完成</button>
+        <button type="button" onClick={openEditorPreview} className="inline-flex h-11 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]">预览</button>
+        <button type="button" onClick={finishEditor} className="inline-flex h-11 w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98] active:bg-[var(--tm-brand-primary-strong)]">完成</button>
       </div>
     );
     const pageTitle = isRecommendedPreview
@@ -721,7 +720,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                   <StatusPill className={templateStatusMeta[templateDraft.status].className}>{templateStatusMeta[templateDraft.status].label}</StatusPill>
                 </div>
               </section>
-              <section className={`${sectionSurface} mt-3 p-4`}>
+              <section className={`${sectionSurface} mt-[var(--tm-layout-card-gap)] p-4`}>
                 <dl className="flex items-start justify-between gap-4">
                   <dt className="shrink-0 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-tertiary)]">适用年级</dt>
                   <dd className="text-right text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-primary)]">{templateDraft.gradeScopes.join('、') || '未设置'}</dd>
@@ -729,8 +728,9 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
               </section>
 
               {(templateDraft.fields.length > 0 || templateDraft.growthFields.length > 0) && (
-                <section className="mt-5">
+                <section className="mt-[var(--tm-layout-card-gap)]">
                   <FormBuilder
+                    shape="subtle"
                     layoutMode={templateDraft.layoutMode}
                     sections={templateDraft.sections}
                     fields={builderFields}
@@ -770,14 +770,14 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                   </label>
                 </section>
               )}
-              <section className={`${sectionSurface} p-4 ${isCreating ? 'mt-4' : 'mt-3'}`}>
+              <section className={`${sectionSurface} p-4 mt-[var(--tm-layout-card-gap)]`}>
                 <div>
                   <div className="mb-2 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">适用年级</div>
                   <div className="flex flex-wrap gap-2">
                     {gradeOptions.map(grade => {
                       const selected = templateDraft.gradeScopes.includes(grade);
                       return (
-                        <button key={grade} type="button" onClick={() => setTemplateDraft({ ...templateDraft, gradeScopes: selected ? templateDraft.gradeScopes.filter(item => item !== grade) : [...templateDraft.gradeScopes, grade] })} className={`min-h-[var(--tm-size-touch)] ${phoneRadius.sm} px-3 text-[length:var(--tm-font-size-meta)] font-semibold ${selected ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]'}`}>
+                        <button key={grade} type="button" onClick={() => setTemplateDraft({ ...templateDraft, gradeScopes: selected ? templateDraft.gradeScopes.filter(item => item !== grade) : [...templateDraft.gradeScopes, grade] })} className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control-compact)] px-3 text-[length:var(--tm-font-size-meta)] font-semibold ${selected ? 'bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]'}`}>
                           {grade}
                         </button>
                       );
@@ -786,9 +786,10 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                 </div>
               </section>
 
-              <section className="mt-6">
+              <section className="mt-[var(--tm-layout-card-gap)]">
                 <h2 className="mb-3 px-1 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">档案内容</h2>
                 <FormBuilder
+                  shape="subtle"
                   layoutMode={templateDraft.layoutMode}
                   sections={templateDraft.sections}
                   fields={builderFields}
@@ -845,6 +846,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
         <MobileBottomSheet open={showOutlineSheet} title="大纲" onClose={() => setShowOutlineSheet(false)}>
           <div style={appearanceStyle}>
             <FormOutlineSorter
+              shape="subtle"
               layoutMode={templateDraft.layoutMode}
               sections={templateDraft.sections}
               fields={builderFields}
@@ -920,12 +922,12 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
             </div>
 
             {activeTemplateAction.status === 'published' ? (
-              <button type="button" onClick={stopActiveTemplate} className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"><PowerOff className="h-5 w-5 text-[var(--tm-text-secondary)]" />停用档案</button>
+              <button type="button" onClick={stopActiveTemplate} className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)] transition active:scale-[0.98] active:bg-[var(--tm-bg-surface-soft)]"><PowerOff className="h-5 w-5 text-[var(--tm-text-secondary)]" />停用档案</button>
             ) : (
               <button type="button" onClick={enableActiveTemplate} className={`${primaryButton} mt-3 w-full`}><Power className="h-5 w-5" />{activeTemplateAction.status === 'disabled' ? '重新启用' : '启用档案'}</button>
             )}
 
-            <section className="mt-5">
+            <section className="mt-[var(--tm-layout-card-gap)]">
               <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">问卷设计</h4>
               <div className="mt-2 grid grid-cols-2 gap-[var(--tm-space-2)]">
                 <button type="button" onClick={previewActiveTemplate} className={`${archiveActionTile} text-[var(--tm-text-primary)]`}><Eye className="h-5 w-5 shrink-0 text-[var(--tm-text-tertiary)]" />预览</button>
@@ -933,7 +935,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
               </div>
             </section>
 
-            <section className="mt-5">
+            <section className="mt-[var(--tm-layout-card-gap)]">
               <h4 className="px-0.5 text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">更多操作</h4>
               <div className="mt-2 grid grid-cols-2 gap-[var(--tm-space-2)]">
                 <button type="button" onClick={duplicateActiveTemplate} className={`${archiveActionTile} text-[var(--tm-text-primary)]`}><Copy className="h-5 w-5 shrink-0 text-[var(--tm-text-tertiary)]" />复制档案</button>
@@ -944,8 +946,8 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
         )}
       </MobileBottomSheet>
       <MobileBottomSheet open={showCreateSheet} title="新建档案" onClose={() => setShowCreateSheet(false)}>
-        <button type="button" onClick={createBlankTemplate} className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] px-4 text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.985] active:bg-[var(--tm-bg-surface-soft)]">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
+        <button type="button" onClick={createBlankTemplate} className="flex min-h-[72px] w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.985] active:bg-[var(--tm-bg-surface-soft)]">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]">
             <Plus className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">完全新建</span>
@@ -954,7 +956,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
         <div className="-mx-[var(--tm-space-4)] mt-5 bg-[var(--tm-bg-surface)] pb-4 pt-4">
           <h3 className="mb-3 px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">从模版新建</h3>
           <div className="snap-x snap-mandatory overflow-x-auto px-[var(--tm-space-4)] pb-2 pt-1 no-scrollbar" aria-label="档案模板">
-            <div className="flex w-max gap-3 pr-8">
+            <div className="flex w-max gap-[var(--tm-layout-card-gap)] pr-8">
               {recommendedTemplates.map(template => {
                 const thumbnail = getArchiveHeaderImage(template.appearance);
                 return (
@@ -962,7 +964,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                     key={template.id}
                     type="button"
                     onClick={() => previewRecommendedTemplate(template.id)}
-                    className="w-[220px] snap-start overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.985]"
+                    className="w-[220px] snap-start overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card-on-white)] transition active:scale-[0.985]"
                     aria-label={`使用模板：${template.name}`}
                   >
                     {thumbnail && <img src={thumbnail} alt="" className="aspect-[16/7] w-full object-cover" />}
@@ -979,7 +981,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
       </MobileBottomSheet>
       <MobileBottomSheet open={showDraftRecoverySheet} title="继续编辑" onClose={() => setShowDraftRecoverySheet(false)}>
         <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">发现一份未完成的档案</h3>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
           <button type="button" onClick={restartDesign} className={secondaryButton}>重新创建</button>
           <button type="button" onClick={continueDesignDraft} className={primaryButton}>继续编辑</button>
         </div>
@@ -989,7 +991,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
           <div className="pb-2">
             <section>
               <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">主题风格</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
                 {archiveThemeOptions.map(theme => {
                   const selected = templateDraft.appearance.themeId === theme.id;
                   return (
@@ -998,9 +1000,9 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                       type="button"
                       aria-pressed={selected}
                       onClick={() => setTemplateDraft({ ...templateDraft, appearance: { ...templateDraft.appearance, themeId: theme.id } })}
-                      className={`flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-control)] px-3 text-left transition ${selected ? 'bg-[var(--tm-brand-primary-soft)] ring-2 ring-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                      className={`flex min-h-[56px] items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-3 text-left transition ${selected ? 'bg-[var(--tm-brand-primary-soft)] ring-2 ring-[var(--tm-brand-primary)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
-                      <span className="h-8 w-8 shrink-0 rounded-[var(--tm-radius-inner)] border border-[var(--tm-border-subtle)]" style={{ backgroundColor: theme.swatch }} />
+                      <span className="h-8 w-8 shrink-0 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-subtle)]" style={{ backgroundColor: theme.swatch }} />
                       <span className="min-w-0 flex-1 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{theme.label}</span>
                       {selected && <Check className="h-4 w-4 shrink-0 text-[var(--tm-brand-primary)]" />}
                     </button>
@@ -1008,9 +1010,9 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                 })}
               </div>
             </section>
-            <section className="mt-6">
+            <section className="mt-[var(--tm-layout-card-gap)]">
               <h3 className="text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-primary)]">档案头图</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="mt-3 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
                 {archiveHeaderImageOptions.map(option => {
                   const selected = getArchiveHeaderImageId(templateDraft.appearance) === option.id;
                   return (
@@ -1020,7 +1022,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                       aria-label={`选择档案头图：${option.label}`}
                       aria-pressed={selected}
                       onClick={() => setTemplateDraft({ ...templateDraft, appearance: { ...templateDraft.appearance, headerImageId: option.id } })}
-                      className={`relative overflow-hidden rounded-[var(--tm-radius-card)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                      className={`relative overflow-hidden rounded-[var(--tm-radius-card-compact)] text-left transition ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : '[box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
                       {option.image
                         ? <img src={option.image} alt="" className="aspect-[16/7] w-full object-cover" />
@@ -1052,7 +1054,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
             </section>
             <section className="py-4">
               <h3 className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">档案更新规则</h3>
-              <div className="mt-3 grid grid-cols-2 gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1" role="radiogroup" aria-label="档案更新规则">
+              <div className="mt-3 grid grid-cols-2 gap-1 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-1" role="radiogroup" aria-label="档案更新规则">
                 {([['once', '仅填写一次'], ['continuous', '可重复填写']] as const).map(([value, label]) => {
                   const selected = templateDraft.generationMode === value;
                   return (
@@ -1062,7 +1064,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
                       role="radio"
                       aria-checked={selected}
                       onClick={() => setTemplateDraft({ ...templateDraft, generationMode: value })}
-                      className={`min-h-11 rounded-[calc(var(--tm-radius-control)-4px)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
+                      className={`min-h-11 rounded-[var(--tm-form-segment-active-radius)] px-2 text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
                     >
                       {label}
                     </button>
@@ -1078,9 +1080,9 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
         <p className="mt-2 text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">
           删除后，该档案将从档案设计中移除。学生已有档案和更新记录不受影响。此操作无法撤销。
         </p>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
           <button type="button" onClick={() => setShowDeleteConfirm(false)} className={secondaryButton}>取消</button>
-          <button type="button" onClick={deleteCurrentTemplate} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98]">确认删除</button>
+          <button type="button" onClick={deleteCurrentTemplate} className="min-h-11 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-status-negative)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] transition active:scale-[0.98]">确认删除</button>
         </div>
       </BottomSheet>
       <BottomSheet open={showEnableConfirm} label={templateDraft?.status === 'disabled' ? '重新启用档案' : '启用档案'} onDismiss={() => setShowEnableConfirm(false)}>
@@ -1088,7 +1090,7 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
         <p className="mt-2 text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">
           启用后，老师可以在问卷采集中按此档案发起采集。
         </p>
-        <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-[var(--tm-layout-card-gap)]">
           <button type="button" onClick={() => setShowEnableConfirm(false)} className={secondaryButton}>取消</button>
           <button
             type="button"

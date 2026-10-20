@@ -12,7 +12,7 @@ interface EvaluationRecordEditViewProps {
   onSave: (update: StudentEvaluationRecordUpdate) => void;
 }
 
-const fieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
+const fieldClass = 'mt-2 h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none transition placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
 const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
   record,
@@ -93,7 +93,7 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
               {['一级指标', '二级指标', '三级指标'].map((label, index) => (
                 <label key={label} className="block">
                   <span className="sr-only">{label}</span>
-                  <input value={indicatorPath[index]} onChange={event => updateIndicator(index, event.target.value)} placeholder={label} className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+                  <input value={indicatorPath[index]} onChange={event => updateIndicator(index, event.target.value)} placeholder={label} className="h-12 w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 text-[14px] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
                 </label>
               ))}
             </div>
@@ -101,14 +101,14 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
 
           <section>
             <h2 className="text-[13px] font-semibold text-[var(--tm-text-primary)]">评价分值</h2>
-            <div className="mt-2 flex h-12 items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-1 [box-shadow:var(--tm-shadow-control)]">
-              <button type="button" onClick={() => updateScore(scoreChange - 1)} disabled={scoreChange <= -5} aria-label="减少评价分值" className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)]">
+            <div className="mt-2 flex h-12 items-center justify-between rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] px-1 [box-shadow:var(--tm-shadow-control)]">
+              <button type="button" onClick={() => updateScore(scoreChange - 1)} disabled={scoreChange <= -5} aria-label="减少评价分值" className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)]">
                 <Minus className="h-4 w-4" />
               </button>
               <span className={`text-[22px] font-bold tabular-nums ${scoreChange < 0 ? 'text-[var(--tm-record-negative-text)]' : 'text-[var(--tm-record-positive-text)]'}`}>
                 {scoreChange > 0 ? `+${scoreChange}` : scoreChange}
               </span>
-              <button type="button" onClick={() => updateScore(scoreChange + 1)} disabled={scoreChange >= 5} aria-label="增加评价分值" className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)]">
+              <button type="button" onClick={() => updateScore(scoreChange + 1)} disabled={scoreChange >= 5} aria-label="增加评价分值" className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)] disabled:text-[var(--tm-text-disabled)]">
                 <Plus className="h-4 w-4" />
               </button>
             </div>
@@ -117,7 +117,7 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
           <section>
             <label className="text-[13px] font-semibold text-[var(--tm-text-primary)]">
               评价内容
-              <textarea value={aiComment} onChange={event => setAiComment(event.target.value)} rows={5} className="mt-2 min-h-[132px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 py-3 text-[14px] font-medium leading-6 text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+              <textarea value={aiComment} onChange={event => setAiComment(event.target.value)} rows={5} className="mt-2 min-h-[132px] w-full resize-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 py-3 text-[14px] font-medium leading-6 text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
             </label>
           </section>
 
@@ -125,13 +125,13 @@ const EvaluationRecordEditView: React.FC<EvaluationRecordEditViewProps> = ({
             <section>
               <label className="text-[13px] font-semibold text-[var(--tm-text-primary)]">
                 修改原因
-                <textarea value={reason} onChange={event => setReason(event.target.value)} rows={3} placeholder="请简要说明修改原因" className="mt-2 min-h-[88px] w-full resize-none rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 py-3 text-[14px] font-medium leading-5 text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+                <textarea value={reason} onChange={event => setReason(event.target.value)} rows={3} placeholder="请简要说明修改原因" className="mt-2 min-h-[88px] w-full resize-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3.5 py-3 text-[14px] font-medium leading-5 text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
               </label>
             </section>
           )}
 
           {validationAttempted && !isValid && (
-            <p role="alert" className="rounded-[var(--tm-radius-control)] bg-[var(--tm-record-negative-bg)] px-3 py-2.5 text-[12px] font-medium text-[var(--tm-record-negative-text)]">
+            <p role="alert" className="rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-record-negative-bg)] px-3 py-2.5 text-[12px] font-medium text-[var(--tm-record-negative-text)]">
               {isEditingOthersRecord && !reason.trim()
                 ? '修改其他老师的评价时，请填写修改原因。'
                 : '请完整填写评价信息，分值为 -5 至 +5 且不能为 0。'}

@@ -213,8 +213,8 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                     </div>
                 </section>
 
-                <div className="flex-1 space-y-4 p-4">
-                    <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
+                <div className="flex-1 space-y-[var(--tm-space-3)] p-4">
+                    <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
                         <div className="flex min-h-11 items-center justify-between gap-3">
                             <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">班级排行榜</h3>
                             <button
@@ -223,7 +223,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                                 aria-label="班级排行榜年级筛选"
                                 aria-haspopup="dialog"
                                 aria-expanded={isGradeSheetOpen}
-                                className="-mr-2 flex h-[var(--tm-size-touch)] min-w-0 items-center gap-1 rounded-[var(--tm-radius-control)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                                className="-mr-2 flex h-[var(--tm-size-touch)] min-w-0 items-center gap-1 rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                             >
                                 <span className="max-w-[112px] truncate">{activeGrade}</span>
                                 <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
@@ -246,7 +246,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                         />
                     </section>
 
-                    <section className="rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
+                    <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]">
                         <div className="mb-[var(--tm-report-card-content-gap)] flex min-h-11 items-center justify-between">
                             <h3 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">评价记录</h3>
                             <button
@@ -281,7 +281,7 @@ const ClassLeaderboardView: React.FC<ClassLeaderboardViewProps> = ({ settlementC
                     </section>
                 </div>
 
-                <MobileDatePickerSheet
+                <MobileDatePickerSheet shape="subtle"
                     open={isPeriodSheetOpen}
                     mode={settlementCycle}
                     title={periodPickerTitle}

@@ -33,7 +33,7 @@ const ReportDateRangeTabs = <TValue extends string,>({
           type="button"
           aria-pressed={selected}
           onClick={() => onChange(item.value)}
-          className={`relative flex h-full min-w-0 items-center justify-center whitespace-nowrap px-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] transition-[color,scale] [transition-duration:var(--tm-duration-standard)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transform-none ${selected
+          className={`relative flex h-full min-w-0 items-center justify-center whitespace-nowrap px-[var(--tm-space-1)] text-[length:var(--tm-font-size-body)] transition-colors [transition-duration:var(--tm-duration-standard)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${selected
             ? 'font-semibold text-[var(--tm-brand-primary)]'
             : 'font-medium text-[var(--tm-text-secondary)] active:text-[var(--tm-text-primary)]'}`}
         >

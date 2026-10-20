@@ -55,10 +55,10 @@ const HomeworkStatusButtonGroup: React.FC<HomeworkStatusButtonGroupProps> = ({
           type="button"
           aria-pressed={selected}
           onClick={() => onChange(status)}
-          className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center p-0 text-[length:var(--tm-font-size-badge)] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${size === 'compact' ? '' : `rounded-[var(--tm-radius-control)] transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${tone}`}`}
+          className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center p-0 text-[length:var(--tm-font-size-badge)] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${size === 'compact' ? '' : `rounded-[var(--tm-radius-control-compact)] transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${tone}`}`}
         >
           {size === 'compact' ? (
-            <span className={`flex h-9 w-full items-center justify-center rounded-[8px] px-0.5 transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${tone}`}>
+            <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] px-0.5 transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${tone}`}>
               {HOMEWORK_STATUS_META[status].label}
             </span>
           ) : HOMEWORK_STATUS_META[status].label}

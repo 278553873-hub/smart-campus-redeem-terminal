@@ -65,7 +65,7 @@ requireText(viewSource, 'h-[var(--tm-duty-unassigned-button-visible-height)]', '
 requireText(viewSource, 'rounded-[var(--tm-duty-unassigned-button-radius)]', '暂不安排老师的可见按钮应使用紧凑圆角。');
 requireText(tokenSource, "'--tm-duty-unassigned-button-bg': 'var(--tm-bg-surface)'", '暂不安排老师默认态应使用白色实体表面。');
 requireText(tokenSource, "'--tm-duty-unassigned-button-visible-height': '28px'", '暂不安排老师的可见按钮高度应为28像素。');
-requireText(tokenSource, "'--tm-duty-unassigned-button-radius': '8px'", '暂不安排老师的可见按钮圆角应为8像素。');
+requireText(tokenSource, "'--tm-duty-unassigned-button-radius': 'var(--tm-radius-control-compact)'", '暂不安排老师的可见按钮圆角应为8像素。');
 requireText(tokenSource, "'--tm-duty-unassigned-button-selected-bg': 'var(--tm-brand-primary-soft)'", '暂不安排老师已选态应使用主题色浅表面，不应使用灰色底色。');
 requireText(tokenSource, "'--tm-duty-unassigned-button-border': 'var(--tm-brand-primary)'", '暂不安排老师按钮边框应使用主题色。');
 requireText(tokenSource, "'--tm-duty-unassigned-button-text': 'var(--tm-brand-primary)'", '暂不安排老师按钮文字应使用主题色。');
@@ -74,7 +74,7 @@ assert.ok(!viewSource.includes('scheduledCount') && !viewSource.includes('7/27�
 assert.ok(!viewSource.includes('当前安排') && !viewSource.includes('RotateCcw'), '抽屉不应保留旧的当前安排与清空行。');
 requireText(viewSource, '--tm-duty-current-button-bg', '本周入口应使用明确的中性按钮表面。');
 requireText(viewSource, 'h-7', '本周按钮的可见描边应保持紧凑高度。');
-requireText(viewSource, 'rounded-[8px]', '本周按钮应使用 8 像素圆角。');
+requireText(viewSource, 'rounded-[var(--tm-radius-control-compact)]', '本周按钮应使用 8 像素圆角。');
 requireText(viewSource, 'border-[var(--tm-duty-current-button-border)]', '本周按钮应使用主题色边框。');
 requireText(viewSource, 'text-[var(--tm-duty-current-button-text)]', '本周按钮应使用主题色文字。');
 requireText(tokenSource, "'--tm-duty-current-button-bg': 'var(--tm-bg-surface)'", '本周按钮应使用白色表面承载主题色描边。');

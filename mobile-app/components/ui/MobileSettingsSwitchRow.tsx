@@ -5,6 +5,7 @@ interface MobileSettingsSwitchRowProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   surface?: 'soft' | 'plain';
+  shape?: 'default' | 'subtle';
   className?: string;
 }
 
@@ -13,11 +14,15 @@ const MobileSettingsSwitchRow: React.FC<MobileSettingsSwitchRowProps> = ({
   checked,
   onChange,
   surface = 'soft',
+  shape = 'default',
   className = '',
 }) => {
+  const radiusClass = shape === 'subtle'
+    ? surface === 'plain' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-card-compact)]'
+    : surface === 'plain' ? 'rounded-[var(--tm-radius-control)]' : 'rounded-[var(--tm-radius-inner)]';
   const surfaceClass = surface === 'plain'
-    ? 'rounded-[var(--tm-radius-control)] bg-transparent px-[var(--tm-space-1)]'
-    : 'rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)]';
+    ? 'bg-transparent px-[var(--tm-space-1)]'
+    : 'bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)]';
 
   return (
     <button
@@ -25,7 +30,7 @@ const MobileSettingsSwitchRow: React.FC<MobileSettingsSwitchRowProps> = ({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`flex min-h-[52px] w-full items-center justify-between gap-[var(--tm-space-4)] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-border-control)] ${surfaceClass} ${className}`}
+      className={`flex min-h-[52px] w-full items-center justify-between gap-[var(--tm-space-4)] text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-border-control)] ${radiusClass} ${surfaceClass} ${className}`}
     >
       <span className="text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]">{label}</span>
       <span

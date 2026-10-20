@@ -16,12 +16,18 @@ import { teacherIndicatorCanvasMetrics } from '../../styles/teacherMobileTokens'
 import type {
   TeacherIndicatorCatalog,
   TeacherIndicatorLeaf,
-  TeacherIndicatorLevelTwo,
 } from '../../data/teacherIndicatorCatalog';
 
+// 保留现有三级目录，同时允许一级分支直接承载末级指标，避免为两级体系补造层级。
+export interface IndicatorMindMapCatalog {
+  scope: string;
+  title: string;
+  levels: Array<TeacherIndicatorCatalog['levels'][number] & { leaves?: TeacherIndicatorLeaf[] }>;
+}
+
 interface TeacherIndicatorMindMapProps {
-  catalog: TeacherIndicatorCatalog;
-  onSelectLeaf: (leaf: TeacherIndicatorLeaf, path: [string, string, string]) => void;
+  catalog: IndicatorMindMapCatalog;
+  onSelectLeaf: (leaf: TeacherIndicatorLeaf, path: string[]) => void;
 }
 
 type FocusTarget =
@@ -37,11 +43,11 @@ interface IndicatorNodeData extends Record<string, unknown> {
   branchColor?: string;
   expanded?: boolean;
   leaves?: TeacherIndicatorLeaf[];
-  path?: [string, string];
+  path?: string[];
   onReturnToOverview: () => void;
   onToggleBranch?: (branchId: string) => void;
   onToggleGroup?: (branchId: string, groupId: string) => void;
-  onSelectLeaf: (leaf: TeacherIndicatorLeaf, path: [string, string, string]) => void;
+  onSelectLeaf: TeacherIndicatorMindMapProps['onSelectLeaf'];
 }
 
 type IndicatorCanvasNode = Node<IndicatorNodeData>;
@@ -123,7 +129,7 @@ const LeafGroupNode = ({ data }: NodeProps<IndicatorCanvasNode>) => (
         <button
           key={leaf.id}
           type="button"
-          onClick={() => data.path && data.onSelectLeaf(leaf, [data.path[0], data.path[1], leaf.name])}
+          onClick={() => data.path && data.onSelectLeaf(leaf, [...data.path, leaf.name])}
           className="nodrag nopan flex min-h-[var(--tm-indicator-canvas-leaf-height)] min-w-0 items-center rounded-[var(--tm-indicator-canvas-leaf-radius)] bg-[var(--tm-indicator-canvas-leaf-bg)] px-[var(--tm-space-3)] text-left text-[length:var(--tm-indicator-canvas-leaf-font-size)] font-medium leading-5 text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
         >
           <span className="min-w-0 break-words">{leaf.name}</span>
@@ -140,9 +146,9 @@ const nodeTypes: NodeTypes = {
   leafGroup: LeafGroupNode,
 };
 
-const getLeafGroupHeight = (levelTwo: TeacherIndicatorLevelTwo) => (
-  levelTwo.children.length * teacherIndicatorCanvasMetrics.leafHeight
-  + Math.max(0, levelTwo.children.length - 1) * teacherIndicatorCanvasMetrics.leafGap
+const getLeafGroupHeight = (leaves: TeacherIndicatorLeaf[]) => (
+  leaves.length * teacherIndicatorCanvasMetrics.leafHeight
+  + Math.max(0, leaves.length - 1) * teacherIndicatorCanvasMetrics.leafGap
 );
 
 const layoutNodes = (nodes: IndicatorCanvasNode[], edges: Edge[]) => {
@@ -189,7 +195,7 @@ const buildCanvasGraph = ({
   onToggleGroup,
   onSelectLeaf,
 }: {
-  catalog: TeacherIndicatorCatalog;
+  catalog: IndicatorMindMapCatalog;
   expandedLevelOneIds: Set<string>;
   expandedLevelTwoIds: Set<string>;
   onReturnToOverview: () => void;
@@ -247,6 +253,27 @@ const buildCanvasGraph = ({
 
       if (!branchExpanded) return;
 
+      if (levelOne.leaves?.length) {
+        const leafGroupNodeId = `leaf-group:${levelOne.id}`;
+        nodes.push({
+          id: leafGroupNodeId,
+          type: 'leafGroup',
+          position: { x: 0, y: 0 },
+          width: teacherIndicatorCanvasMetrics.leafGroupWidth,
+          height: getLeafGroupHeight(levelOne.leaves),
+          data: {
+            kind: 'leafGroup', label: levelOne.name, branchId: levelOne.id,
+            branchColor, leaves: levelOne.leaves, path: [levelOne.name],
+            onReturnToOverview, onSelectLeaf,
+          },
+        });
+        edges.push({
+          id: `edge:${levelOne.id}:leaves`, type: 'step',
+          source: levelOneNodeId, target: leafGroupNodeId,
+          style: { stroke: branchColor, strokeWidth: 1, opacity: 0.28 },
+        });
+      }
+
       [...levelOne.children].reverse().forEach(levelTwo => {
         const levelTwoNodeId = `level-two:${levelTwo.id}`;
         const groupExpanded = expandedLevelTwoIds.has(levelTwo.id);
@@ -285,7 +312,7 @@ const buildCanvasGraph = ({
           type: 'leafGroup',
           position: { x: 0, y: 0 },
           width: teacherIndicatorCanvasMetrics.leafGroupWidth,
-          height: getLeafGroupHeight(levelTwo),
+          height: getLeafGroupHeight(levelTwo.children),
           data: {
             kind: 'leafGroup',
             label: levelTwo.name,
@@ -484,7 +511,7 @@ const TeacherIndicatorMindMap: React.FC<TeacherIndicatorMindMapProps> = ({ catal
         preventScrolling
         proOptions={{ hideAttribution: true }}
         className="[&_.react-flow__pane]:cursor-grab [&_.react-flow__pane:active]:cursor-grabbing"
-        aria-label={`${catalog.title}三级结构画布`}
+        aria-label={`${catalog.title}结构画布`}
       />
 
       <div className="absolute bottom-[calc(var(--tm-space-3)+env(safe-area-inset-bottom))] left-1/2 z-10 flex -translate-x-1/2 items-center overflow-hidden rounded-[var(--tm-radius-control)] bg-[var(--tm-indicator-canvas-toolbar-bg)] [box-shadow:var(--tm-shadow-control)] backdrop-blur-sm" aria-label="指标画布操作">

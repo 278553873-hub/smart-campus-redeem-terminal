@@ -69,3 +69,14 @@ export const getPeriodForDays = (days: number): ReportPeriodKey => {
   if (days <= 31) return 'month';
   return 'semester';
 };
+
+/** 演示数据按每次评价平均覆盖两名学生折算，与报告概况保持一致。 */
+export const getReportEvaluationCount = (recordCount: number): number => (
+  recordCount <= 0 ? 0 : Math.ceil(recordCount / 2)
+);
+export const formatReportSourceEvaluationCount = (count: number): string => (
+  count > 999 ? '999+' : String(Math.max(0, Math.round(count)))
+);
+export const formatReportSourceEvaluationCountAria = (count: number): string => (
+  count > 999 ? '999次评价以上' : `${Math.max(0, Math.round(count))}次评价`
+);

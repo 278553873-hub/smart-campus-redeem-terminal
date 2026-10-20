@@ -381,7 +381,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
                                         candidateStudentIds,
                                     });
                                 }}
-                                className={`px-8 py-3.5 rounded-2xl font-semibold text-white shadow-md transition-colors flex items-center gap-2
+                                className={`px-8 py-3.5 rounded-[var(--tm-radius-control-compact)] font-semibold text-white shadow-md transition-colors flex items-center gap-2
                                ${inputText.trim() ? 'bg-indigo-600 shadow-indigo-200 ' : 'bg-slate-300'}`}
                             >
                                 发送识别

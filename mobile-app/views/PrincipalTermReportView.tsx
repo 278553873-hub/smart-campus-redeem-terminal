@@ -62,12 +62,14 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
       <main data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto no-scrollbar pb-[calc(32px+env(safe-area-inset-bottom))]">
         {status === 'empty' ? (
           <AssistantReportFeedback
+            shape="subtle"
             status="empty"
             title="本学期暂无可分析数据"
             message="当前学期没有有效评价记录，系统不会调用人工智能生成学校学期报告。"
           />
         ) : status === 'failed' ? (
           <AssistantReportFeedback
+            shape="subtle"
             status="failed"
             title="学期报告生成失败"
             message="本次报告没有生成成功，请检查网络后重试；已冻结的数据快照不会重复计入。"
@@ -101,12 +103,13 @@ const PrincipalTermReportView: React.FC<PrincipalTermReportViewProps> = ({
             {reportResolution.document ? (
               <>
                 <AssistantReportCards
+                  shape="subtle"
                   document={reportResolution.document}
-                  className="px-[var(--tm-report-page-inline)] py-[var(--tm-report-card-gap)]"
+                  className="px-[var(--tm-report-page-inline)] py-[var(--tm-layout-card-gap)]"
                 />
               </>
             ) : (
-              <AssistantReportContractError onRetry={onRetry} />
+              <AssistantReportContractError shape="subtle" onRetry={onRetry} />
             )}
           </>
         )}

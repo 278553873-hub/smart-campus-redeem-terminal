@@ -9,7 +9,7 @@ import MobilePeriodPicker, { type MobilePeriodOption, type MobilePeriodType, per
 import { dateRangePresets, dateAllowed, localToday, rangeError, type MobileDateRange } from './mobileDatePickerModel';
 
 export type { MobileDateRange, MobilePeriodOption };
-interface CommonProps { open: boolean; title?: string; onClose: () => void; confirmLabel?: string }
+interface CommonProps { shape?: 'default' | 'subtle'; open: boolean; title?: string; onClose: () => void; confirmLabel?: string }
 interface DateLimits { min?: string; max?: string }
 export type MobileDatePickerSheetProps = CommonProps & (
   | (DateLimits & { mode: 'single'; showTodayButton?: boolean; value: string; onConfirm: (date: string) => void })
@@ -19,7 +19,7 @@ export type MobileDatePickerSheetProps = CommonProps & (
 
 /** 日期与月份滚轮先暂存再确认；周期网格点击即生效。 */
 export default function MobileDatePickerSheet(props: MobileDatePickerSheetProps) {
-  const { open, mode, onClose } = props;
+  const { open, mode, onClose, shape = 'default' } = props;
   const [draft, setDraft] = useState<MobileDateRange>({ start: '', end: '' });
   const [session, setSession] = useState(0);
   const [settling, setSettling] = useState(false);
@@ -66,7 +66,7 @@ export default function MobileDatePickerSheet(props: MobileDatePickerSheetProps)
     onClose();
   };
   const currentPeriod = 'periods' in props ? props.periods.find(period => period.id === props.currentPeriodId && period.type === mode) : undefined;
-  const control = 'min-h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control)] px-3 text-[length:var(--tm-font-size-body)] leading-5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]';
+  const control = `min-h-[var(--tm-size-touch)] ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} px-3 text-[length:var(--tm-font-size-body)] leading-5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]`;
   const confirmAppearance = error
     ? 'bg-[var(--tm-input-disabled-bg)] text-[var(--tm-input-disabled-text)]'
     : `bg-[var(--tm-brand-primary)] text-[var(--tm-text-inverse)] ${settling ? 'opacity-[0.85]' : 'opacity-100'}`;
@@ -76,7 +76,7 @@ export default function MobileDatePickerSheet(props: MobileDatePickerSheetProps)
     </button>
   );
   const footer = isPeriod ? undefined : mode === 'range' || isMonthWheel ? (
-    <div className="tm-date-range-actions grid grid-cols-2 gap-[var(--tm-space-4)]">
+    <div className={`tm-date-range-actions grid grid-cols-2 ${shape === 'subtle' ? 'gap-[var(--tm-layout-card-gap)]' : 'gap-[var(--tm-space-4)]'}`}>
       <button type="button" onClick={onClose} className={`${mobileSheetActionClass} flex items-center justify-center bg-[var(--tm-bg-surface-soft)] font-medium text-[var(--tm-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]`}>取消</button>
       {confirmButton}
     </div>
@@ -92,7 +92,7 @@ export default function MobileDatePickerSheet(props: MobileDatePickerSheetProps)
             <MobileWheelPicker key={session} columns={monthColumns} onSettlingChange={setSettling} />
           </div>
         ) : 'periods' in props ? (
-          <div className="px-[var(--tm-sheet-inline)]"><MobilePeriodPicker key={`${mode}-${open}`} periods={props.periods.filter(period => period.type === mode)} selectedPeriodId={props.value} onSelect={id => { props.onConfirm(id); onClose(); }} /></div>
+          <div className="px-[var(--tm-sheet-inline)]"><MobilePeriodPicker shape={shape} key={`${mode}-${open}`} periods={props.periods.filter(period => period.type === mode)} selectedPeriodId={props.value} onSelect={id => { props.onConfirm(id); onClose(); }} /></div>
         ) : mode === 'range' ? (
           <MobileDateRangePicker key={session} value={draft} onChange={setDraft} settling={settling} onSettlingChange={setSettling} presets={props.showPresets === false ? [] : props.presets ?? dateRangePresets(localToday(), props.currentTerm, min, max)} min={min} max={max} error={error} validate={props.validate} />
         ) : (
@@ -103,7 +103,7 @@ export default function MobileDatePickerSheet(props: MobileDatePickerSheetProps)
                 {mode === 'single' && props.showTodayButton !== false && <button type="button" disabled={!dateAllowed(localToday(), min, max)} onClick={() => { const today = localToday(); setDraft({ start: today, end: today }); setSession(s => s + 1); }} className={`${control} text-[var(--tm-brand-primary)] disabled:text-[var(--tm-text-disabled)]`}>今天</button>}
               </div>
             </div>
-            <MobileDateCalendar key={session} value={draft} min={min} max={max} onSelect={date => setDraft({ start: date, end: date })} />
+            <MobileDateCalendar shape={shape} key={session} value={draft} min={min} max={max} onSelect={date => setDraft({ start: date, end: date })} />
           </>
         )}
       </div>

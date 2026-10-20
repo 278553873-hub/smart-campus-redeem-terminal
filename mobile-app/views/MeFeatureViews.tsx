@@ -1,3 +1,5 @@
+import GrowthCoinBrandFields, { useCoinBrandingDraft, withCoinBrandingSaveNotice } from '../../components/GrowthCoinBrandFields';
+import GrowthCoinRuleDescription from '../../components/GrowthCoinRuleDescription';
 import React from 'react';
 import {
     BookOpen,
@@ -17,6 +19,7 @@ import {
 import { ASSETS } from '../assets/images';
 import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import MobileCardTabBar from '../components/ui/MobileCardTabBar';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import type { CoinIssuanceConfig } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
@@ -25,7 +28,10 @@ import {
     type TeacherGradientPreviewConfig,
     type TeacherGradientSchemeId,
 } from '../styles/teacherGradientPreview';
-import { getClassBudgetTotal } from '../domain/campusCoinIssuance';
+import { getClassBudgetTotal, roundCoinAmount } from '../domain/campusCoinIssuance';
+import { ScoreCoinAmountFields, ScoreCoinLimitFields } from '../components/ScoreCoinRuleFields';
+import { getEditableGrowthCoinConfig, saveGrowthCoinRule, type GrowthCoinSaveNotice } from '../../shared/growthCoinRuleSchedule';
+import { getGrowthCoinMode, getScoreCoinRule, GROWTH_COIN_ENABLE_HELP, GROWTH_COIN_MODES } from '../../shared/growthCoinRules';
 
 export interface SchoolSubjectItem {
     id: string;
@@ -64,7 +70,7 @@ interface DepartmentManagementViewProps {
 interface CoinIssuanceViewProps {
     config: CoinIssuanceConfig;
     onChange: (config: CoinIssuanceConfig) => void;
-    onSave: () => void;
+    onSave?: () => void;
     classStudentCount?: number;
 }
 
@@ -77,21 +83,23 @@ interface SuggestionFeedbackViewProps {
     onSubmit: () => void;
 }
 
-export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string }> = ({ children, footer, contentClassName = '' }) => (
+export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string; spacing?: 'default' | 'compact' }> = ({ children, footer, contentClassName = '', spacing = 'default' }) => (
     <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
-        <div className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>{children}</div>
+        <div className={`min-h-0 flex-1 ${spacing === 'compact' ? 'space-y-[var(--tm-layout-card-gap)]' : 'space-y-4'} overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>{children}</div>
         {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
     </div>
 );
 
-export const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; allowOverflow?: boolean }> = ({ children, className = '', allowOverflow = false }) => (
-    <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} rounded-[24px] bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm ${className}`}>
+export const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; allowOverflow?: boolean; variant?: 'default' | 'form' }> = ({ children, className = '', allowOverflow = false, variant = 'default' }) => (
+    <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} ${variant === 'form' ? 'rounded-[var(--tm-form-card-radius)]' : 'rounded-[24px]'} bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm ${className}`}>
         {children}
     </section>
 );
 
-export const featurePrimaryButtonClass = 'flex h-12 w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]';
-export const featureListRowClass = 'flex min-h-[60px] items-center gap-1 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 [box-shadow:var(--tm-shadow-control)]';
+const featurePrimaryButtonBaseClass = 'flex h-12 w-full items-center justify-center gap-2 bg-[var(--tm-brand-primary)] text-[14px] font-bold text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]';
+export const featurePrimaryButtonClass = `${featurePrimaryButtonBaseClass} rounded-[20px]`;
+export const featureFormPrimaryButtonClass = `${featurePrimaryButtonBaseClass} rounded-[var(--tm-form-control-radius)]`;
+export const featureListRowClass = 'flex min-h-[60px] items-center gap-1 rounded-[var(--tm-form-card-radius)] bg-[var(--tm-bg-surface)] px-3 [box-shadow:var(--tm-shadow-control)]';
 export const featureEditButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)]';
 export const featureDeleteButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-status-negative)]';
 
@@ -164,7 +172,7 @@ const TeacherStyleSheet: React.FC<TeacherStyleSheetProps> = ({ open, value, onCl
                             aria-checked={selected}
                             aria-label={`${option.label}${option.exclusive ? '，专属' : ''}`}
                             onClick={() => onChange({ schemeId: option.schemeId, styleId: 'diffuse' })}
-                            className={`w-[148px] shrink-0 snap-start overflow-hidden rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card)] transition-[box-shadow] motion-reduce:transition-none ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : 'ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}
+                            className={`w-[148px] shrink-0 snap-start overflow-hidden rounded-[var(--tm-form-card-radius)] bg-[var(--tm-bg-surface)] text-left [box-shadow:var(--tm-shadow-card)] transition-[box-shadow] motion-reduce:transition-none ${selected ? 'ring-2 ring-[var(--tm-brand-primary)]' : 'ring-1 ring-inset ring-[var(--tm-border-subtle)]'}`}
                         >
                             <div className="relative aspect-[9/16] w-full">
                                 <div
@@ -204,7 +212,7 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, gradie
 
     return (
         <>
-            <FeaturePageBody>
+            <FeaturePageBody spacing="compact">
                 <section className="space-y-2">
                     <h3 className="px-1 text-[14px] font-bold text-[var(--tm-text-primary)]">账号安全</h3>
                     <StaticRow icon={Shield} title="登录账号" value="139****0121" />
@@ -227,7 +235,7 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, gradie
                     <ActionRow icon={BookOpen} title="用户协议" />
                 </section>
 
-                <button type="button" onClick={onLogout} className="flex min-h-[60px] w-full items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface)] px-3 text-[14px] font-semibold text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-control)]">
+                <button type="button" onClick={onLogout} className="flex min-h-[60px] w-full items-center justify-center rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface)] px-3 text-[14px] font-semibold text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-control)]">
                     退出登录
                 </button>
             </FeaturePageBody>
@@ -244,9 +252,10 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, gradie
 
 export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ subjects, draggingSubjectId, onAdd, onEdit, onDelete, onDragStart, onDragOver, onDragEnd }) => (
     <FeaturePageBody
+        spacing="compact"
         contentClassName={subjects.length === 0 ? 'flex min-h-0 flex-col' : ''}
         footer={(
-            <button type="button" onClick={onAdd} className={featurePrimaryButtonClass}>
+            <button type="button" onClick={onAdd} className={featureFormPrimaryButtonClass}>
                 <Plus className="h-4 w-4" />
                 新增科目
             </button>
@@ -292,9 +301,10 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
 
 export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> = ({ departments, onAdd, onEdit, onDelete }) => (
     <FeaturePageBody
+        spacing="compact"
         contentClassName={departments.length === 0 ? 'flex min-h-0 flex-col' : ''}
         footer={(
-            <button type="button" onClick={onAdd} className={featurePrimaryButtonClass}>
+            <button type="button" onClick={onAdd} className={featureFormPrimaryButtonClass}>
                 <Plus className="h-4 w-4" />
                 新增部门
             </button>
@@ -325,21 +335,42 @@ export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> =
     </FeaturePageBody>
 );
 
-export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onChange, onSave, classStudentCount }) => {
+export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: savedConfig, onChange, onSave, classStudentCount }) => {
+    const [activeTab, setActiveTab] = React.useState<'rules' | 'branding'>('rules');
+    const tabsId = React.useId();
+    const brandingEditor = useCoinBrandingDraft();
+    const [config, setConfig] = React.useState(() => getEditableGrowthCoinConfig(savedConfig));
+    const [saveNotice, setSaveNotice] = React.useState<GrowthCoinSaveNotice | null>(null);
+    React.useEffect(() => {
+        const editable = getEditableGrowthCoinConfig(savedConfig);
+        setConfig(editable);
+        setBudgetAmountDraft(String(editable.budgetAmount));
+    }, [savedConfig]);
+    const pendingChange = savedConfig.pendingChange && Date.parse(savedConfig.pendingChange.effectiveAt) > Date.now() ? savedConfig.pendingChange : undefined;
+    const handleSave = () => {
+        const brandingChanged = config.enabled ? brandingEditor.commit() : false;
+        if (brandingChanged === null) { setActiveTab('branding'); return; }
+        const result = saveGrowthCoinRule(savedConfig, config);
+        onChange(result.config);
+        setSaveNotice(withCoinBrandingSaveNotice(result.notice, brandingChanged));
+        onSave?.();
+    };
+    const mode = getGrowthCoinMode(config);
+    const scoreRule = getScoreCoinRule(config);
     const [showIssuanceHelp, setShowIssuanceHelp] = React.useState(false);
     const [budgetAmountDraft, setBudgetAmountDraft] = React.useState(String(config.budgetAmount));
     const issuanceHelpId = React.useId();
     const rankingRatio = 100 - config.sunshineRatio;
     const isPerStudentBudget = config.budgetMode === 'per_student';
-    const update = (patch: Partial<CoinIssuanceConfig>) => onChange({ ...config, ...patch });
+    const update = (patch: Partial<CoinIssuanceConfig>) => setConfig(current => ({ ...current, ...patch }));
     const classBudgetTotal = getClassBudgetTotal({
         budgetMode: config.budgetMode,
         budgetAmount: config.budgetAmount,
         // 配置页没有绑定单一班级时，用 50 人作为试算示例；进入具体班级上下文后使用实际人数。
         classStudentCount: classStudentCount ?? 50,
     });
-    const sunshineAmount = Math.round(classBudgetTotal * config.sunshineRatio / 100);
-    const rankingAmount = classBudgetTotal - sunshineAmount;
+    const sunshineAmount = roundCoinAmount(classBudgetTotal * config.sunshineRatio / 100);
+    const rankingAmount = roundCoinAmount(classBudgetTotal - sunshineAmount);
     const budgetLabel = isPerStudentBudget ? '每人预算' : '每班预算';
     const sampleClassStudentCount = 50;
     const studentBudgetPreview = config.budgetAmount * sampleClassStudentCount;
@@ -365,20 +396,21 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
 
     return (
         <FeaturePageBody
+            spacing="compact"
             footer={(
-                <button type="button" onClick={onSave} className={featurePrimaryButtonClass}>
+                <button type="button" onClick={handleSave} disabled={brandingEditor.busy} className={`${featureFormPrimaryButtonClass} disabled:opacity-50`}>
                     保存
                 </button>
             )}
         >
-            <FeaturePanel className="relative z-10 px-4 py-2" allowOverflow>
+            <FeaturePanel variant="form" className="relative z-10 px-4 py-2" allowOverflow>
                 <div className="flex min-h-[60px] items-center justify-between gap-3">
                     <div className="relative flex min-w-0 items-center gap-0">
-                        <span className="truncate text-[14px] font-bold text-[var(--tm-text-primary)]">开启校园币发放</span>
+                        <span className="truncate text-[14px] font-bold text-[var(--tm-text-primary)]">开启成长币发放</span>
                         <button
                             type="button"
                             className="-ml-2 flex h-11 w-11 shrink-0 touch-manipulation select-none items-center justify-center rounded-full text-[var(--tm-text-disabled)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary-soft-strong)]"
-                            aria-label="查看校园币发放说明"
+                            aria-label={'查看成长币发放说明'}
                             aria-describedby={showIssuanceHelp ? issuanceHelpId : undefined}
                             aria-expanded={showIssuanceHelp}
                             onPointerDown={() => setShowIssuanceHelp(true)}
@@ -392,24 +424,70 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                             <CircleHelp className="h-4 w-4" aria-hidden="true" />
                         </button>
                         {showIssuanceHelp && (
-                            <div id={issuanceHelpId} role="tooltip" className="pointer-events-none absolute left-0 top-full z-30 w-[260px] max-w-[calc(100vw-64px)] rounded-2xl bg-[var(--tm-text-primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-white shadow-[0_14px_32px_-20px_var(--tm-shadow-neutral-color)]">
-                                开启后，系统将按设置的周期和预算自动向班级发放校园币。
+                            <div id={issuanceHelpId} role="tooltip" className="pointer-events-none absolute left-0 top-full z-30 w-[260px] max-w-[calc(100vw-64px)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-text-primary)] px-3.5 py-3 text-[12px] font-medium leading-5 text-white shadow-[0_14px_32px_-20px_var(--tm-shadow-neutral-color)]">
+                                {GROWTH_COIN_ENABLE_HELP}
                             </div>
                         )}
                     </div>
-                    <SwitchControl checked={config.enabled} onChange={(enabled) => update({ enabled })} label="开启校园币发放" />
+                    <SwitchControl checked={config.enabled} onChange={(enabled) => { update({ enabled }); if (enabled) setActiveTab('rules'); }} label={'开启成长币发放'} />
                 </div>
             </FeaturePanel>
 
             {config.enabled && (
-                <>
-                    <FeaturePanel className="space-y-4 p-4">
+                <div className="-mx-5 overflow-hidden rounded-[var(--tm-form-card-radius)] bg-[var(--tm-bg-surface-soft)]">
+                    <MobileCardTabBar<'rules' | 'branding'>
+                        value={activeTab}
+                        items={[{ value: 'rules', label: '发放规则' }, { value: 'branding', label: '名称与图标' }]}
+                        onChange={setActiveTab}
+                        ariaLabel="成长币配置"
+                        idPrefix={tabsId}
+                    />
+                    <div className="rounded-b-[var(--tm-form-card-radius)] bg-[var(--tm-bg-surface-soft)] px-5 py-[var(--tm-layout-card-gap)]">
+                    <div role="tabpanel" aria-label="名称与图标" id={`${tabsId}-panel-branding`} aria-labelledby={`${tabsId}-tab-branding`} hidden={activeTab !== 'branding'}>
+                        <FeaturePanel variant="form" className="space-y-4 p-4">
+                            <GrowthCoinBrandFields editor={brandingEditor} />
+                        </FeaturePanel>
+                    </div>
+                    <div role="tabpanel" aria-label="发放规则" id={`${tabsId}-panel-rules`} aria-labelledby={`${tabsId}-tab-rules`} hidden={activeTab !== 'rules'} className="space-y-[var(--tm-layout-card-gap)]">
+                        {pendingChange && (
+                            <p role="status" className="text-[12px] font-medium leading-5 text-[var(--tm-text-secondary)]">
+                                以下包含此前未生效的修改，保存后将立即生效。
+                            </p>
+                        )}
+                    <FeaturePanel variant="form" className="space-y-3 p-4">
+                        <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">发放方式</h2>
+                        <CompactSegmentedControl
+                            value={mode}
+                            items={GROWTH_COIN_MODES}
+                            onChange={mode => update({ mode })}
+                            ariaLabel="成长币发放方式"
+                            semantics="group"
+                            fullWidth
+                            shape="subtle"
+                        />
+                        <p className="text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">
+                            <GrowthCoinRuleDescription mode={mode} />
+                        </p>
+                    </FeaturePanel>
+                    {mode === 'score' ? (<>
+                        <FeaturePanel variant="form" className="space-y-4 p-4">
+                            <ScoreCoinAmountFields rule={scoreRule} onChange={scoreRule => update({ scoreRule })} />
+                        </FeaturePanel>
+                        <FeaturePanel variant="form" className="space-y-4 p-4">
+                            <ScoreCoinLimitFields
+                                rule={scoreRule}
+                                onChange={scoreRule => update({ scoreRule })}
+                                limitSwitch={<SwitchControl checked={scoreRule.limitEnabled} onChange={limitEnabled => update({ scoreRule: { ...scoreRule, limitEnabled } })} label="限制发放数量" />}
+                            />
+                        </FeaturePanel>
+                    </>) : (<>
+                    <FeaturePanel variant="form" className="space-y-4 p-4">
                         <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">发放条件</h2>
                         <div className="space-y-3">
                             <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
                                 <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">发放周期</span>
                                 <div className="w-[172px] max-w-full justify-self-end">
-                                    <select value={config.period} onChange={(event) => update({ period: event.target.value as CoinIssuanceConfig['period'] })} className="h-11 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-center text-[14px] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
+                                    <select value={config.period} onChange={(event) => update({ period: event.target.value as CoinIssuanceConfig['period'] })} className="h-11 w-full rounded-[var(--tm-form-control-radius)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-center text-[14px] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
                                         <option value="weekly">每周一发放</option>
                                         <option value="monthly">每月一号发放</option>
                                     </select>
@@ -427,7 +505,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                                         inputMode="numeric"
                                         value={config.minimumEvaluationCount}
                                         onChange={(event) => update({ minimumEvaluationCount: parsePositiveInteger(event.target.value) })}
-                                        className={`${numberInputClass} h-11 w-11 shrink-0 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-center text-[14px] font-bold tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]`}
+                                        className={`${numberInputClass} h-11 w-11 shrink-0 rounded-[var(--tm-form-control-radius)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-2 text-center text-[14px] font-bold tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]`}
                                         aria-label={`${config.period === 'weekly' ? '本周' : '本月'}评价次数`}
                                     />
                                     <span className="shrink-0 whitespace-nowrap">次</span>
@@ -437,7 +515,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                         <p className="whitespace-nowrap pl-1 text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">班主任评价“全班50名同学积极参加锻炼”，算作1次评价</p>
                     </FeaturePanel>
 
-                    <FeaturePanel className="space-y-4 p-4">
+                    <FeaturePanel variant="form" className="space-y-4 p-4">
                         <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">发放数量</h2>
                         <div className="space-y-3">
                             <div className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
@@ -453,6 +531,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                                         ariaLabel="预算设置"
                                         semantics="group"
                                         variant="settings"
+                                        shape="subtle"
                                     />
                                 </div>
                             </div>
@@ -476,7 +555,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                                                 setBudgetAmountDraft(String(normalized));
                                                 update({ budgetAmount: normalized });
                                             }}
-                                            className={`${numberInputClass} h-11 min-w-0 flex-1 rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-center text-[14px] font-bold tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]`}
+                                            className={`${numberInputClass} h-11 min-w-0 flex-1 rounded-[var(--tm-form-control-radius)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-center text-[14px] font-bold tabular-nums text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]`}
                                             aria-label={budgetLabel}
                                         />
                                         <span className="shrink-0 text-[13px] font-semibold text-[var(--tm-brand-reward-strong)]">币</span>
@@ -489,7 +568,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                         </div>
                     </FeaturePanel>
 
-                    <FeaturePanel className="space-y-4 p-4">
+                    <FeaturePanel variant="form" className="space-y-4 p-4">
                         <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">奖励分配</h2>
                         <div className="space-y-6">
                         <label className="block">
@@ -513,7 +592,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                             />
                         </div>
                             <p className="mt-1 text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">每个学生无论评价如何，都可以获得的成长奖励</p>
-                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">全班平分：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{sunshineAmount}币</span></div>
+                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">全班平分：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(sunshineAmount)}币</span></div>
                         </label>
 
                         <div>
@@ -537,12 +616,22 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config, onCh
                             />
                         </div>
                             <p className="mt-1 text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">评分为正的学生，按比例分配的排名奖励</p>
-                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">奖池金额：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{rankingAmount}币</span></div>
+                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">奖池金额：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(rankingAmount)}币</span></div>
                         </div>
                         </div>
                     </FeaturePanel>
-                </>
+                    </>)}
+                    </div>
+                    </div>
+                </div>
             )}
+            <MobileBottomSheet open={Boolean(saveNotice)} title="设置已保存" onClose={() => setSaveNotice(null)}
+                footer={<button type="button" onClick={() => setSaveNotice(null)} className={featureFormPrimaryButtonClass}>知道了</button>}>
+                <div className="space-y-3">
+                    <p className="text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{saveNotice?.headline}</p>
+                    <p className="text-[14px] leading-6 text-[var(--tm-text-secondary)]">{saveNotice?.detail}</p>
+                </div>
+            </MobileBottomSheet>
         </FeaturePageBody>
     );
 };
@@ -553,24 +642,25 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
 
     return (
         <FeaturePageBody
+            spacing="compact"
             footer={(
-                <button type="button" disabled={!canSubmit} onClick={onSubmit} className={`h-12 w-full rounded-[20px] text-[14px] font-bold transition-colors ${canSubmit ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-disabled)]'}`}>
+                <button type="button" disabled={!canSubmit} onClick={onSubmit} className={`h-12 w-full rounded-[var(--tm-form-control-radius)] text-[14px] font-bold transition-colors ${canSubmit ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-disabled)]'}`}>
                     提交
                 </button>
             )}
         >
-            <FeaturePanel className="p-4">
+            <FeaturePanel variant="form" className="p-4">
                 <textarea value={text} onChange={(event) => onTextChange(event.target.value)} className="min-h-[156px] w-full resize-none bg-transparent text-[14px] leading-6 text-[var(--tm-text-primary)] outline-none placeholder:text-[var(--tm-text-disabled)]" placeholder="请输入建议或问题" aria-label="反馈内容" />
             </FeaturePanel>
 
-            <FeaturePanel className="p-4">
+            <FeaturePanel variant="form" className="p-4">
                 <div className="flex items-center justify-between">
                     <div className="text-[14px] font-bold text-[var(--tm-text-primary)]">上传图片</div>
                     <div className="text-[12px] font-semibold tabular-nums text-[var(--tm-text-disabled)]">{images.length}/5</div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                     {images.map((image, index) => (
-                        <div key={`${image}-${index}`} className="relative flex aspect-square items-center justify-center rounded-2xl bg-[var(--tm-bg-surface-soft)] text-[12px] font-semibold text-[var(--tm-text-secondary)]">
+                        <div key={`${image}-${index}`} className="relative flex aspect-square items-center justify-center rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface-soft)] text-[12px] font-semibold text-[var(--tm-text-secondary)]">
                             {image}
                             <CompactRemoveButton
                                 onClick={() => onRemoveImage(index)}
@@ -579,7 +669,7 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
                         </div>
                     ))}
                     {canAddImage && (
-                        <button type="button" onClick={onAddImage} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-white text-[12px] font-semibold text-[var(--tm-brand-primary)]" aria-label="上传反馈图片">
+                        <button type="button" onClick={onAddImage} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--tm-form-control-radius)] border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-white text-[12px] font-semibold text-[var(--tm-brand-primary)]" aria-label="上传反馈图片">
                             <ImagePlus className="h-5 w-5" />
                             上传图片
                         </button>
@@ -605,12 +695,12 @@ export const TextEditSheet: React.FC<EditSheetProps> = ({ title, value, placehol
             <div className="mb-4 flex items-center justify-between">
                 <button type="button" onClick={onCancel} className="h-9 px-2 text-[13px] font-semibold text-[var(--tm-text-secondary)]">取消</button>
                 <div className="text-[16px] font-bold text-[var(--tm-text-primary)]">{title}</div>
-                <button type="button" onClick={onConfirm} className="flex h-9 items-center gap-1 rounded-full bg-[var(--tm-brand-primary-soft)] px-3 text-[13px] font-bold text-[var(--tm-brand-primary)]">
+                <button type="button" onClick={onConfirm} className="flex h-9 items-center gap-1 rounded-[var(--tm-form-control-radius)] bg-[var(--tm-brand-primary-soft)] px-3 text-[13px] font-bold text-[var(--tm-brand-primary)]">
                     <Check className="h-3.5 w-3.5" />
                     完成
                 </button>
             </div>
-            <input value={value} onChange={(event) => onChange(event.target.value)} autoFocus placeholder={placeholder} className="h-12 w-full rounded-[var(--tm-radius-control)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[14px] font-semibold text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
+            <input value={value} onChange={(event) => onChange(event.target.value)} autoFocus placeholder={placeholder} className="h-12 w-full rounded-[var(--tm-form-control-radius)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[14px] font-semibold text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]" />
         </section>
     </div>
 );
@@ -625,10 +715,10 @@ export const DeleteConfirmSheet: React.FC<ConfirmSheetProps> = ({ title, onCance
     <div className="absolute inset-0 z-[100] flex items-end bg-[var(--tm-mask)] px-4 pb-4 backdrop-blur-[2px]" onClick={onCancel}>
         <section className="w-full rounded-[28px] bg-[var(--tm-bg-surface-glass)] p-4 shadow-[0_28px_80px_-42px_var(--tm-shadow-neutral-color)] backdrop-blur-xl" onClick={(event) => event.stopPropagation()}>
             <div className="px-2 pb-4 pt-1 text-center text-[16px] font-bold text-[var(--tm-text-primary)]">{title}</div>
-            <button type="button" onClick={onConfirm} className="h-12 w-full rounded-[20px] bg-[var(--tm-status-negative-soft)] text-[14px] font-bold text-[var(--tm-status-negative)]">
+            <button type="button" onClick={onConfirm} className="h-12 w-full rounded-[var(--tm-form-control-radius)] bg-[var(--tm-status-negative-soft)] text-[14px] font-bold text-[var(--tm-status-negative)]">
                 删除
             </button>
-            <button type="button" onClick={onCancel} className="mt-2 h-12 w-full rounded-[20px] bg-[var(--tm-bg-surface-soft)] text-[14px] font-bold text-[var(--tm-text-secondary)]">
+            <button type="button" onClick={onCancel} className="mt-2 h-12 w-full rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface-soft)] text-[14px] font-bold text-[var(--tm-text-secondary)]">
                 取消
             </button>
         </section>

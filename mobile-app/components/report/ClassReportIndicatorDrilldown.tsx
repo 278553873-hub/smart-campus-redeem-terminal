@@ -13,6 +13,7 @@ import MobileBottomSheet from '../ui/MobileBottomSheet';
 export type ClassReportIndicatorDrilldownMode = 'score' | 'event';
 
 interface ClassReportIndicatorDrilldownProps {
+  colorStyle?: React.CSSProperties;
   open: boolean;
   mode: ClassReportIndicatorDrilldownMode;
   roots: ClassReportIndicatorNode[];
@@ -48,6 +49,7 @@ const ScoreLegend = () => (
 );
 
 const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps> = ({
+  colorStyle,
   open,
   mode,
   roots,
@@ -98,6 +100,7 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
 
   return (
     <MobileBottomSheet open={open} title={title} onClose={onClose}>
+      <div style={colorStyle}>
       <nav aria-label="一级指标切换" className="-mt-1 flex min-h-[var(--tm-size-touch)] items-center gap-4 overflow-x-auto whitespace-nowrap no-scrollbar">
         {roots.map(root => {
           const selected = path[0] === root.id;
@@ -164,6 +167,7 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
             onCategorySelect={hasNextLevel ? selectCategory : undefined}
           />
         )}
+      </div>
       </div>
     </MobileBottomSheet>
   );

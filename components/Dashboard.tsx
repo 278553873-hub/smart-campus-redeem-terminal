@@ -1,3 +1,4 @@
+import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 
 import React from 'react';
 import {
@@ -5,7 +6,6 @@ import {
   Zap, ChevronRight, LogOut
 } from 'lucide-react';
 import { Student } from '../types';
-import { GROWTH_COIN_TERMS } from '../shared/growthCoinTerminology';
 import { DEMO_SELF_SCORE, DEMO_SELF_TOTAL_REWARD } from '../shared/demoRewardScenario';
 
 interface DashboardProps {
@@ -17,6 +17,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance, layout = 'mobile', hideShop = false }) => {
+  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const formatCoin = (val: number) => Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
   
   return (
@@ -67,7 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
               {/* 中间行：总资产大数字（独占整行，绝对不会被右上角按钮遮挡） */}
               <div className="my-1.5 sm:my-2">
                 <h3 className="text-4xl font-black tracking-tighter leading-none flex items-center whitespace-nowrap">
-                  <img src="/assets/coin.png" className="inline-block w-[1.05em] h-[1.05em] drop-shadow-sm mr-2 shrink-0" alt="coin" /> 
+                  <GrowthCoinIcon className="inline-block w-[1.05em] h-[1.05em] drop-shadow-sm mr-2 shrink-0" alt="coin" />
                   {formatCoin(student.campusCoins + bankBalance)}
                 </h3>
               </div>
@@ -77,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
                 <div className="flex items-center shrink-0">
                   <span className="font-semibold mr-1.5 text-blue-100 whitespace-nowrap">{GROWTH_COIN_TERMS.available}</span>
                   <span className="font-black tracking-tight inline-flex items-center text-white text-[13px] whitespace-nowrap">
-                    <img src="/assets/coin.png" className="w-[1.05em] h-[1.05em] -mt-[1px] mr-1 opacity-90" alt="coin" />
+                    <GrowthCoinIcon className="w-[1.05em] h-[1.05em] -mt-[1px] mr-1 opacity-90" alt="coin" />
                     {formatCoin(student.campusCoins)}
                   </span>
                 </div>
@@ -85,7 +86,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
                 <div className="flex items-center shrink-0">
                   <span className="font-semibold mr-1.5 text-blue-100 whitespace-nowrap">{GROWTH_COIN_TERMS.saved}</span>
                   <span className="font-black tracking-tight inline-flex items-center text-white text-[13px] whitespace-nowrap">
-                    <img src="/assets/coin.png" className="w-[1.05em] h-[1.05em] -mt-[1px] mr-1 opacity-90" alt="coin" />
+                    <GrowthCoinIcon className="w-[1.05em] h-[1.05em] -mt-[1px] mr-1 opacity-90" alt="coin" />
                     {formatCoin(bankBalance)}
                   </span>
                 </div>
@@ -109,7 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({ student, onNavigate, bankBalance,
 
               <div className="flex-1 flex items-center min-h-0 py-1">
                 <h3 className="text-[26px] sm:text-[32px] font-black text-orange-500 tracking-tighter leading-none flex items-center whitespace-nowrap">
-                  <img src="/assets/coin.png" className="inline-block w-[0.9em] h-[0.9em] mr-1 shrink-0" alt="coin" />
+                  <GrowthCoinIcon className="inline-block w-[0.9em] h-[0.9em] mr-1 shrink-0" alt="coin" />
                   {DEMO_SELF_TOTAL_REWARD.toFixed(2)}
                 </h3>
               </div>

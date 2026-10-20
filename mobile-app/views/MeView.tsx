@@ -7,6 +7,7 @@ import {
     ClipboardList,
     Coins,
     FileCog,
+    FileSliders,
     ScanLine,
     MessageCircle,
     MonitorSmartphone,
@@ -53,6 +54,7 @@ interface MeViewProps {
     pendingCollectionCount: number;
     onOpenAssignedCollections: () => void;
     onOpenArchiveDesign: () => void;
+    onOpenReportManagement: () => void;
     onOpenAiHeadteacherAssistant: () => void;
     onOpenAiPrincipalAssistant: () => void;
     onToggleSpaceSheet: () => void;
@@ -85,7 +87,7 @@ const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] obje
 const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';
 
 const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
-    <section className={`relative overflow-hidden rounded-[var(--tm-radius-card)] p-4 ${toolCardSurfaceClass}`}>
+    <section className={`relative overflow-hidden rounded-[var(--tm-radius-card-compact)] p-4 ${toolCardSurfaceClass}`}>
         <h3 className="flex items-center gap-3 text-[17px] font-bold leading-snug text-[var(--tm-text-primary)]">
             <span className="h-7 w-1.5 rounded-full bg-[var(--tm-brand-primary)]" aria-hidden="true" />
             {title}
@@ -105,7 +107,7 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                     type="button"
                     aria-label={item.title}
                     onClick={item.onClick}
-                    className={`${isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-inner)] py-1 text-center`}
+                    className={`${isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-control-compact)] py-1 text-center`}
                 >
                     {item.imageSrc ? (
                         <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[var(--tm-radius-inner)]">
@@ -133,13 +135,13 @@ const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'p
                             <Icon className="h-[19px] w-[19px]" strokeWidth={2.35} />
                         </span>
                     ) : Icon ? (
-                        <span className={`relative flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-inner)] ${secondaryIconClass}`}>
+                        <span className={`relative flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${secondaryIconClass}`}>
                             <Icon className="relative h-[23px] w-[23px]" strokeWidth={2.15} />
                         </span>
                     ) : (
                         null
                     )}
-                    <span className="max-w-[72px] whitespace-nowrap text-[12px] font-medium leading-[18px] text-[var(--tm-text-primary)]">
+                    <span className={`max-w-[72px] whitespace-nowrap text-[12px] [font-weight:var(--tm-font-weight-minimum)] leading-[18px] text-[var(--tm-text-primary)]`}>
                         {item.labelLines?.map(line => <span key={line} className="block">{line}</span>) ?? item.title}
                     </span>
                 </button>
@@ -155,7 +157,7 @@ export const ClassSourceSheet: React.FC<{
     onSelectSpace: (spaceId: string) => void;
 }> = ({ currentSpace, spaceOptions, onClose, onSelectSpace }) => (
     <MobileBottomSheet open title="切换班级来源" onClose={onClose} contentTone="plain">
-        <div className="space-y-3 py-[var(--tm-space-3)]">
+        <div className="space-y-[var(--tm-layout-card-gap)] py-[var(--tm-space-3)]">
             {spaceOptions.map(space => {
                 const isActive = space.id === currentSpace.id;
                 const schoolTypeLabel = getTeacherSchoolTypeLabel(space);
@@ -167,7 +169,7 @@ export const ClassSourceSheet: React.FC<{
                         aria-pressed={isActive}
                         aria-label={`${isActive ? '当前' : '切换至'}${space.title}，${sourceTypeLabel}${schoolTypeLabel ? `，${schoolTypeLabel}` : ''}`}
                         onClick={() => onSelectSpace(space.id)}
-                        className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-inner)] px-4 text-left ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                        className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-card-compact)] px-4 text-left ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
                     >
                         <span className="flex min-w-0 flex-1 items-center gap-3">
                             <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${isActive ? 'text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}>
@@ -207,6 +209,7 @@ const MeView: React.FC<MeViewProps> = ({
     pendingCollectionCount,
     onOpenAssignedCollections,
     onOpenArchiveDesign,
+    onOpenReportManagement,
     onOpenAiHeadteacherAssistant,
     onOpenAiPrincipalAssistant,
     onToggleSpaceSheet,
@@ -280,7 +283,7 @@ const MeView: React.FC<MeViewProps> = ({
         },
         {
             id: 'coinIssuance',
-            title: '校园币发放',
+            title: '成长币规则',
             icon: Coins,
             onClick: onOpenCoinIssuance,
         },
@@ -301,6 +304,12 @@ const MeView: React.FC<MeViewProps> = ({
             title: '家长端展示',
             icon: MonitorSmartphone,
             onClick: onOpenParentEvaluationVisibility,
+        },
+        {
+            id: 'reportManagement',
+            title: '报告配置',
+            icon: FileSliders,
+            onClick: onOpenReportManagement,
         },
         {
             id: 'archiveDesign',
@@ -390,14 +399,14 @@ const MeView: React.FC<MeViewProps> = ({
                 </div>
             </div>
 
-            <div className="relative z-10 space-y-3 px-5 pt-0">
+            <div className="relative z-10 space-y-[var(--tm-layout-card-gap)] px-5 pt-0">
                 {pendingCollectionCount > 0 && (
                     <button
                         type="button"
                         onClick={onOpenAssignedCollections}
-                        className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-inner)] px-4 text-left ${toolCardSurfaceClass}`}
+                        className={`flex min-h-12 w-full items-center gap-3 rounded-[var(--tm-radius-card-compact)] px-4 text-left ${toolCardSurfaceClass}`}
                     >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><ClipboardList className="h-4 w-4" /></span>
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]"><ClipboardList className="h-4 w-4" /></span>
                         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-[var(--tm-text-primary)]">待填写采集</span>
                         <span className="flex shrink-0 items-center gap-1.5">
                             <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--tm-status-negative)] px-1.5 text-[11px] font-bold tabular-nums text-white">{pendingCollectionCount}</span>

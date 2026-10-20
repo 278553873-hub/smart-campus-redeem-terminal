@@ -73,7 +73,7 @@ const HomeroomClassPickerSheet: React.FC<HomeroomClassPickerSheetProps> = ({
                 <div className="mx-auto h-1.5 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />
                 <div className="mt-2 flex h-12 items-center justify-between">
                     <h2 id={titleId} className="text-[17px] font-semibold text-[var(--tm-text-primary)]">选择班级</h2>
-                    <button type="button" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control)] text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]" aria-label="关闭">
+                    <button type="button" onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-[var(--tm-radius-control-compact)] text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]" aria-label="关闭">
                         <X className="h-5 w-5" strokeWidth={2.1} />
                     </button>
                 </div>

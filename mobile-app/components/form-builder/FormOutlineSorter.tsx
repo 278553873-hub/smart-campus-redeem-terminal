@@ -19,6 +19,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Folder, GripVertical } from 'lucide-react';
 import type { ConfigurableFormField, FormLayoutMode, FormSection } from '../../../shared/formDefinition';
+import { formBuilderShapes, type FormBuilderShape } from './formBuilderShape';
 
 export interface FormOutlineValue<TType extends string> {
   layoutMode: FormLayoutMode;
@@ -27,6 +28,7 @@ export interface FormOutlineValue<TType extends string> {
 }
 
 interface FormOutlineSorterProps<TType extends string> extends FormOutlineValue<TType> {
+  shape?: FormBuilderShape;
   onChange: (value: FormOutlineValue<TType>) => void;
   itemLabel: '题目' | '字段';
 }
@@ -50,19 +52,22 @@ const orderFieldsBySections = <TType extends string>(
 
 const OutlineFieldRow = <TType extends string>({
   field,
+  shape,
   number,
   itemLabel,
 }: {
+  shape: FormBuilderShape;
   field: ConfigurableFormField<TType>;
   number: number;
   itemLabel: '题目' | '字段';
 }) => {
+  const shapeClasses = formBuilderShapes[shape];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: field.id });
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 20 : undefined }}
-      className={`flex min-h-[52px] items-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] ${isDragging ? 'opacity-[0.85] [box-shadow:var(--tm-shadow-sheet)]' : ''}`}
+      className={`flex min-h-[52px] items-center ${shapeClasses.row} bg-[var(--tm-bg-surface-soft)] ${isDragging ? 'opacity-[0.85] [box-shadow:var(--tm-shadow-sheet)]' : ''}`}
     >
       <button
         type="button"
@@ -73,7 +78,7 @@ const OutlineFieldRow = <TType extends string>({
       >
         <GripVertical className="h-5 w-5" />
       </button>
-      <span className="mr-2 flex h-6 min-w-6 shrink-0 items-center justify-center rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-1 text-[length:var(--tm-font-size-badge)] font-bold tabular-nums text-[var(--tm-brand-primary-strong)]">
+      <span className={`mr-2 flex h-6 min-w-6 shrink-0 items-center justify-center ${shape === 'subtle' ? shapeClasses.control : shapeClasses.inner} bg-[var(--tm-bg-surface)] px-1 text-[length:var(--tm-font-size-badge)] font-bold tabular-nums text-[var(--tm-brand-primary-strong)]`}>
         {number}
       </span>
       <span className="min-w-0 flex-1 break-words py-3 pr-3 text-[length:var(--tm-font-size-compact)] font-semibold leading-5 text-[var(--tm-text-primary)]">
@@ -84,14 +89,15 @@ const OutlineFieldRow = <TType extends string>({
   );
 };
 
-const OutlineSection = ({ section, children }: { section: FormSection; children: React.ReactNode }) => {
+const OutlineSection = ({ section, children, shape }: { section: FormSection; children: React.ReactNode; shape: FormBuilderShape }) => {
+  const shapeClasses = formBuilderShapes[shape];
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sectionSortId(section.id) });
   const { isOver, setNodeRef: setDropRef } = useDroppable({ id: sectionDropId(section.id) });
   return (
     <section
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 20 : undefined }}
-      className={`border-b border-[var(--tm-border-subtle)] pb-4 last:border-b-0 ${isDragging ? 'opacity-[0.85]' : ''}`}
+      className={`border-b border-[var(--tm-border-subtle)] ${shapeClasses.sectionPadding} last:border-b-0 ${isDragging ? 'opacity-[0.85]' : ''}`}
     >
       <div className="flex min-h-[52px] items-center">
         <button
@@ -106,7 +112,7 @@ const OutlineSection = ({ section, children }: { section: FormSection; children:
         <Folder className="mr-2 h-4.5 w-4.5 shrink-0 text-[var(--tm-brand-primary-strong)]" />
         <h3 className="min-w-0 flex-1 truncate pr-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">{section.label}</h3>
       </div>
-      <div ref={setDropRef} className={`ml-5 min-h-3 space-y-2 rounded-[var(--tm-radius-control)] pl-3 transition-colors ${isOver ? 'bg-[var(--tm-brand-primary-soft)]' : ''}`}>
+      <div ref={setDropRef} className={`ml-5 min-h-3 ${shapeClasses.listGap} ${shapeClasses.control} pl-3 transition-colors ${isOver ? 'bg-[var(--tm-brand-primary-soft)]' : ''}`}>
         {children}
       </div>
     </section>
@@ -114,12 +120,14 @@ const OutlineSection = ({ section, children }: { section: FormSection; children:
 };
 
 const FormOutlineSorter = <TType extends string>({
+  shape = 'default',
   layoutMode,
   sections,
   fields,
   onChange,
   itemLabel,
 }: FormOutlineSorterProps<TType>) => {
+  const shapeClasses = formBuilderShapes[shape];
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -222,8 +230,8 @@ const FormOutlineSorter = <TType extends string>({
     return (
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderFlatFields} accessibility={outlineAccessibility}>
         <SortableContext items={fields.map(field => field.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2">
-            {fields.map((field, index) => <OutlineFieldRow key={field.id} field={field} number={index + 1} itemLabel={itemLabel} />)}
+          <div className={shapeClasses.listGap}>
+            {fields.map((field, index) => <OutlineFieldRow shape={shape} key={field.id} field={field} number={index + 1} itemLabel={itemLabel} />)}
           </div>
         </SortableContext>
       </DndContext>
@@ -233,14 +241,15 @@ const FormOutlineSorter = <TType extends string>({
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={reorderGroupedOutline} accessibility={outlineAccessibility}>
       <SortableContext items={sections.map(section => sectionSortId(section.id))} strategy={verticalListSortingStrategy}>
-        <div className="space-y-4">
+        <div className={shapeClasses.groupGap}>
           {sections.map(section => {
             const sectionFields = orderedFields.filter(field => field.sectionId === section.id);
             return (
-              <OutlineSection key={section.id} section={section}>
+              <OutlineSection shape={shape} key={section.id} section={section}>
                 <SortableContext items={sectionFields.map(field => field.id)} strategy={verticalListSortingStrategy}>
                   {sectionFields.map(field => (
                     <OutlineFieldRow
+                      shape={shape}
                       key={field.id}
                       field={field}
                       number={fieldNumberById.get(field.id) ?? 1}

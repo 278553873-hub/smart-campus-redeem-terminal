@@ -22,11 +22,10 @@ import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import {
   BottomAction,
   PageHeader,
-  inputClass,
-  primaryButton,
-  secondaryButton,
-  sectionSurface,
+  subtleArchivePageStyles,
 } from '../archive-design/archivePagePrimitives';
+
+const { inputClass, primaryButton, secondaryButton, sectionSurface } = subtleArchivePageStyles;
 
 type PageMode = 'list' | 'detail' | 'form';
 
@@ -66,7 +65,7 @@ const recordToInput = (record: HealthExamRecord): HealthExamInput => ({
 });
 
 const fieldLabelClass = 'mb-2 block text-[13px] font-semibold text-[var(--tm-text-secondary)]';
-const metricIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]';
+const metricIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]';
 
 const StudentHealthRecordsView: React.FC<StudentHealthRecordsViewProps> = ({
   studentId,
@@ -168,7 +167,7 @@ const StudentHealthRecordsView: React.FC<StudentHealthRecordsViewProps> = ({
               </label>
             </div>
 
-            <div className="flex min-h-[52px] items-center justify-between rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-soft)] px-3.5">
+            <div className="flex min-h-[52px] items-center justify-between rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3.5">
               <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">身体质量指数</span>
               <span className="text-[16px] font-bold tabular-nums text-[var(--tm-text-primary)]">{currentBmi || '--'}</span>
             </div>
@@ -218,7 +217,7 @@ const StudentHealthRecordsView: React.FC<StudentHealthRecordsViewProps> = ({
     return (
       <div className="relative flex h-full min-h-0 flex-col bg-transparent">
         <PageHeader title="体检记录详情" onBack={() => setPageMode('list')} />
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-24 pt-3 no-scrollbar">
+        <div className="min-h-0 flex-1 space-y-[var(--tm-layout-card-gap)] overflow-y-auto px-4 pb-24 pt-3 no-scrollbar">
           <section className={`${sectionSurface} overflow-hidden`}>
             <div className="flex items-start justify-between px-4 pb-3 pt-4">
               <div>
@@ -262,7 +261,7 @@ const StudentHealthRecordsView: React.FC<StudentHealthRecordsViewProps> = ({
           </button>
           <button type="button" onClick={() => setShowRecordMenu(false)} className={`${secondaryButton} mt-4 w-full`}>取消</button>
         </MobileBottomSheet>
-        {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-inner)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+        {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
       </div>
     );
   }
@@ -288,9 +287,9 @@ const StudentHealthRecordsView: React.FC<StudentHealthRecordsViewProps> = ({
               </div>
             </section>
 
-            <div className="mb-2 mt-5 flex min-h-11 items-center justify-between">
+            <div className="mb-2 mt-[var(--tm-layout-card-gap)] flex min-h-11 items-center justify-between">
               <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">历史记录</h2>
-              {canEdit && <button type="button" onClick={openCreate} className="flex min-h-11 items-center gap-1.5 rounded-full px-2 text-[13px] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />新增测量</button>}
+              {canEdit && <button type="button" onClick={openCreate} className="flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control-compact)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary-strong)] active:bg-[var(--tm-brand-primary-soft)]"><Plus className="h-4 w-4" />新增测量</button>}
             </div>
             <section className={`${sectionSurface} divide-y divide-[var(--tm-border-subtle)] px-4`}>
               {sortedRecords.map(record => (

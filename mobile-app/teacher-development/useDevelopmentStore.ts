@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { INDICATORS, INITIAL_RECORDS, TEACHERS, type DevelopmentIndicator, type DevelopmentRecord } from './data';
 import { migrateRecordInput } from './recordInput';
+import { withRecordFields } from './indicatorFields';
 
 const STORAGE_KEY = 'teacher-development-demo-v1';
 interface StoredData { version: 1; records: DevelopmentRecord[]; indicators: DevelopmentIndicator[]; }
@@ -11,13 +12,16 @@ const readData = (): StoredData => {
     if (data?.version !== 1 || !Array.isArray(data.records) || !Array.isArray(data.indicators)) return initialData();
     if (data.indicators.length !== INDICATORS.length || data.indicators.some((i: DevelopmentIndicator) => !INDICATORS.some(item => item.id === i.id) || !Array.isArray(i.roles) || !i.roles.length || i.roles.some(role => !['teacher', 'manager'].includes(role)) || typeof i.requiresReview !== 'boolean')) return initialData();
     if (data.records.some((r: DevelopmentRecord) => !r.id || !TEACHERS.some(t => t.id === r.teacherId) || !INDICATORS.some(i => i.id === r.indicatorId) || !Array.isArray(r.history) || !Number.isFinite(r.delta))) return initialData();
-    // 规则与基础分来自版本化方案；演示控制只持久化角色和审核配置。
+    // 规则与基础分来自版本化方案；演示控制持久化角色、审核及等级开关。
     const records: DevelopmentRecord[] = data.records.map((r: DevelopmentRecord) => (r.status as string) === 'needs-info'
       ? { ...r, status: 'returned', delta: 0, note: '此前录入未完成事实核实，校验未通过；请核实后修改重提。', history: [...r.history, '旧版未完成校验记录迁移为未通过，未计分'] }
-      : r).map(migrateRecordInput);
+      : r).map(migrateRecordInput).map((r: DevelopmentRecord) => withRecordFields(r, INDICATORS.find(i => i.id === r.indicatorId)!));
     // 仅补齐新增预置示例；保留用户已有修改与全部记录。
     if (!records.some(r => r.id === 'r12')) records.push(structuredClone(INITIAL_RECORDS.find(r => r.id === 'r12')!));
-    return { version: 1, records, indicators: INDICATORS.map(i => ({ ...i, roles: data.indicators.find((item: DevelopmentIndicator) => item.id === i.id).roles, requiresReview: data.indicators.find((item: DevelopmentIndicator) => item.id === i.id).requiresReview })) };
+    return { version: 1, records, indicators: INDICATORS.map(i => {
+      const saved = data.indicators.find((item: DevelopmentIndicator) => item.id === i.id);
+      return { ...i, roles: saved.roles, requiresReview: saved.requiresReview, distinguishLevels: typeof saved.distinguishLevels === 'boolean' ? saved.distinguishLevels : i.distinguishLevels };
+    }) };
   } catch { return initialData(); }
 };
 export function useDevelopmentStore() {

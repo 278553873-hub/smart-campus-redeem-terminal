@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, ChevronRight, FolderOpen } from 'lucide-react';
 import { MobileCard } from '../components/ui/MobileCard';
 import { mobileSheetActionClass } from '../components/ui/mobileSheetActionStyles';
+import RecordLevelBadge from './RecordLevelBadge';
 import { STATUS_LABELS, type DevelopmentRecord } from './data';
 
 export const primaryAction = `${mobileSheetActionClass} flex w-full items-center justify-center gap-2 bg-[var(--tm-brand-primary)] px-4 font-semibold text-white disabled:opacity-40 active:bg-[var(--tm-brand-primary-pressed)]`;
@@ -31,11 +32,11 @@ export function EmptyState({ title = '暂无记录', description = '换个筛选
 export function Metric({ label, value, unit }: { label: string; value: number | string; unit?: string }) {
   return <div><p className={metaClass}>{label}</p><p className="mt-1 text-[length:var(--tm-font-size-metric)] font-bold tabular-nums">{value}<span className="ml-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">{unit}</span></p></div>;
 }
-export function RecordList({ records, teacherNames, indicatorNames, onOpen, showNames = false }: { records: DevelopmentRecord[]; teacherNames: Record<string, string>; indicatorNames: Record<string, string>; onOpen: (record: DevelopmentRecord) => void; showNames?: boolean }) {
-  if (!records.length) return <EmptyState />;
+export function RecordList({ records, teacherNames, indicatorNames, onOpen, showNames = false, emptyDescription }: { emptyDescription?: string; records: DevelopmentRecord[]; teacherNames: Record<string, string>; indicatorNames: Record<string, string>; onOpen: (record: DevelopmentRecord) => void; showNames?: boolean }) {
+  if (!records.length) return <EmptyState description={emptyDescription} />;
   let previousMonth = '';
   return <div className="space-y-3">{[...records].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)).map(record => {
     const month = record.date.slice(0, 7); const newMonth = month !== previousMonth; previousMonth = month;
-    return <React.Fragment key={record.id}>{newMonth && <h3 className={`px-1 pt-2 ${metaClass}`}>{month.replace('-', '年')}月</h3>}<MobileCard padding="none"><button type="button" onClick={() => onOpen(record)} className="w-full p-4 text-left"><div className="mb-2 flex items-center justify-between gap-2"><span className={metaClass}>{record.date}{showNames ? ` · ${teacherNames[record.teacherId]}` : ''}</span><StatusLabel record={record} /></div><h4 className="text-[length:var(--tm-font-size-card-title)] font-semibold leading-6">{record.title}</h4><div className="mt-3 flex items-center justify-between gap-2 text-[length:var(--tm-font-size-compact)]"><span className="min-w-0 truncate text-[var(--tm-text-secondary)]">{[indicatorNames[record.indicatorId], record.level].filter(Boolean).join(' · ')}</span>{record.status === 'approved' ? <ScoreChange delta={record.delta} /> : <span className="shrink-0 text-[var(--tm-text-secondary)]">尚未计分</span>}</div></button></MobileCard></React.Fragment>;
+    return <React.Fragment key={record.id}>{newMonth && <h3 className={`px-1 pt-2 ${metaClass}`}>{month.replace('-', '年')}月</h3>}<MobileCard padding="none"><button type="button" onClick={() => onOpen(record)} className="w-full p-4 text-left"><div className="mb-2 flex items-center justify-between gap-2"><span className={metaClass}>{record.date}{showNames ? ` · ${teacherNames[record.teacherId]}` : ''}</span><StatusLabel record={record} /></div><h4 className="text-[length:var(--tm-font-size-card-title)] font-semibold leading-6">{record.inputType === 'image' ? record.title : record.text}</h4><div className="mt-3 flex items-center justify-between gap-2 text-[length:var(--tm-font-size-compact)]"><span className="flex min-w-0 items-center gap-2 text-[var(--tm-text-secondary)]"><RecordLevelBadge record={record} reserveSpace /><span className="truncate">{indicatorNames[record.indicatorId]}</span></span>{record.status === 'approved' ? <ScoreChange delta={record.delta} /> : <span className="shrink-0 text-[var(--tm-text-secondary)]">尚未计分</span>}</div></button></MobileCard></React.Fragment>;
   })}</div>;
 }

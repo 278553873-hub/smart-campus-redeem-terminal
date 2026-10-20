@@ -11,12 +11,12 @@ assert.doesNotMatch(
 
 assert.match(
   source,
-  /relative\s+z-10\s+flex-1\s+min-h-0\s+overflow-y-auto\s+px-5\s+pb-44\s+pt-0\s+no-scrollbar/,
+  /relative\s+z-10\s+min-h-0\s+flex-1\s+overflow-y-auto\s+px-5\s+pb-44\s+pt-0\s+no-scrollbar/,
   '记录页内容滚动区域应保持完整高度，并通过尾部留白保证最后一条记录可滚动到录入条上方'
 );
 
 assert.match(
   source,
-  /<div className="space-y-3\.5">/,
+  /<div className="space-y-\[var\(--tm-layout-card-gap\)\]">/,
   '记录卡列表应在滚动容器内保持统一的卡片间距'
 );

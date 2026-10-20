@@ -158,7 +158,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                     <select 
                         value={activeMonth}
                         onChange={(e) => setActiveMonth(e.target.value as 'all' | string)}
-                        className="h-[var(--tm-size-touch)] w-full appearance-none rounded-[var(--tm-radius-control)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] px-[var(--tm-space-3)] pr-9 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]"
+                        className="h-[var(--tm-size-touch)] w-full appearance-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-filter-border)] bg-[var(--tm-filter-bg)] px-[var(--tm-space-3)] pr-9 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] [box-shadow:var(--tm-filter-shadow)] [outline:var(--tm-filter-focus-outline)] focus-visible:bg-[var(--tm-filter-focus-bg)]"
                     >
                         <option value="all">全部月份</option>
                         {monthOptions.map(option => (
@@ -170,7 +170,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
             </div>
 
             {/* File List */}
-            <div className="flex-1 p-4 space-y-5">
+            <div className="flex-1 p-4 space-y-[var(--tm-layout-card-gap)]">
                 {filteredFiles.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-slate-400">
                         <GenericFileIcon className="w-12 h-12 mb-2 opacity-20" />
@@ -180,13 +180,13 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                     groupedFiles.map(group => (
                         <div key={group.key}>
                             <div className="text-[11px] font-semibold text-slate-400 mb-2 px-1">{group.label}</div>
-                            <div className="space-y-3">
+                            <div className="space-y-[var(--tm-layout-card-gap)]">
                             {group.files.map(file => (
-                        <div key={file.id} className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 relative group">
+                        <div key={file.id} className="bg-white rounded-[var(--tm-radius-card-compact)] p-4 shadow-sm border border-slate-100 relative group">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 overflow-hidden">
                                     {/* File Icon */}
-                                    <div className="w-10 h-10 bg-white border border-slate-100 rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+                                    <div className="w-10 h-10 bg-white border border-slate-100 rounded-[var(--tm-radius-control-compact)] flex items-center justify-center shrink-0 shadow-sm">
                                         <div className="relative">
                                             {(() => {
                                                 const { color, badge, badgeColor } = getFileIconStyle(file.type);
@@ -233,10 +233,10 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ onBack }) => {
                             {activeMenuId === file.id && (
                                 <>
                                     <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)}></div>
-                                    <div className="absolute top-10 right-4 z-30 bg-white rounded-xl shadow-lg border border-slate-100 p-1 w-24 animate-in fade-in zoom-in duration-100 origin-top-right">
+                                    <div className="absolute top-10 right-4 z-30 bg-white rounded-[var(--tm-radius-card-compact)] shadow-lg border border-slate-100 p-1 w-24 animate-in fade-in zoom-in duration-100 origin-top-right">
                                         <button 
                                             onClick={() => handleDelete(file.id)}
-                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-500 active:bg-red-50 rounded-md transition-colors"
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-500 active:bg-red-50 rounded-[var(--tm-radius-control-compact)] transition-colors"
                                         >
                                             <DeleteIcon className="w-3.5 h-3.5" />
                                             删除

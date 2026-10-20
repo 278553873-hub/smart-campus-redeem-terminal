@@ -9,7 +9,7 @@ interface StudentBatchEditViewProps {
   onSave: (students: Student[]) => void;
 }
 
-const inputClass = 'h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-inner)] border border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
+const inputClass = 'h-[var(--tm-size-touch)] min-w-0 rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-compact-editor-control-border)] bg-[var(--tm-compact-editor-control-bg)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]';
 
 const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, onBack, onSave }) => {
   const [drafts, setDrafts] = useState<Student[]>(() => students.map(student => ({ ...student })));
@@ -44,7 +44,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, o
           {drafts.map(student => (
             <div
               key={student.id}
-              className="grid grid-cols-[minmax(72px,1fr)_minmax(76px,0.72fr)_92px] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card)] bg-[var(--tm-compact-editor-row-bg)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]"
+              className="grid grid-cols-[minmax(72px,1fr)_minmax(76px,0.72fr)_92px] items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-compact-editor-row-bg)] p-[var(--tm-space-3)] [box-shadow:var(--tm-shadow-card)]"
               role="group"
               aria-label={`${student.name || '学生'}信息`}
             >
@@ -72,7 +72,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, o
                       key={gender}
                       type="button"
                       onClick={() => updateStudent(student.id, { gender })}
-                      className={`h-[var(--tm-size-touch)] rounded-[var(--tm-radius-inner)] text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-compact-editor-selected-bg)] text-[var(--tm-compact-editor-selected-text)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
+                      className={`h-[var(--tm-size-touch)] rounded-[var(--tm-radius-control-compact)] text-[length:var(--tm-font-size-compact)] font-semibold ${selected ? 'bg-[var(--tm-compact-editor-selected-bg)] text-[var(--tm-compact-editor-selected-text)]' : 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-muted)]'}`}
                       aria-pressed={selected}
                     >
                       {gender === 'male' ? '男' : '女'}
@@ -90,7 +90,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, o
           type="button"
           disabled={!canSave}
           onClick={handleSave}
-          className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
+          className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
         >
           {showSaved && <Check className="h-[18px] w-[18px]" />}
           {showSaved ? '已保存' : '保存修改'}

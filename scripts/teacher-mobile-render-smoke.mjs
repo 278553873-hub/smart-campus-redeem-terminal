@@ -93,6 +93,69 @@ const renderPage = async (name, load, props, verify) => {
   writeResults();
 };
 
+for (const recordMode of [
+  { activeTab: 'student', canRecordClass: false },
+  { activeTab: 'student', canRecordClass: true },
+  { activeTab: 'class', canRecordClass: true },
+]) {
+  for (const showFirstRecordGuide of [false, true]) {
+    await renderPage('记录首页（' + recordMode.activeTab + '，班级权限' + recordMode.canRecordClass + '，引导' + showFirstRecordGuide + '）', () => import('../mobile-app/views/ClassRecordLogView'), {
+      ...recordMode, showFirstRecordGuide, isMainView: true,
+      onBack: noop, onTabChange: noop, onViewIndicators: noop,
+    }, html => {
+      const text = plainText(html);
+      if (html.includes('aria-label="记录对象"') !== recordMode.canRecordClass) throw new Error('对象切换入口应遵循班级记录权限');
+      if (showFirstRecordGuide) {
+        if (!text.includes('试试通过语音描述一下内容：')) throw new Error('初次记录应展示语音示例');
+        if (text.includes('AI 智能解读')) throw new Error('引导态不应同时展示历史识别结果');
+      } else if (!text.includes('AI 智能解读') || !text.includes('总分')) {
+        throw new Error('记录列表应完整展示识别结果与分数');
+      }
+    });
+  }
+}
+
+const inputBarProps = {
+  showKeyboard: false, showTabBar: true, inputText: '', hasSelectionTarget: true,
+  emptySelectionPrompt: '请选择学生', isMultiSelectMode: false, selectedTargetCount: 0, selectedTargetUnit: '人',
+  voicePressState: 'idle', onCloseKeyboard: noop, onCameraClick: noop, onVoicePointerDown: noop,
+  onKeyboardClick: noop, onVoiceKeyboardActivate: noop,
+};
+for (const scenario of [
+  { label: '玻璃待录音', props: {}, text: '按住说话' },
+  { label: '无底部导航', props: { showTabBar: false }, text: '按住说话' },
+  { label: '录音中', props: { voicePressState: 'listening' }, text: '松手发送，上移取消' },
+  { label: '取消录音', props: { voicePressState: 'canceling' }, text: '松开取消' },
+  { label: '未选择对象', props: { hasSelectionTarget: false, isMultiSelectMode: true }, text: '请选择学生' },
+  { label: '多选对象', props: { isMultiSelectMode: true, selectedTargetCount: 12 }, text: '按住说话 · 12人' },
+  { label: '键盘空内容', props: { showKeyboard: true }, text: '请输入' },
+  { label: '键盘草稿', props: { showKeyboard: true, inputText: '全班同学积极参与劳动。' }, text: '全班同学积极参与劳动。' },
+]) {
+  await renderPage('悬浮录入条（' + scenario.label + '）', () => import('../mobile-app/components/TeacherRecordInputBar'), {
+    ...inputBarProps, ...scenario.props,
+  }, html => {
+    if (!plainText(html).includes(scenario.text)) throw new Error('录入状态文案缺失：' + scenario.text);
+    if (scenario.props.hasSelectionTarget === false && (html.match(/disabled=""/g) ?? []).length !== 2) throw new Error('没有选择对象时禁用拍照与语音提交，允许保留文字草稿');
+    if (scenario.props.showKeyboard && !html.includes(scenario.props.inputText ? 'aria-label="发送记录"' : 'aria-label="切换到语音输入"')) throw new Error('文字形态应按草稿内容提供发送或语音入口');
+  });
+}
+for (const scenario of [
+  { mode: 'text', ids: ['record-student'], names: '演示学生' },
+  { mode: 'voice', ids: ['record-student'], names: '演示学生' },
+  { mode: 'camera', ids: ['record-student'], names: '演示学生' },
+  { mode: 'camera', ids: [], names: '' },
+]) {
+  await renderPage('全屏录入（' + scenario.mode + '，已选' + scenario.ids.length + '人）', () => import('../mobile-app/views/RecordInputView'), {
+    initialMode: scenario.mode, initialStudentIds: scenario.ids, studentNameList: scenario.names,
+    onClose: noop, onAnalysisComplete: noop,
+  }, html => {
+    const text = plainText(html);
+    const expected = scenario.mode === 'camera' ? '轻触拍照' : scenario.mode === 'text' ? '发送识别' : '按住 说话';
+    if (!text.includes(expected)) throw new Error('录入模式缺少对应操作：' + expected);
+    if (scenario.mode === 'camera' && scenario.ids.length === 0 && text.includes('未选择学生')) throw new Error('拍照无预选学生时不应显示占位姓名');
+  });
+}
+
 const demoStudents = Array.from({ length: 6 }, (_, index) => ({
   id: 'render-smoke-student-' + (index + 1),
   name: '演示学生' + (index + 1),
@@ -116,6 +179,290 @@ const ledgerEntries = createDemoCoinLedger({
 });
 
 await renderPage('教师端首页（默认页面）', () => import('../mobile-app/App'), {});
+
+for (const scenario of [
+  { name: '关闭发放', enabled: false, budgetMode: 'per_student' },
+  { name: '按人预算', enabled: true, budgetMode: 'per_student' },
+  { name: '按班预算', enabled: true, budgetMode: 'per_class' },
+  { name: '加分就发·周上限', enabled: true, mode: 'score', scoreRule: { coinsPerPoint: 2, limitEnabled: true, limitPeriod: 'weekly', limitAmount: 20 } },
+  { name: '加分就发·月上限', enabled: true, mode: 'score', scoreRule: { coinsPerPoint: 1, limitEnabled: true, limitPeriod: 'monthly', limitAmount: 80 } },
+  { name: '加分就发·不限额', enabled: true, mode: 'score', scoreRule: { coinsPerPoint: 1, limitEnabled: false, limitPeriod: 'weekly', limitAmount: 20 } },
+]) {
+  await renderPage('成长币规则（' + scenario.name + '）', async () => ({
+    default: (await import('../mobile-app/views/MeFeatureViews')).CoinIssuanceView,
+  }), {
+    config: { ...DEFAULT_COIN_ISSUANCE_CONFIG, ...scenario },
+    onChange: noop,
+    onSave: noop,
+  }, html => {
+    const text = plainText(html);
+    if (scenario.mode === 'score') {
+      if (text.includes('阳光保底比例') || text.includes('发放门槛')) throw new Error('加分就发不应展示定期发放参数');
+      if (!text.includes('扣分不扣币')) throw new Error('缺少扣分规则说明');
+      if (text.includes('aria-label="每人每周期发放上限"') !== scenario.scoreRule.limitEnabled) throw new Error('上限字段应随开关显示');
+    } else if (scenario.enabled && !text.includes('阳光保底比例')) throw new Error('旧配置应继续展示定期发放参数');
+  });
+}
+
+const scoreCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(demoStudents[0], { ...DEFAULT_COIN_ISSUANCE_CONFIG, mode: 'score' });
+const legacyCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(demoStudents[0]);
+if (scoreCoinDetail.balance !== legacyCoinDetail.balance || scoreCoinDetail.bankDeposit !== legacyCoinDetail.bankDeposit
+    || JSON.stringify(scoreCoinDetail.issueRecords) !== JSON.stringify(legacyCoinDetail.issueRecords)
+    || JSON.stringify(scoreCoinDetail.consumeRecords) !== JSON.stringify(legacyCoinDetail.consumeRecords)) {
+  throw new Error('更换规则不得改写历史余额、存款或流水');
+}
+await renderPage('学生成长币明细（加分就发）', () => import('../mobile-app/views/StudentCoinDetailView'), {
+  student: demoStudents[0], coinDetail: scoreCoinDetail, onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('每人每周最多获得 20 币')) throw new Error('学生明细未展示加分规则');
+  if (text.includes('预计可得') || text.includes('阳光保底')) throw new Error('即时发币不应继续显示周期结算预估');
+});
+
+// 学校货币外观：用独立存储验证各端读到名称/图标，结束后还原，不污染后续页面。
+const coinStorageBefore = globalThis.localStorage;
+const coinMemory = new Map();
+define('localStorage', { ...storage(), getItem: key => coinMemory.get(key) ?? null, setItem: (key, value) => coinMemory.set(key, value) });
+const { saveCoinBranding } = await import('../shared/growthCoinBrandingStore');
+const { GrowthCoinScope } = await import('../components/GrowthCoinBranding');
+saveCoinBranding('school-star', { name: '向阳币', iconUrl: '/assets/c4d_growth.png' });
+const loadCoinScoped = async (load, schoolId = 'school-star') => {
+  const module = await load();
+  return { default: props => React.createElement(GrowthCoinScope, { schoolId }, React.createElement(module.default, props)) };
+};
+await renderPage('成长币规则（学校名称与图标）', () => loadCoinScoped(async () => ({ default: (await import('../mobile-app/views/MeFeatureViews')).CoinIssuanceView })), {
+  config: DEFAULT_COIN_ISSUANCE_CONFIG, onChange: noop,
+}, html => {
+  if (!plainText(html).includes('开启成长币发放') || !html.includes('value="向阳币"') || !html.includes('/assets/c4d_growth.png')) throw new Error('学校设置未回显名称和图标');
+  if (!html.includes('grid-template-columns:repeat(2, minmax(0, 1fr))')) throw new Error('成长币页签应等宽铺满100%');
+  if (! /role="tabpanel" aria-label="名称与图标"[^>]*hidden=""/.test(html) || /role="tabpanel" aria-label="发放规则"[^>]*hidden/.test(html)) throw new Error('配置默认页签应展示发放规则、隐藏名称与图标');
+});
+await renderPage('学生明细（学校名称与图标）', () => loadCoinScoped(() => import('../mobile-app/views/StudentCoinDetailView')), {
+  student: demoStudents[0], coinDetail: legacyCoinDetail, onBack: noop,
+}, html => {
+  if (!html.includes('向阳币明细') || !html.includes('/assets/c4d_growth.png')) throw new Error('学生明细未同步货币外观');
+});
+await renderPage('学生明细（学校隔离）', () => loadCoinScoped(() => import('../mobile-app/views/StudentCoinDetailView'), 'another-school'), {
+  student: demoStudents[0], coinDetail: legacyCoinDetail, onBack: noop,
+}, html => {
+  if (html.includes('向阳币') || !html.includes('成长币明细')) throw new Error('其他学校读到了本校货币名称');
+});
+await renderPage('学校后台（名称与图标配置）', () => import('../components/CoinIssuanceSettings'), {
+  value: DEFAULT_COIN_ISSUANCE_CONFIG, onChange: noop,
+}, html => {
+  if (!plainText(html).includes('开启成长币发放') || !html.includes('value="向阳币"')) throw new Error('学校后台未同步名称');
+});
+await renderPage('家长端（学校名称与图标）', () => import('../components/ParentApp'), {}, html => {
+  if (!html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('家长端未同步当前孩子学校的名称与图标');
+});
+await renderPage('货柜首页（学校名称与图标）', () => import('../components/Dashboard'), {
+  student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, bankBalance: 100, onNavigate: noop,
+}, html => {
+  if (!html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('货柜首页未同步名称与图标');
+});
+define('localStorage', coinStorageBefore);
+
+const { DEFAULT_SCHOOL_PARENT_EVALUATION_CONFIG } = await import('../mobile-app/domain/parentEvaluationVisibility');
+for (const allowHomeroomTeacherCustomization of [true, false]) {
+  await renderPage('家长端展示（' + (allowHomeroomTeacherCustomization ? '允许自主设置' : '学校统管') + '）', () => import('../mobile-app/views/ParentEvaluationVisibilityManagementView'), {
+    initialConfig: { ...DEFAULT_SCHOOL_PARENT_EVALUATION_CONFIG, allowHomeroomTeacherCustomization },
+    onSave: noop,
+    onBack: noop,
+  });
+}
+for (const draft of [
+  { name: '空白', text: '', images: [] },
+  { name: '已填写并添加图片', text: '希望支持按学期查看历史记录', images: ['反馈图片'] },
+]) {
+  await renderPage('建议反馈（' + draft.name + '）', async () => ({
+    default: (await import('../mobile-app/views/MeFeatureViews')).SuggestionFeedbackView,
+  }), {
+    text: draft.text, images: draft.images,
+    onTextChange: noop, onAddImage: noop, onRemoveImage: noop, onSubmit: noop,
+  });
+}
+
+const loadFeatureView = name => async () => ({ default: (await import('../mobile-app/views/MeFeatureViews'))[name] });
+const { defaultTeacherGradientPreview } = await import('../mobile-app/styles/teacherGradientPreview');
+await renderPage('设置页', loadFeatureView('MineSettingsView'), {
+  onLogout: noop, gradientPreview: defaultTeacherGradientPreview, onGradientPreviewChange: noop,
+});
+for (const empty of [false, true]) {
+  await renderPage('科目管理（' + (empty ? '空列表' : '有科目') + '）', loadFeatureView('SubjectManagementView'), {
+    subjects: empty ? [] : [{ id: 'subject-1', name: '语文' }, { id: 'subject-2', name: '数学' }],
+    draggingSubjectId: null, onAdd: noop, onEdit: noop, onDelete: noop,
+    onDragStart: noop, onDragOver: noop, onDragEnd: noop,
+  });
+  await renderPage('部门管理（' + (empty ? '空列表' : '有部门') + '）', loadFeatureView('DepartmentManagementView'), {
+    departments: empty ? [] : [{ id: 'department-1', name: '教务处' }, { id: 'department-2', name: '学生发展中心' }],
+    onAdd: noop, onEdit: noop, onDelete: noop,
+  });
+}
+await renderPage('科目及部门名称编辑', loadFeatureView('TextEditSheet'), {
+  title: '修改科目', value: '语文', placeholder: '请输入科目名称', onChange: noop, onCancel: noop, onConfirm: noop,
+});
+await renderPage('科目及部门删除确认', loadFeatureView('DeleteConfirmSheet'), {
+  title: '确认删除该科目？', onCancel: noop, onConfirm: noop,
+});
+
+const { MOCK_CLASSES, GET_MOCK_STUDENTS_FOR_CLASS } = await import('../mobile-app/constants');
+const rosterClass = MOCK_CLASSES[0];
+const rosterStudents = GET_MOCK_STUDENTS_FOR_CLASS(rosterClass.id).slice(0, 6);
+const rosterTeacher = { id: 'roster-teacher', name: '演示老师', teachingAssignments: [{ classId: rosterClass.id, subject: '语文' }], homeroomClassIds: [rosterClass.id], gradeLeaderGrades: [] };
+await renderPage('班级列表', () => import('../mobile-app/views/ClassListView'), {
+  classes: [rosterClass], teacherProfile: rosterTeacher,
+  currentSpace: { id: 'roster-school', title: '示范学校', type: 'school', role: 'teacher', schoolType: 'primary' },
+  classMembershipById: {}, activeListTab: 'class', studentTeams: [], studentTeamEditableClasses: [rosterClass],
+  currentTeacherId: rosterTeacher.id, isSchoolManager: false, canCreateStudentTeam: true,
+  getStudentsForClass: () => rosterStudents, searchStudentsByExactName: () => [], getStudentLabelById: noop,
+  ...Object.fromEntries(['onCreateClass', 'onJoinClass', 'onSelectClass', 'onRestoreStudentStatus', 'onViewClassReport', 'onViewLeaderboard', 'onViewRewardVerification', 'onViewMedalIssuance', 'onBatchEditStudents', 'onViewFaceUpdate', 'onViewBankPassword', 'onViewHomeworkEntry', 'onEditClassInfo', 'onUpdateParentEvaluationVisibility', 'onListTabChange', 'onCreateStudentTeam', 'onUpdateStudentTeam', 'onSelectStudentTeam', 'onSelectStudentTeamInfo', 'onSelectStudentTeamReport'].map(name => [name, noop])),
+});
+for (const scenario of [
+  { name: '普通教师', students: rosterStudents, isSelectionMode: false, canManage: false },
+  { name: '班主任多选', students: rosterStudents, isSelectionMode: true, canManage: true },
+  { name: '空班', students: [], isSelectionMode: false, canManage: true },
+]) {
+  await renderPage('学生列表（' + scenario.name + '）', () => import('../mobile-app/views/ClassDetailView'), {
+    classInfo: rosterClass, students: scenario.students, currentTeacherName: rosterTeacher.name,
+    isSelectionMode: scenario.isSelectionMode, selectedIds: new Set(),
+    canConfigureCardDisplay: scenario.canManage, canResetStudentEvaluationCounts: scenario.canManage, canAddStudent: scenario.canManage,
+    onSelectStudent: noop, onToggleSelectionMode: noop, onSelectionChange: noop, onBack: noop, onAddStudent: noop,
+    onUpdateStudentCardDisplaySettings: noop, onUpdateGroupCardDisplaySettings: noop,
+  });
+}
+await renderPage('班级报告', () => import('../mobile-app/views/ClassReportView'), {
+  classInfo: rosterClass, students: rosterStudents, currentTeacherName: rosterTeacher.name, onSelectStudent: noop,
+}, html => {
+  if (html.includes('对比详情') || html.includes('本周期以正向评价记录为主')) throw new Error('评价记录分布不应显示详情或分析');
+  if (!html.includes('得分排行') || !html.includes('查看得分排行与进步幅度说明')) throw new Error('得分排行应提供规则说明入口');
+  if (!html.includes('记录条数') || html.includes('按评价次数')) throw new Error('学生覆盖应使用记录条数口径');
+  if (!html.includes('/' + rosterStudents.length)) throw new Error('覆盖人数应展示全班人数作为分母');
+});
+
+const { createDefaultClassReportOutline, toggleClassReportSection } = await import('../shared/classReportOutline');
+const outlineDefault = createDefaultClassReportOutline();
+const outlineHidden = toggleClassReportSection(outlineDefault, outlineDefault[1].id);
+const outlineReselected = toggleClassReportSection(outlineHidden, outlineDefault[1].id);
+if (outlineHidden.at(-1).visible || outlineHidden.at(-1).id !== outlineDefault[1].id) throw new Error('取消勾选应移至可选区末尾');
+if (!outlineReselected.at(-1).visible || outlineReselected.at(-1).id !== outlineDefault[1].id) throw new Error('重新勾选应加入已选区末尾');
+
+for (const scenario of [
+  { name: '反向排序', outline: createDefaultClassReportOutline().reverse() },
+  { name: '隐藏中间板块', outline: createDefaultClassReportOutline().map((item, index) => ({ ...item, visible: index % 2 === 0 })) },
+  { name: '全部隐藏', outline: createDefaultClassReportOutline().map(item => ({ ...item, visible: false })) },
+  { name: '恢复默认', outline: createDefaultClassReportOutline() },
+]) {
+  await renderPage('班级报告大纲（' + scenario.name + '）', () => import('../mobile-app/views/ClassReportView'), {
+    classInfo: rosterClass, students: rosterStudents, currentTeacherName: rosterTeacher.name, onSelectStudent: noop,
+    outline: scenario.outline,
+  }, html => {
+    let previousIndex = -1;
+    for (const item of scenario.outline) {
+      const index = html.indexOf('<section aria-labelledby="' + item.id + '"');
+      if (!item.visible && index !== -1) throw new Error('隐藏板块仍然渲染：' + item.id);
+      if (item.visible) {
+        if (index <= previousIndex) throw new Error('报告板块顺序未生效：' + item.id);
+        previousIndex = index;
+      }
+    }
+    if (!html.includes('报告时间范围')) throw new Error('调整大纲后日期筛选应保留');
+  });
+}
+await renderPage('班级报告大纲预览控件', () => import('../components/ClassReportOutlinePreviewControls'), {
+  value: createDefaultClassReportOutline(), onChange: noop,
+}, html => {
+  if ((html.match(/type="checkbox"/g) ?? []).length !== 7) throw new Error('大纲需提供七个显示开关');
+  if (!html.includes('已选板块') || !html.includes('可选板块')) throw new Error('大纲缺少分组');
+  if (html.includes('恢复默认') || html.includes('撤销')) throw new Error('大纲不应保留恢复按钮');
+});
+
+
+for (const schoolType of ['primary', 'middle']) {
+  const dataReportSpace = { id: 'data-report-' + schoolType, title: '示范学校', type: 'school', role: 'administrator', schoolType };
+  await renderPage('学生评价报表初始页（' + schoolType + '）', () => import('../mobile-app/views/LeaderReportView'), {
+    onBack: noop, currentSpace: dataReportSpace,
+  });
+  await renderPage('班级评价报表初始页（' + schoolType + '）', () => import('../mobile-app/views/MoralEducationCockpitView'), {
+    onBack: noop, currentSpace: dataReportSpace,
+  });
+}
+for (const settlementCycle of ['week', 'month']) {
+  await renderPage('班级排行榜（' + settlementCycle + '）', () => import('../mobile-app/views/ClassLeaderboardView'), {
+    settlementCycle, currentSpace: { id: 'ranking-school', title: '示范学校', type: 'school', role: 'administrator', schoolType: 'primary' },
+    classes: MOCK_CLASSES, onOpenEvaluationRecords: noop,
+  });
+}
+
+await renderPage('添加学生', () => import('../mobile-app/views/AddStudentView'), {
+  existingStudents: rosterStudents, onBack: noop, onSave: noop,
+});
+for (const students of [rosterStudents, []]) {
+  await renderPage('批量修改学生（' + (students.length ? '有学生' : '空列表') + '）', () => import('../mobile-app/views/StudentBatchEditView'), {
+    students, onBack: noop, onSave: noop,
+  });
+}
+await renderPage('学生基本资料', () => import('../mobile-app/views/StudentBasicEditView'), {
+  student: rosterStudents[0], classes: MOCK_CLASSES,
+  currentSpace: { id: 'student-profile-school', title: '示范学校', type: 'school', role: 'homeroomTeacher', schoolType: 'primary' },
+  onBack: noop, onChange: noop,
+});
+
+const profileSpace = { id: 'profile-school', title: '示范学校', type: 'school', role: 'teacher', schoolType: 'primary' };
+for (const classRole of ['headTeacher', 'teacher']) {
+  await renderPage('班级详情（' + classRole + '）', () => import('../mobile-app/views/ClassInfoView'), {
+    classInfo: rosterClass, classRole, spaceType: 'school', currentSpace: profileSpace,
+    teacherProfile: rosterTeacher, students: rosterStudents, onBack: noop, onSave: noop,
+  });
+}
+await renderPage('教师个人资料', () => import('../mobile-app/views/TeacherProfileEditView'), {
+  profile: { ...rosterTeacher, schoolName: '示范学校', departmentId: '', departmentName: '' },
+  classes: [rosterClass], subjects: ['语文', '数学'], departments: [], currentSpace: profileSpace,
+  onBack: noop, onChange: noop,
+});
+for (const canManage of [true, false]) {
+  await renderPage('团队详情（' + (canManage ? '负责人' : '协作老师') + '）', () => import('../mobile-app/views/student-team/StudentTeamInfoView'), {
+    team: { id: 'profile-team', name: '篮球社', ownerId: rosterTeacher.id, ownerName: rosterTeacher.name,
+      collaboratorIds: ['collaborator'], collaboratorNames: ['协作老师'], memberIds: rosterStudents.map(student => student.id), visibility: 'management' },
+    canManage, classes: [rosterClass], getStudentsForClass: () => rosterStudents,
+    searchStudentsByExactName: () => [], getStudentLabelById: noop, currentSpace: profileSpace,
+    onBack: noop, onUpdate: noop, onRemoveCollaborator: noop, onTransferOwner: noop, onArchive: noop,
+  });
+}
+
+const teamStyleFixture = { id: 'style-team', name: '跨年级篮球社与课后兴趣活动团队', ownerId: rosterTeacher.id,
+  ownerName: rosterTeacher.name, collaboratorIds: [], collaboratorNames: [],
+  memberIds: rosterStudents.map(student => student.id), visibility: 'management' };
+const teamStyleProps = {
+  classes: [rosterClass], getStudentsForClass: () => rosterStudents, searchStudentsByExactName: () => [],
+  getStudentLabelById: id => { const student = rosterStudents.find(item => item.id === id); return student ? { ...student, classLabel: rosterClass.name } : undefined; },
+  currentSpace: profileSpace, onBack: noop, onClose: noop, onSave: noop,
+};
+for (const mode of ['create', 'add']) {
+  await renderPage('团队创建流程（' + mode + '）', () => import('../mobile-app/views/student-team/StudentTeamCreateView'), {
+    ...teamStyleProps, mode, initialTeam: mode === 'add' ? teamStyleFixture : undefined,
+  });
+}
+await renderPage('团队添加学生（无班级）', () => import('../mobile-app/views/student-team/StudentTeamCreateView'), {
+  ...teamStyleProps, mode: 'add', classes: [], getStudentsForClass: () => [], initialTeam: teamStyleFixture,
+});
+// 团队设置与拍照来源为挂载后的公共弹层，服务端渲染无法覆盖其内容。
+for (const mode of ['members']) {
+  await renderPage('团队编辑初始页（' + mode + '）', () => import('../mobile-app/views/student-team/StudentTeamEditorView'), {
+    ...teamStyleProps, open: true, mode, team: teamStyleFixture,
+  });
+}
+for (const scenario of [
+  { label: '普通列表', students: rosterStudents, isSelectionMode: false },
+  { label: '多选', students: rosterStudents, isSelectionMode: true },
+  { label: '空列表', students: [], isSelectionMode: false },
+]) {
+  await renderPage('团队学生列表（' + scenario.label + '）', () => import('../mobile-app/views/student-team/StudentTeamDetailView'), {
+    team: teamStyleFixture, students: scenario.students, isSelectionMode: scenario.isSelectionMode,
+    selectedIds: new Set([rosterStudents[0].id]), canManage: true, getStudentLabelById: teamStyleProps.getStudentLabelById,
+    onBack: noop, onSelectStudent: noop, onToggleSelectionMode: noop, onSelectionChange: noop,
+  });
+}
+
 
 await renderPage('兑换核销页', () => import('../mobile-app/views/reward-verification/RewardVerificationView'), {
   classInfo: { id: 'render-smoke-class', name: '三年级1班', gradeLevel: '三年级' },
@@ -162,6 +509,285 @@ await renderPage('学生成长币明细页（按月发放）', () => import('../
   if (!plainText(html).includes('每月奖励（2月）')) throw new Error('按月发放时成长嘉奖应展示每月奖励与所属月份');
 });
 
+await renderPage('兑换奖励（空班）', () => import('../mobile-app/views/reward-verification/RewardVerificationView'), {
+  classInfo: rosterClass, currentSpace: profileSpace, students: [], onBack: noop,
+  onViewExchangeRecords: noop, onRecordCoinRedeem: noop, onRecordCoinClear: noop,
+});
+await renderPage('兑换记录（无流水）', () => import('../mobile-app/views/ClassExchangeRecordView'), {
+  students: rosterStudents, entries: [], onRevokeEntry: noop, onBack: noop,
+});
+for (const scenario of [
+  { label: '未开启自动发放', estimate: { enabled: false } },
+  { label: '评价次数不足', estimate: { enabled: true, eligible: false, periodEvaluationCount: 1, minimumEvaluationCount: 5 } },
+  { label: '符合发放条件', estimate: { enabled: true, eligible: true, estimatedTotal: 30, sunshineReward: 10, rankingReward: 20 } },
+]) {
+  await renderPage('成长币明细空流水（' + scenario.label + '）', () => import('../mobile-app/views/StudentCoinDetailView'), {
+    student: rosterStudents[0], onBack: noop,
+    coinDetail: { ...GET_MOCK_CAMPUS_COIN_DETAIL(rosterStudents[0]), issueRecords: [], consumeRecords: [],
+      settlementEstimate: { period: 'weekly', ...scenario.estimate } },
+  });
+}
+
+const archiveDesignProps = {
+  onBack: noop, teacherProfile: rosterTeacher, spaceId: 'style-archive-design', classes: [rosterClass],
+  currentSpace: profileSpace, getStudentsForClass: () => rosterStudents,
+};
+await renderPage('档案设计（空列表）', () => import('../mobile-app/views/archive-design/ArchiveDesignView'), archiveDesignProps, html => {
+  if (!plainText(html).includes('暂无档案')) throw new Error('档案设计空列表应显示缺省内容');
+});
+// 仅在本次服务端渲染中注入档案数据，完成后恢复环境桩，不写入真实浏览器存储。
+const archiveDesignOriginalStorage = globalThis.localStorage;
+try {
+  const entries = new Map();
+  define('localStorage', { ...storage(), getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value) });
+  const { readArchiveWorkspace, persistArchiveWorkspace } = await import('../shared/studentArchiveStore');
+  const workspace = readArchiveWorkspace({ ...archiveDesignProps, teacherName: rosterTeacher.name, homeroomClassIds: rosterTeacher.homeroomClassIds });
+  const template = workspace.templates[0];
+  workspace.templates.push(...['ready', 'published', 'disabled'].map((status, index) => ({
+    ...template, id: 'style-archive-design-' + status, origin: 'school', status,
+    name: ['待启用的学生成长档案', '跨学段综合素养与实践活动成长档案', '已停用的历史档案'][index],
+    gradeScopes: ['一年级', '二年级', '三年级'],
+  })));
+  persistArchiveWorkspace(workspace);
+  await renderPage('档案设计（待启用、使用中、已停用）', () => import('../mobile-app/views/archive-design/ArchiveDesignView'), archiveDesignProps, html => {
+    for (const expected of ['待启用', '使用中', '已停用', '跨学段综合素养与实践活动成长档案']) {
+      if (!plainText(html).includes(expected)) throw new Error('档案列表未展示预期内容：' + expected);
+    }
+  });
+} finally {
+  define('localStorage', archiveDesignOriginalStorage);
+}
+
+await renderPage('学生成长档案首页', () => import('../mobile-app/views/archive-design/StudentArchiveView'), {
+  onBack: noop, student: rosterStudents[0], classInfo: rosterClass, teacherProfile: rosterTeacher,
+  spaceId: 'style-archive-school', classes: [rosterClass], getStudentsForClass: () => rosterStudents, onOpenPendingCollection: noop,
+}, html => {
+  if (!plainText(html).includes('暂无档案')) throw new Error('尚未建立档案时应展示空态');
+});
+const archiveStyleFields = ['text', 'number', 'date', 'rating', 'single', 'multiple', 'multi_fill'].map((type, index) => ({
+  id: type, semanticKey: type, label: '档案字段' + (index + 1), type, sectionId: 'style-section', required: false,
+  options: ['选项一', '其他'], customAnswerOptions: ['其他'],
+  subFields: type === 'multi_fill' ? [{ id: 'item', label: '补充项目', required: false }] : undefined,
+}));
+const archiveStyleAnswers = {
+  text: '保持每天阅读的习惯。', number: '150', date: '2026-10-20', rating: '3',
+  single: { selectedOptions: ['其他'], customText: { 其他: '课后参加合唱训练' } },
+  multiple: { selectedOptions: ['选项一'], customText: {} }, multi_fill: { fillValues: { item: '补充内容' } },
+};
+const editorStyleFieldTypes = archiveStyleFields.map(field => ({
+  value: field.type, label: field.label, choice: ['single', 'multiple'].includes(field.type),
+  rating: field.type === 'rating', subFields: field.type === 'multi_fill',
+}));
+for (const itemLabel of ['字段', '题目']) {
+  for (const layoutMode of ['flat', 'grouped']) {
+    for (const readOnly of [false, true]) {
+      await renderPage('共享编辑器（' + itemLabel + '，' + layoutMode + '，' + (readOnly ? '只读' : '编辑') + '）', () => import('../mobile-app/components/form-builder/FormBuilder'), {
+        shape: 'subtle', layoutMode, sections: [{ id: 'style-section', label: '成长信息' }, { id: 'style-empty', label: '待补充分组' }],
+        fields: archiveStyleFields, itemLabel, readOnly, fieldTypes: editorStyleFieldTypes,
+        createField: () => archiveStyleFields[0], onChange: noop,
+        lockedFieldIds: new Set(['number']), fixedContentFieldIds: new Set(['date']),
+        fieldErrors: { text: { label: '请输入完整内容' } }, listError: readOnly ? '' : '请检查未完成内容',
+      }, html => {
+        for (const expected of ['档案字段1', '档案字段7']) {
+          if (!plainText(html).includes(expected)) throw new Error('共享编辑器缺少字段：' + expected);
+        }
+        if (!readOnly && !plainText(html).includes('请检查未完成内容')) throw new Error('编辑器应保留表单错误提示');
+        if (readOnly && html.includes('title="拖动排序' + itemLabel + '"')) throw new Error('只读预览不应提供拖动编辑入口');
+      });
+    }
+    await renderPage('共享大纲排序（' + itemLabel + '，' + layoutMode + '）', () => import('../mobile-app/components/form-builder/FormOutlineSorter'), {
+      shape: 'subtle', layoutMode, sections: [{ id: 'style-section', label: '成长信息' }, { id: 'style-empty', label: '待补充分组' }],
+      fields: archiveStyleFields, itemLabel, onChange: noop,
+    }, html => {
+      if (!html.includes('aria-label="拖动排序' + itemLabel + '：档案字段1"')) throw new Error('排序器应保留带名称的拖动入口');
+      if (layoutMode === 'grouped' && !plainText(html).includes('待补充分组')) throw new Error('排序器应保留空分组作为移动目标');
+    });
+  }
+}
+await renderPage('共享编辑器默认形态兼容', () => import('../mobile-app/components/form-builder/FormBuilder'), {
+  layoutMode: 'flat', sections: [], fields: archiveStyleFields, itemLabel: '字段', readOnly: true,
+  fieldTypes: editorStyleFieldTypes, createField: () => archiveStyleFields[0], onChange: noop,
+});
+await renderPage('共享排序器默认形态兼容', () => import('../mobile-app/components/form-builder/FormOutlineSorter'), {
+  layoutMode: 'flat', sections: [], fields: archiveStyleFields, itemLabel: '字段', onChange: noop,
+});
+
+for (const layoutMode of ['flat', 'grouped']) {
+  for (const mode of ['preview', 'fill', 'readonly']) {
+    await renderPage('成长档案表单（' + layoutMode + '，' + mode + '）', () => import('../mobile-app/views/archive-design/ArchiveFormRenderer'), {
+      definition: { layoutMode, sections: [{ id: 'style-section', label: '成长信息' }], fields: archiveStyleFields, growthFields: [] },
+      mode, shape: mode === 'preview' ? 'default' : 'subtle', answers: archiveStyleAnswers, onAnswersChange: noop,
+    }, html => {
+      if (!plainText(html).includes('档案字段7')) throw new Error('档案表单应完整渲染各字段类型');
+      if (mode === 'readonly' && !plainText(html).includes('保持每天阅读的习惯。')) throw new Error('只读档案应展示已保存内容');
+      if (mode === 'fill' && !html.includes('aria-checked="true"')) throw new Error('档案填写应保留已有选项状态');
+    });
+  }
+}
+
+await renderPage('值周安排月份概览', () => import('../mobile-app/views/WeeklyDutyScheduleView'), {
+  onBack: noop,
+}, html => {
+  if (!plainText(html).includes('值周安排') || !plainText(html).includes('只看未安排')) throw new Error('值周安排应展示标题与筛选入口');
+});
+
+// 临时补齐默认月份的排班，验证周卡中的多人摘要与未安排状态；不改动应用演示数据。
+const dutyStyleData = await import('../mobile-app/data/weeklyDutySchedule');
+const dutyStyleDomain = await import('../mobile-app/domain/weeklyDutySchedule');
+const dutyStyleOriginalWeeks = [...dutyStyleData.DUTY_TERM_WEEKS];
+const dutyStyleOriginalSchedules = { ...dutyStyleData.INITIAL_DUTY_SCHEDULES };
+try {
+  dutyStyleData.DUTY_TERM_WEEKS.splice(0, dutyStyleData.DUTY_TERM_WEEKS.length, ...dutyStyleDomain.createDutyWeeks('2026-07-27', 6));
+  Object.assign(dutyStyleData.INITIAL_DUTY_SCHEDULES, {
+    '2026-08-03': ['teacher-li-lian', 'teacher-liu-chang'],
+    '2026-08-10': ['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin'],
+  });
+  await renderPage('值周安排周卡与多人摘要', () => import('../mobile-app/views/WeeklyDutyScheduleView'), {
+    onBack: noop,
+  }, html => {
+    for (const label of ['07.27-08.02', '08.31-09.06', '李连、刘畅', '张全有等3人', '未安排']) {
+      if (!plainText(html).includes(label)) throw new Error('值周安排未完整展示周次或教师摘要：' + label);
+    }
+  });
+} finally {
+  dutyStyleData.DUTY_TERM_WEEKS.splice(0, dutyStyleData.DUTY_TERM_WEEKS.length, ...dutyStyleOriginalWeeks);
+  for (const key of Object.keys(dutyStyleData.INITIAL_DUTY_SCHEDULES)) delete dutyStyleData.INITIAL_DUTY_SCHEDULES[key];
+  Object.assign(dutyStyleData.INITIAL_DUTY_SCHEDULES, dutyStyleOriginalSchedules);
+}
+
+const questionnaireStyleProps = {
+  onBack: noop, teacherId: rosterTeacher.id, teacherName: rosterTeacher.name, teacherAvatar: '',
+  spaceId: 'style-questionnaire-school', homeroomClassIds: [rosterClass.id], classes: [rosterClass],
+  currentSpace: profileSpace, getStudentsForClass: () => rosterStudents,
+};
+const questionnaireStyleOriginalStorage = globalThis.localStorage;
+try {
+  const entries = new Map();
+  define('localStorage', { ...storage(), getItem: key => entries.get(key) ?? null, setItem: (key, value) => entries.set(key, value) });
+  const { writeQuestionnaires } = await import('../shared/questionnaireStore');
+  writeQuestionnaires([]);
+  for (const initialMode of ['owned', 'assigned']) {
+    await renderPage('问卷采集空列表（' + initialMode + '）', () => import('../mobile-app/views/questionnaire/QuestionnaireManagementView'), {
+      ...questionnaireStyleProps, initialMode,
+    });
+  }
+  const target = { studentId: rosterStudents[0].id, studentNo: rosterStudents[0].studentNo ?? rosterStudents[0].id,
+    studentName: rosterStudents[0].name, classId: rosterClass.id, className: rosterClass.name, reachable: true };
+  const record = {
+    id: 'style-questionnaire-guardian', title: '学生课外阅读与综合实践活动情况问卷', description: '请按实际情况记录。',
+    creatorName: rosterTeacher.name, creatorTeacherId: rosterTeacher.id, spaceId: questionnaireStyleProps.spaceId,
+    createdAt: '2026-10-20 08:00:00', suggestedDeadline: '', status: 'active', collectionMode: 'guardian_questionnaire',
+    respondentRole: 'guardian', layoutMode: 'grouped', sections: [{ id: 'style-section', label: '成长信息' }],
+    questions: archiveStyleFields.map(field => ({ ...field, title: field.label })), targets: [target],
+    submissions: [{ id: 'style-submission', studentNo: target.studentNo, studentName: target.studentName,
+      guardianRelation: '妈妈', submittedAt: '2026-10-20 09:00:00', answers: archiveStyleAnswers }],
+  };
+  const teacherRecord = { ...record, id: 'style-questionnaire-teacher', title: '教师采集学生成长情况',
+    collectionMode: 'student_information', respondentRole: 'teacher', studentAssignmentMode: 'creator', submissions: [],
+    studentRecords: [{ ...target, id: 'style-student-record', status: 'completed', updatedAt: '2026-10-20 09:00:00',
+      answers: archiveStyleAnswers, assigneeTeacherId: rosterTeacher.id, assigneeTeacherName: rosterTeacher.name }],
+  };
+  const endedRecord = { ...record, id: 'style-questionnaire-ended', status: 'ended' };
+  const emptyRecord = { ...record, id: 'style-questionnaire-empty-results', submissions: [] };
+  writeQuestionnaires([record, teacherRecord, endedRecord, emptyRecord]);
+  for (const initialMode of ['owned', 'assigned']) {
+    await renderPage('问卷采集列表（' + initialMode + '）', () => import('../mobile-app/views/questionnaire/QuestionnaireManagementView'), {
+      ...questionnaireStyleProps, initialMode,
+    });
+  }
+  for (const detailRecord of [record, teacherRecord, endedRecord, emptyRecord]) {
+    await renderPage('问卷详情及题目统计（' + detailRecord.id + '）', () => import('../mobile-app/views/questionnaire/QuestionnaireManagementView'), {
+      ...questionnaireStyleProps, initialRecordId: detailRecord.id,
+    }, html => {
+      for (const expected of ['采集详情', detailRecord.title, '档案字段7']) {
+        if (!plainText(html).includes(expected)) throw new Error('问卷详情缺少预期内容：' + expected);
+      }
+    });
+  }
+} finally {
+  define('localStorage', questionnaireStyleOriginalStorage);
+}
+
+const collectionStyleItem = {
+  id: 'style-collection', questionnaireId: 'style-questionnaire', collectionMode: 'guardian_questionnaire',
+  title: '本学期学生课外阅读与体育活动情况采集', description: '请根据实际情况填写。',
+  creatorName: '演示老师', respondentLabel: '学生家长', completedAt: '2026-10-19 09:00',
+  questions: [
+    { id: 'reading', type: 'text', title: '近期阅读情况', required: true, options: [] },
+    { id: 'notes', type: 'text', title: '其他补充', required: false, options: [] },
+  ], answers: { reading: '每天阅读半小时。' },
+};
+for (const collectionMode of ['guardian_questionnaire', 'student_information']) {
+  await renderPage('采集记录详情（' + collectionMode + '）', () => import('../mobile-app/views/student-collection/StudentCollectionRecordDetailView'), {
+    item: { ...collectionStyleItem, collectionMode }, onBack: noop,
+  }, html => {
+    for (const expected of ['每天阅读半小时。', '未填写', collectionMode === 'guardian_questionnaire' ? '家长问卷' : '学生采集']) {
+      if (!plainText(html).includes(expected)) throw new Error('采集详情缺少预期内容：' + expected);
+    }
+  });
+}
+for (const hasItems of [true, false]) {
+  await renderPage('采集记录列表（' + (hasItems ? '有记录' : '空态') + '）', () => import('../mobile-app/views/student-collection/StudentCollectionHistoryTab'), {
+    items: hasItems ? [collectionStyleItem] : [], selectedTerm: 'style-term',
+    termOptions: [{ value: 'style-term', label: '2026-2027学年上学期', startDate: '2026-09-01', endDate: '2027-01-31' }],
+    onSelectedTermChange: noop, onOpen: noop,
+  }, html => {
+    const expected = hasItems ? '2026年10月' : '暂无采集记录';
+    if (!plainText(html).includes(expected)) throw new Error('采集列表缺少预期内容：' + expected);
+  });
+}
+for (const scenario of [
+  { label: '可管理', classes: MOCK_CLASSES, canEditRecords: true, canDeleteRecords: true },
+  { label: '只读', classes: MOCK_CLASSES, canEditRecords: false, canDeleteRecords: false },
+  { label: '无班级', classes: [], canEditRecords: false, canDeleteRecords: false },
+]) {
+  await renderPage('班级评价记录查询（' + scenario.label + '）', () => import('../mobile-app/views/EvaluationRecordsLogView'), {
+    currentSpace: profileSpace, ...scenario,
+  }, html => {
+    if (scenario.classes.length === 0 && !plainText(html).includes('暂无评价记录')) throw new Error('无班级时应展示评价记录空态');
+  });
+}
+await renderPage('班级评价三级指标编辑器', () => import('../mobile-app/components/evaluation/EvaluationIndicatorCascadePicker'), {
+  value: ['德育', '团结友爱', '主动帮助同学'], options: [['德育', '体育'], ['团结友爱'], ['主动帮助同学']], onChange: noop,
+}, html => {
+  if (!html.includes('aria-selected="true"') || !html.includes('aria-selected="false"')) throw new Error('指标编辑器应保留选中和未选中状态');
+});
+
+const evaluationStyleRecord = {
+  id: 'style-evaluation-positive', evaluation_date: '2026-10-19',
+  indicatorPath: ['德育', '团结友爱', '主动帮助同学解决学习中的困难'],
+  scoreChange: 2, isBad: false, aiComment: '主动帮助同学整理学习资料，并耐心讲解不理解的内容。',
+  description: '今天主动帮助同桌整理复习资料。', teacherId: 'style-teacher', teacherName: '负责跨学科教学的演示老师',
+};
+const evaluationStyleNegative = {
+  ...evaluationStyleRecord, id: 'style-evaluation-negative', evaluation_date: '2026-09-18',
+  scoreChange: -1, isBad: true, teacherId: 'style-other-teacher', teacherName: '另一位老师',
+  aiComment: '需要按时完成课堂练习，遇到困难可以主动寻求帮助。',
+  revisions: [{ id: 'style-revision', editedAt: '2026-10-19T09:00:00',
+    editedByTeacherId: 'style-teacher', editedByTeacherName: '演示老师', reason: '核对原始记录后修正指标。', previous: evaluationStyleRecord }],
+};
+for (const scenario of [
+  { label: '独立列表跨月记录', expected: '2026年9月' },
+  { label: '学生详情嵌入列表', embedded: true, expected: 'AI 智能解读' },
+  { label: '空列表', records: [], expected: '没有符合条件的评价记录' },
+  { label: '本人评价详情', initialRecordId: evaluationStyleRecord.id, expected: '原始记录', editable: true },
+  { label: '他人评价只读及修改留痕', initialRecordId: evaluationStyleNegative.id, expected: '修改记录', editable: false },
+  { label: '修改本人评价', initialRecordId: evaluationStyleRecord.id, initialRecordPage: 'edit', expected: '评价分值' },
+  { label: '班主任修改他人评价', initialRecordId: evaluationStyleNegative.id, initialRecordPage: 'edit', canEditOtherTeachersRecords: true, expected: '修改原因' },
+]) {
+  await renderPage('学生评价记录（' + scenario.label + '）', () => import('../mobile-app/views/StudentEvaluationRecordsView'), {
+    records: [evaluationStyleRecord, evaluationStyleNegative], selectedTerm: 'style-term',
+    termOptions: [{ value: 'style-term', label: '2026-2027学年上学期', startDate: '2026-09-01', endDate: '2027-01-31' }],
+    currentTeacherId: 'style-teacher', currentTeacherName: '演示老师', canEditOtherTeachersRecords: false,
+    onSelectedTermChange: noop, onUpdateRecord: noop, onBack: noop, ...scenario,
+  }, html => {
+    if (!plainText(html).includes(scenario.expected)) throw new Error('评价记录缺少预期内容：' + scenario.expected);
+    if (scenario.editable !== undefined && html.includes('aria-label="修改评价"') !== scenario.editable) {
+      throw new Error('评价详情修改入口与当前教师权限不符');
+    }
+  });
+}
+
 const { MOCK_BEHAVIOR_RECORDS } = await import('../mobile-app/constants');
 await renderPage('学生详情（实际积分）', () => import('../mobile-app/views/DashboardView'), {
   student: demoStudents[0],
@@ -191,6 +817,87 @@ await renderPage('学生详情（实际积分）', () => import('../mobile-app/v
   if (!summary.includes('总分')) throw new Error('学生详情缺少总分摘要');
   const total = summary.match(/总分<\/span><span[^>]*>([^<]+)<\/span>/)?.[1];
   if (total !== '1250') throw new Error('学生详情总分应为实际分项之和，实际为：' + total);
+});
+
+for (const scenario of [
+  { label: '有学生', students: rosterStudents },
+  { label: '空班', students: [] },
+]) {
+  await renderPage('颁发奖章（' + scenario.label + '）', () => import('../mobile-app/views/MedalIssuanceView'), {
+    classInfo: rosterClass, students: scenario.students, onBack: noop,
+  });
+}
+await renderPage('设置兑换密码（空班）', () => import('../mobile-app/views/bank-password/BankPasswordView'), {
+  classInfo: rosterClass, currentSpace: profileSpace, students: [], onBack: noop,
+});
+await renderPage('更新人脸（空班）', () => import('../mobile-app/views/face-update/FaceUpdateView'), {
+  classInfo: { ...rosterClass, id: 'style-face-empty' }, currentSpace: profileSpace, students: [], onBack: noop,
+});
+
+const homeworkFixture = {
+  id: 'style-homework', schoolId: profileSpace.id, schoolName: profileSpace.title,
+  classId: rosterClass.id, className: rosterClass.name, subject: '语文', teacherName: rosterTeacher.name,
+  date: '2026-10-19', title: '阅读课文并完成课后练习，记录需要讲解的问题', source: 'manual', creatorName: rosterTeacher.name,
+  createdAt: '2026-10-19T08:00:00', updatedAt: '2026-10-19T08:00:00',
+  results: rosterStudents.map((student, index) => ({ studentId: student.id, studentNo: String(index + 1), studentName: student.name, status: 'good' })),
+};
+for (const scenario of [
+  { label: '有作业', assignments: [homeworkFixture], subjects: ['语文', '数学'] },
+  { label: '暂无作业', assignments: [], subjects: ['语文'] },
+  { label: '未配置学科', assignments: [], subjects: [] },
+]) {
+  await renderPage('作业录入（' + scenario.label + '）', () => import('../mobile-app/views/HomeworkEntryView'), {
+    schoolId: profileSpace.id, schoolName: profileSpace.title, classInfo: rosterClass, currentSpace: profileSpace,
+    students: rosterStudents, subjects: scenario.subjects, teacherName: rosterTeacher.name,
+    assignments: scenario.assignments, onSaveAssignment: noop, onBack: noop,
+  });
+}
+for (const scenario of [
+  { label: '无任务', tasks: [] },
+  { label: '待核对与已完成', tasks: [
+    { id: 'style-import-pending', fileName: '作业记录表.jpg', className: rosterClass.name, subject: '语文', teacherName: rosterTeacher.name,
+      assignments: [homeworkFixture], issues: [{ id: 'style-issue', type: 'low_confidence', message: '请核对学生等级', resolved: false }] },
+    { id: 'style-import-done', fileName: '已核对记录表.jpg', className: rosterClass.name, subject: '数学', teacherName: rosterTeacher.name,
+      assignments: [homeworkFixture], issues: [] },
+  ] },
+]) {
+  await renderPage('批量作业录入（' + scenario.label + '）', () => import('../mobile-app/views/HomeworkBatchImportView'), {
+    schoolId: profileSpace.id, schoolName: profileSpace.title, operatorName: rosterTeacher.name,
+    rosters: [], assignments: [homeworkFixture], tasks: scenario.tasks,
+    classes: [rosterClass], currentSpace: profileSpace, onChangeTasks: noop,
+    onSubmitAssignments: () => ({ saved: 0, skipped: 0 }), onSyncAssignments: noop, onDeleteTask: noop, onBack: noop,
+  });
+}
+
+const growthStyleRecord = { id: 'style-growth', studentId: rosterStudents[0].id, recordedAt: '2026-10-19',
+  values: { height_cm: 150, weight_kg: 40 }, sourceType: 'mobile-entry', sourceLabel: '教师手机端新增',
+  sourceRecordId: 'style-source', version: 1, createdAt: '2026-10-19', updatedAt: '2026-10-19' };
+const healthStyleRecord = { id: 'style-health', studentId: rosterStudents[0].id, examDate: '2026-10-19',
+  heightCm: 150, weightKg: 40, bmi: 17.8, nakedVisionLeft: '5.0', nakedVisionRight: '5.0',
+  correctedVisionLeft: '', correctedVisionRight: '', glassesType: '不戴镜', conclusion: '演示体检记录', conclusionTags: [],
+  sourceType: 'mobile-entry', sourceLabel: '教师手机端新增', version: 1, createdAt: '2026-10-19', updatedAt: '2026-10-19', corrections: [] };
+for (const scenario of [
+  { label: '有记录可编辑', empty: false, canEdit: true },
+  { label: '有记录只读', empty: false, canEdit: false },
+  { label: '无记录可编辑', empty: true, canEdit: true },
+  { label: '无记录只读', empty: true, canEdit: false },
+]) {
+  const growthProps = { studentId: rosterStudents[0].id, studentName: rosterStudents[0].name,
+    canEdit: scenario.canEdit, operator: rosterTeacher.name, onBack: noop, onSaved: noop };
+  await renderPage('成长数据（' + scenario.label + '）', () => import('../mobile-app/views/student-growth/StudentBodyMeasurementsView'), {
+    ...growthProps, records: scenario.empty ? [] : [growthStyleRecord],
+  });
+  await renderPage('体检记录（' + scenario.label + '）', () => import('../mobile-app/views/student-growth/StudentHealthRecordsView'), {
+    ...growthProps, records: scenario.empty ? [] : [healthStyleRecord],
+  });
+}
+await renderPage('学生详情（成长报告目录）', () => import('../mobile-app/views/DashboardView'), {
+  student: rosterStudents[0], classInfo: rosterClass, currentSpace: profileSpace, initialSection: 'report',
+  scores: [], growthReports: [], collectionHistory: [], evaluationRecords: [],
+  campusCoinDetail: GET_MOCK_CAMPUS_COIN_DETAIL(rosterStudents[0]), currentTeacherId: rosterTeacher.id,
+  currentTeacherName: rosterTeacher.name, canEditOtherTeachersEvaluationRecords: false,
+  onBack: noop, onEditBasicInfo: noop, onUpdateStudentStatus: noop, onViewCampusCoins: noop, onViewTermReport: noop,
+  onUpdateEvaluationRecord: noop, onViewCollectionRecord: noop, onOpenStudentArchive: noop,
 });
 
 await renderPage('设置兑换密码页', () => import('../mobile-app/views/bank-password/BankPasswordView'), {
@@ -239,6 +946,31 @@ await renderPage('更新人脸数据页（全班已录入）', () => import('../
   if (!html.includes('data:image/jpeg')) throw new Error('已录入学生应展示采集照风格头像。');
 });
 
+const meStyleActions = Object.fromEntries([
+  'onNavigateToFiles', 'onEditTeacherProfile', 'onOpenTermGenerateModal', 'onViewLeaderReport',
+  'onOpenMoralEducationCockpit', 'onOpenWeeklyDutySchedule', 'onOpenParentEvaluationVisibility',
+  'onOpenHomeworkBatchImport', 'onOpenSettings', 'onOpenSubjectManagement', 'onOpenDepartmentManagement',
+  'onOpenCoinIssuance', 'onOpenSuggestionFeedback', 'onOpenQuestionnaire', 'onOpenAssignedCollections',
+  'onOpenArchiveDesign', 'onOpenReportManagement', 'onOpenAiHeadteacherAssistant', 'onOpenAiPrincipalAssistant',
+  'onToggleSpaceSheet',
+].map(name => [name, noop]));
+for (const scenario of [
+  { role: 'administrator', type: 'school', pending: 3 },
+  { role: 'teacher', type: 'school', pending: 0 },
+  { role: 'owner', type: 'personal', pending: 1 },
+]) {
+  await renderPage('我的页面（' + scenario.role + '）', () => import('../mobile-app/views/MeView'), {
+    ...meStyleActions, teacherProfile: { ...rosterTeacher, name: '演示老师' }, isSpaceSheetOpen: false,
+    currentSpace: { ...profileSpace, role: scenario.role, type: scenario.type }, pendingCollectionCount: scenario.pending,
+  }, html => {
+    const text = plainText(html);
+    if (!text.includes('演示老师') || !html.includes('aria-label="设置"')) throw new Error('我的页面应保留个人资料及设置入口');
+    if (text.includes('待填写采集') !== (scenario.pending > 0)) throw new Error('采集待办应按待办数量显示');
+    if (scenario.role === 'administrator' && !html.includes('aria-label="成长币规则"')) throw new Error('管理员应保留成长币规则入口');
+    if (scenario.role === 'teacher' && html.includes('aria-label="成长币规则"')) throw new Error('普通老师不应出现管理配置入口');
+  });
+}
+
 await renderPage('教师手机端登录页', () => import('../mobile-app/views/TeacherLoginView'), {
   onLogin: noop,
 });
@@ -279,6 +1011,43 @@ for (const combination of [
       }
     },
   );
+}
+
+for (const replying of [false, true]) {
+  await renderPage('助理输入区（' + (replying ? '回复中' : '可提问') + '）', () => import('../mobile-app/components/assistant-chat/AssistantComposer'), {
+    draft: '', replying, suggestedQuestions: ['本周哪些方面需要重点关注？'],
+    placeholder: '输入问题', onDraftChange: noop, onSubmit: noop,
+  }, html => {
+    if (!html.includes('aria-label="切换到文字输入"') || !html.includes('aria-label="按住说话"')) throw new Error('助理输入区应保留语音和文字入口');
+    const disabledCount = (html.match(/disabled=""/g) ?? []).length;
+    if (disabledCount !== (replying ? 2 : 0)) throw new Error('回复中应同时禁用语音提交与快捷问题，保留模式切换');
+  });
+}
+
+// 同一公共组件：能力参数、语音状态、文字草稿与发送约束。
+for (const camera of [false, true]) {
+  for (const scenario of [
+    { name: '语音待输入', mode: 'voice', state: 'idle', value: '' },
+    { name: '按住说话', mode: 'voice', state: 'listening', value: '' },
+    { name: '上移取消', mode: 'voice', state: 'canceling', value: '' },
+    { name: '文字空白', mode: 'text', state: 'idle', value: '' },
+    { name: '文字草稿', mode: 'text', state: 'idle', value: '今天积极参与劳动。' },
+    { name: '回复中', mode: 'text', state: 'idle', value: '本周表现如何？', disabled: true },
+  ]) {
+    await renderPage('统一输入（' + (camera ? '含拍照' : '无拍照') + '，' + scenario.name + '）', () => import('../mobile-app/components/ui/MobileInputComposer'), {
+      mode: scenario.mode, voiceState: scenario.state, value: scenario.value, disabled: scenario.disabled,
+      onModeChange: noop, onChange: noop, onSubmit: noop, ...(camera ? { onCameraClick: noop } : {}),
+    }, html => {
+      if (html.includes('aria-label="拍照记录"') !== camera) throw new Error('拍照入口必须只由能力参数决定');
+      if (!html.includes('mobile-input-composer')) throw new Error('必须使用同一玻璃面板');
+      if (scenario.mode === 'text') {
+        if (!html.includes('<input') || !html.includes('value="' + scenario.value + '"')) throw new Error('文字态必须完整保留草稿');
+        if (html.includes('aria-label="发送问题"') !== Boolean(scenario.value.trim())) throw new Error('空文字不得展示发送按钮');
+      }
+      if (scenario.state === 'canceling' && !plainText(html).includes('松开取消')) throw new Error('取消录音状态必须可辨识');
+      if (scenario.disabled && !html.includes('disabled=""')) throw new Error('回复中应禁止再次发送');
+    });
+  }
 }
 
 // 校长助理：三个报告入口和自由对话都在同一页，缺一块就会出现打开即白屏。
@@ -327,6 +1096,30 @@ await renderPage('本周行动建议页', () => import('../mobile-app/views/Week
   if (!plainText(html).includes('根据7月7日-13日评价记录生成')) throw new Error('报告应保留数据来源');
 });
 
+const adviceStyleData = await import('../mobile-app/data/weeklyActionAdvice');
+await renderPage('本周行动建议示例正文', () => import('../mobile-app/views/WeeklyActionAdviceView'), {
+  onBack: noop, report: adviceStyleData.WEEKLY_ACTION_ADVICE_SAMPLE_REPORT, simulateLoading: false,
+}, html => {
+  if (!plainText(html).includes('查看依据')) throw new Error('示例正文应保留查看依据入口');
+});
+await renderPage('本周行动建议数据不足', () => import('../mobile-app/views/WeeklyActionAdviceView'), {
+  onBack: noop, data: adviceStyleData.WEEKLY_ACTION_ADVICE_CURRENT_BY_CLASS.c_2025_1, simulateLoading: false,
+}, html => {
+  if (!plainText(html).includes('上周数据不足，暂时无法生成本周行动建议。')) throw new Error('数据不足状态应保留完整无障碍提示');
+});
+await renderPage('本周行动建议异常与重试入口', () => import('../mobile-app/views/WeeklyActionAdviceView'), {
+  onBack: noop, reportPayload: {}, onRetry: noop, simulateLoading: false,
+}, html => {
+  for (const label of ['报告暂时无法展示', '重新加载']) {
+    if (!plainText(html).includes(label)) throw new Error('报告异常状态缺少：' + label);
+  }
+});
+await renderPage('往期建议空列表', () => import('../mobile-app/views/WeeklyActionAdviceHistoryView'), {
+  onBack: noop, classes: [], initialClassId: 'empty-class',
+}, html => {
+  if (!plainText(html).includes('暂无往期建议')) throw new Error('往期建议无记录时应显示缺省提示');
+});
+
 await renderPage('往期建议页', () => import('../mobile-app/views/WeeklyActionAdviceHistoryView'), {
   onBack: noop,
   classes: assistantClasses,
@@ -347,6 +1140,26 @@ await renderPage('我的评价复盘页', () => import('../mobile-app/views/Teac
 }, html => {
   if (plainText(html).includes('生成时间')) throw new Error('复盘底部不应出现生成时间');
   if (!plainText(html).includes('根据你在6月的评价记录生成')) throw new Error('复盘数据来源应按自然月表述');
+});
+
+const reviewStyleData = await import('../mobile-app/data/teacherEvaluationReview');
+const insufficientReview = reviewStyleData.TEACHER_EVALUATION_REVIEW_CURRENT_BY_CLASS.c_2025_1;
+await renderPage('我的评价复盘记录不足', () => import('../mobile-app/views/TeacherEvaluationReviewView'), {
+  onBack: noop, data: insufficientReview, simulateLoading: false,
+}, html => {
+  for (const label of ['暂时无法生成评价复盘。', '查看报告示例', `还差${Math.max(0, insufficientReview.targetRecords - insufficientReview.overview.records)}条`]) {
+    if (!plainText(html).includes(label)) throw new Error('记录不足状态缺少：' + label);
+  }
+});
+await renderPage('我的评价复盘异常与重试', () => import('../mobile-app/views/TeacherEvaluationReviewView'), {
+  onBack: noop, onRetry: noop, reportPayload: {}, simulateLoading: false,
+}, html => {
+  if (!plainText(html).includes('报告暂时无法展示') || !plainText(html).includes('重新加载')) throw new Error('复盘异常应展示错误与重试入口');
+});
+await renderPage('往期复盘空列表', () => import('../mobile-app/views/TeacherEvaluationReviewHistoryView'), {
+  onBack: noop, classes: [], initialClassId: 'empty-class',
+}, html => {
+  if (!plainText(html).includes('暂无往期复盘')) throw new Error('复盘无记录时应展示缺省提示');
 });
 
 await renderPage('往期复盘页', () => import('../mobile-app/views/TeacherEvaluationReviewHistoryView'), {
@@ -403,6 +1216,27 @@ await renderPage('学期学校报告页', () => import('../mobile-app/views/Prin
   if (text.includes('学生综合素质评价系统学期运营报告')) throw new Error('学期报告不应再展示固定的报告标题文案');
   if (!text.includes('根据2025-2026学年上学期评价记录生成')) throw new Error('学期报告应只保留一句数据来源');
 });
+
+for (const reportKind of ['weekly', 'monthly', 'term']) {
+  const loadReport = reportKind === 'term'
+    ? () => import('../mobile-app/views/PrincipalTermReportView')
+    : () => import('../mobile-app/views/PrincipalPeriodicReportView');
+  const reportProps = {
+    kind: reportKind, schoolName: '示范学校', onBack: noop, onRetry: noop,
+    term: { id: 'render-smoke-term', name: '2025-2026学年上学期', startDate: '2025-09-01', endDate: '2026-01-20' },
+  };
+  for (const reportState of ['empty', 'failed', 'invalid']) {
+    await renderPage('校长报告状态（' + reportKind + '，' + reportState + '）', loadReport, {
+      ...reportProps, status: reportState === 'invalid' ? 'generated' : reportState,
+      ...(reportState === 'invalid' ? { reportPayload: {} } : {}),
+    }, html => {
+      const text = plainText(html);
+      if (reportState === 'empty' && (!text.includes('暂无可分析数据') || text.includes('重新生成'))) throw new Error('无数据状态应明确提示且不提供重新生成');
+      if (reportState === 'failed' && (!text.includes('生成失败') || !text.includes('重新生成'))) throw new Error('生成失败应保留重试入口');
+      if (reportState === 'invalid' && (!text.includes('报告暂时无法展示') || !text.includes('重新加载'))) throw new Error('不完整报告应展示异常与重新加载入口');
+    });
+  }
+}
 
 await renderPage('往期学校复盘页', () => import('../mobile-app/views/PrincipalReportHistoryView'), {
   kind: 'monthly',
@@ -541,11 +1375,23 @@ for (const actorId of ['t1', 't2']) {
       if (initialTab === 'archive' && actorId === 't1') {
         for (const label of ['基本信息', '任职信息', '资格证书', '工作经历']) if (!text.includes(label)) throw new Error('教师档案缺少' + label);
         if (text.includes('全校教师')) throw new Error('教师不应看到全校教师目录');
+        if (!text.includes('今天，我与刘甜家长沟通学生学习习惯。')) throw new Error('教师档案应展示本人原话，而非旧摘要');
       }
       if (initialTab === 'archive' && actorId === 't2' && !text.includes('全校教师')) throw new Error('管理者应访问全校目录');
-      if (initialTab === 'report' && actorId === 't2' && !text.includes('赵宁')) throw new Error('全校报表应包含无记录教师');
+      if (initialTab === 'report' && actorId === 't2' && (!text.includes('教师人数') || !text.includes('统计报表'))) throw new Error('全校报表应提供概览与统计报表入口');
     });
   }
+}
+// 报表的次级视图单独渲染，避免只覆盖默认看板。
+const developmentData = await import('../mobile-app/teacher-development/data');
+const developmentReporting = await import('../mobile-app/teacher-development/reporting');
+for (const [schoolScope, kind] of [[false, 'records'], [true, 'records'], [true, 'people'], [true, 'profiles']]) {
+  const report = developmentReporting.buildDevelopmentReport(schoolScope ? developmentData.TEACHERS : [developmentData.TEACHERS[0]], developmentData.INITIAL_RECORDS, developmentData.INDICATORS, '2026-autumn');
+  await renderPage('教师评价统计报表（' + (schoolScope ? '全校' : '本人') + ' / ' + kind + '）', () => import('../mobile-app/teacher-development/ReportStatistics'), { report, schoolScope, state: { page: 'statistics', kind, grouping: 'subject' }, onState: noop, onDrill: noop, onTeacher: noop }, html => {
+    const text = plainText(html);
+    if (schoolScope && kind === 'records' && !text.includes('赵宁')) throw new Error('记录统计必须包含零记录教师');
+    if (!schoolScope && (!text.includes('指标得分') || text.includes('赵宁'))) throw new Error('个人指标报表应只显示本人');
+  });
 }
 for (const initialActorId of ['t2', 't4']) {
   await renderPage('教师评价审核（' + initialActorId + '）', () => import('../mobile-app/teacher-development/TeacherDevelopmentApp'), { initialActorId, initialTab: 'record', initialRecordMode: 'review' }, html => {
@@ -554,7 +1400,10 @@ for (const initialActorId of ['t2', 't4']) {
     if (text.includes('按住说话')) throw new Error('审核功能不应显示录入条');
   });
 }
-const developmentData = await import('../mobile-app/teacher-development/data');
+await renderPage('教师评价指标导图', () => import('../mobile-app/teacher-development/IndicatorView'), { indicators: developmentData.INDICATORS, onBack: noop });
+for (const scope of ['student', 'class']) {
+  await renderPage('教师手机端指标导图（' + scope + '）', () => import('../mobile-app/views/TeacherIndicatorCatalogView'), { scope, onBack: noop });
+}
 const profileModule = await import('../mobile-app/teacher-development/ArchiveView');
 for (const [part, expected] of [['basic', '学科教学（语文）'], ['positions', '高一1班、2班'], ['qualifications', '2014**********2186'], ['experience', '成都市实验中学']]) {
   await renderPage('教师完整资料（' + part + '）', async () => ({ default: profileModule.ProfileDetails }), { teacher: developmentData.TEACHERS[0], part }, html => {
@@ -565,5 +1414,55 @@ await renderPage('管理者查看教师档案', () => import('../mobile-app/teac
   if (!plainText(html).includes('王悦的档案')) throw new Error('管理者查看对象应明确');
 });
 
-// 渲染结束后主动退出：个别模块会留下常驻定时器，让进程一直挂着不返回。
+
+const reportAppearanceDomain = await import('../mobile-app/domain/termReportAppearance');
+const reportAppearanceStore = await import('../mobile-app/services/termReportAppearanceStore');
+const reportSpace = { id: 'cover-config-smoke', title: '星河实验学校', type: 'school', role: 'administrator', schoolType: 'nineYear' };
+await renderPage('报告配置（默认关闭）', () => import('../mobile-app/views/ReportManagementView'), { currentSpace: reportSpace, onBack: noop }, html => {
+  if (!html.includes('个性化封面配置') || !html.includes('aria-checked="false"')) throw new Error('封面配置默认应关闭');
+  if (html.includes('封面工具')) throw new Error('关闭时隐藏工具');
+});
+const previousGetItem = localStorage.getItem;
+for (const mode of ['school', 'stage']) {
+  const config = { ...reportAppearanceDomain.createReportAppearance('星河实验学校'), enabled: true, mode };
+  localStorage.getItem = key => key === reportAppearanceStore.appearanceKey(reportSpace.id) ? JSON.stringify(config) : null;
+  await renderPage('统一报告配置（旧模式 ' + mode + '）', () => import('../mobile-app/views/ReportManagementView'), { currentSpace: reportSpace, onBack: noop }, html => {
+    for (const label of ['封面预览', '编辑封面', 'cover-preview__overlay']) if (!html.includes(label)) throw new Error('缺少：' + label);
+    for (const label of ['按学校', '按学段', '区分男女', '男生', '女生', 'A4', '小学低段']) if (html.includes(label)) throw new Error('第一版不应出现：' + label);
+    for (const label of ['封面工具', '背景配色', '上传学校标识', '保存', 'cover-artwork-control']) if (html.includes(label)) throw new Error('预览页不得出现编辑操作：' + label);
+  });
+}
+localStorage.getItem = previousGetItem;
+const imageAsset = { src: 'data:image/png;base64,c2FtcGxl', width: 1600, height: 1600, name: 'cover.png' };
+const customAppearance = { ...reportAppearanceDomain.createReportAppearance('星河实验学校'), enabled: true, assets: { ip: imageAsset }, defaultCover: { ...reportAppearanceDomain.DEFAULT_COVER_STYLE, artwork: 'custom', theme: 'blue', imageId: 'ip', imageScale: 85, imageOffsetX: 5, imageOffsetY: -3, imageRotation: 25 } };
+await renderPage('独立封面编辑页（默认展开图片）', () => import('../mobile-app/components/term-report/SchoolCoverSettings'), { config: customAppearance, draft: null, grade: '一年级', onChange: noop, onSave: noop, onBusyChange: noop }, html => {
+  for (const label of ['封面实时预览', '缩放封面图', '旋转封面图', '取消选中封面图', '封面图设置', '封面工具', '校徽', '背景', '保存']) if (!html.includes(label)) throw new Error('编辑页缺少：' + label);
+  if (html.includes('编辑封面') || html.includes('返回编辑') || html.includes('个性化封面配置')) throw new Error('编辑页不应出现预览页入口');
+  if (html.includes('type="range"')) throw new Error('缩放直接在画布完成，不应显示底部滑杆');
+  const toolbar = html.slice(html.indexOf('school-cover-workspace__toolbar'), html.indexOf('school-cover-workspace__panel'));
+  if (toolbar.includes('<svg')) throw new Error('底部工具应为纯文字');
+  if (html.indexOf('school-cover-workspace__toolbar') > html.indexOf('school-cover-workspace__panel')) throw new Error('选项必须在工具按钮下方');
+  if (html.indexOf('school-cover-workspace__save') < html.indexOf('school-cover-workspace__panel')) throw new Error('保存必须独立放在面板下方');
+});
+for (const gender of ['male', 'female']) for (const grade of ['一年级', '五年级', '七年级']) {
+  await renderPage('统一封面（' + gender + ' / ' + grade + '）', () => import('../mobile-app/components/term-report/TermReportCover'), { student: { id: 'cover', name: '陈子涵', gender, grade, class: '1班' }, appearance: customAppearance, tags: ['勤学', '善思', '合作'] }, html => {
+    if (!html.includes(imageAsset.src) || !html.includes('--cover-image-scale:0.85') || !html.includes('--cover-image-x:5%') || !html.includes('--cover-image-rotation:25deg')) throw new Error('不同学段及性别必须应用统一图片及位置');
+  });
+}
+await renderPage('学校封面默认预览（无上传图片）', () => import('../mobile-app/components/term-report/SchoolCoverSettings'), {
+  config: { ...reportAppearanceDomain.createReportAppearance('星河实验学校'), enabled: true }, draft: null, grade: '一年级', onChange: noop, onSave: noop, onBusyChange: noop,
+}, html => {
+  for (const text of ['成长手册', '陈子涵', '好奇善问', 'term-report-cover__wash']) if (!html.includes(text)) throw new Error('无图片时仍须展示完整封面：' + text);
+  if (html.includes('<img') || html.includes('请上传')) throw new Error('无图片时不得回退默认插画或占位提示');
+  if ((html.match(/星河实验学校/g) ?? []).length !== 1) throw new Error('校名仅在封面成品中展示');
+});
+
+await renderPage('公共组件库：语音与文字输入', () => import('../components/PublicInputComposerDemo'), {}, html => {
+  for (const label of ['语音与文字输入', '预览配置', '使用场景', '阴影档位', '语音状态', '核心入参', '使用示例', '拍照记录', '按住说话']) {
+    if (!plainText(html).includes(label)) throw new Error('公共输入预览缺少：' + label);
+  }
+  if (!html.includes('mobile-input-composer') || !html.includes('data-shadow="floating"')) throw new Error('组件库必须复用正式输入控件与场景参数');
+});
+
+// 渲染结束后主动退出：个别模块会留下常驻定时器。
 process.exit(0);

@@ -34,10 +34,10 @@ requireText(sourceTriggerSource, "density?: 'default' | 'compact';", '班级来�
 requireText(sourceTriggerSource, 'inline-flex h-9 max-w-full items-center', '紧凑来源触发器的可见胶囊应为 36px。');
 requireText(sourceTriggerSource, 'inline-flex min-h-11 max-w-full items-center', '来源触发器应继续保留 44px 触控高度。');
 requireText(sheetSource, '<MobileBottomSheet open title="切换班级来源" onClose={onClose} contentTone="plain">', '班级来源抽屉内容区应使用统一浅灰底。');
-requireText(sheetSource, 'space-y-3 py-[var(--tm-space-3)]', '来源列表应在浅灰内容区内保留上下内边距。');
+requireText(sheetSource, 'space-y-[var(--tm-layout-card-gap)] py-[var(--tm-space-3)]', '来源列表应在浅灰内容区内保留上下内边距。');
 requireText(sheetSource, 'text-[length:var(--tm-font-size-body)] font-medium leading-5', '所有来源名称应统一使用14px字号、20px行高和500字重。');
 requireText(sheetSource, 'min-h-[60px]', '来源卡片高度应按标注收紧为 60px。');
-requireText(sheetSource, 'rounded-[var(--tm-radius-inner)]', '来源卡片应使用统一内层圆角令牌。');
+requireText(sheetSource, 'rounded-[var(--tm-radius-card-compact)]', '来源卡片应使用统一内层圆角令牌。');
 requireText(sheetSource, 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]', '未选中来源应使用白色表面和白底专用阴影。');
 requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft)]', '当前来源卡片应使用浅红选中底。');
 requireText(sheetSource, 'ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]', '当前来源卡片应使用品牌红描边与统一卡片阴影。');

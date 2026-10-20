@@ -33,7 +33,7 @@ interface MoralEducationCockpitViewProps {
 
 type TrendMetric = 'averageScore' | 'deduction';
 
-const reportCardClassName = 'rounded-[var(--tm-radius-card)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]';
+const reportCardClassName = 'rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-[var(--tm-report-card-padding)] [box-shadow:var(--tm-shadow-card)]';
 
 const periodTypeNames: Record<MoralEducationPeriodType, string> = {
     week: '周',
@@ -422,9 +422,9 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                     </div>
                 </div>
 
-                <div className="space-y-[var(--tm-report-card-gap)] px-[var(--tm-report-page-inline)] pt-[var(--tm-report-card-gap)]">
+                <div className="space-y-[var(--tm-space-3)] px-[var(--tm-report-page-inline)] pt-[var(--tm-space-3)]">
                     {isLoading && (
-                        <div className="rounded-[var(--tm-radius-inner)] bg-[var(--tm-bg-surface)] px-4 py-3 text-center text-[12px] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card)]">数据加载中...</div>
+                        <div className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-3 text-center text-[12px] text-[var(--tm-text-secondary)] [box-shadow:var(--tm-shadow-card)]">数据加载中...</div>
                     )}
 
                     {loadError && !isLoading && (
@@ -445,7 +445,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                         <>
                             <section aria-label="班级评价数据概况">
                                 <SectionHeader title="数据概况" />
-                                <div className="min-h-[var(--tm-report-summary-min-height)] overflow-hidden rounded-[var(--tm-radius-inner)] border border-[var(--tm-report-summary-border)] bg-[var(--tm-report-summary-surface)]">
+                                <div className="min-h-[var(--tm-report-summary-min-height)] overflow-hidden rounded-[var(--tm-radius-card-compact)] border border-[var(--tm-report-summary-border)] bg-[var(--tm-report-summary-surface)]">
                                     <div className="grid grid-cols-2 gap-[var(--tm-report-summary-column-gap)] bg-[var(--tm-report-summary-data-surface)] p-[var(--tm-report-summary-padding)]">
                                         <div className="min-w-0">
                                             <div className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">平均得分</div>
@@ -569,14 +569,14 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                 <SectionHeader
                                     title="周期趋势"
                                     action={(
-                                        <div className="flex h-9 rounded-[var(--tm-radius-control)] bg-[var(--tm-bg-surface-muted)] p-1">
+                                        <div className="flex h-9 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-1">
                                             {trendMetricOptions.map(option => (
                                                 <button
                                                     key={option.key}
                                                     type="button"
                                                     aria-pressed={trendMetric === option.key}
                                                     onClick={() => setTrendMetric(option.key)}
-                                                    className={`min-w-[66px] rounded-[var(--tm-radius-control)] px-2 text-[11px] font-semibold ${trendMetric === option.key
+                                                    className={`min-w-[66px] rounded-[var(--tm-form-segment-active-radius)] px-2 text-[11px] font-semibold ${trendMetric === option.key
                                                         ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]'
                                                         : 'text-[var(--tm-text-secondary)]'}`}
                                                 >
@@ -605,7 +605,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                 </div>
             </div>
 
-            <MobileDatePickerSheet
+            <MobileDatePickerSheet shape="subtle"
                 open={isPeriodSheetOpen}
                 mode={reportPeriodType}
                 title={`选择${periodTypeLabels[reportPeriodType]}`}
