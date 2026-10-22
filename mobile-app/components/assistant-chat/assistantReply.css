@@ -1,0 +1,127 @@
+.assistant-reply-bubble {
+  position: relative;
+  isolation: isolate;
+  flex: 0 1 auto;
+  width: fit-content;
+  min-width: calc(3 * var(--tm-assistant-thinking-dot-size) + 2 * var(--tm-assistant-thinking-dot-gap) + 2rem);
+  max-width: 100%;
+  border-radius: var(--tm-assistant-bubble-speaker-radius) var(--tm-assistant-bubble-radius) var(--tm-assistant-bubble-radius) var(--tm-assistant-bubble-radius);
+}
+
+/* 正文出现第二行（包括第二个自然段）即满宽，后续不再收缩。 */
+.assistant-reply-bubble[data-width-locked="true"] {
+  width: 100%;
+}
+
+/* 单行阶段只在水平方向约束新文字，尺寸跟随期间不允许文字跑到气泡外。
+   测量时恢复自然换行；一旦多行立即切换满宽。高度始终由正文自然撑开。 */
+.assistant-reply-bubble:not([data-width-locked="true"]):not([data-measuring="true"]) {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+.assistant-reply-bubble:not([data-width-locked="true"]):not([data-measuring="true"]) p {
+  white-space: nowrap;
+}
+.assistant-reply-bubble:not([data-width-locked="true"]):not([data-measuring="true"]) .assistant-reply-chunk {
+  max-width: none;
+  white-space: pre;
+}
+
+.assistant-reply-surface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.assistant-reply-content {
+  position: relative;
+  min-height: 44px;
+}
+
+.assistant-reply-bubble:not([data-thinking="true"]) .assistant-reply-content {
+  padding-inline-end: var(--tm-assistant-thinking-padding-inline);
+}
+
+/* 首行宽度过渡时，文字的显示边界也保留相同的右侧间距，不触及气泡边缘。 */
+.assistant-reply-bubble:not([data-thinking="true"]):not([data-width-locked="true"]):not([data-measuring="true"]) .assistant-reply-content {
+  clip-path: inset(0 var(--tm-assistant-thinking-padding-inline) 0 0);
+}
+
+/* 思考态用明确宽度和整框居中，避免内容固有宽度与自动边距叠加造成偏移。 */
+.assistant-reply-bubble[data-thinking="true"] {
+  width: var(--tm-assistant-thinking-bubble-width);
+  min-width: var(--tm-assistant-thinking-bubble-width);
+}
+
+.assistant-reply-bubble[data-thinking="true"] .assistant-reply-content {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding-inline: 0;
+}
+
+.assistant-user-bubble {
+  border-radius: var(--tm-assistant-bubble-radius) var(--tm-assistant-bubble-speaker-radius) var(--tm-assistant-bubble-radius) var(--tm-assistant-bubble-radius);
+  overflow-wrap: anywhere;
+}
+
+.assistant-thinking {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  gap: var(--tm-assistant-thinking-dot-gap);
+  height: 16px;
+  color: var(--tm-text-secondary);
+}
+
+.assistant-thinking span {
+  flex: 0 0 var(--tm-assistant-thinking-dot-size);
+  aspect-ratio: 1;
+  width: var(--tm-assistant-thinking-dot-size);
+  height: var(--tm-assistant-thinking-dot-size);
+  border-radius: 50%;
+  background: currentColor;
+  animation: assistant-thinking-breathe var(--tm-assistant-thinking-duration) ease-in-out infinite;
+}
+.assistant-thinking span:nth-child(2) { animation-delay: 150ms; }
+.assistant-thinking span:nth-child(3) { animation-delay: 300ms; }
+
+.assistant-reply-chunk {
+  display: inline-block;
+  max-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.assistant-reply-chunk-enter {
+  animation: assistant-reply-reveal var(--tm-assistant-reply-reveal-duration) ease-out both;
+}
+
+.assistant-reply-cursor {
+  display: inline-block;
+  width: var(--tm-assistant-reply-cursor-width);
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: var(--tm-assistant-role-primary);
+  animation: assistant-reply-blink var(--tm-assistant-reply-cursor-duration) step-end infinite;
+}
+
+.assistant-conversation-scroll { overflow-anchor: none; }
+
+@keyframes assistant-thinking-breathe {
+  0%, 70%, 100% { opacity: .35; transform: translateY(0); }
+  35% { opacity: 1; transform: translateY(-3px); }
+}
+@keyframes assistant-reply-reveal {
+  from { opacity: 0; filter: blur(var(--tm-assistant-reply-reveal-blur)); }
+  to { opacity: 1; filter: blur(0); }
+}
+@keyframes assistant-reply-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-thinking span, .assistant-reply-chunk, .assistant-reply-cursor { animation: none; }
+}

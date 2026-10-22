@@ -160,18 +160,18 @@ assert.ok(!viewSource.includes('w-[calc(100%-48px)]'), '快捷问题不应使用
 requireText(chatSuggestedSource, 'min-h-[var(--tm-size-touch)] shrink-0', '建议问题应保持44像素触控高度。');
 assert.ok(!viewSource.includes('recommendedQuestions: readonly string[];'), '本周数据卡不应再承载建议问题。');
 requireText(viewSource, '<AssistantConversationThread', '发起提问后应在概览页内追加对话消息。');
-requireText(viewSource, 'latestAssistant.offsetTop - 8', 'Agent 回复后应只滚动中部内容区并保留顶部间距。');
+requireText(viewSource, 'useAssistantScrollFollow(scrollRef', 'Agent 回复应复用可暂停的底部跟随。');
 assert.ok(!viewSource.includes('latestAssistantRef.current?.scrollIntoView'), 'Agent 回复不得通过全局滚动带动固定底部栏。');
 assert.ok(!viewSource.includes(') : conversationOpen ? ('), '推荐问题不应跳转到独立对话页面。');
 assert.ok(!viewSource.includes('AgentMessageIdentity'), 'Agent 回复不应展示额外头像。');
 assert.ok(!viewSource.includes('>班主任助理</div>'), 'Agent 回复不应重复展示身份名称。');
-requireText(chatThreadSource, 'assistant-agent-glass min-w-0 flex-1', 'Agent 回复应直接使用左侧浅色内容气泡。');
+requireText(chatThreadSource, 'assistant-agent-glass assistant-reply-surface', 'Agent 回复应使用独立玻璃背景，由正文自然撑开尺寸。');
 requireText(conversationDomainSource, '正在分析班级评比数据', 'Agent 回复前应展示分析中的对话反馈。');
 const conversationAnswerSource = chatThreadSource;
 requireText(conversationAnswerSource, 'space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]', '快捷问题回答应使用统一的普通正文样式。');
-requireText(conversationAnswerSource, '具体来看，{answer.breakdown.map', '分类数据应转换为自然文本段落。');
-requireText(conversationAnswerSource, "<p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>", '分析内容应通过承接语合并为一个自然段。');
-requireText(conversationAnswerSource, "<p>接下来，{answer.suggestions.map(item => item.body).join('')}</p>", '行动建议应通过承接语合并为一个自然段。');
+requireText(conversationAnswerSource, "'具体来看，' + answer.breakdown.map", '分类数据应转换为自然文本段落。');
+requireText(conversationAnswerSource, "'从分析结果看，' + answer.analysis.map(item => item.body).join('')", '分析内容应通过承接语合并为一个自然段。');
+requireText(conversationAnswerSource, "'接下来，' + answer.suggestions.map(item => item.body).join('')", '行动建议应通过承接语合并为一个自然段。');
 assert.ok(!conversationAnswerSource.includes('answer.metrics.map'), '关键数据不应机械重复首段已经表达的结论。');
 assert.ok(!conversationAnswerSource.includes('answer.evidenceRefs'), '快捷问题回答不应保留依据功能。');
 for (const forbidden of ['<Sparkles', '<ListChecks', 'aria-label="人工智能分析"', 'aria-label="人工智能建议"', 'text-[var(--tm-status-negative)]', 'text-[var(--tm-assistant-role-text)]']) {

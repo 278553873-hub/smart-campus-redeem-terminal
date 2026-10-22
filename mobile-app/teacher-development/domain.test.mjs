@@ -108,7 +108,7 @@ test('旧预置输入更新口吻，保留审核结果与自定义修改', () =>
   const { inputType, imageSampleId, ...seed } = INITIAL_RECORDS.find(r => r.id === 'r1');
   const old = { ...seed, text: '张敏于2026年10月12日完成新课程教学研修。', status: 'returned', reviewerId: 't4', note: '请核对时间', evidence: '研修证明' };
   const updated = migrateRecordInput(old);
-  assert.match(updated.text, /^今天，我/); assert.equal(updated.inputType, 'text');
+  assert.equal(updated.text, seed.text); assert.equal(updated.inputType, 'image');
   assert.equal(updated.status, 'returned'); assert.equal(updated.reviewerId, 't4'); assert.equal(updated.note, '请核对时间');
   assert.equal('evidence' in updated, false);
   const custom = migrateRecordInput({ ...old, text: '今天，我完成了自己的研修记录。' });
@@ -210,8 +210,8 @@ test('等级开关控制新记录；不区分与未识别均不冒充校级', ()
   assert.equal(recordLevel(identify('我与家长沟通校级活动。', {}, enabled).record), '校级');
 });
 
-test('统一五档，县级及旧区县级归一为区级，过滤和报表使用相同等级', () => {
-  assert.deepEqual(RECORD_LEVELS.map(level => level.short), ['校', '区', '市', '省', '国']);
+test('统一六档，县级及旧区县级归一为区级，过滤和报表使用相同等级', () => {
+  assert.deepEqual(RECORD_LEVELS.map(level => level.short), ['个', '校', '区', '市', '省', '国']);
   for (const inputLevel of ['区级', '县级', '区县级']) {
     const recognized = identify(`我完成了${inputLevel}公开课，本人为执教人。`).record;
     assert.equal(recognized.delta, 2);
@@ -222,6 +222,19 @@ test('统一五档，县级及旧区县级归一为区级，过滤和报表使�
   assert.equal(recordLevel(legacy), '区级');
   assert.equal(recordFieldRows(legacy)[0].display, '区级');
   assert.equal(recordLevel(identify('我完成了集团级研修。').record), undefined);
+});
+
+test('明确的个人级别写入快照，不与个人身份、市级成果或未识别级别混淆', () => {
+  const personal = identify('今天，我完成了个人研修，共6学时。').record;
+  assert.equal(personal.level, '个人');
+  assert.equal(personal.fieldSnapshot.values.level, '个人');
+  assert.equal(recordLevelGroup(personal), '个人');
+  assert.equal(recordFieldRows(personal)[0].display, '个人');
+  assert.equal(personal.delta, 1);
+  const city = identify('今天，我主持的市级课题已经结题。').record;
+  assert.equal(recordLevelGroup(city), '市级');
+  assert.equal(city.delta, 3);
+  assert.equal(recordLevelGroup(identify('今天，我完成了研修。').record), '未识别等级');
 });
 
 test('修改开关不改历史认定；关闭等级不能沿用按等级计分的规则', () => {

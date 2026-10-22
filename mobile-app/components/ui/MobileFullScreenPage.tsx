@@ -8,10 +8,11 @@ interface MobileFullScreenPageProps {
   onBack: () => void;
   children: React.ReactNode;
   appearance?: 'light' | 'dark';
+  screenBackground?: React.ReactNode;
 }
 
 /** 在手机内容区打开完整页面，保留调用页草稿，不使用弹窗遮罩和底部抽屉动画。 */
-const MobileFullScreenPage: React.FC<MobileFullScreenPageProps> = ({ open, title, onBack, children, appearance = 'light' }) => {
+const MobileFullScreenPage: React.FC<MobileFullScreenPageProps> = ({ open, title, onBack, children, appearance = 'light', screenBackground }) => {
   const [root, setRoot] = useState<HTMLElement | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const backRef = useRef(onBack);
@@ -53,7 +54,8 @@ const MobileFullScreenPage: React.FC<MobileFullScreenPageProps> = ({ open, title
   return createPortal(
     <div ref={pageRef} role="region" aria-label={title} tabIndex={-1}
       className={`${root === document.body ? 'fixed' : 'absolute'} inset-0 z-[1200] flex min-h-0 flex-col overflow-hidden outline-none pointer-events-auto ${appearance === 'dark' ? 'bg-[var(--tm-camera-bg)]' : 'bg-[var(--tm-bg-surface)]'}`}>
-      <div className="flex min-h-0 flex-1 flex-col pt-[var(--mini-program-status-bar-height,0px)] pb-[var(--mini-program-bottom-safe-area,0px)]">
+      {screenBackground && <div className="pointer-events-none absolute inset-0" aria-hidden="true">{screenBackground}</div>}
+      <div className="relative flex min-h-0 flex-1 flex-col pt-[var(--mini-program-status-bar-height,0px)] pb-[var(--mini-program-bottom-safe-area,0px)]">
         {children}
       </div>
       <SimulatedMiniProgramChrome appearance={appearance} />

@@ -57,7 +57,7 @@ import teacherBottomNavClassActive from './resources/teacher-bottom-navigation/c
 import teacherBottomNavClassDefault from './resources/teacher-bottom-navigation/class-default.png';
 import teacherBottomNavMeActive from './resources/teacher-bottom-navigation/me-active.png';
 import teacherBottomNavMeDefault from './resources/teacher-bottom-navigation/me-default.png';
-import classLeaderboardEntryImg from './resources/class-leaderboard-entry.png';
+import classLeaderboardEntryImg from './resources/class-leaderboard-entry-sunset-trophy-art.png';
 import {
   studentBoyAvatarGroups,
   studentBoyAvatars,

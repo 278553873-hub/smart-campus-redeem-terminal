@@ -7,6 +7,7 @@ export const CLASS_REPORT_SECTIONS = [
   { id: 'ranking-title', label: '得分排行' },
   { id: 'attention-students-title', label: '需要关注' },
   { id: 'student-coverage-title', label: '学生覆盖情况' },
+  { id: 'evaluation-records-title', label: '评价明细' },
 ] as const;
 export type ClassReportSectionId = typeof CLASS_REPORT_SECTIONS[number]['id'];
 export interface ClassReportOutlineItem { id: ClassReportSectionId; visible: boolean }
@@ -23,4 +24,17 @@ export function toggleClassReportSection(items: ClassReportOutlineItem[], id: Cl
   return target.visible
     ? [...selected, ...available, { ...target, visible: false }]
     : [...selected, { ...target, visible: true }, ...available];
+}
+
+/** 兼容演示中保留的旧大纲：保留原排序及隐藏状态，新板块默认追加显示。 */
+export function normalizeClassReportOutline(items: readonly ClassReportOutlineItem[]): ClassReportOutlineItem[] {
+  const known = new Set<string>(CLASS_REPORT_SECTIONS.map(item => item.id));
+  const seen = new Set<string>();
+  const preserved = items.filter(item => {
+    if (!known.has(item.id) || seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+  const added = createDefaultClassReportOutline().filter(item => !seen.has(item.id));
+  return [...preserved.filter(item => item.visible), ...added, ...preserved.filter(item => !item.visible)];
 }

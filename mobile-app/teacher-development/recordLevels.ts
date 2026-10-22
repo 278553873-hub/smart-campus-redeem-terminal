@@ -1,7 +1,8 @@
 import type { DevelopmentIndicator, DevelopmentRecord } from './data';
 
-/** 全平台统一五档；县级、旧区县级作为区级别名，不增加第六档。 */
+/** 统一六档；个人与行政级别并列，县级、旧区县级作为区级别名。 */
 export const RECORD_LEVELS = [
+  { name: '个人', short: '个', aliases: [] },
   { name: '校级', short: '校', aliases: [] },
   { name: '区级', short: '区', aliases: ['县级', '区县级'] },
   { name: '市级', short: '市', aliases: [] },

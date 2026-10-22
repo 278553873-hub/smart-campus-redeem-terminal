@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { getEditableGrowthCoinConfig, getEffectiveGrowthCoinConfig, saveGrowthCoinRule } from './growthCoinRuleSchedule.ts';
+import { getEditableGrowthCoinConfig, getEffectiveGrowthCoinConfig, getNextGrowthCoinCycle, saveGrowthCoinRule } from './growthCoinRuleSchedule.ts';
 import { calculateScoreCoinAward } from './growthCoinRules.ts';
 
 const monday = new Date('2026-10-19T10:00:00+08:00');
@@ -8,7 +8,7 @@ const snapshot = structuredClone(old);
 const next = { ...old, mode: 'score', scoreRule: { coinsPerPoint: 2, limitEnabled: true, limitPeriod: 'monthly', limitAmount: 80 } };
 const saved = saveGrowthCoinRule(old, next, monday);
 assert.equal(saved.config.pendingChange, undefined);
-assert.equal(saved.notice.headline, '立即生效');
+assert.equal(saved.notice.message, '新规则已生效，加分后按新规则立即发放。');
 assert.deepEqual(getEffectiveGrowthCoinConfig(saved.config, monday), next, '切换方式立即生效');
 assert.equal(calculateScoreCoinAward(saved.config, 1, 0), 2, '新增加分立即使用新比例');
 assert.equal(calculateScoreCoinAward(saved.config, 1, 79), 1, '继续计入本周期已发额度');
@@ -17,11 +17,17 @@ const lowered = saveGrowthCoinRule(saved.config, lowerLimit, monday);
 assert.equal(calculateScoreCoinAward(lowered.config, 1, 79), 0, '降低上限不追扣已发币，也不继续发放');
 const periodic = saveGrowthCoinRule(next, { ...old, budgetAmount: 600 }, monday);
 assert.equal(periodic.config.budgetAmount, 600);
-assert.equal(periodic.notice.headline, '立即生效');
-assert.match(periodic.notice.detail, /下一次定期结算/);
+assert.equal(periodic.notice.message, '新规则已生效，将在下一次定期结算时按新规则发放。');
 assert.equal(saveGrowthCoinRule(old, { ...old, enabled: false }, monday).config.enabled, false, '关闭立即生效');
 assert.equal(saveGrowthCoinRule({ ...old, enabled: false }, next, monday).config.enabled, true, '首次开启立即生效');
-assert.equal(saveGrowthCoinRule(old, old, monday).notice.headline, '继续使用当前规则');
+assert.equal(saveGrowthCoinRule(old, { ...old }, monday).notice, null, '规则未变（包括只改外观）不弹窗');
+assert.equal(saveGrowthCoinRule(next, { ...next, scoreRule: { ...next.scoreRule } }, monday).notice, null, '重新保存加分规则不弹窗');
+assert.equal(saveGrowthCoinRule(old, { ...old, enabled: false }, monday).notice.message, '成长币发放已关闭。');
+const daily = { ...next, scoreRule: { ...next.scoreRule, limitPeriod: 'daily' } };
+assert.equal(saveGrowthCoinRule(next, daily, monday).config.scoreRule.limitPeriod, 'daily');
+assert.equal(getNextGrowthCoinCycle(daily, new Date('2026-10-21T23:59:59+08:00')), '2026-10-21T16:00:00.000Z', '每天在北京时间零点进入新周期');
+assert.equal(getNextGrowthCoinCycle(daily, new Date('2026-10-22T00:00:00+08:00')), '2026-10-22T16:00:00.000Z');
+assert.equal(getNextGrowthCoinCycle(daily, new Date('2026-12-31T23:59:59+08:00')), '2026-12-31T16:00:00.000Z', '每日周期支持跨年');
 
 const legacy = { ...old, pendingChange: { effectiveAt: '2026-10-25T16:00:00.000Z', config: next } };
 assert.deepEqual(getEffectiveGrowthCoinConfig(legacy, monday), old, '旧版待生效配置不会被读取操作自动提前启用');

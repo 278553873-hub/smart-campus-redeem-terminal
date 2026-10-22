@@ -5,6 +5,12 @@ import { fileURLToPath } from 'node:url';
 const bundle = await build({ stdin: { contents: "export * from './reporting'; export * from './data';", resolveDir: fileURLToPath(new URL('.', import.meta.url)), loader: 'ts' }, bundle: true, write: false, platform: 'node', format: 'esm' });
 const { buildDevelopmentReport, reportRecords, personnelGroups, registeredProfileParts, TEACHERS, INITIAL_RECORDS, INDICATORS } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].contents).toString('base64')}`);
 const period = '2026-autumn';
+test('学年周期可包含跨学期记录', () => {
+  const yearRecord = { ...INITIAL_RECORDS[0], id: 'annual-period-record', date: '2027-04-12' };
+  assert.equal(reportRecords([yearRecord], TEACHERS, INDICATORS, '2026-year', { status: 'all' }).length, 1);
+  assert.equal(reportRecords([yearRecord], TEACHERS, INDICATORS, '2026-autumn', { status: 'all' }).length, 0);
+});
+
 test('学校汇总包含零记录教师；待审、未通过与已通过严格分开', () => {
   const report = buildDevelopmentReport(TEACHERS, INITIAL_RECORDS, INDICATORS, period);
   assert.equal(report.teacherRows.length, 6);
@@ -37,6 +43,16 @@ test('状态下钻不混入撤回或其他周期；等级未知与不区分保�
   const report = buildDevelopmentReport(TEACHERS, records, INDICATORS, period);
   assert.equal(report.levelRows.find(row => row.name === '未识别等级').count, 1);
   assert.equal(report.levelRows.find(row => row.name === '不区分等级').count, 4);
+});
+test('个人级别独立统计和下钻，不合并不区分等级及未识别记录', () => {
+  const source = INITIAL_RECORDS[0];
+  const personal = { ...source, id: 'personal', level: '个人', fieldSnapshot: { ...source.fieldSnapshot, values: { ...source.fieldSnapshot.values, level: '个人' } } };
+  const records = [...INITIAL_RECORDS, personal];
+  const report = buildDevelopmentReport(TEACHERS, records, INDICATORS, period);
+  assert.equal(report.levelRows.find(row => row.name === '个人').count, 1);
+  assert.equal(report.levelRows.find(row => row.name === '不区分等级').count, 4);
+  assert.equal(report.levelRows.find(row => row.name === '未识别等级').count, 1);
+  assert.deepEqual(reportRecords(records, TEACHERS, INDICATORS, period, { level: '个人' }).map(row => row.id), ['personal']);
 });
 test('指标表按上下限计算当前分，人员结构人数不依赖记录数量', () => {
   const records = [...INITIAL_RECORDS, ...Array.from({ length: 40 }, (_, i) => ({ ...INITIAL_RECORDS[1], id: `extra-${i}` }))];

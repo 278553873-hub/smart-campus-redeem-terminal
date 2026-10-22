@@ -500,13 +500,18 @@ export const teacherBrandCssVariables = {
   '--tm-record-level-size': '22px',
   '--tm-record-level-radius': '4px',
   '--tm-record-level-font-size': '13px',
-  '--tm-record-level-ink': '#FFFFFF',
-  '--tm-record-level-personal': '#687789',
-  '--tm-record-level-school': '#4572C4',
-  '--tm-record-level-district': '#34834A',
-  '--tm-record-level-city': '#AE5F08',
-  '--tm-record-level-province': '#8059BE',
-  '--tm-record-level-national': '#CD414B',
+  '--tm-record-level-personal': '#EDF0F5',
+  '--tm-record-level-personal-ink': '#526176',
+  '--tm-record-level-school': '#2F6FEB',
+  '--tm-record-level-school-ink': '#FFFFFF',
+  '--tm-record-level-district': '#00856A',
+  '--tm-record-level-district-ink': '#FFFFFF',
+  '--tm-record-level-city': '#FFB12B',
+  '--tm-record-level-city-ink': '#603500',
+  '--tm-record-level-province': '#8056D9',
+  '--tm-record-level-province-ink': '#FFFFFF',
+  '--tm-record-level-national': '#D93650',
+  '--tm-record-level-national-ink': '#FFFFFF',
   '--tm-brand-primary': teacherBrandSemantic.primary,
   '--tm-brand-primary-strong': teacherBrandSemantic.primaryStrong,
   '--tm-brand-primary-hover': teacherBrandSemantic.primaryHover,
@@ -887,13 +892,19 @@ export const teacherBrandCssVariables = {
   '--tm-class-list-action-icon-size': '14px',
   '--tm-class-list-toolbar-row-gap': '0px',
   '--tm-class-list-toolbar-card-gap': '8px',
-  '--tm-class-list-leaderboard-touch-width': '120px',
+  '--tm-class-list-leaderboard-touch-width': '130px',
   '--tm-class-list-leaderboard-touch-height': 'var(--tm-size-touch)',
-  '--tm-class-list-leaderboard-image-width': '112px',
+  '--tm-class-list-leaderboard-image-width': '124px',
   '--tm-class-list-leaderboard-image-height': '24px',
   '--tm-class-list-divider': '#EEEEEE',
   '--tm-class-list-divider-thickness': '0.5px',
   '--tm-class-list-divider-vertical-height': '20px',
+  // 列表加载：单道共享扫光，真实块与骨架在原位置交接。
+  '--tm-skeleton-base': '#EEECEA',
+  '--tm-skeleton-sweep-duration': '1500ms',
+  '--tm-skeleton-block-stagger': '60ms',
+  '--tm-skeleton-reveal-duration': '300ms',
+  '--tm-skeleton-reveal-offset': '8px',
   '--tm-radius-sheet': '28px',
   // 布局语义：独立卡片/分组12px，紧凑条目8px；不用于覆盖网格列距、表格行高或触控尺寸。
   '--tm-layout-card-gap': 'var(--tm-space-3)',
@@ -963,6 +974,19 @@ export const teacherBrandCssVariables = {
   '--tm-assistant-category-pill-width': '108px',
   '--tm-assistant-secondary-pill-height': '30px',
   '--tm-assistant-icon-control-visual-size': '36px',
+  // 两类对话气泡仅靠近说话方的上角使用直角，其余三角保持一致。
+  '--tm-assistant-bubble-radius': '18px',
+  '--tm-assistant-bubble-speaker-radius': '0px',
+  // 两类助理共用的思考与增量回复动效。
+  '--tm-assistant-thinking-dot-size': '5px',
+  '--tm-assistant-thinking-dot-gap': '5px',
+  '--tm-assistant-thinking-padding-inline': '24px',
+  '--tm-assistant-thinking-bubble-width': 'calc(3 * var(--tm-assistant-thinking-dot-size) + 2 * var(--tm-assistant-thinking-dot-gap) + 2 * var(--tm-assistant-thinking-padding-inline))',
+  '--tm-assistant-thinking-duration': '1200ms',
+  '--tm-assistant-reply-reveal-duration': '240ms',
+  '--tm-assistant-reply-reveal-blur': '4px',
+  '--tm-assistant-reply-cursor-width': '1.5px',
+  '--tm-assistant-reply-cursor-duration': '900ms',
   // 班主任助理录音状态专用，不作为品牌色或主操作色。
   '--tm-voice-feedback-blue': 'radial-gradient(ellipse 100% 100% at 50% 100%, #1479e6 0%, #229bec 48%, #229bec 60%, rgb(50 173 242 / 48%) 76%, rgb(86 193 248 / 14%) 88%, transparent 100%)',
   '--tm-voice-feedback-red': 'radial-gradient(ellipse 100% 100% at 50% 100%, #ffd2d2 0%, #ffdddd 48%, #ffdddd 60%, rgb(255 210 210 / 48%) 76%, rgb(255 221 221 / 14%) 88%, transparent 100%)',
@@ -1051,8 +1075,8 @@ export const teacherBrandCssVariables = {
   '--tm-selection-card-shadow': teacherSelectionCardSemantic.shadow,
   '--tm-report-page-inline': 'var(--tm-space-5)',
   '--tm-report-card-gap': 'var(--tm-space-6)',
-  '--tm-report-score-category-width': '96px',
-  '--tm-report-score-axis-space': '48px',
+  '--tm-report-score-visible-categories': '5.2',
+  '--tm-report-score-axis-space': '46px',
   '--tm-report-card-padding': 'var(--tm-space-4)',
   '--tm-report-card-content-gap': 'var(--tm-space-4)',
   '--tm-report-coverage-row-height': '48px',
@@ -1188,8 +1212,15 @@ export const phoneTone = {
 
 export type PhoneTone = keyof typeof phoneTone;
 
+/** 班级报告指标分类色：避开红、粉、珊瑚色，十育以内不重复。 */
+export const classReportIndicatorPalette = [
+  '#8BDD35', '#36CFFF', '#4295FF', '#FFD43B', '#08CDB1',
+  '#AA7AFF', '#FFB52E', '#8185FF', '#38D979', '#20BCD4',
+] as const;
+
 /** 班级报告局部配色试览：仅映射负向图形及数值，不改变全局扣分语义色。 */
 export const classReportColorPreviewStyle = {
   '--tm-chart-negative': teacherBrandSemantic.primary,
   '--tm-chart-negative-text': teacherBrandSemantic.primary,
+  ...Object.fromEntries(classReportIndicatorPalette.map((color, index) => [`--tm-chart-indicator-${index + 1}`, color])),
 } as CSSProperties;

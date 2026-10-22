@@ -60,7 +60,7 @@ const ClassSourceTrigger: React.FC<ClassSourceTriggerProps> = ({
             aria-expanded={expanded}
         >
             {isCompactSurface ? (
-                <span className="inline-flex h-9 max-w-full items-center gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3 [box-shadow:var(--tm-shadow-control)]">
+                <span className="inline-flex h-8 max-w-full items-center gap-2 rounded-full bg-[var(--tm-bg-surface-glass)] px-3 [box-shadow:var(--tm-shadow-control)]">
                     {content}
                 </span>
             ) : content}

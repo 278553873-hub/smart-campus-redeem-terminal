@@ -1,3 +1,5 @@
+import { buildReportIndicatorColorMap } from '../../domain/reportIndicatorColors';
+import ReportScoreLegend from './ReportScoreLegend';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import type { ClassReportIndicatorNode } from '../../domain/classReportIndicatorTree';
@@ -6,7 +8,6 @@ import {
   TeacherReportBarChart,
   TeacherReportDonutChart,
   type TeacherReportBarSeries,
-  type TeacherReportChartColor,
 } from './TeacherReportChart';
 import MobileBottomSheet from '../ui/MobileBottomSheet';
 
@@ -22,31 +23,6 @@ interface ClassReportIndicatorDrilldownProps {
   onRootChange?: (rootId: string) => void;
 }
 
-const indicatorChartColors: TeacherReportChartColor[] = [
-  'indicator1',
-  'indicator2',
-  'indicator3',
-  'indicator4',
-  'indicator5',
-  'indicator6',
-] as const;
-
-const ScoreLegend = () => (
-  <div aria-label="得分图例" className="flex h-8 items-center justify-end gap-3 text-[length:var(--tm-font-size-badge)] font-medium text-[var(--tm-text-secondary)]">
-    <span className="flex items-center gap-1.5">
-      <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px] bg-[var(--tm-chart-positive)]" />
-      表扬
-    </span>
-    <span className="flex items-center gap-1.5">
-      <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px] bg-[var(--tm-chart-negative)]" />
-      待改进
-    </span>
-    <span className="flex items-center gap-1.5">
-      <span aria-hidden="true" className="h-2.5 w-2.5 rounded-[3px] bg-[var(--tm-chart-data-default)]" />
-      总分
-    </span>
-  </div>
-);
 
 const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps> = ({
   colorStyle,
@@ -75,11 +51,12 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
     { name: '待改进', values: visibleNodes.map(node => node.metrics.deductScore), color: 'negative' },
     { name: '总分', values: visibleNodes.map(node => node.metrics.netScore), color: 'data' },
   ], [visibleNodes]);
-  const eventData = useMemo(() => visibleNodes.map((node, index) => ({
+  const indicatorColorMap = useMemo(() => buildReportIndicatorColorMap(visibleNodes.map(node => node.id)), [visibleNodes]);
+  const eventData = useMemo(() => visibleNodes.map(node => ({
     name: node.label,
     value: node.metrics.eventCount,
-    color: indicatorChartColors[index % indicatorChartColors.length],
-  })), [visibleNodes]);
+    color: indicatorColorMap.get(node.id)!,
+  })), [visibleNodes, indicatorColorMap]);
   const hasNextLevel = visibleNodes.some(node => node.children.length > 0);
   const title = mode === 'score' ? '五育得分明细' : '五育事件明细';
 
@@ -138,7 +115,7 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
       <div aria-label={`${title}，当前${currentNode?.label ?? '未选择指标'}`}>
         {mode === 'score' ? (
           <div>
-            <ScoreLegend />
+            <ReportScoreLegend />
             <div className="-mx-[var(--tm-space-4)] overflow-x-auto no-scrollbar">
               <div
                 className="px-[var(--tm-space-4)]"

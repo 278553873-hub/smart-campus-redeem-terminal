@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Building2, CalendarRange, ChevronRight, ScanSearch } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import { getAssistantGreeting, useAssistantTypewriter } from '../hooks/useAssistantTypewriter';
+import { useAssistantScrollFollow } from '../hooks/useAssistantScrollFollow';
 import AssistantComposer from '../components/assistant-chat/AssistantComposer';
 import AssistantConversationThread, { type AssistantChatMessage } from '../components/assistant-chat/AssistantConversationThread';
 import AssistantSubpageHeader from '../components/AssistantSubpageHeader';
@@ -99,29 +100,12 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
     const [isReplying, setIsReplying] = useState(false);
     const snapshot = useMemo(() => getPrincipalAssistantSnapshot(), []);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const latestAssistantRef = useRef<HTMLDivElement>(null);
+    const resumeFollowing = useAssistantScrollFollow(scrollRef, messages.length > 0);
     const replyTimerRef = useRef<number | null>(null);
 
     useEffect(() => () => {
         if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
     }, []);
-
-    useEffect(() => {
-        const latestMessage = messages[messages.length - 1];
-        if (!latestMessage) return undefined;
-
-        const frame = window.requestAnimationFrame(() => {
-            if (latestMessage.role === 'assistant' && latestAssistantRef.current) {
-                const scroller = scrollRef.current;
-                if (scroller) {
-                    scroller.scrollTo({ top: Math.max(0, latestAssistantRef.current.offsetTop - 8), behavior: 'smooth' });
-                    return;
-                }
-            }
-            scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-        });
-        return () => window.cancelAnimationFrame(frame);
-    }, [isReplying, messages]);
 
     const handleOption = (item: AssistantOption) => {
         if (item.action === 'weeklyAdvice') {
@@ -147,21 +131,19 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
         const question = rawQuestion.trim();
         if (!question || isReplying) return;
 
+        const replyId = 'assistant-' + Date.now();
+        resumeFollowing();
         setMessages(current => [...current, {
             id: 'user-' + Date.now(),
             role: 'user',
             content: question,
-        }]);
+        }, { id: replyId, role: 'assistant' }]);
         setDraft('');
         setIsReplying(true);
 
         replyTimerRef.current = window.setTimeout(() => {
-            setMessages(current => [...current, {
-                id: 'assistant-' + Date.now(),
-                role: 'assistant',
-                answer: askPrincipalAssistantQuestion({ question, snapshot }),
-            }]);
-            setIsReplying(false);
+            const answer = askPrincipalAssistantQuestion({ question, snapshot });
+            setMessages(current => current.map(message => message.id === replyId ? { ...message, answer } : message));
             replyTimerRef.current = null;
         }, 620);
     };
@@ -178,7 +160,7 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
         <div className="ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
             <AssistantSubpageHeader onBack={onBack} surface="transparent" />
 
-            <div ref={scrollRef} data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
+            <div ref={scrollRef} data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar assistant-conversation-scroll">
                 <section className="relative h-[148px] overflow-hidden px-5">
                     <div className="relative z-10 max-w-[59%] pt-3" aria-live="polite">
                         <p className="ai-assistant-typewriter-shine min-h-16 whitespace-pre-line text-pretty text-[17px] font-bold leading-7">
@@ -220,7 +202,7 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
                         replying={isReplying}
                         replyingLabel={PRINCIPAL_ASSISTANT_REPLYING_LABEL}
                         ariaLabel="校长助理对话"
-                        latestAssistantRef={latestAssistantRef}
+                        onReplyComplete={() => setIsReplying(false)}
                     />
                 )}
             </div>

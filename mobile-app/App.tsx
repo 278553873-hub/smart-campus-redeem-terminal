@@ -1,6 +1,6 @@
 import type { ClassReportOutlineItem } from '../shared/classReportOutline';
 import { GrowthCoinScope } from '../components/GrowthCoinBranding';
-import React, { lazy, Suspense, useMemo, useState, useRef, useEffect } from 'react';
+import React, { lazy, Suspense, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
@@ -473,6 +473,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
 ];
 
 interface MobileAppProps {
+    classListLoadingPreview?: import('../shared/classListLoadingPreview').ClassListLoadingPreview;
     classReportOutline?: ClassReportOutlineItem[];
     onClassReportViewChange?: (active: boolean) => void;
     showPhoneShell?: boolean;
@@ -496,6 +497,7 @@ interface MobileAppProps {
 }
 
 const App: React.FC<MobileAppProps> = ({
+    classListLoadingPreview,
     classReportOutline,
     onClassReportViewChange,
     showPhoneShell = true,
@@ -514,6 +516,9 @@ const App: React.FC<MobileAppProps> = ({
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
+    const [reportDetailNavigation, setReportDetailNavigation] = useState<{ title: string; onBack: () => void } | null>(null);
+    const handleReportDetailPageChange = useCallback((page: { title: string; onBack: () => void } | null) => setReportDetailNavigation(page), []);
+
     const [history, setHistory] = useState<ViewState[]>([]);
     const scrollPositionsRef = useRef<Partial<Record<ViewState, number>>>({});
     const pendingScrollTopRef = useRef<number | null>(0);
@@ -621,7 +626,7 @@ const App: React.FC<MobileAppProps> = ({
         // 手机端切走时同步收回预览卡片，避免下一个应用沿用上一次的显示状态。
         return () => onHeadteacherAssistantViewChange?.(false);
     }, [isHeadteacherAssistantView, onHeadteacherAssistantViewChange]);
-    const isClassReportView = currentView === 'class_report';
+    const isClassReportView = currentView === 'class_report' && reportDetailNavigation == null;
     useEffect(() => {
         onClassReportViewChange?.(isClassReportView);
         return () => onClassReportViewChange?.(false);
@@ -1735,7 +1740,7 @@ const App: React.FC<MobileAppProps> = ({
             case 'mine_settings': return '设置';
             case 'subject_management': return '科目管理';
             case 'department_management': return '部门管理';
-            case 'coin_issuance': return '成长币规则';
+            case 'coin_issuance': return '成长币发放';
             case 'suggestion_feedback': return '建议反馈';
             case 'questionnaire': return '问卷采集';
             case 'archive_design': return '档案设计';
@@ -1958,8 +1963,8 @@ const App: React.FC<MobileAppProps> = ({
                         {/* Only show LocalHeader for views that need it and are not handled by PhoneMockup's internal header */}
                         {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_team_info' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'medal_issuance' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && !hasPlainPageOwnHeader && (
                             <LocalHeader
-                                title={getHeaderTitle()}
-                                onBack={history.length > 0 ? goBack : undefined}
+                                title={(currentView === 'class_report' || currentView === 'student_team_report') && reportDetailNavigation ? reportDetailNavigation.title : getHeaderTitle()}
+                                onBack={(currentView === 'class_report' || currentView === 'student_team_report') && reportDetailNavigation ? reportDetailNavigation.onBack : history.length > 0 ? goBack : undefined}
                             />
                         )}
 
@@ -2012,6 +2017,11 @@ const App: React.FC<MobileAppProps> = ({
                             {currentView === 'class_list' && (
                                 <ClassListView
                                     classes={activeSpaceClasses}
+                                    hasLoaded={true /* 当前演示数据同步就绪；线上改接当前列表的成功结果标记。 */}
+                                    demoLoadDuration={classListLoadingPreview?.mode === 'timed' ? classListLoadingPreview.durationMs : 0}
+                                    demoInitialLoad={classListLoadingPreview?.mode === 'timed' && classListLoadingPreview.replayKey === 0}
+                                    demoLoadKey={classListLoadingPreview?.replayKey}
+                                    demoHoldLoading={classListLoadingPreview?.mode === 'hold'}
                                     teacherProfile={teacherProfile}
                                     currentSpace={activeTeacherSpace}
                                     classMembershipById={activeClassMembershipById}
@@ -2166,6 +2176,7 @@ const App: React.FC<MobileAppProps> = ({
 
                             {currentView === 'class_report' && (
                                 <ClassReportView
+                                    onDetailPageChange={handleReportDetailPageChange}
                                     outline={classReportOutline}
                                     classInfo={classes.find(c => c.id === selectedClassId)!}
                                     students={getMergedStudentsForClass(selectedClassId).filter(student => (student.status ?? 'active') === 'active')}
@@ -2176,6 +2187,7 @@ const App: React.FC<MobileAppProps> = ({
 
                             {currentView === 'student_team_report' && selectedStudentTeam && (
                                 <ClassReportView
+                                    onDetailPageChange={handleReportDetailPageChange}
                                     classInfo={{
                                         id: selectedStudentTeam.id,
                                         name: selectedStudentTeam.name,

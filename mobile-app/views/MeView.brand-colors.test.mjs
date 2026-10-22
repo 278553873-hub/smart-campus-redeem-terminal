@@ -1,8 +1,14 @@
 import { readFileSync } from 'node:fs';
 
-const viewSource = readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
+const viewSource = [
+  readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8'),
+  readFileSync(new URL('../components/me/TeacherMeTools.tsx', import.meta.url), 'utf8'),
+].join('\n');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
-const bottomNavSource = readFileSync(new URL('../components/TeacherBottomNavigation.tsx', import.meta.url), 'utf8');
+const bottomNavSource = [
+  readFileSync(new URL('../components/TeacherBottomNavigation.tsx', import.meta.url), 'utf8'),
+  readFileSync(new URL('../components/ui/MobileBottomNavigation.tsx', import.meta.url), 'utf8'),
+].join('\n');
 const tokenSource = readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 const sharedThemeTokenSource = readFileSync(new URL('../../shared/questionnaireThemeTokens.ts', import.meta.url), 'utf8');
 
@@ -35,7 +41,7 @@ for (const required of [
   'border-0 bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-navigation)]',
   'src={isActive ? icon.active : icon.default}',
   'relative flex h-[22px] w-[22px] items-center justify-center',
-  "group-active:scale-[0.86] motion-reduce:transition-none ${isActive ? 'scale-100' : 'scale-90'}",
+  "ease-out motion-reduce:transition-none ${isActive ? 'scale-100' : 'scale-90'}",
   'text-xs font-medium',
   "aria-current={isActive ? 'page' : undefined}",
   'bg-[var(--tm-status-negative)]',

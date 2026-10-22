@@ -26,7 +26,7 @@ const LEGACY_COIN_ICONS = [
 
 export const DEFAULT_COIN_BRANDING: Readonly<GrowthCoinBranding> = {
   name: GROWTH_COIN_TERMS.name,
-  iconUrl: '/assets/coin.png',
+  iconUrl: COIN_ICON_PRESETS[0].url,
 };
 
 export const validateCoinBranding = (value: GrowthCoinBranding): GrowthCoinBranding => {
@@ -36,7 +36,8 @@ export const validateCoinBranding = (value: GrowthCoinBranding): GrowthCoinBrand
     || LEGACY_COIN_ICONS.includes(value.iconUrl)
     || (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(value.iconUrl) && value.iconUrl.length <= 600000);
   if (!validIcon) throw new Error('请选择图标，或重新上传PNG、JPG、WebP图片');
-  return { name, iconUrl: value.iconUrl };
+  // 旧蓝底金币统一升级为金色星星金币，保留学校名称及其他自选图标。
+  return { name, iconUrl: value.iconUrl === '/assets/coin.png' ? DEFAULT_COIN_BRANDING.iconUrl : value.iconUrl };
 };
 
 export const getCoinBrandTerms = (branding: GrowthCoinBranding) => ({

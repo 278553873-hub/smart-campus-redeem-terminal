@@ -179,7 +179,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">
           {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}
           {header ?? (
-            <header className="flex h-[var(--tm-sheet-header-height)] shrink-0 items-center justify-between px-[var(--tm-sheet-inline)]">
+            <header className="relative flex h-[var(--tm-sheet-header-height)] shrink-0 items-center justify-between px-[var(--tm-sheet-inline)]">
               {titleContent ? (
                 <div className="min-w-0 flex-1 self-stretch">{titleContent}</div>
               ) : (

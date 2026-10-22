@@ -49,6 +49,10 @@ export type TeacherReportChartColor =
     | 'indicator4'
     | 'indicator5'
     | 'indicator6'
+    | 'indicator7'
+    | 'indicator8'
+    | 'indicator9'
+    | 'indicator10'
     | 'peer'
     | 'total';
 
@@ -88,6 +92,10 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
             indicator4: readToken(style, '--tm-chart-indicator-4'),
             indicator5: readToken(style, '--tm-chart-indicator-5'),
             indicator6: readToken(style, '--tm-chart-indicator-6'),
+            indicator7: readToken(style, '--tm-chart-indicator-7'),
+            indicator8: readToken(style, '--tm-chart-indicator-8'),
+            indicator9: readToken(style, '--tm-chart-indicator-9'),
+            indicator10: readToken(style, '--tm-chart-indicator-10'),
             peer: readToken(style, '--tm-chart-series-peer'),
             total: readToken(style, '--tm-chart-series-total'),
         },
@@ -110,6 +118,10 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
             indicator4: readToken(style, '--tm-text-primary'),
             indicator5: readToken(style, '--tm-text-primary'),
             indicator6: readToken(style, '--tm-text-primary'),
+            indicator7: readToken(style, '--tm-text-primary'),
+            indicator8: readToken(style, '--tm-text-primary'),
+            indicator9: readToken(style, '--tm-text-primary'),
+            indicator10: readToken(style, '--tm-text-primary'),
             peer: readToken(style, '--tm-text-secondary'),
             total: readToken(style, '--tm-chart-series-total'),
         },
@@ -339,6 +351,9 @@ interface TeacherReportBarChartProps {
     showLegend?: boolean;
     valueLabelSuffix?: string;
     chartTop?: number;
+    barMaxWidth?: number;
+    barGap?: string;
+    barCategoryGap?: string;
     onCategorySelect?: (name: string) => void;
 }
 
@@ -353,6 +368,9 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
     showLegend = true,
     valueLabelSuffix = '',
     chartTop,
+    barMaxWidth,
+    barGap,
+    barCategoryGap,
     onCategorySelect,
 }) => {
     const useCategoryColors = Boolean(categoryColors && categoryColors.length > 0);
@@ -432,8 +450,9 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                         : {}),
                 },
             })),
-            barMaxWidth: showValueAxis ? 22 : 16,
-            barGap: showValueAxis ? '30%' : '100%',
+            barMaxWidth: barMaxWidth ?? (showValueAxis ? 22 : 16),
+            barGap: barGap ?? (showValueAxis ? '30%' : '100%'),
+            ...(barCategoryGap ? { barCategoryGap } : {}),
             barMinHeight: 2,
             itemStyle: {
                 borderRadius: [4, 4, 0, 0],
@@ -453,7 +472,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 fontWeight: 600,
             },
         })),
-    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, valueLabelSuffix, chartTop, onCategorySelect]);
+    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, valueLabelSuffix, chartTop, barMaxWidth, barGap, barCategoryGap, onCategorySelect]);
 
     return (
         <TeacherReportChart

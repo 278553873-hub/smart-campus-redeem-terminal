@@ -210,7 +210,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const menus = [
         {
             title: '货柜机配置中心', icon: <Package size={18} />,
-            children: ['货柜超市', '成长币规则', '发币记录', '储蓄银行', '终端设备']
+            children: ['货柜超市', '成长币发放', '发币记录', '储蓄银行', '终端设备']
         },
         {
             title: '报表中心', icon: <FileText size={18} />,
@@ -2986,7 +2986,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                             className={`pl-12 pr-6 py-2 text-[13px] cursor-pointer transition-colors ${(activeMenu === child ||
                                                 (child === '终端设备' && (activeMenu === '终端设备管理' || activeMenu === '设备基础配置')) ||
                                                 (child === '货柜超市' && activeMenu === '货柜超市管理') ||
-                                                (child === '成长币规则' && ['货币发放', '货币发放管理'].includes(activeMenu)) ||
+                                                (child === '成长币发放' && ['货币发放', '货币发放管理'].includes(activeMenu)) ||
                                                 (child === '发币记录' && activeMenu === '历次发币记录') ||
                                                 (child === '储蓄银行' && activeMenu === '储蓄银行配置'))
                                                 ? 'bg-blue-50 text-blue-600 font-bold border-r-4 border-blue-600'
@@ -3084,7 +3084,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     )}
 
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
-                    {(['成长币规则', '货币发放', '货币发放管理'].includes(activeMenu)) && (
+                    {(['成长币发放', '货币发放', '货币发放管理'].includes(activeMenu)) && (
                         <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform">
                             <div className="border-b border-[#E5E6EB] bg-white px-6 py-4">
                                 {/* 内部 Tab 切换器 */}
@@ -4278,7 +4278,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                                     <div className="mb-6 flex items-center justify-between gap-4">
                                         <span className="text-sm text-[#4E5969]">货币名称与图标</span>
-                                        <Button type="text" onClick={() => { setActiveMenu('成长币规则'); setIssuanceTab('auto'); }}>前往成长币规则设置</Button>
+                                        <Button type="text" onClick={() => { setActiveMenu('成长币发放'); setIssuanceTab('auto'); }}>前往成长币发放设置</Button>
                                     </div>
 
                                     <div className="border-t border-[#F2F3F5] pt-5 flex justify-end gap-2">

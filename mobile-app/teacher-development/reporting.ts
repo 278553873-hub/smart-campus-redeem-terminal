@@ -1,4 +1,4 @@
-import { DEMO_TODAY, PERIODS, type DevelopmentIndicator, type DevelopmentRecord, type TeacherDossier } from './data';
+import { ALL_PERIODS, DEMO_TODAY, PERIODS, type DevelopmentIndicator, type DevelopmentRecord, type TeacherDossier } from './data';
 import { inPeriod, indicatorScore, teacherScore } from './domain';
 import { recordLevelGroup, RECORD_LEVELS } from './recordLevels';
 
@@ -58,7 +58,7 @@ export function buildDevelopmentReport(teachers: TeacherDossier[], records: Deve
   const levelRows = [...RECORD_LEVELS.map(level => level.name), '不区分等级', '未识别等级'].map(name => ({
     name, count: approved.filter(r => recordLevelGroup(r, indicators.find(i => i.id === r.indicatorId)) === name).length,
   }));
-  const period = PERIODS.find(p => p.id === periodId);
+  const period = ALL_PERIODS.find(p => p.id === periodId);
   const latestDate = current.reduce((date, r) => r.date > date ? r.date : date, today);
   const end = period ? (period.end < latestDate ? period.end : latestDate) : '';
   const months: { key: string; label: string; count: number }[] = [];

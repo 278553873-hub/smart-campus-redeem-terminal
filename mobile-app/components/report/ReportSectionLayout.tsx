@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ClassReportOutlineItem } from '../../../shared/classReportOutline';
+import { normalizeClassReportOutline, type ClassReportOutlineItem } from '../../../shared/classReportOutline';
 
 /** 根据外部布局配置渲染实际顺序，使视觉顺序与读屏、键盘顺序一致。 */
 export default function ReportSectionLayout({ outline, children }: {
@@ -11,5 +11,5 @@ export default function ReportSectionLayout({ outline, children }: {
   );
   if (!outline) return <>{sections}</>;
   const byId = new Map(sections.map(section => [section.props.id, section]));
-  return <>{outline.filter(item => item.visible).map(item => byId.get(item.id))}</>;
+  return <>{normalizeClassReportOutline(outline).filter(item => item.visible).map(item => byId.get(item.id))}</>;
 }

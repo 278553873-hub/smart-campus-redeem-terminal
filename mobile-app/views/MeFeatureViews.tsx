@@ -1,4 +1,4 @@
-import GrowthCoinBrandFields, { useCoinBrandingDraft, withCoinBrandingSaveNotice } from '../../components/GrowthCoinBrandFields';
+import GrowthCoinBrandFields, { useCoinBrandingEditor } from '../../components/GrowthCoinBrandFields';
 import GrowthCoinRuleDescription from '../../components/GrowthCoinRuleDescription';
 import React from 'react';
 import {
@@ -23,6 +23,8 @@ import MobileCardTabBar from '../components/ui/MobileCardTabBar';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import type { CoinIssuanceConfig } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileToast from '../components/ui/MobileToast';
+import MobileSelectField from '../components/ui/MobileSelectField';
 import {
     getTeacherGradientPreviewVisual,
     type TeacherGradientPreviewConfig,
@@ -77,21 +79,45 @@ interface CoinIssuanceViewProps {
 interface SuggestionFeedbackViewProps {
     text: string;
     images: string[];
+    errorMessage?: string;
     onTextChange: (text: string) => void;
     onAddImage: () => void;
     onRemoveImage: (index: number) => void;
     onSubmit: () => void;
 }
 
-export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string; spacing?: 'default' | 'compact' }> = ({ children, footer, contentClassName = '', spacing = 'default' }) => (
-    <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
-        <div className={`min-h-0 flex-1 ${spacing === 'compact' ? 'space-y-[var(--tm-layout-card-gap)]' : 'space-y-4'} overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>{children}</div>
-        {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
-    </div>
-);
+export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: React.ReactNode; contentClassName?: string; spacing?: 'default' | 'compact'; preserveScrollPosition?: boolean }> = ({ children, footer, contentClassName = '', spacing = 'default', preserveScrollPosition = false }) => {
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+    const contentRef = React.useRef<HTMLDivElement>(null);
+    const scrollTopRef = React.useRef(0);
+    const spacingClass = spacing === 'compact' ? 'space-y-[var(--tm-layout-card-gap)]' : 'space-y-4';
+    const retainScrollRange = () => {
+        const scroll = scrollRef.current;
+        const content = contentRef.current;
+        if (!preserveScrollPosition || !scroll || !content) return;
+        const style = getComputedStyle(scroll);
+        // 仅补足页面末尾的滚动范围，不固定卡片高度。向上滚动时补偿空间同步减少。
+        content.style.minHeight = `${Math.max(0, scroll.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) + scrollTopRef.current)}px`;
+    };
+    React.useLayoutEffect(() => {
+        if (!preserveScrollPosition) { scrollTopRef.current = 0; return; }
+        if (!scrollRef.current) return;
+        retainScrollRange();
+        scrollRef.current.scrollTop = scrollTopRef.current;
+    });
+    return (
+        <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
+            <div ref={scrollRef} onScroll={preserveScrollPosition ? event => { scrollTopRef.current = event.currentTarget.scrollTop; retainScrollRange(); } : undefined}
+                className={`min-h-0 flex-1 ${preserveScrollPosition ? '[overflow-anchor:none]' : spacingClass} overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>
+                {preserveScrollPosition ? <div ref={contentRef} className={spacingClass}>{children}</div> : children}
+            </div>
+            {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
+        </div>
+    );
+};
 
 export const FeaturePanel: React.FC<{ children: React.ReactNode; className?: string; allowOverflow?: boolean; variant?: 'default' | 'form' }> = ({ children, className = '', allowOverflow = false, variant = 'default' }) => (
-    <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} ${variant === 'form' ? 'rounded-[var(--tm-form-card-radius)]' : 'rounded-[24px]'} bg-[var(--tm-bg-surface-glass)] shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] backdrop-blur-sm ${className}`}>
+    <section className={`${allowOverflow ? 'overflow-visible' : 'overflow-hidden'} ${variant === 'form' ? 'rounded-[var(--tm-form-card-radius)] bg-[var(--tm-bg-surface)]' : 'rounded-[24px] bg-[var(--tm-bg-surface-glass)] backdrop-blur-sm'} shadow-[0_12px_32px_-26px_var(--tm-shadow-neutral-color)] ${className}`}>
         {children}
     </section>
 );
@@ -338,7 +364,7 @@ export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> =
 export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: savedConfig, onChange, onSave, classStudentCount }) => {
     const [activeTab, setActiveTab] = React.useState<'rules' | 'branding'>('rules');
     const tabsId = React.useId();
-    const brandingEditor = useCoinBrandingDraft();
+    const brandingEditor = useCoinBrandingEditor();
     const [config, setConfig] = React.useState(() => getEditableGrowthCoinConfig(savedConfig));
     const [saveNotice, setSaveNotice] = React.useState<GrowthCoinSaveNotice | null>(null);
     React.useEffect(() => {
@@ -346,13 +372,18 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
         setConfig(editable);
         setBudgetAmountDraft(String(editable.budgetAmount));
     }, [savedConfig]);
+    const [toastVersion, setToastVersion] = React.useState(0);
+    React.useEffect(() => {
+        if (!toastVersion) return;
+        const timer = window.setTimeout(() => setToastVersion(0), 1800);
+        return () => window.clearTimeout(timer);
+    }, [toastVersion]);
     const pendingChange = savedConfig.pendingChange && Date.parse(savedConfig.pendingChange.effectiveAt) > Date.now() ? savedConfig.pendingChange : undefined;
     const handleSave = () => {
-        const brandingChanged = config.enabled ? brandingEditor.commit() : false;
-        if (brandingChanged === null) { setActiveTab('branding'); return; }
         const result = saveGrowthCoinRule(savedConfig, config);
         onChange(result.config);
-        setSaveNotice(withCoinBrandingSaveNotice(result.notice, brandingChanged));
+        setSaveNotice(result.notice);
+        setToastVersion(version => result.notice ? 0 : version + 1);
         onSave?.();
     };
     const mode = getGrowthCoinMode(config);
@@ -363,17 +394,16 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
     const rankingRatio = 100 - config.sunshineRatio;
     const isPerStudentBudget = config.budgetMode === 'per_student';
     const update = (patch: Partial<CoinIssuanceConfig>) => setConfig(current => ({ ...current, ...patch }));
+    const previewClassStudentCount = classStudentCount ?? 50;
     const classBudgetTotal = getClassBudgetTotal({
         budgetMode: config.budgetMode,
         budgetAmount: config.budgetAmount,
         // 配置页没有绑定单一班级时，用 50 人作为试算示例；进入具体班级上下文后使用实际人数。
-        classStudentCount: classStudentCount ?? 50,
+        classStudentCount: previewClassStudentCount,
     });
     const sunshineAmount = roundCoinAmount(classBudgetTotal * config.sunshineRatio / 100);
     const rankingAmount = roundCoinAmount(classBudgetTotal - sunshineAmount);
     const budgetLabel = isPerStudentBudget ? '每人预算' : '每班预算';
-    const sampleClassStudentCount = 50;
-    const studentBudgetPreview = config.budgetAmount * sampleClassStudentCount;
     const formatCoinAmount = (amount: number) => {
         if (!Number.isFinite(amount)) return '0';
         return Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.?0+$/, '');
@@ -397,7 +427,8 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
     return (
         <FeaturePageBody
             spacing="compact"
-            footer={(
+            preserveScrollPosition={config.enabled && activeTab === 'rules' && mode === 'score'}
+            footer={(!config.enabled || activeTab === 'rules') && (
                 <button type="button" onClick={handleSave} disabled={brandingEditor.busy} className={`${featureFormPrimaryButtonClass} disabled:opacity-50`}>
                     保存
                 </button>
@@ -484,15 +515,16 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                     <FeaturePanel variant="form" className="space-y-4 p-4">
                         <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">发放条件</h2>
                         <div className="space-y-3">
-                            <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
+                            <div className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
                                 <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">发放周期</span>
                                 <div className="w-[172px] max-w-full justify-self-end">
-                                    <select value={config.period} onChange={(event) => update({ period: event.target.value as CoinIssuanceConfig['period'] })} className="h-11 w-full rounded-[var(--tm-form-control-radius)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-center text-[14px] font-semibold text-[var(--tm-input-text)] outline-none focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]">
-                                        <option value="weekly">每周一发放</option>
-                                        <option value="monthly">每月一号发放</option>
-                                    </select>
+                                    <MobileSelectField<CoinIssuanceConfig['period']>
+                                        label="发放周期" value={config.period}
+                                        options={[{ value: 'weekly', label: '每周一发放' }, { value: 'monthly', label: '每月一号发放' }]}
+                                        onChange={period => update({ period })}
+                                    />
                                 </div>
-                            </label>
+                            </div>
 
                             <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
                                 <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">发放门槛</span>
@@ -535,7 +567,8 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                                     />
                                 </div>
                             </div>
-                            <label className="grid min-h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3 px-1">
+                            <div className="px-1">
+                            <label className="grid h-12 grid-cols-[minmax(72px,1fr)_minmax(0,1.8fr)] items-center gap-3">
                                 <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">{budgetLabel}</span>
                                 <div className="flex min-w-0 justify-end">
                                     <div className="flex w-[144px] items-center gap-2">
@@ -561,10 +594,13 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                                         <span className="shrink-0 text-[13px] font-semibold text-[var(--tm-brand-reward-strong)]">币</span>
                                     </div>
                                 </div>
-                                {isPerStudentBudget && (
-                                    <p className="col-span-2 text-pretty text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">一个班50人，则班级预算为 <span className="tabular-nums">{formatCoinAmount(config.budgetAmount)}</span> × 50 = <span className="tabular-nums">{formatCoinAmount(studentBudgetPreview)}</span> 币</p>
-                                )}
                             </label>
+                            {isPerStudentBudget && <p className="mt-3 text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">
+                                {[30, 50].map((count, index) => (
+                                    <React.Fragment key={count}>{index > 0 && '；'}如果一个班{count}人，则班级预算为 <span className="tabular-nums">{formatCoinAmount(config.budgetAmount)} × {count} = {formatCoinAmount(config.budgetAmount * count)} 币</span></React.Fragment>
+                                ))}。
+                            </p>}
+                            </div>
                         </div>
                     </FeaturePanel>
 
@@ -592,7 +628,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                             />
                         </div>
                             <p className="mt-1 text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">每个学生无论评价如何，都可以获得的成长奖励</p>
-                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">全班平分：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(sunshineAmount)}币</span></div>
+                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">全班平分：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(sunshineAmount)}币</span>{isPerStudentBudget && <span className="font-medium text-[var(--tm-text-tertiary)]">（假设1个班{previewClassStudentCount}人）</span>}</div>
                         </label>
 
                         <div>
@@ -616,7 +652,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                             />
                         </div>
                             <p className="mt-1 text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">评分为正的学生，按比例分配的排名奖励</p>
-                            <div className="mt-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">奖池金额：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(rankingAmount)}币</span></div>
+                            <div className="mt-2 text-[12px] font-medium text-[var(--tm-text-primary)]">奖池金额：<span className="tabular-nums text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(rankingAmount)}币</span>{isPerStudentBudget && <span className="text-[var(--tm-text-tertiary)]">（假设1个班{previewClassStudentCount}人）</span>}</div>
                         </div>
                         </div>
                     </FeaturePanel>
@@ -625,18 +661,16 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                     </div>
                 </div>
             )}
-            <MobileBottomSheet open={Boolean(saveNotice)} title="设置已保存" onClose={() => setSaveNotice(null)}
+            <MobileToast message={toastVersion ? '保存成功' : ''} />
+            <MobileBottomSheet open={Boolean(saveNotice)} title="提示" onClose={() => setSaveNotice(null)}
                 footer={<button type="button" onClick={() => setSaveNotice(null)} className={featureFormPrimaryButtonClass}>知道了</button>}>
-                <div className="space-y-3">
-                    <p className="text-[15px] font-semibold leading-6 text-[var(--tm-text-primary)]">{saveNotice?.headline}</p>
-                    <p className="text-[14px] leading-6 text-[var(--tm-text-secondary)]">{saveNotice?.detail}</p>
-                </div>
+                <p className="text-[14px] font-semibold leading-6 text-[var(--tm-text-primary)]">{saveNotice?.message}</p>
             </MobileBottomSheet>
         </FeaturePageBody>
     );
 };
 
-export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ text, images, onTextChange, onAddImage, onRemoveImage, onSubmit }) => {
+export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ text, images, errorMessage, onTextChange, onAddImage, onRemoveImage, onSubmit }) => {
     const canSubmit = Boolean(text.trim());
     const canAddImage = images.length < 5;
 
@@ -676,6 +710,7 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
                     )}
                 </div>
             </FeaturePanel>
+            {errorMessage && <p role="alert" className="text-[14px] leading-6 text-[var(--tm-status-negative-strong)]">{errorMessage}</p>}
         </FeaturePageBody>
     );
 };

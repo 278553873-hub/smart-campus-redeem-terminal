@@ -5,7 +5,7 @@ import {
     type TeacherGradientPreviewConfig,
 } from '../styles/teacherGradientPreview';
 
-export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'class-list' | 'me' | 'plain' | 'preview' | 'record' | 'student-detail';
+export type TeacherMobileScreenBackgroundVariant = 'ambient' | 'class-list' | 'me' | 'plain' | 'preview' | 'record' | 'student-detail' | 'assistant-headteacher' | 'assistant-principal';
 export type TeacherMobileRecordMode = 'student' | 'class';
 export type TeacherMobileClassListMode = 'class' | 'team';
 
@@ -75,6 +75,10 @@ const TeacherMobileScreenBackground: React.FC<TeacherMobileScreenBackgroundProps
     classListMode = 'class',
     preview,
 }) => {
+    if (variant === 'assistant-headteacher' || variant === 'assistant-principal') {
+        return <div className={`absolute inset-0 overflow-hidden ${variant === 'assistant-principal' ? 'ai-assistant-theme-principal principal-agent-gradient-page' : 'ai-assistant-theme-headteacher headteacher-agent-gradient-page'}`} aria-hidden="true" />;
+    }
+
     if (variant === 'preview' && preview) {
         const visual = getTeacherGradientPreviewVisual(preview);
         return (

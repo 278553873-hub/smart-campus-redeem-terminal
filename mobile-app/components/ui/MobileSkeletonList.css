@@ -1,0 +1,62 @@
+.mobile-skeleton-list__layout {
+    position: relative;
+}
+
+.mobile-skeleton-list__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.mobile-skeleton-list[data-phase='loading'] [data-skeleton-block],
+.mobile-skeleton-list[data-phase='loading'] [data-skeleton-decoration] {
+    visibility: hidden;
+}
+
+.mobile-skeleton-list__light {
+    transform-box: view-box;
+    animation: mobile-skeleton-sweep var(--tm-skeleton-sweep-duration) linear infinite;
+}
+
+.mobile-skeleton-list[data-phase='revealing'] [data-skeleton-block] {
+    animation: mobile-skeleton-reveal var(--tm-skeleton-reveal-duration) ease-out both;
+    animation-delay: calc(var(--mobile-skeleton-order) * var(--tm-skeleton-block-stagger));
+}
+
+.mobile-skeleton-list[data-phase='revealing'] .mobile-skeleton-list__mask-block {
+    animation: mobile-skeleton-fade var(--tm-skeleton-reveal-duration) ease-out both;
+    animation-delay: calc(var(--mobile-skeleton-order) * var(--tm-skeleton-block-stagger));
+}
+
+.mobile-skeleton-list[data-phase='revealing'] [data-skeleton-motion='fade'] {
+    animation-name: mobile-skeleton-reveal-still;
+}
+
+@keyframes mobile-skeleton-sweep {
+    from { transform: translateX(0); }
+    to { transform: translateX(200%); }
+}
+
+@keyframes mobile-skeleton-reveal {
+    from { opacity: 0; transform: translateY(var(--tm-skeleton-reveal-offset)); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes mobile-skeleton-fade {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes mobile-skeleton-reveal-still {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mobile-skeleton-list__light { display: none; }
+    .mobile-skeleton-list[data-phase='revealing'] [data-skeleton-block],
+    .mobile-skeleton-list[data-phase='revealing'] .mobile-skeleton-list__mask-block { animation: none; }
+    .mobile-skeleton-list[data-phase='revealing'] .mobile-skeleton-list__overlay { display: none; }
+}

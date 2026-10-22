@@ -80,6 +80,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       : 'h-[calc(var(--tm-student-card-height-minimal)+18px)]';
   const accessibilityDetails = [
     `${student.name}，学号${studentNo}`,
+    student.gender === 'male' ? '男生' : '女生',
     contextLabel ?? '',
     displaySettings.showLevel ? `等级分值${shownLevelNetScore}分` : '',
     showPraise

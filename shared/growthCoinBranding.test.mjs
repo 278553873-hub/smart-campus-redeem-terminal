@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { COIN_ICON_PRESETS, DEFAULT_COIN_BRANDING, getCoinBrandTerms, validateCoinBranding } from './growthCoinBranding.ts';
-import { readCoinBranding, saveCoinBranding, subscribeCoinBranding } from './growthCoinBrandingStore.ts';
+import { readCoinBranding, saveCoinBranding, subscribeCoinBranding, updateCoinBranding } from './growthCoinBrandingStore.ts';
 
 const memory = new Map([['student-balance', '320'], ['student-history', '[{"amount":10}]']]);
 globalThis.localStorage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value) };
@@ -26,12 +26,24 @@ assert.throws(() => validateCoinBranding({ ...own, name: '一二三四五六七�
 assert.throws(() => validateCoinBranding({ ...own, iconUrl: 'javascript:alert(1)' }), /请选择图标/);
 assert.throws(() => validateCoinBranding({ ...own, iconUrl: 'data:image/svg+xml;base64,PHN2Zz4=' }), /请选择图标/);
 assert.equal(validateCoinBranding({ ...own, iconUrl: 'data:image/png;base64,AAAA' }).iconUrl, 'data:image/png;base64,AAAA');
-for (const iconUrl of ['/assets/coin.png', '/assets/c4d_growth.png', '/assets/c4d_shop.png', '/assets/c4d_bank.png', '/assets/growth-coins/coin-sprout.png', '/assets/growth-coins/coin-sun.png', '/assets/growth-coins/coin-laurel.png']) {
+assert.equal(DEFAULT_COIN_BRANDING.iconUrl, '/assets/growth-coins/coin-star.png', '默认使用金色星星金币');
+memory.set('school-growth-coin-branding:v1:school-legacy', JSON.stringify({ name: '向阳币', iconUrl: '/assets/coin.png' }));
+assert.deepEqual(readCoinBranding('school-legacy'), { name: '向阳币', iconUrl: DEFAULT_COIN_BRANDING.iconUrl }, '旧蓝底金币自动升级，保留本校名称');
+assert.equal(saveCoinBranding('school-legacy', { name: '向阳币', iconUrl: '/assets/coin.png' }).iconUrl, DEFAULT_COIN_BRANDING.iconUrl, '保存旧草稿也使用新默认图标');
+for (const iconUrl of ['/assets/c4d_growth.png', '/assets/c4d_shop.png', '/assets/c4d_bank.png', '/assets/growth-coins/coin-sprout.png', '/assets/growth-coins/coin-sun.png', '/assets/growth-coins/coin-laurel.png']) {
   assert.equal(validateCoinBranding({ name: '旧校币', iconUrl }).iconUrl, iconUrl, '旧图标继续兼容');
 }
 saveCoinBranding('school-a', DEFAULT_COIN_BRANDING);
 assert.deepEqual(readCoinBranding('school-a'), DEFAULT_COIN_BRANDING, '可恢复默认');
 unsubscribe();
+updateCoinBranding('school-instant', { name: '云朵币' });
+assert.equal(readCoinBranding('school-instant').name, '云朵币', '确认名称立即写入');
+updateCoinBranding('school-instant', { iconUrl: COIN_ICON_PRESETS[2].url });
+assert.deepEqual(readCoinBranding('school-instant'), { name: '云朵币', iconUrl: COIN_ICON_PRESETS[2].url }, '选择图标立即写入且保留名称');
+updateCoinBranding('school-instant', { name: '小红花' });
+assert.equal(readCoinBranding('school-instant').iconUrl, COIN_ICON_PRESETS[2].url, '单独改名称保留已选图标');
+assert.throws(() => updateCoinBranding('school-instant', { name: ' ' }), /1至8/);
+assert.equal(readCoinBranding('school-instant').name, '小红花', '非法名称不覆盖原值');
 localStorage.setItem = () => { throw new Error('quota'); };
 assert.throws(() => saveCoinBranding('school-a', own), /保存失败/);
 assert.deepEqual(readCoinBranding('school-a'), DEFAULT_COIN_BRANDING, '保存失败不能假报成功或改内存快照');

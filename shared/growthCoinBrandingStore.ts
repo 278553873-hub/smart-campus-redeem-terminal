@@ -29,6 +29,11 @@ export const saveCoinBranding = (schoolId: string, draft: GrowthCoinBranding): G
   return value;
 };
 
+/** 单字段即时更新，合并最新存储值，避免覆盖另一字段的修改。 */
+export const updateCoinBranding = (schoolId: string, patch: Partial<GrowthCoinBranding>): GrowthCoinBranding => (
+  saveCoinBranding(schoolId, { ...readCoinBranding(schoolId), ...patch })
+);
+
 export const subscribeCoinBranding = (schoolId: string, listener: () => void) => {
   if (typeof window === 'undefined') return () => {};
   const key = keyFor(schoolId);

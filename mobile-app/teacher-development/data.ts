@@ -1,4 +1,6 @@
-import { INDICATOR_FIELD_PRESETS, withRecordFields, type IndicatorField, type RecordFieldSnapshot } from './indicatorFields';
+import { INDICATOR_FIELD_PRESETS, extractIndicatorFields, indicatorFields, makeFieldSnapshot, withRecordFields, type IndicatorField, type RecordFieldSnapshot } from './indicatorFields';
+import { findImageSample } from './imageSamples';
+export { IMAGE_SAMPLES } from './imageSamples';
 
 export type EvaluationRole = 'teacher' | 'manager';
 export type RecordInputType = 'text' | 'voice' | 'image';
@@ -26,12 +28,22 @@ export interface DevelopmentRecord {
   inputType: RecordInputType; imageSampleId?: string; note?: string; reviewerId?: string; history: string[];
   fieldSnapshot?: RecordFieldSnapshot;
   distinguishLevels?: boolean;
+  matter?: string;
+  inputContext?: { teacherId: string; date: string };
+  scoreAdjustment?: { value: number; reason: string };
 }
 export const SCHOOL = '玉林中学';
 export const PERIODS = [
   { id: '2026-autumn', label: '2026—2027 第一学期', start: '2026-09-01', end: '2027-01-31' },
   { id: '2026-spring', label: '2025—2026 第二学期', start: '2026-02-01', end: '2026-08-31' },
 ];
+export const ACADEMIC_YEAR_PERIODS = [
+  { id: '2026-year', label: '2026—2027 学年', start: '2026-09-01', end: '2027-08-31' },
+  { id: '2025-year', label: '2025—2026 学年', start: '2025-09-01', end: '2026-08-31' },
+];
+export type EvaluationPeriodMode = 'semester' | 'academic-year';
+export const periodsForMode = (mode: EvaluationPeriodMode) => mode === 'academic-year' ? ACADEMIC_YEAR_PERIODS : PERIODS;
+export const ALL_PERIODS = [...PERIODS, ...ACADEMIC_YEAR_PERIODS];
 const INDICATOR_PRESETS: Omit<DevelopmentIndicator, 'fields' | 'fieldVersion' | 'distinguishLevels'>[] = [
   { id: 'C01', name: '履职尽责', dimension: '师德师风', definition: '履行教育教学职责，遵守课堂及岗位要求。', roles: ['manager'], requiresReview: false, base: 10, upper: 10, lower: 0, rule: '经核实，无故缺课或课堂播放与教学无关内容并影响教学，扣3分。', delta: -3, keywords: ['无故缺课', '追星', '歌星', '与教学无关'] },
   { id: 'C02', name: '关爱学生', dimension: '师德师风', definition: '尊重学生人格，平等关爱并保护学生。', roles: ['manager'], requiresReview: false, base: 10, upper: 10, lower: 0, rule: '经核实公开辱骂学生，扣3分。', delta: -3, keywords: ['辱骂', '体罚'] },
@@ -65,14 +77,17 @@ export const TEACHERS: TeacherDossier[] = [
 ];
 const seed = (id: string, teacherId: string, indicatorId: string, title: string, date: string, status: RecordStatus = 'approved', extra: Partial<DevelopmentRecord> = {}): DevelopmentRecord => {
   const indicator = INDICATORS.find(item => item.id === indicatorId)!;
-  return withRecordFields({ id, inputType: 'text', teacherId, authorId: teacherId, text: title, title, indicatorId, date, recordedAt: `${date}T14:00:00+08:00`, category: indicator.category, delta: indicator.delta, status, requiresReview: indicator.requiresReview, rule: indicator.rule, history: [indicator.requiresReview ? '教师提交记录' : 'AI匹配规则，免审自动生效'], ...(status === 'approved' && indicator.requiresReview ? { reviewerId: 't2', history: ['教师提交记录', '管理者审核通过'] } : {}), ...extra }, indicator);
+  const sample = findImageSample(extra.imageSampleId);
+  const snapshot = sample && sample.teacherId === teacherId && sample.date === date
+    ? { fieldSnapshot: makeFieldSnapshot(indicator, extractIndicatorFields(sample.text, indicatorFields(indicator))) } : {};
+  return withRecordFields({ id, inputType: 'text', teacherId, authorId: teacherId, text: title, title, indicatorId, date, recordedAt: `${date}T14:00:00+08:00`, category: indicator.category, delta: indicator.delta, status, requiresReview: indicator.requiresReview, rule: indicator.rule, history: [indicator.requiresReview ? '教师提交记录' : 'AI匹配规则，免审自动生效'], ...(status === 'approved' && indicator.requiresReview ? { reviewerId: 't2', history: ['教师提交记录', '管理者审核通过'] } : {}), ...snapshot, ...extra }, indicator);
 };
 export const INITIAL_RECORDS: DevelopmentRecord[] = [
-  seed('r1', 't1', 'C07', '完成新课程教学研修', '2026-10-12', 'approved', { text: '今天，我完成了校级新课程教学研修，学到了几种课堂提问的方法。', level: '校级' }),
+  seed('r1', 't1', 'C07', '完成新课程教学研修', '2026-10-12', 'approved', { inputType: 'image', imageSampleId: 'training-certificate', text: findImageSample('training-certificate')!.text, level: '校级' }),
   seed('r2', 't1', 'C06', '与家长沟通学生学习习惯', '2026-10-09', 'approved', { inputType: 'voice', text: SELF_COMMUNICATION_EXAMPLE }),
-  seed('r3', 't1', 'C09', '项目化学习课题结题', '2026-10-08', 'pending', { inputType: 'image', imageSampleId: 'research', level: '市级', stage: '结题', contribution: '主持人', text: '张敏主持的市级项目化学习课题于2026年10月8日结题。' }),
+  seed('r3', 't1', 'C09', '项目化学习课题结题', '2026-10-08', 'pending', { inputType: 'image', imageSampleId: 'research-completion', level: '市级', stage: '结题', contribution: '主持人', text: findImageSample('research-completion')!.text }),
   seed('r4', 't1', 'C12', '区县级阅读教学公开课', '2026-09-22', 'approved', { inputType: 'image', imageSampleId: 'lesson', level: '区县级', contribution: '执教人' }),
-  seed('r5', 't1', 'C08', '优化阅读课堂提问策略', '2026-09-15', 'approved', { text: '今天，我完成了阅读课堂提问策略的教研改进，先让学生交流，再进行全班分享。' }),
+  seed('r5', 't1', 'C08', '优化阅读课堂提问策略', '2026-09-15', 'approved', { inputType: 'image', imageSampleId: 'teaching-research-notes', text: findImageSample('teaching-research-notes')!.text }),
   seed('r6', 't2', 'C11', '完成青年教师带教任务', '2026-10-11', 'pending', { inputType: 'voice', text: '今天，我完成了青年教师带教任务，和青年教师一起复盘了课堂，收到了受助反馈。' }),
   seed('r7', 't3', 'C07', '完成英语教学研修', '2026-10-10', 'approved', { text: '今天，我完成了英语教学研修，学习了分组口语练习的方法。' }),
   seed('r8', 't3', 'C04', '分层教学实践与反馈', '2026-09-28', 'approved', { inputType: 'image', imageSampleId: 'practice' }),
@@ -82,9 +97,3 @@ export const INITIAL_RECORDS: DevelopmentRecord[] = [
   seed('r12', 't1', 'C12', '区县级公开课执教证明', '2026-10-06', 'returned', { inputType: 'image', imageSampleId: 'lesson-incomplete', level: '区县级', reviewerId: 't2', note: '图片未显示本人执教信息，请更换清晰完整的图片后重新提交。', history: ['教师提交图片', 'AI匹配示范服务，进入审核队列', '管理者审核未通过：图片未显示本人执教信息'] }),
 ];
 export const STATUS_LABELS: Record<RecordStatus, string> = { approved: '已通过', pending: '待审核', returned: '未通过', withdrawn: '已撤回' };
-export const IMAGE_SAMPLES = [
-  { id: 'training', label: '研修学习', heading: '教师研修活动记录', lines: ['校级新课程教学研修', '已完成学习与课堂实践交流'], text: (name: string, date: string) => `${name}于${date}完成校级新课程研修。` },
-  { id: 'research', label: '课题研究', heading: '课题结题评审记录', lines: ['市级阅读素养教学研究', '项目状态：已结题', '本人贡献：主持人'], text: (name: string, date: string) => `${name}主持的市级阅读素养教学研究课题于${date}结题。` },
-  { id: 'lesson', label: '公开授课', heading: '公开课活动记录', lines: ['区县级阅读教学公开课', '已完成课堂展示与交流', '本人贡献：执教人'], text: (name: string, date: string) => `${name}于${date}完成区县级公开课，本人为执教人。` },
-  { id: 'practice', label: '教学实践', heading: '课堂教学实践记录', lines: ['分层教学：阅读课堂实践', '已完成教学设计与课堂实施', '已收集学生反馈'], text: (name: string, date: string) => `${name}于${date}完成分层教学，图片包含教学设计、实施记录与学生反馈。` },
-];

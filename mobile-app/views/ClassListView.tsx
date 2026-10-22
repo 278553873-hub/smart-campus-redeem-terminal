@@ -34,6 +34,7 @@ import {
 import ClassInviteFlow, { type ClassInviteAudience } from '../components/class/ClassInviteFlow';
 import ParentEvaluationVisibilitySettings from '../components/class/ParentEvaluationVisibilitySettings';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileTag from '../components/ui/MobileTag';
 import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSlidingSegmentedControl from '../components/ui/MobileSlidingSegmentedControl';
@@ -54,6 +55,9 @@ import {
 } from '../domain/teacherSpaceAccess';
 import { formatClassCode } from '../domain/classInfo';
 import { copyText } from '../utils/copyText';
+import MobileSkeletonList, { skeletonBlock } from '../components/ui/MobileSkeletonList';
+import ClassListLoadingCards from '../components/class/ClassListLoadingCards';
+import { classListLoadingPreviewSession } from '../../shared/classListLoadingPreview';
 
 interface ClassListViewProps {
     classes: ClassInfo[];
@@ -61,6 +65,16 @@ interface ClassListViewProps {
     currentSpace: TeacherSpaceOption;
     classMembershipById: Record<string, TeacherClassMembership>;
     addDemoTopBreathingSpace?: boolean;
+    /** 正式请求状态；后台刷新不应遮挡已有内容。 */
+    loading?: boolean;
+    /** 当前账号、空间、页签已有成功结果，空数组也算；由数据层随缓存一起提供。 */
+    hasLoaded?: boolean;
+    /** 仅演示容器传入模拟等待时间，线上请求无需此项。 */
+    demoLoadDuration?: number;
+    demoLoadKey?: number;
+    demoHoldLoading?: boolean;
+    /** 默认首轮演示使用无数据标准占位，手动重播仍可测量真实内容。 */
+    demoInitialLoad?: boolean;
     onCreateClass: () => void;
     onJoinClass: () => void;
     onSelectClass: (classId: string) => void;
@@ -95,6 +109,9 @@ interface ClassListViewProps {
 
 type ClassActionGroupTone = 'daily' | 'student' | 'collaboration';
 
+// 未返回数据时不依据数字位数猜测长度，两页数量占位共用相同尺寸。
+const listCountSkeleton = { ...skeletonBlock(0, 'line', 1, 10), 'data-skeleton-width-px': 48 };
+
 interface ClassActionItem {
     label: string;
     icon: React.ComponentType<{ className?: string }>;
@@ -126,6 +143,12 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     currentSpace,
     classMembershipById,
     addDemoTopBreathingSpace = false,
+    loading = false,
+    hasLoaded,
+    demoLoadDuration = 0,
+    demoLoadKey = 0,
+    demoHoldLoading = false,
+    demoInitialLoad = false,
     onCreateClass,
     onJoinClass,
     onSelectClass,
@@ -158,6 +181,21 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onSelectStudentTeamReport,
 }) => {
     const listScrollRef = useRef<HTMLDivElement>(null);
+    const loadKey = `${currentTeacherId}:${currentSpace.id}:${activeListTab}:${demoLoadKey}`;
+    const [completedDemoLoadKey, setCompletedDemoLoadKey] = useState<string | null>(null);
+    // 兼容已有非空列表；已加载的空结果必须由数据层明确标记，不能与首次未加载混淆。
+    const hasUsableData = hasLoaded ?? (activeListTab === 'class' ? classes.length > 0 : studentTeams.length > 0);
+    const demoTimedLoading = demoLoadDuration > 0 && completedDemoLoadKey !== loadKey && !classListLoadingPreviewSession.hasLoaded(loadKey);
+    const listLoading = (loading && !hasUsableData) || demoHoldLoading || demoTimedLoading;
+
+    useEffect(() => {
+        if (demoLoadDuration <= 0 || demoHoldLoading || classListLoadingPreviewSession.hasLoaded(loadKey)) return;
+        const timer = window.setTimeout(() => {
+            classListLoadingPreviewSession.complete(loadKey);
+            setCompletedDemoLoadKey(loadKey);
+        }, demoLoadDuration);
+        return () => window.clearTimeout(timer);
+    }, [loadKey, demoLoadDuration, demoHoldLoading]);
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
     const [showTeachingOnly, setShowTeachingOnly] = useState(false);
     const [showGradeFilter, setShowGradeFilter] = useState(false);
@@ -218,6 +256,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         || team.ownerId === currentTeacherId
         || team.collaboratorIds.includes(currentTeacherId)
     )), [currentTeacherId, showParticipatingTeamsOnly, studentTeams]);
+    const classCards = demoInitialLoad && demoTimedLoading ? [] : visibleClasses;
+    const teamCards = demoInitialLoad && demoTimedLoading ? [] : visibleStudentTeams;
 
     const leftStudentClass = useMemo(() => classes.find(classInfo => classInfo.id === leftStudentClassId) || null, [classes, leftStudentClassId]);
     const leftStudents = useMemo(() => (
@@ -423,7 +463,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         const hasRelationshipTags = Boolean(classRole) || subjectTags.length > 0;
 
         return (
-            <article key={classInfo.id} className={`relative flex ${hasRelationshipTags ? 'min-h-[var(--tm-class-list-card-min-height)]' : 'min-h-[var(--tm-class-list-card-compact-min-height)]'} flex-col rounded-[var(--tm-class-list-card-radius)] bg-white px-4 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]`}>
+            <article key={classInfo.id} className="relative flex min-h-[var(--tm-class-list-card-compact-min-height)] flex-col rounded-[var(--tm-class-list-card-radius)] bg-white px-5 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]">
                 <button
                     type="button"
                     onClick={() => onSelectClass(classInfo.id)}
@@ -431,22 +471,22 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     aria-label={`查看${displayClassName}学生列表`}
                 />
                 <div className="pointer-events-none relative z-[1] min-w-0 flex-1 pr-10">
-                    <h3 className="min-w-0 truncate text-lg font-[550] text-[var(--tm-text-primary)]">{displayClassName}</h3>
+                    <h3 {...skeletonBlock(0, 'line', 1, 18)} data-skeleton-right-to={`class-action-end-${classInfo.id}`} className="min-w-0 truncate text-lg font-medium text-[var(--tm-text-primary)]">{displayClassName}</h3>
                     {hasRelationshipTags && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
+                        <div {...skeletonBlock(1, 'line', 0.72, 13)} className="mt-1.5 flex flex-wrap gap-1">
                             {classRole && (
-                                <span className="min-h-5 whitespace-nowrap rounded-md bg-[var(--tm-brand-primary-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--tm-brand-primary)]">
+                                <MobileTag tone="brand">
                                     {classRole}
-                                </span>
+                                </MobileTag>
                             )}
                             {subjectTags.map(tag => (
-                                <span key={tag} className="min-h-5 whitespace-nowrap rounded-md bg-[var(--tm-brand-secondary-soft)] px-2 py-0.5 text-[11px] tm-font-regular text-[var(--tm-brand-secondary)]">
+                                <MobileTag key={tag} tone="secondary">
                                     {tag}
-                                </span>
+                                </MobileTag>
                             ))}
                         </div>
                     )}
-                    <div className="mt-1.5 flex min-h-5 items-center text-[13px] font-[450] text-[var(--tm-text-secondary)]">
+                    <div {...skeletonBlock(2, 'line', 0.72, 13)} className={`${hasRelationshipTags ? 'mt-2' : 'mt-1.5'} flex min-h-5 items-center text-[13px] font-[450] text-[var(--tm-text-secondary)]`}>
                         <span>{classInfo.gradeLevel}</span>
                         <span className="mx-1.5 text-[var(--tm-text-disabled)]" aria-hidden="true">·</span>
                         <span>{classInfo.studentCount}人</span>
@@ -455,16 +495,17 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         type="button"
                         aria-label={`${displayClassName}更多操作`}
                         onClick={() => setActiveActionClassId(classInfo.id)}
-                        className="pointer-events-auto absolute -right-2 -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)]"
+                        className="pointer-events-auto absolute -right-[14.5px] -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)]"
                     >
-                        <WechatMoreIcon className="h-5 w-5" />
+                        <span {...skeletonBlock(0, 'circle')} className="block h-5 w-5"><WechatMoreIcon className="h-5 w-5" /></span>
                     </button>
                 </div>
 
-                <div className="pointer-events-none relative z-[1] mt-2 pt-1">
+                <div className={`pointer-events-none relative z-[1] mt-2 ${hasRelationshipTags ? '' : 'pt-1'}`}>
                     <div className="h-[var(--tm-class-list-divider-thickness)] bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
                     <div className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
                         <button
+                            {...skeletonBlock(3, 'line', 0.78, 14)}
                             type="button"
                             onClick={() => onSelectClass(classInfo.id)}
                             className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
@@ -473,14 +514,16 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             学生列表
                         </button>
                         <button
+                            {...skeletonBlock(3, 'line', 0.78, 14)}
                             type="button"
                             onClick={() => onViewClassReport(classInfo.id)}
+                            data-skeleton-anchor={`class-action-end-${classInfo.id}`}
                             className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
                         >
                             <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             班级报告
                         </button>
-                        <span className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
+                        <span data-skeleton-decoration className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
                     </div>
                 </div>
             </article>
@@ -495,15 +538,16 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             <button
                 type="button"
                 onClick={() => onSelectStudentTeam(team.id)}
+                data-skeleton-anchor={`team-content-${team.id}`}
                 className="flex min-h-[74px] min-w-0 flex-1 items-center gap-3 rounded-[var(--tm-class-list-card-radius)] px-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
                 aria-label={`${team.name}，${team.ownerName}负责，${team.memberIds.length}人`}
             >
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
+                <span {...skeletonBlock(0, 'circle')} className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-avatar)] ring-1 ring-white/90">
                     <img src={avatarSrc} alt="" className="h-full w-full object-cover" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                    <span className="block truncate text-lg font-[550] text-[var(--tm-text-primary)]">{team.name}</span>
-                    <span className="mt-1 flex min-w-0 items-center gap-1.5">
+                    <span {...skeletonBlock(1, 'line', 1, 18)} data-skeleton-right-to={`team-action-end-${team.id}`} className="block truncate text-lg font-[550] text-[var(--tm-text-primary)]">{team.name}</span>
+                    <span {...skeletonBlock(2, 'line', 0.82, 13)} className="mt-1 flex min-w-0 items-center gap-1.5">
                         <span className="truncate text-[13px] font-[450] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
                         <span className={`inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-semibold ${isPublicTeam ? 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
                             {isPublicTeam ? '公开' : '私密'}
@@ -513,13 +557,14 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             </button>
             {team.ownerId === currentTeacherId && (
                 <button type="button" aria-label={`${team.name}更多操作`} onClick={() => setActiveActionTeamId(team.id)} className="absolute right-1 top-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
-                    <WechatMoreIcon className="h-5 w-5" />
+                    <span {...skeletonBlock(1, 'circle')} className="block h-5 w-5"><WechatMoreIcon className="h-5 w-5" /></span>
                 </button>
             )}
             <div className="relative mt-2 pt-1">
                 <div className="h-[var(--tm-class-list-divider-thickness)] bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
-                <div className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
+                <div data-skeleton-align-to={`team-content-${team.id}`} className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
                     <button
+                        {...skeletonBlock(3, 'line', 0.78, 14)}
                         type="button"
                         onClick={() => onSelectStudentTeam(team.id)}
                         className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
@@ -528,14 +573,16 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         成员列表
                     </button>
                     <button
+                        {...skeletonBlock(3, 'line', 0.78, 14)}
                         type="button"
                         onClick={() => onSelectStudentTeamReport(team.id)}
+                        data-skeleton-anchor={`team-action-end-${team.id}`}
                         className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
                     >
                         <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                         数据概览
                     </button>
-                    <span className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
+                    <span data-skeleton-decoration className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
                 </div>
             </div>
         </article>
@@ -628,15 +675,15 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 <section className="space-y-0 px-1">
                     {activeListTab === 'class' && isSchoolSpace && (
                         <div className="space-y-0">
-                            <div className="flex min-h-11 items-center justify-between gap-2 max-[359px]:flex-wrap">
-                                <div className="flex min-w-0 items-center gap-1">
+                            <div className="flex min-h-11 flex-wrap items-center justify-between gap-2">
+                                <div className="flex shrink-0 items-center gap-1">
                                     <button
                                         type="button"
                                         aria-label="按年级筛选班级"
                                         aria-haspopup="dialog"
                                         aria-expanded={showGradeFilter}
                                         onClick={() => setShowGradeFilter(true)}
-                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${gradeFilter !== '全部' ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] pl-[var(--tm-space-1)] pr-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${gradeFilter !== '全部' ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                     >
                                         <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
                                         <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
@@ -658,7 +705,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         type="button"
                                         aria-label="查看班级排行榜"
                                         onClick={onViewLeaderboard}
-                                        className="inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-self-end justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                                        className="ml-auto inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
                                     >
                                         <img
                                             src={ASSETS.CLASS.LEADERBOARD_ENTRY}
@@ -681,7 +728,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         type="button"
                                         aria-pressed={showParticipatingTeamsOnly}
                                         onClick={() => setShowParticipatingTeamsOnly(current => !current)}
-                                        className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-transparent px-2.5 text-[13px] font-medium focus-visible:bg-[var(--tm-bg-surface-soft)] ${showParticipatingTeamsOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                        className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-transparent pl-[var(--tm-space-1)] pr-[var(--tm-space-4)] text-[13px] font-medium focus-visible:bg-[var(--tm-bg-surface-soft)] ${showParticipatingTeamsOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
                                     >
                                         <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showParticipatingTeamsOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
                                             {showParticipatingTeamsOnly && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -708,17 +755,19 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 ref={listScrollRef}
                 className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(var(--teacher-tabbar-height,66px)+var(--teacher-tabbar-bottom,16px)+var(--tm-space-3))] no-scrollbar"
             >
+                <MobileSkeletonList key={loadKey} loading={listLoading} label={activeListTab === 'class' ? '班级列表' : '社团与团队列表'}>
                 <div className={isSchoolSpace ? 'space-y-[var(--tm-class-list-toolbar-card-gap)]' : 'space-y-3'}>
                     <section className="space-y-0 px-1">
-                        {activeListTab === 'class' && canManagePersonal && classes.length > 0 && (
+                        {activeListTab === 'class' && canManagePersonal && (classes.length > 0 || listLoading) && (
                             <div className="flex min-h-11 items-center justify-between gap-3">
-                                <span className="text-[13px] font-medium text-[var(--tm-text-tertiary)]">
+                                <span {...skeletonBlock(0, 'line', 1.2, 12)} data-skeleton-count data-skeleton-motion="fade" className="text-[13px] font-medium text-[var(--tm-text-tertiary)]">
                                     {hiddenClassIds.size > 0
                                         ? `显示${visibleClasses.length}/${classes.length}个班级`
                                         : `共${classes.length}个班级`}
                                 </span>
                                 <button
                                     type="button"
+                                    disabled={listLoading}
                                     onClick={() => setShowClassManagement(true)}
                                     className="-mr-2 inline-flex min-h-11 items-center gap-1.5 rounded-[var(--tm-radius-control-compact)] px-2 text-[13px] font-semibold text-[var(--tm-brand-primary)]"
                                 >
@@ -731,39 +780,41 @@ const ClassListView: React.FC<ClassListViewProps> = ({
 
                         {activeListTab === 'class' && isSchoolSpace && (
                             <span
-                                className="block h-[18px] whitespace-nowrap pl-3 text-[12px] font-medium leading-[18px] tabular-nums text-[var(--tm-text-secondary)]"
+                                className="block h-[18px] whitespace-nowrap pl-[var(--tm-space-1)] text-[12px] font-medium leading-[18px] tabular-nums text-[var(--tm-text-secondary)]"
                                 aria-live="polite"
                                 aria-atomic="true"
                             >
-                                共{visibleClasses.length}个
+                                <span {...listCountSkeleton} data-skeleton-count data-skeleton-motion="fade" className="inline-block align-top">共{visibleClasses.length}个</span>
                             </span>
                         )}
                         {activeListTab === 'team' && (
                             <span
-                                className="block h-[18px] whitespace-nowrap pl-3 text-[12px] font-medium leading-[18px] tabular-nums text-[var(--tm-text-secondary)]"
+                                className="block h-[18px] whitespace-nowrap pl-[var(--tm-space-1)] text-[12px] font-medium leading-[18px] tabular-nums text-[var(--tm-text-secondary)]"
                                 aria-live="polite"
                                 aria-atomic="true"
                             >
-                                共{visibleStudentTeams.length}个
+                                <span {...listCountSkeleton} data-skeleton-count data-skeleton-motion="fade" className="inline-block align-top">共{visibleStudentTeams.length}个</span>
                             </span>
                         )}
                     </section>
 
                 {activeListTab === 'class' && (
                     <div className="space-y-[var(--tm-space-3)]">
-                        {visibleClasses.map(renderClassCard)}
+                        {listLoading && classCards.length === 0 && <ClassListLoadingCards variant="class" />}
+                        {classCards.map(renderClassCard)}
                     </div>
                 )}
 
                 {activeListTab === 'team' && (
                     <div className="space-y-[var(--tm-space-3)]">
-                        {visibleStudentTeams.map(renderStudentTeamCard)}
+                        {listLoading && teamCards.length === 0 && <ClassListLoadingCards variant="team" />}
+                        {teamCards.map(renderStudentTeamCard)}
                     </div>
                 )}
 
                 {activeListTab === 'class' && (
                     <>
-                        {visibleClasses.length === 0 && (
+                        {!listLoading && visibleClasses.length === 0 && (
                             <section className="px-2 py-6 text-center">
                                 <MobileEmptyState
                                     imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
@@ -789,7 +840,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     </>
                 )}
 
-                {activeListTab === 'team' && visibleStudentTeams.length === 0 && (
+                {!listLoading && activeListTab === 'team' && visibleStudentTeams.length === 0 && (
                     <section className="px-2 py-6 text-center">
                         <MobileEmptyState
                             imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
@@ -799,6 +850,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     </section>
                 )}
                 </div>
+                </MobileSkeletonList>
             </div>
 
             <MobileGradePickerSheet

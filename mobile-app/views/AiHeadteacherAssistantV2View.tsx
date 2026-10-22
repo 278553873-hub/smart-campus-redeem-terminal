@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import { getAssistantGreeting, useAssistantTypewriter } from '../hooks/useAssistantTypewriter';
+import { useAssistantScrollFollow } from '../hooks/useAssistantScrollFollow';
 import AssistantClassSwitchButton from '../components/AssistantClassSwitchButton';
 import AssistantComposer from '../components/assistant-chat/AssistantComposer';
 import AssistantConversationThread, { type AssistantChatMessage } from '../components/assistant-chat/AssistantConversationThread';
@@ -786,7 +787,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [detailWeekId, setDetailWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
     const [showClassPicker, setShowClassPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const latestAssistantRef = useRef<HTMLDivElement>(null);
+    const resumeFollowing = useAssistantScrollFollow(scrollRef, messages.length > 0 && !activeReport && !isGenerating && !historyOpen && !weekDetailOpen, resolvedClassId);
     const generationTimersRef = useRef<number[]>([]);
     const replyTimerRef = useRef<number | null>(null);
     const previousClassIdRef = useRef(resolvedClassId);
@@ -822,31 +823,9 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     }, [resolvedClassId]);
 
     useEffect(() => {
-        const latestMessage = messages[messages.length - 1];
-        if (latestMessage?.role === 'assistant') {
-            const frame = window.requestAnimationFrame(() => {
-                const scroller = scrollRef.current;
-                const latestAssistant = latestAssistantRef.current;
-                if (!scroller || !latestAssistant) return;
-                scroller.scrollTo({
-                    top: Math.max(0, latestAssistant.offsetTop - 8),
-                    behavior: 'smooth',
-                });
-            });
-            return () => window.cancelAnimationFrame(frame);
-        }
-        if (latestMessage?.role === 'user' || isReplying) {
-            const frame = window.requestAnimationFrame(() => {
-                scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-            });
-            return () => window.cancelAnimationFrame(frame);
-        }
-        if (!activeReport && !isGenerating) return undefined;
-        const frame = window.requestAnimationFrame(() => {
-            scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-        return () => window.cancelAnimationFrame(frame);
-    }, [activeReport, isGenerating, isReplying, messages]);
+        if (!activeReport && !isGenerating) return;
+        scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [activeReport, isGenerating]);
 
     useEffect(() => () => {
         clearGenerationTimers();
@@ -953,23 +932,21 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         const question = rawQuestion.trim();
         if (!question || isReplying) return;
 
+        const replyId = 'assistant-' + Date.now();
+        resumeFollowing();
         setMessages(current => [...current, {
             id: 'user-' + Date.now(),
             role: 'user',
             content: question,
-        }]);
+        }, { id: replyId, role: 'assistant' }]);
         setDraft('');
         setIsReplying(true);
         const route = resolveQuestionRoute(question, capabilities);
         setReplyingCapability(route.enabled ? route.capability : 'unknown');
 
         replyTimerRef.current = window.setTimeout(() => {
-            setMessages(current => [...current, {
-                id: 'assistant-' + Date.now(),
-                role: 'assistant',
-                answer: buildAnswer(route, question),
-            }]);
-            setIsReplying(false);
+            const answer = buildAnswer(route, question);
+            setMessages(current => current.map(message => message.id === replyId ? { ...message, answer } : message));
             replyTimerRef.current = null;
         }, 620);
     };
@@ -1089,7 +1066,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     onOpenReport={openHistoryReport}
                 />
             ) : (
-                <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar">
+                <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar assistant-conversation-scroll">
                     <section className="relative h-[148px] overflow-hidden px-5">
                         <div className="relative z-10 max-w-[59%] pt-3" aria-live="polite">
                             <p className="ai-assistant-typewriter-shine min-h-16 whitespace-pre-line text-pretty text-[17px] font-bold leading-7">
@@ -1152,7 +1129,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                             replying={isReplying}
                             replyingLabel={HEADTEACHER_ASSISTANT_REPLYING_LABELS[replyingCapability]}
                             ariaLabel={conversationLabel}
-                            latestAssistantRef={latestAssistantRef}
+                            onReplyComplete={() => setIsReplying(false)}
                         />
                     )}
                 </div>

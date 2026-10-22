@@ -1,15 +1,19 @@
+import { ReportEvaluationRecordList, ReportEvaluationRecordsPage } from '../components/report/ReportEvaluationRecords';
+import { buildClassReportEvaluationRecords, getClassReportRecordRange, type ClassReportEvaluationRecord } from '../domain/classReportEvaluationRecords';
+import MobileInfoHint from '../components/ui/MobileInfoHint';
+import { buildReportIndicatorColorMap } from '../domain/reportIndicatorColors';
+import ReportScoreLegend from '../components/report/ReportScoreLegend';
 import { classReportColorPreviewStyle } from '../styles/teacherMobileTokens';
 import ReportSectionLayout from '../components/report/ReportSectionLayout';
 import type { ClassReportOutlineItem } from '../../shared/classReportOutline';
 import MobileDatePickerSheet, { type MobileDateRange } from '../components/ui/MobileDatePickerSheet';
 import { currentTermToDateRange, localToday } from '../components/ui/mobileDatePickerModel';
-import React, { useCallback, useId, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ArrowDownNarrowWide,
     ArrowUpDown,
     ArrowUpNarrowWide,
     ChevronRight,
-    Info,
     Quote,
     Triangle,
 } from 'lucide-react';
@@ -59,6 +63,7 @@ import { buildClassReportIndicatorTree } from '../domain/classReportIndicatorTre
 import { ClassInfo, Student } from '../types';
 
 interface ClassReportViewProps {
+    onDetailPageChange?: (page: { title: string; onBack: () => void } | null) => void;
     outline?: ClassReportOutlineItem[];
     classInfo: ClassInfo;
     students: Student[];
@@ -71,14 +76,7 @@ type EducationKey = 'all' | string;
 type RankingMode = 'net' | 'progress';
 type FocusTone = 'positive' | 'negative';
 
-const indicatorChartColors: TeacherReportChartColor[] = [
-    'indicator1',
-    'indicator2',
-    'indicator3',
-    'indicator4',
-    'indicator5',
-    'indicator6',
-];
+
 
 const timeRangeTabs: { key: TimeRange; label: string }[] = [
     { key: 'day', label: '今日' },
@@ -167,44 +165,18 @@ const StatCell = ({
     hint?: string;
     hintAlign?: 'left' | 'center';
 }) => {
-    const [hintOpen, setHintOpen] = useState(false);
-    const hintId = useId();
 
     return (
         <div className="relative">
             <div className="flex items-center gap-1">
                 <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{label}</span>
-                {hint && (
-                    <button
-                        type="button"
-                        aria-label={`查看${label}定义`}
-                        aria-expanded={hintOpen}
-                        aria-controls={hintOpen ? hintId : undefined}
-                        aria-describedby={hintOpen ? hintId : undefined}
-                        onClick={() => setHintOpen(current => !current)}
-                        onBlur={() => setHintOpen(false)}
-                        onKeyDown={(event) => {
-                            if (event.key === 'Escape') setHintOpen(false);
-                        }}
-                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-tertiary)] transition-colors active:text-[var(--tm-text-primary)]"
-                    >
-                        <Info aria-hidden="true" className="h-3.5 w-3.5" />
-                    </button>
-                )}
+                {hint && <MobileInfoHint label={`查看${label}定义`} align={hintAlign}>{hint}</MobileInfoHint>}
             </div>
             <div className="mt-2 flex items-baseline gap-1">
                 <strong className="text-[var(--tm-font-size-metric)] leading-none">{value}</strong>
                 <span className="text-[var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">{unit}</span>
             </div>
-            {hintOpen && hint && (
-                <div
-                    id={hintId}
-                    role="tooltip"
-                    className={`absolute top-10 z-20 w-56 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-text-primary)] px-3 py-2 text-xs font-medium leading-relaxed text-white ${hintAlign === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-0'}`}
-                >
-                    {hint}
-                </div>
-            )}
+
         </div>
     );
 };
@@ -390,6 +362,7 @@ const StudentCoverageList = ({
 
 const ClassReportView: React.FC<ClassReportViewProps> = ({
     outline,
+    onDetailPageChange,
     classInfo,
     students,
     currentTeacherName,
@@ -403,7 +376,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const [rankingMode, setRankingMode] = useState<RankingMode>('net');
     const [activeEducation, setActiveEducation] = useState<EducationKey>('all');
     const [showAllRanking, setShowAllRanking] = useState(false);
-    const [showRankingHelp, setShowRankingHelp] = useState(false);
+    const [showAllEvaluationRecords, setShowAllEvaluationRecords] = useState(false);
+    const [selectedEvaluationRecord, setSelectedEvaluationRecord] = useState<ClassReportEvaluationRecord | null>(null);
     const [coverageSortKey, setCoverageSortKey] = useState<StudentCoverageSortKey>('evaluationCount');
     const [coverageSortDirection, setCoverageSortDirection] = useState<StudentCoverageSortDirection>('asc');
     const [showAllCoverage, setShowAllCoverage] = useState(false);
@@ -458,10 +432,11 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         const coveredStudents = Math.min(totalStudents, Math.round(totalStudents * coverageBase));
         const previousRecords = Math.max(0, Math.round(totalRecords * 0.78));
         const indicatorTree = buildClassReportIndicatorTree(classReportIndicatorDemoPaths, totalRecords);
-        const educationEvents = indicatorTree.map((node, index) => ({
+        const indicatorColorMap = buildReportIndicatorColorMap(indicatorTree.map(node => node.id));
+        const educationEvents = indicatorTree.map(node => ({
             key: node.id,
             label: node.label,
-            color: indicatorChartColors[index % indicatorChartColors.length],
+            color: indicatorColorMap.get(node.id)!,
             value: node.metrics.eventCount,
         }));
         const addScores = indicatorTree.map(node => node.metrics.addScore);
@@ -580,6 +555,31 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
         coverageSortDirection,
     ), [coverageSortDirection, coverageSortKey, studentCoverageRows]);
     const visibleCoverageRows = sortedCoverageRows.slice(0, 10);
+    const evaluationRecords = useMemo(() => {
+        const range = timeRange === 'custom' && appliedCustomRange
+            ? appliedCustomRange
+            : getClassReportRecordRange(resolvedReportPeriod, localToday());
+        const sources = reportSourceKey === 'all' ? reportSourceOptions.filter(source => source.key !== 'all' && source.recordCount > 0) : [activeReportSource];
+        return buildClassReportEvaluationRecords({
+            classId: classInfo.id, studentCounts: studentCoverageRows,
+            count: reportData.totalRecords, positiveCount: reportData.positiveRecords,
+            paths: classReportIndicatorDemoPaths,
+            teachers: sources.map(source => ({ id: source.key, name: source.key === 'mine' ? currentTeacherName : source.label })),
+            start: range.start, end: range.end,
+        });
+    }, [timeRange, appliedCustomRange, resolvedReportPeriod, reportSourceKey, reportSourceOptions, activeReportSource, classInfo.id, studentCoverageRows, reportData.totalRecords, reportData.positiveRecords, currentTeacherName]);
+    const evaluationDetailActive = showAllEvaluationRecords || selectedEvaluationRecord != null;
+    const closeEvaluationDetail = useCallback(() => {
+        if (selectedEvaluationRecord) setSelectedEvaluationRecord(null);
+        else setShowAllEvaluationRecords(false);
+    }, [selectedEvaluationRecord]);
+    useEffect(() => {
+        onDetailPageChange?.(evaluationDetailActive ? {
+            title: selectedEvaluationRecord ? '评价详情' : '评价明细', onBack: closeEvaluationDetail,
+        } : null);
+        return () => onDetailPageChange?.(null);
+    }, [evaluationDetailActive, selectedEvaluationRecord, closeEvaluationDetail, onDetailPageChange]);
+
     const coveredStudentCount = studentCoverageRows.filter(row => row.evaluationCount > 0).length;
     const handleCoverageSort = (nextSortKey: StudentCoverageSortKey) => {
         if (nextSortKey === coverageSortKey) {
@@ -637,6 +637,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
     const reportKey = `${reportSourceKey}-${appliedPeriodKey}`;
     return (
         <div style={classReportColorPreviewStyle} className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
+            <div className="flex h-full min-h-0 flex-col" style={{ display: evaluationDetailActive ? 'none' : undefined }}>
                 <header className={`z-30 shrink-0 border-b bg-[var(--tm-page-plain-content-bg)] ${isReportScrolled ? 'border-[var(--tm-border-subtle)]' : 'border-transparent'}`}>
                     <div className="px-[var(--tm-report-page-inline)]">
                         <div>
@@ -766,21 +767,28 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         </button>
                     )}
                 >
-                    <div
-                        role="region"
-                        aria-label="五育得分分布，可左右滑动查看全部指标"
-                        tabIndex={0}
-                        className="overflow-x-auto overscroll-x-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
-                    >
-                        <div style={{ minWidth: `max(100%, calc(${reportData.indicatorTree.length} * var(--tm-report-score-category-width) + var(--tm-report-score-axis-space)))` }}>
-                            <TeacherReportBarChart
-                                ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的表扬、待改进与总分对比`}
-                                categories={reportData.indicatorTree.map(item => item.label)}
-                                series={educationScoreSeries}
-                                optionKey={`scores-${reportKey}`}
-                                className="h-64"
-                                onCategorySelect={label => openIndicatorDrilldown('score', label)}
-                            />
+                    <div className="[container-type:inline-size]">
+                        <ReportScoreLegend />
+                        <div
+                            role="region"
+                            aria-label="五育得分分布，可左右滑动查看全部指标"
+                            tabIndex={0}
+                            className="overflow-x-auto overscroll-x-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+                        >
+                            <div style={{ width: `max(100%, calc((100cqw - var(--tm-report-score-axis-space)) / var(--tm-report-score-visible-categories) * ${reportData.indicatorTree.length} + var(--tm-report-score-axis-space)))` }}>
+                                <TeacherReportBarChart
+                                    ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的表扬、待改进与总分对比`}
+                                    categories={reportData.indicatorTree.map(item => item.label)}
+                                    series={educationScoreSeries}
+                                    optionKey={`scores-${reportKey}`}
+                                    className="h-64"
+                                    showLegend={false}
+                                    barMaxWidth={9}
+                                    barGap="8%"
+                                    barCategoryGap="40%"
+                                    onCategorySelect={label => openIndicatorDrilldown('score', label)}
+                                />
+                            </div>
                         </div>
                     </div>
                     <ChartAnalysis {...educationScoreAnalysis} />
@@ -816,10 +824,9 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 </ReportSection>
 
                 <ReportSection id="ranking-title" title="得分排行" titleAccessory={(
-                    <button type="button" onClick={() => setShowRankingHelp(true)} aria-label="查看得分排行与进步幅度说明" aria-haspopup="dialog"
-                        className="relative -my-2 flex h-[var(--tm-size-touch)] w-5 shrink-0 items-center justify-start text-[var(--tm-text-tertiary)] after:absolute after:inset-y-0 after:left-0 after:w-[var(--tm-size-touch)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]">
-                        <Info aria-hidden="true" className="h-3.5 w-3.5" />
-                    </button>
+                    <MobileInfoHint label="查看得分排行与进步幅度说明" align="inset">
+                        总分＝当前时间范围内的加分－扣分，按总分从高到低排序。进步幅度＝本期总分－上期总分，按增加的分数从高到低排序。示例：本期80分，上期60分，进步幅度为+20分。
+                    </MobileInfoHint>
                 )}>
                     <div>
                         <CompactSegmentedControl
@@ -911,6 +918,16 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         </button>
                     )}
                 </ReportSection>
+                <ReportSection id="evaluation-records-title" title="评价明细" action={(
+                    <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">共{evaluationRecords.length}条</span>
+                )}>
+                    <ReportEvaluationRecordList records={evaluationRecords.slice(0, 5)} onSelect={setSelectedEvaluationRecord} />
+                    {evaluationRecords.length > 5 && <button type="button" onClick={() => setShowAllEvaluationRecords(true)}
+                        className="mt-1 flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-1 text-[var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] transition-colors active:text-[var(--tm-brand-primary-pressed)]">
+                        查看全部{evaluationRecords.length}条记录
+                        <ChevronRight aria-hidden="true" className="h-4 w-4" />
+                    </button>}
+                </ReportSection>
                 </ReportSectionLayout>
             </div>
             </div>
@@ -936,14 +953,6 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     [indicatorDrilldown?.mode ?? 'score']: rootId,
                 }))}
             />
-
-            <MobileBottomSheet open={showRankingHelp} title="得分排行说明" onClose={() => setShowRankingHelp(false)}>
-                <div className="space-y-4 text-[length:var(--tm-font-size-body)] leading-relaxed text-[var(--tm-text-primary)]">
-                    <p>总分＝当前时间范围内的加分－扣分，按总分从高到低排序。</p>
-                    <p>进步幅度＝本期总分－上期总分，按增加的分数从高到低排序，表示分数差值。</p>
-                    <p>示例：本期总分80分，上期总分60分，进步幅度为+20分。</p>
-                </div>
-            </MobileBottomSheet>
 
             <MobileBottomSheet open={showAllRanking} title="全部得分排行" onClose={() => setShowAllRanking(false)}>
                 <div style={classReportColorPreviewStyle}>
@@ -975,6 +984,13 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     onSelectStudent={onSelectStudent}
                 />
             </MobileBottomSheet>
+            </div>
+            {evaluationDetailActive && <div className="flex min-h-0 flex-1 flex-col">
+                {!onDetailPageChange && <button type="button" onClick={closeEvaluationDetail} className="min-h-[var(--tm-size-touch)] shrink-0 px-4 text-left text-[var(--tm-text-primary)]">返回</button>}
+                <div className="min-h-0 flex-1">
+                    <ReportEvaluationRecordsPage records={evaluationRecords} selected={selectedEvaluationRecord} onSelect={setSelectedEvaluationRecord} />
+                </div>
+            </div>}
         </div>
     );
 };

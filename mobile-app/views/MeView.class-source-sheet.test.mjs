@@ -1,4 +1,7 @@
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import React from 'react';
+import { transformSync } from 'esbuild';
 
 const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
@@ -31,18 +34,19 @@ requireText(sourceTriggerSource, 'collaboration: UsersRound', '协作来源触�
 requireText(sourceTriggerSource, 'school: Building2', '学校来源触发器应使用学校图标。');
 requireText(sourceTriggerSource, 'export const ClassSourceIcon', '来源图标应作为公共组件导出，供弹窗复用。');
 requireText(sourceTriggerSource, "density?: 'default' | 'compact';", '班级来源触发器应通过公共参数支持紧凑密度。');
-requireText(sourceTriggerSource, 'inline-flex h-9 max-w-full items-center', '紧凑来源触发器的可见胶囊应为 36px。');
+requireText(sourceTriggerSource, 'inline-flex h-8 max-w-full items-center', '紧凑来源触发器的可见胶囊应为 32px。');
 requireText(sourceTriggerSource, 'inline-flex min-h-11 max-w-full items-center', '来源触发器应继续保留 44px 触控高度。');
 requireText(sheetSource, '<MobileBottomSheet open title="切换班级来源" onClose={onClose} contentTone="plain">', '班级来源抽屉内容区应使用统一浅灰底。');
 requireText(sheetSource, 'space-y-[var(--tm-layout-card-gap)] py-[var(--tm-space-3)]', '来源列表应在浅灰内容区内保留上下内边距。');
 requireText(sheetSource, 'text-[length:var(--tm-font-size-body)] font-medium leading-5', '所有来源名称应统一使用14px字号、20px行高和500字重。');
-requireText(sheetSource, 'min-h-[60px]', '来源卡片高度应按标注收紧为 60px。');
+requireText(sheetSource, 'min-h-[72px]', '来源卡片应为名称和下方标签保留至少72px高度。');
 requireText(sheetSource, 'rounded-[var(--tm-radius-card-compact)]', '来源卡片应使用统一内层圆角令牌。');
-requireText(sheetSource, 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]', '未选中来源应使用白色表面和白底专用阴影。');
-requireText(sheetSource, 'bg-[var(--tm-brand-primary-soft)]', '当前来源卡片应使用浅红选中底。');
-requireText(sheetSource, 'ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]', '当前来源卡片应使用品牌红描边与统一卡片阴影。');
-requireText(sheetSource, 'bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]', '当前来源胶囊应使用品牌红和统一反色文字。');
-requireText(sheetSource, 'flex min-h-[60px] w-full items-center justify-between', '抽屉内来源按钮应保持 60px 紧凑高度与稳定布局。');
+requireText(sheetSource, 'bg-[var(--tm-bg-surface)]', '所有来源应使用统一白色表面。');
+requireText(sheetSource, 'shadow-none', '来源卡片不应增加阴影。');
+requireText(sheetSource, '{isActive && <Check', '当前来源应通过右侧对勾展示选中状态。');
+forbidText(sheetSource, 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px]', '当前来源不应使用原有整行浅红底与描边，版本标签可使用浅红底。');
+forbidText(sheetSource, 'ring-[var(--tm-brand-primary)]', '当前来源不应使用整行红色描边。');
+forbidText(sheetSource, '>当前</span>', '右侧对勾已表示选中，不应再叠加当前标签。');
 forbidText(sheetSource, 'aria-label="切换学校"', '不应继续使用切换学校语义。');
 forbidText(sheetSource, '<div className="text-[16px] font-bold text-slate-900">切换学校</div>', '不应继续展示切换学校标题。');
 forbidText(sheetSource, "bg-cyan-50/70", '班级来源当前态不应使用浅青底加圆点。');
@@ -90,4 +94,29 @@ if (navIndex < 0 || sheetIndex < 0 || sheetIndex < navIndex) {
   throw new Error('班级来源抽屉应渲染在底部导航之后，确保层级位于底部导航上层。');
 }
 
-console.log('MeView class source sheet assertions passed');
+// 直接调用真实选项的点击回调，覆盖当前来源与其他来源，避免只校验源码中存在关闭文字。
+const compiledSheet = transformSync(sheetSource.replace('export const ClassSourceSheet', 'const ClassSourceSheet'), {
+  loader: 'tsx', jsx: 'transform',
+}).code;
+const createSheet = new Function(
+  'React', 'MobileBottomSheet', 'MobileTag', 'ClassSourceIcon', 'Check',
+  'getTeacherSchoolTypeLabel', 'getClassSourceTypeLabel',
+  `${compiledSheet}\nreturn ClassSourceSheet;`,
+)(React, 'section', 'span', 'svg', 'svg', () => undefined, () => '个人');
+const options = [
+  { id: 'current', title: '当前来源', type: 'personal', role: 'owner' },
+  { id: 'another', title: '另一个来源', type: 'collaboration', role: 'collaborator' },
+];
+for (const option of options) {
+  const calls = [];
+  const sheet = createSheet({
+    currentSpace: options[0], spaceOptions: options,
+    onClose: () => calls.push('close'),
+    onSelectSpace: id => calls.push(`select:${id}`),
+  });
+  const row = sheet.props.children.props.children.find(item => item.key === option.id);
+  row.props.onClick();
+  assert.deepEqual(calls, ['close', `select:${option.id}`], '点击任意来源都应立即关闭并应用选择。');
+}
+
+console.log('MeView class source sheet assertions and selection-close interactions passed');

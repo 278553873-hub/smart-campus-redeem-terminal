@@ -221,7 +221,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin }) => {
         title="手机号登录/注册"
         onClose={closeActiveSheet}
         titleContent={(
-          <div className="flex h-full items-center gap-[var(--tm-space-5)]" role="tablist" aria-label="手机号登录方式">
+          <div className="absolute inset-y-0 left-[max(var(--tm-space-4),calc((100%_-_300px)/2))] flex items-center gap-[var(--tm-space-5)]" role="tablist" aria-label="手机号登录方式">
             {([
               ['sms', '验证码登录'],
               ['password', '密码登录'],

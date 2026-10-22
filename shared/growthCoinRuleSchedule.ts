@@ -22,7 +22,8 @@ export const getNextGrowthCoinCycle = (config: GrowthCoinConfig, now = new Date(
   const day = chinaTime.getUTCDate();
   const nextMidnight = period === 'monthly'
     ? Date.UTC(year, month + 1, 1)
-    : Date.UTC(year, month, day + ((8 - chinaTime.getUTCDay()) % 7 || 7));
+    : period === 'daily' ? Date.UTC(year, month, day + 1)
+      : Date.UTC(year, month, day + ((8 - chinaTime.getUTCDay()) % 7 || 7));
   return new Date(nextMidnight - 8 * 3600000).toISOString();
 };
 
@@ -43,29 +44,25 @@ const comparable = (config: GrowthCoinConfig) => JSON.stringify({
 });
 
 export interface GrowthCoinSaveNotice {
-  headline: string;
-  detail: string;
+  message: string;
 }
 
+/** 仅规则变化返回弹窗内容；外观变化和重复保存交由页面显示通用轻提示。 */
 export const saveGrowthCoinRule = (saved: GrowthCoinConfig, draft: GrowthCoinConfig, now = new Date()): {
   config: GrowthCoinConfig;
-  notice: GrowthCoinSaveNotice;
+  notice: GrowthCoinSaveNotice | null;
 } => {
   const active = getEffectiveGrowthCoinConfig(saved, now);
   const next = withoutPending(draft);
-  if (comparable(active) === comparable(next)) {
-    return { config: next, notice: { headline: '继续使用当前规则', detail: saved.pendingChange && Date.parse(saved.pendingChange.effectiveAt) > now.getTime()
-      ? '待生效的修改已取消，现有规则保持不变。' : '规则没有变化，无需等待生效。' } };
-  }
+  if (comparable(active) === comparable(next)) return { config: next, notice: null };
   return {
     config: next,
     notice: {
-      headline: '立即生效',
-      detail: !next.enabled
-        ? '成长币自动发放已关闭，已有余额、存款和历史记录不变。'
+      message: !next.enabled
+        ? '成长币发放已关闭。'
         : getGrowthCoinMode(next) === 'score'
-          ? `后续加分按新规则发币，历史评价不补发。${getScoreCoinRule(next).limitEnabled ? '本周期已发放数量继续计入上限，' : ''}已有余额不变。`
-          : '新规则已生效，将在下一次定期结算时按新规则发放；本次保存不会额外发币，已有余额不变。',
+          ? '新规则已生效，加分后按新规则立即发放。'
+          : '新规则已生效，将在下一次定期结算时按新规则发放。',
     },
   };
 };

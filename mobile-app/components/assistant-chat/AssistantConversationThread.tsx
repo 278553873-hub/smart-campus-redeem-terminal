@@ -1,14 +1,10 @@
-/**
- * 助理对话气泡流与回答呈现结构
- *
- * 回答统一转换为「结论 + 具体来看 + 从分析结果看 + 接下来」四个自然段，
- * 班主任助理的班级评比、学生评价回答与校长助理的学校回答共用同一套呈现。
- */
-import React from 'react';
-import { LoaderCircle } from 'lucide-react';
+/** 两类助理共用的思考、增量回复与气泡呈现。 */
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { AssistantAnswerBreakdown, AssistantAiInsight } from '../../domain/assistantAnswerShape';
+import { splitAssistantReply } from './assistantReplyChunks';
+import { useAssistantBubbleSurface } from './useAssistantBubbleSurface';
+import './assistantReply.css';
 
-/** 气泡渲染需要的最小回答结构，三类助理回答都满足。 */
 export interface AssistantChatAnswer {
     answerType: string;
     message: string;
@@ -24,70 +20,126 @@ export interface AssistantChatMessage {
     answer?: AssistantChatAnswer;
 }
 
-const ConversationAnswerContent: React.FC<{
-    answer: AssistantChatAnswer;
-}> = ({ answer }) => (
-    <div className="space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]">
-        <p className="whitespace-pre-line">{answer.message}</p>
+/** 保留原有四段自然语言结构，动画不介入业务回答。 */
+export const getAssistantAnswerParagraphs = (answer: AssistantChatAnswer) => [
+    answer.message,
+    ...(answer.breakdown.length ? ['具体来看，' + answer.breakdown.map(item =>
+        `${item.label}${item.detail ? `（${item.detail}）` : ''}${item.value ? `：${item.value}` : ''}`,
+    ).join('；') + '。'] : []),
+    ...(answer.analysis.length ? ['从分析结果看，' + answer.analysis.map(item => item.body).join('')] : []),
+    ...(answer.suggestions.length ? ['接下来，' + answer.suggestions.map(item => item.body).join('')] : []),
+];
 
-        {answer.breakdown.length > 0 && (
-            <p>
-                具体来看，{answer.breakdown.map(item => (
-                    `${item.label}${item.detail ? `（${item.detail}）` : ''}${item.value ? `：${item.value}` : ''}`
-                )).join('；')}。
-            </p>
-        )}
+const AssistantReplyBubble: React.FC<{
+    answer?: AssistantChatAnswer;
+    active: boolean;
+    thinkingLabel: string;
+    onComplete: () => void;
+}> = ({ answer, active, thinkingLabel, onComplete }) => {
+    const paragraphs = useMemo(() => answer ? getAssistantAnswerParagraphs(answer).map(splitAssistantReply) : [], [answer]);
+    const chunks = useMemo(() => paragraphs.flat(), [paragraphs]);
+    const [visible, setVisible] = useState(0);
+    const [finished, setFinished] = useState(false);
+    const { bubbleRef } = useAssistantBubbleSurface();
+    const completeRef = useRef(onComplete);
+    completeRef.current = onComplete;
 
-        {answer.analysis.length > 0 && (
-            <p>从分析结果看，{answer.analysis.map(item => item.body).join('')}</p>
-        )}
+    useEffect(() => {
+        if (!answer || !active) return;
+        const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        let timer: number;
+        let count = 0;
+        const complete = () => {
+            setVisible(chunks.length);
+            setFinished(true);
+            completeRef.current();
+        };
+        const reveal = () => {
+            count += 1;
+            setVisible(count);
+            if (count >= chunks.length) timer = window.setTimeout(complete, 240);
+            else timer = window.setTimeout(reveal, /[。！？；\n]\s*$/.test(chunks[count - 1]) ? 150 : 80);
+        };
+        setVisible(0);
+        setFinished(false);
+        if (motion.matches || !chunks.length) complete();
+        else timer = window.setTimeout(reveal, 60);
+        const onMotionChange = () => { if (motion.matches) { window.clearTimeout(timer); complete(); } };
+        motion.addEventListener('change', onMotionChange);
+        return () => { window.clearTimeout(timer); motion.removeEventListener('change', onMotionChange); };
+    }, [answer, active, chunks]);
 
-        {answer.suggestions.length > 0 && (
-            <p>接下来，{answer.suggestions.map(item => item.body).join('')}</p>
-        )}
-    </div>
-);
+    const streaming = active && !finished;
+    const shown = streaming ? visible : chunks.length;
+    let offset = 0;
+    return (
+        <div ref={bubbleRef} className="min-w-0 assistant-reply-bubble" data-thinking={!answer ? 'true' : undefined}>
+            <div className="assistant-agent-glass assistant-reply-surface" aria-hidden="true" />
+            <div className="assistant-reply-content px-4 py-3.5">
+                {!answer ? (
+                    <div className="assistant-thinking" role="status" aria-label={'正在思考，' + thinkingLabel}>
+                        <span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="space-y-3 text-pretty text-[14px] tm-font-regular leading-6 text-[var(--tm-text-primary)]" aria-hidden={streaming || undefined}>
+                            {paragraphs.map((paragraph, index) => {
+                                const start = offset;
+                                offset += paragraph.length;
+                                const count = Math.max(0, Math.min(paragraph.length, shown - start));
+                                if (!count && !(streaming && start === 0)) return null;
+                                const cursorHere = streaming && shown >= start && shown <= offset
+                                    && (shown > start || start === 0);
+                                return (
+                                    <p key={index} className="whitespace-pre-line">
+                                        {paragraph.slice(0, count).map((chunk, chunkIndex) => (
+                                            <React.Fragment key={chunkIndex}>
+                                                {chunk.split('\n').map((line, lineIndex) => (
+                                                    <React.Fragment key={lineIndex}>
+                                                        {lineIndex > 0 && <br />}
+                                                        {line && <span className={'assistant-reply-chunk' + (active ? ' assistant-reply-chunk-enter' : '')}>{line}</span>}
+                                                    </React.Fragment>
+                                                ))}
+                                            </React.Fragment>
+                                        ))}
+                                        {cursorHere && <span className="assistant-reply-cursor" aria-hidden="true" />}
+                                    </p>
+                                );
+                            })}
+                        </div>
+                        {streaming && <span className="sr-only" role="status">正在回复</span>}
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
 
 interface AssistantConversationThreadProps {
     messages: AssistantChatMessage[];
     replying: boolean;
     replyingLabel: string;
     ariaLabel: string;
-    latestAssistantRef: React.RefObject<HTMLDivElement | null>;
+    onReplyComplete?: () => void;
+    latestAssistantRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const AssistantConversationThread: React.FC<AssistantConversationThreadProps> = ({
-    messages,
-    replying,
-    replyingLabel,
-    ariaLabel,
-    latestAssistantRef,
+    messages, replying, replyingLabel, ariaLabel, onReplyComplete = () => {}, latestAssistantRef,
 }) => (
-    <section className="mx-4 mt-5 space-y-4" aria-label={ariaLabel} aria-live="polite">
+    <section className="mx-4 mt-5 space-y-4" aria-label={ariaLabel} aria-live="polite" aria-relevant="additions text">
         {messages.map((message, index) => (
-            <div
-                key={message.id}
-                ref={message.role === 'assistant' && index === messages.length - 1 ? latestAssistantRef : undefined}
-                className={'flex scroll-mt-2 ' + (message.role === 'user' ? 'justify-end' : 'items-start')}
-            >
+            <div key={message.id} ref={message.role === 'assistant' && index === messages.length - 1 ? latestAssistantRef : undefined} className={'flex scroll-mt-2 ' + (message.role === 'user' ? 'justify-end' : 'items-start')}>
                 {message.role === 'user' ? (
-                    <div className="max-w-[82%] rounded-[18px] rounded-br-[6px] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
+                    <div className="assistant-user-bubble max-w-[82%] bg-[var(--tm-assistant-role-primary)] px-4 py-2.5 text-[15px] font-medium leading-6 text-white [box-shadow:var(--tm-shadow-control)]">
                         {message.content}
                     </div>
-                ) : message.answer ? (
-                    <div className="assistant-agent-glass min-w-0 flex-1 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 py-3.5">
-                        <ConversationAnswerContent answer={message.answer} />
-                    </div>
-                ) : null}
+                ) : (
+                    <AssistantReplyBubble answer={message.answer} active={replying && index === messages.length - 1}
+                        thinkingLabel={replyingLabel} onComplete={onReplyComplete} />
+                )}
             </div>
         ))}
-
-        {replying && (
-            <div className="assistant-agent-glass flex h-11 w-fit items-center gap-2 rounded-[var(--tm-radius-card)] rounded-tl-[6px] px-4 text-[13px] font-medium text-[var(--tm-text-secondary)]" role="status">
-                <LoaderCircle className="h-4 w-4 animate-spin text-[var(--tm-assistant-role-primary)]" aria-hidden="true" />
-                {replyingLabel}
-            </div>
-        )}
     </section>
 );
 

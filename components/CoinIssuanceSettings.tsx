@@ -1,8 +1,8 @@
 import { useGrowthCoinTerms } from './GrowthCoinBranding';
-import GrowthCoinBrandFields, { useCoinBrandingDraft, withCoinBrandingSaveNotice } from './GrowthCoinBrandFields';
+import GrowthCoinBrandFields, { useCoinBrandingEditor } from './GrowthCoinBrandFields';
 import GrowthCoinRuleDescription from './GrowthCoinRuleDescription';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, InputNumber, Modal, Radio, Slider, Switch, Tabs } from '@arco-design/web-react';
+import { Button, Card, InputNumber, Modal, Message, Radio, Select, Slider, Switch, Tabs } from '@arco-design/web-react';
 import { Coins, Info } from 'lucide-react';
 import type { CoinIssuanceConfig } from '../mobile-app/types';
 import { getClassBudgetTotal } from '../mobile-app/domain/campusCoinIssuance';
@@ -31,7 +31,7 @@ const normalizeBudgetAmount = (value: number | undefined) => (
 
 const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onChange }) => {
     const [activeTab, setActiveTab] = useState('rules');
-    const brandingEditor = useCoinBrandingDraft();
+    const brandingEditor = useCoinBrandingEditor();
     const coinTerms = useGrowthCoinTerms();
     const [draft, setDraft] = useState(() => getEditableGrowthCoinConfig(value));
     const [saveNotice, setSaveNotice] = useState<GrowthCoinSaveNotice | null>(null);
@@ -62,11 +62,10 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
     };
 
     const handleSave = () => {
-        const brandingChanged = draft.enabled ? brandingEditor.commit() : false;
-        if (brandingChanged === null) { setActiveTab('branding'); return; }
         const result = saveGrowthCoinRule(value, draft);
         onChange(result.config);
-        setSaveNotice(withCoinBrandingSaveNotice(result.notice, brandingChanged));
+        setSaveNotice(result.notice);
+        if (!result.notice) Message.success('保存成功');
     };
 
     return (
@@ -109,41 +108,38 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                             <Card>
                                 <h4 className="m-0 mb-5 text-base font-semibold leading-6 text-[#1D2129]">发放数量</h4>
                                 <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
-                                    <span className="text-sm text-[#4E5969]">每加 1 分</span>
-                                    <div className="flex items-center gap-2 text-sm">
+                                    <span className="text-sm text-[#4E5969]">发放规则</span>
+                                    <div className="flex items-center gap-2 whitespace-nowrap text-sm">
+                                        <span>1分=</span>
                                         <InputNumber min={0.01} precision={2} value={scoreRule.coinsPerPoint}
                                             onChange={amount => updateDraft({ scoreRule: { ...scoreRule, coinsPerPoint: normalizeBudgetAmount(amount) } })}
-                                            style={{ width: 120 }} aria-label="每加1分获得的成长币" />
+                                            hideControl className="[&_.arco-input-inner-wrapper]:!px-1 [&_input]:!px-0 [&_input]:text-center"
+                                            style={{ width: 88, flexShrink: 0 }} aria-label="每加1分获得的成长币" />
                                         <span>币</span>
                                     </div>
                                 </div>
-                                <p className="mt-5 text-xs leading-5 text-[#86909C]">扣分不扣币，负分不影响加分得币。</p>
                             </Card>
                             <Card>
                                 <h4 className="m-0 mb-5 text-base font-semibold leading-6 text-[#1D2129]">发放上限</h4>
-                                <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-y-5">
+                                <div className="grid auto-rows-[32px] grid-cols-[120px_minmax(0,1fr)] content-start items-center gap-y-5">
                                     <span className="text-sm text-[#4E5969]">限制发放数量</span>
                                     <Switch checked={scoreRule.limitEnabled} aria-label="限制发放数量"
                                         onChange={limitEnabled => updateDraft({ scoreRule: { ...scoreRule, limitEnabled } })} />
                                     {scoreRule.limitEnabled && <>
-                                        <span className="text-sm text-[#4E5969]">上限周期</span>
-                                        <div className="flex items-center gap-3 whitespace-nowrap text-sm">
-                                            <Radio.Group type="button" value={scoreRule.limitPeriod} aria-label="发放上限周期"
-                                                onChange={limitPeriod => updateDraft({ scoreRule: { ...scoreRule, limitPeriod } })}>
-                                                <Radio value="weekly">每周</Radio>
-                                                <Radio value="monthly">每月</Radio>
-                                            </Radio.Group>
-                                        </div>
-                                        <span className="text-sm text-[#4E5969]">每人上限</span>
-                                        <div className="flex items-center gap-3 whitespace-nowrap text-sm">
+                                        <span className="text-sm text-[#4E5969]">上限规则</span>
+                                        <div className="flex items-center gap-2 whitespace-nowrap text-sm">
+                                            <Select value={scoreRule.limitPeriod} aria-label="发放上限周期" style={{ width: 88 }}
+                                                onChange={limitPeriod => updateDraft({ scoreRule: { ...scoreRule, limitPeriod } })}
+                                                options={[{ value: 'daily', label: '每天' }, { value: 'weekly', label: '每周' }, { value: 'monthly', label: '每月' }]} />
+                                            <span>每人</span>
                                             <InputNumber min={0.01} precision={2} value={scoreRule.limitAmount}
                                                 onChange={amount => updateDraft({ scoreRule: { ...scoreRule, limitAmount: normalizeBudgetAmount(amount) } })}
-                                                style={{ width: 120 }} aria-label="每人每周期发放上限" />
+                                                hideControl className="[&_.arco-input-inner-wrapper]:!px-1 [&_input]:!px-0 [&_input]:text-center"
+                                                style={{ width: 88, flexShrink: 0 }} aria-label="每人每周期发放上限" />
                                             <span>币</span>
                                         </div>
                                     </>}
                                 </div>
-                                {scoreRule.limitEnabled && <p className="mt-5 text-xs leading-5 text-[#86909C]">全校统一上限，领满后仍可加分，兑换不恢复额度。</p>}
                             </Card>
                         </>) : (<>
                         <Card>
@@ -213,11 +209,13 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                                 </div>
                             </div>
                             {draft.budgetMode === 'per_student' && (
-                                <div className="mt-5 flex items-center gap-2 border-t border-[#F2F3F5] pt-4 text-xs leading-5 text-[#86909C]">
+                                <div className="mt-5 flex items-start gap-2 border-t border-[#F2F3F5] pt-4 text-xs leading-5 text-[#86909C]">
                                     <Coins size={14} className="shrink-0 text-[#FF7D00]" />
-                                    <span>
-                                        一个班50人，则班级预算为 <span className="tabular-nums">{formatCoinAmount(draft.budgetAmount)}</span> × 50 = <span className="tabular-nums">{formatCoinAmount(classBudgetTotal)}</span> 币
-                                    </span>
+                                    <p>
+                                        {[30, 50].map((count, index) => (
+                                            <React.Fragment key={count}>{index > 0 && '；'}如果一个班{count}人，则班级预算为 <span className="tabular-nums">{formatCoinAmount(draft.budgetAmount)} × {count} = {formatCoinAmount(draft.budgetAmount * count)} 币</span></React.Fragment>
+                                        ))}。
+                                    </p>
                                 </div>
                             )}
                         </Card>
@@ -274,8 +272,7 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
 
                             <div className="mt-6 grid grid-cols-2 gap-4 border-t border-[#F2F3F5] pt-5">
                                 <div className="border-l-2 border-[#00B42A] bg-[#F2FFEA] px-4 py-3">
-                                    <div className="text-xs text-[#4E5969]">全班平分：</div>
-                                    <div className="mt-1 text-xl font-semibold tabular-nums text-[#008A2E]">{formatCoinAmount(sunshineAmount)}币</div>
+                                    <div className="text-xs text-[#4E5969]">全班平分：<span className="text-xl font-semibold tabular-nums text-[#008A2E]">{formatCoinAmount(sunshineAmount)}币</span>{draft.budgetMode === 'per_student' && <span className="font-medium text-[#86909C]">（假设1个班{SAMPLE_CLASS_SIZE}人）</span>}</div>
                                 </div>
                                 <div className="border-l-2 border-[#FF7D00] bg-[#FFF7E8] px-4 py-3">
                                     <div className="text-xs text-[#4E5969]">奖池金额：</div>
@@ -295,13 +292,12 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
                 )}
             </div>
 
-            <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
-                    <Button type="primary" disabled={brandingEditor.busy} onClick={handleSave}>保存</Button>
-                </div>
-            <Modal visible={Boolean(saveNotice)} title="设置已保存" onCancel={() => setSaveNotice(null)}
+            {(!draft.enabled || activeTab === 'rules') && <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
+                <Button type="primary" disabled={brandingEditor.busy} onClick={handleSave}>保存</Button>
+            </div>}
+            <Modal visible={Boolean(saveNotice)} title="提示" onCancel={() => setSaveNotice(null)}
                 footer={<Button type="primary" onClick={() => setSaveNotice(null)}>知道了</Button>}>
-                <p className="text-base font-medium text-[#1D2129]">{saveNotice?.headline}</p>
-                <p className="mt-3 text-sm leading-6 text-[#4E5969]">{saveNotice?.detail}</p>
+                <p className="text-sm font-semibold leading-6 text-[#1D2129]">{saveNotice?.message}</p>
             </Modal>
         </div>
     );

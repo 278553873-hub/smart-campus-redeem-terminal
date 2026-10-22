@@ -32,3 +32,9 @@ assert.equal(getScoreCoinRule({ scoreRule: { coinsPerPoint: -1, limitAmount: 0 }
 assert.equal(getScoreCoinRuleSummary(score), '加 1 分得 2 币，每人每周最多获得 20 币');
 assert.match(getScoreCoinRuleSummary({ ...score, scoreRule: { ...score.scoreRule, limitPeriod: 'monthly' } }), /每人每月/);
 console.log('成长币规则检查通过：旧规则兼容、正向加分、个人上限与小数金额');
+
+const daily = { ...score, scoreRule: { ...score.scoreRule, limitPeriod: 'daily' } };
+assert.equal(getScoreCoinRule(daily).limitPeriod, 'daily');
+assert.match(getScoreCoinRuleSummary(daily), /每人每天最多获得 20 币/);
+assert.equal(calculateScoreCoinAward(daily, 1, 20), 0, '当天达到上限不再发放');
+assert.equal(calculateScoreCoinAward(daily, 1, 0), 2, '新一天的累计值归零后可以继续获得');

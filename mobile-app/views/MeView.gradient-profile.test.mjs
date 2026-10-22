@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 
-const source = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
+const source = [
+  fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8'),
+  fs.readFileSync(new URL('../components/me/TeacherMeTools.tsx', import.meta.url), 'utf8'),
+].join('\n');
 const assetsSource = fs.readFileSync(new URL('../assets/images.ts', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 
@@ -38,7 +41,7 @@ requireText(screenBackgroundSource, 'linear-gradient(180deg, transparent 52%, va
 requireText(source, 'flex min-h-[132px] items-center', '教师信息区应保留适度高度，并将内容垂直居中。');
 requireText(source, 'Camera', '教师头像右下角应使用相机图标。');
 requireText(source, 'border border-white bg-white text-[var(--tm-brand-primary)]', '我的页头像相机图标应使用白色实底和品牌红图标。');
-requireText(source, "const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)]';", '设置图标应无底色，右侧与卡片对齐，并与教师姓名首行视觉居中。');
+requireText(source, "const settingsButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-end text-[var(--tm-text-secondary)]';", '设置图标应在姓名行内占据独立触控区域，右侧与卡片对齐，并与教师姓名视觉居中。');
 requireText(source, 'aria-label="设置"', '我的页应保留设置入口的无障碍名称。');
 requireText(source, 'Settings className="h-[22px] w-[22px]"', '设置图标应在原 20px 基础上放大 10%。');
 requireText(source, '成都市未来实验小学', '教师信息区应保留学校/来源切换入口。');
@@ -57,7 +60,7 @@ requireText(source, "labelLines: ['作业录入']", '更多工具中的作业入
 requireText(source, "gap-x-3 ${variant === 'secondary' ? 'gap-y-3' : 'gap-y-4'} mb-[var(--tm-space-1)]", '管理工具应使用 16px 原始行距，更多工具保持 12px，并统一增加 4px 底部留白。');
 requireText(source, "isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'", '更多工具和管理工具入口应分别保留 72px 与 82px 稳定高度。');
 requireText(source, 'rounded-[var(--tm-radius-control-compact)] py-1 text-center', '工具入口应增加上下各 4px 的内部留白。');
-requireText(source, 'text-[12px] font-medium leading-[18px]', '管理工具和更多工具标签应统一使用 500 字重。');
+requireText(source, 'text-[12px] [font-weight:var(--tm-font-weight-minimum)] leading-[18px]', '管理工具和更多工具标签应统一使用公共最小字重令牌（450）。');
 requireText(source, '学生评价报表', '管理工具应包含学生评价报表。');
 requireText(source, "labelLines: ['学评报表']", '学生评价报表入口应使用四字单行文案。');
 requireText(source, "labelLines: ['班评报表']", '班级评价报表入口应使用四字单行文案。');
@@ -75,7 +78,7 @@ requireText(source, 'overflow-visible rounded-[var(--tm-radius-inner)]', '图片
 requireText(source, 'absolute -bottom-1 -right-2 h-6 w-6', 'AI 角标应定位在图标右下角，并与文字保持 4px 间距。');
 requireText(source, '科目管理', '更多工具应包含科目管理。');
 requireText(source, '部门管理', '更多工具应包含部门管理。');
-requireText(source, '校园币发放', '更多工具应包含校园币发放。');
+requireText(source, '成长币发放', '更多工具应包含使用当前统一文案的成长币发放。');
 requireText(source, '建议反馈', '更多工具应包含建议反馈。');
 requireText(source, "const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';", '“我的”页工具卡应使用不透明白色表面和克制的氛围背景卡片阴影 Token。');
 requireText(source, 'rounded-[var(--tm-radius-card-compact)] p-4 ${toolCardSurfaceClass}', '管理工具、更多工具卡片应共享紧凑内边距、统一圆角和卡片表面。');

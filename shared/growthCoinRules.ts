@@ -4,7 +4,7 @@ export type GrowthCoinIssuanceMode = 'periodic' | 'score';
 export interface ScoreCoinRule {
   coinsPerPoint: number;
   limitEnabled: boolean;
-  limitPeriod: 'weekly' | 'monthly';
+  limitPeriod: 'daily' | 'weekly' | 'monthly';
   limitAmount: number;
 }
 
@@ -59,7 +59,7 @@ export const getScoreCoinRule = (config: GrowthCoinRuleOptions): ScoreCoinRule =
   return {
     coinsPerPoint: normalizeCoinRuleAmount(rule.coinsPerPoint),
     limitEnabled: rule.limitEnabled !== false,
-    limitPeriod: rule.limitPeriod === 'monthly' ? 'monthly' : 'weekly',
+    limitPeriod: rule.limitPeriod === 'daily' ? 'daily' : rule.limitPeriod === 'monthly' ? 'monthly' : 'weekly',
     limitAmount: normalizeCoinRuleAmount(rule.limitAmount, DEFAULT_SCORE_COIN_RULE.limitAmount),
   };
 };
@@ -67,7 +67,7 @@ export const getScoreCoinRule = (config: GrowthCoinRuleOptions): ScoreCoinRule =
 export const getScoreCoinRuleSummary = (config: GrowthCoinRuleOptions): string => {
   const rule = getScoreCoinRule(config);
   return `加 1 分得 ${rule.coinsPerPoint} 币${rule.limitEnabled
-    ? `，每人每${rule.limitPeriod === 'weekly' ? '周' : '月'}最多获得 ${rule.limitAmount} 币`
+    ? `，每人每${rule.limitPeriod === 'daily' ? '天' : rule.limitPeriod === 'weekly' ? '周' : '月'}最多获得 ${rule.limitAmount} 币`
     : '，不设发放上限'}`;
 };
 

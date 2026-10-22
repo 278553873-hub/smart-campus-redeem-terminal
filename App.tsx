@@ -1,5 +1,7 @@
 import ClassReportOutlinePreviewControls from './components/ClassReportOutlinePreviewControls';
-import { createDefaultClassReportOutline } from './shared/classReportOutline';
+import ClassListLoadingPreviewControls from './components/ClassListLoadingPreviewControls';
+import { defaultClassListLoadingPreview } from './shared/classListLoadingPreview';
+import { createDefaultClassReportOutline, normalizeClassReportOutline } from './shared/classReportOutline';
 import { GrowthCoinIcon, GrowthCoinName, useGrowthCoinTerms } from './components/GrowthCoinBranding';
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -1443,6 +1445,7 @@ const AppSwitcher: React.FC = () => {
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [studentTeamInvitePreview, setStudentTeamInvitePreview] = useState(false);
   const [isStudentTeamListViewActive, setIsStudentTeamListViewActive] = useState(false);
+  const [classListLoadingPreview, setClassListLoadingPreview] = useState(defaultClassListLoadingPreview);
   const [headteacherAssistantScopePreview, setHeadteacherAssistantScopePreview] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [headteacherAssistantScopePreviewDefault, setHeadteacherAssistantScopePreviewDefault] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [isHeadteacherAssistantViewActive, setIsHeadteacherAssistantViewActive] = useState(false);
@@ -1827,11 +1830,12 @@ const AppSwitcher: React.FC = () => {
             onHeadteacherAssistantScopePreviewDefaultChange={setHeadteacherAssistantScopePreviewDefault}
             onHeadteacherAssistantScopePreviewChange={setHeadteacherAssistantScopePreview}
             onHeadteacherAssistantViewChange={setIsHeadteacherAssistantViewActive}
-            classReportOutline={classReportOutline}
+            classReportOutline={normalizeClassReportOutline(classReportOutline)}
             onClassReportViewChange={setIsClassReportViewActive}
             studentTeamInvitePreview={studentTeamInvitePreview}
             onStudentTeamInvitePreviewChange={setStudentTeamInvitePreview}
             onStudentTeamListViewChange={setIsStudentTeamListViewActive}
+            classListLoadingPreview={classListLoadingPreview}
             gradientPreview={{ schemeId: teacherGradientScheme, styleId: teacherGradientStyle }}
             onGradientPreviewChange={config => {
               setTeacherGradientScheme(config.schemeId);
@@ -2020,6 +2024,10 @@ const AppSwitcher: React.FC = () => {
             </div>
 
             {isStudentTeamListViewActive && (
+              <ClassListLoadingPreviewControls value={classListLoadingPreview} onChange={setClassListLoadingPreview} />
+            )}
+
+            {isStudentTeamListViewActive && (
             <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl">
               <button
                 type="button"
@@ -2038,7 +2046,7 @@ const AppSwitcher: React.FC = () => {
 
             {isClassReportViewActive && (
               <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
-                <ClassReportOutlinePreviewControls value={classReportOutline} onChange={setClassReportOutline} />
+                <ClassReportOutlinePreviewControls value={normalizeClassReportOutline(classReportOutline)} onChange={setClassReportOutline} />
               </div>
             )}
 

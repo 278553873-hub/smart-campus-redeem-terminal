@@ -3,6 +3,7 @@ import {
     BookOpen,
     CalendarRange,
     Camera,
+    Check,
     ChevronRight,
     ClipboardList,
     Coins,
@@ -13,11 +14,12 @@ import {
     MonitorSmartphone,
     Settings,
     UsersRound,
-    type LucideIcon,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import { ToolGrid, ToolSection, type MenuEntry } from '../components/me/TeacherMeTools';
 import ClassSourceTrigger, { ClassSourceIcon } from '../components/ClassSourceTrigger';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileTag from '../components/ui/MobileTag';
 import type { TeacherProfile } from '../types';
 import {
     getTeacherSchoolTypeLabel,
@@ -60,95 +62,10 @@ interface MeViewProps {
     onToggleSpaceSheet: () => void;
 }
 
-interface MenuEntry<TId extends string = string> {
-    id: TId;
-    title: string;
-    labelLines?: readonly string[];
-    icon?: LucideIcon;
-    imageSrc?: string;
-    imageAlt?: string;
-    imageClassName?: string;
-    imageBadgeSrc?: string;
-    imageBadgeAlt?: string;
-    onClick?: () => void;
-    plainImage?: boolean;
-}
-
-interface ToolSectionProps {
-    title: string;
-    children: React.ReactNode;
-}
-
-const secondaryIconClass = 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]';
-
-const settingsButtonClass = 'absolute right-0 top-6 flex h-11 w-11 items-center justify-end text-[var(--tm-text-secondary)]';
+const settingsButtonClass = 'flex h-11 w-11 shrink-0 items-center justify-end text-[var(--tm-text-secondary)]';
 const reportToolImageClass = 'h-14 w-14 max-w-none rounded-[var(--tm-radius-inner)] object-cover';
 const assistantToolImageClass = 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover';
 const toolCardSurfaceClass = 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-ambient)]';
-
-const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => (
-    <section className={`relative overflow-hidden rounded-[var(--tm-radius-card-compact)] p-4 ${toolCardSurfaceClass}`}>
-        <h3 className="flex items-center gap-3 text-[17px] font-bold leading-snug text-[var(--tm-text-primary)]">
-            <span className="h-7 w-1.5 rounded-full bg-[var(--tm-brand-primary)]" aria-hidden="true" />
-            {title}
-        </h3>
-        {children}
-    </section>
-);
-
-const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'primary' | 'secondary' }> = ({ items, columns = 4, variant = 'primary' }) => (
-    <div className={`mt-4 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-3 ${variant === 'secondary' ? 'gap-y-3' : 'gap-y-4'} mb-[var(--tm-space-1)]`}>
-        {items.map(item => {
-            const Icon = item.icon;
-            const isSecondary = variant === 'secondary';
-            return (
-                <button
-                    key={item.id}
-                    type="button"
-                    aria-label={item.title}
-                    onClick={item.onClick}
-                    className={`${isSecondary ? 'min-h-[72px]' : 'min-h-[82px]'} group flex flex-col items-center justify-start gap-2 rounded-[var(--tm-radius-control-compact)] py-1 text-center`}
-                >
-                    {item.imageSrc ? (
-                        <span className="relative flex h-12 w-12 items-center justify-center overflow-visible rounded-[var(--tm-radius-inner)]">
-                            {item.plainImage ? (
-                                <img
-                                    src={item.imageSrc}
-                                    alt={item.imageAlt ?? item.title}
-                                    className={item.imageClassName ?? 'h-12 w-12 rounded-[var(--tm-radius-inner)] object-cover [box-shadow:var(--tm-shadow-icon)]'}
-                                />
-                            ) : (
-                                <span className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-[var(--tm-radius-inner)] bg-[linear-gradient(145deg,var(--tm-brand-primary-soft),var(--tm-brand-secondary-soft))] [box-shadow:var(--tm-shadow-icon)] ring-1 ring-[var(--tm-brand-primary-soft-strong)]">
-                                    <img src={item.imageSrc} alt={item.imageAlt ?? item.title} className={item.imageClassName ?? 'relative h-11 w-11 object-contain'} />
-                                </span>
-                            )}
-                            {item.imageBadgeSrc && (
-                                <img
-                                    src={item.imageBadgeSrc}
-                                    alt={item.imageBadgeAlt ?? ''}
-                                    className="pointer-events-none absolute -bottom-1 -right-2 h-6 w-6 object-contain"
-                                />
-                            )}
-                        </span>
-                    ) : isSecondary && Icon ? (
-                        <span className={`flex h-[38px] w-[38px] items-center justify-center rounded-full ${secondaryIconClass}`}>
-                            <Icon className="h-[19px] w-[19px]" strokeWidth={2.35} />
-                        </span>
-                    ) : Icon ? (
-                        <span className={`relative flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${secondaryIconClass}`}>
-                            <Icon className="relative h-[23px] w-[23px]" strokeWidth={2.15} />
-                        </span>
-                    ) : (
-                        null
-                    )}
-                    <span className={`max-w-[72px] whitespace-nowrap text-[12px] [font-weight:var(--tm-font-weight-minimum)] leading-[18px] text-[var(--tm-text-primary)]`}>
-                        {item.labelLines?.map(line => <span key={line} className="block">{line}</span>) ?? item.title}
-                    </span>
-                </button>
-            );
-        })}
-    </div>
-);
 
 export const ClassSourceSheet: React.FC<{
     currentSpace: TeacherSpaceOption;
@@ -162,24 +79,33 @@ export const ClassSourceSheet: React.FC<{
                 const isActive = space.id === currentSpace.id;
                 const schoolTypeLabel = getTeacherSchoolTypeLabel(space);
                 const sourceTypeLabel = getClassSourceTypeLabel(space);
+                const versionLabel = space.type === 'school' ? '学校版' : '个人版';
                 return (
                     <button
                         key={space.id}
                         type="button"
                         aria-pressed={isActive}
-                        aria-label={`${isActive ? '当前' : '切换至'}${space.title}，${sourceTypeLabel}${schoolTypeLabel ? `，${schoolTypeLabel}` : ''}`}
-                        onClick={() => onSelectSpace(space.id)}
-                        className={`flex min-h-[60px] w-full items-center justify-between rounded-[var(--tm-radius-card-compact)] px-4 text-left ${isActive ? 'bg-[var(--tm-brand-primary-soft)] ring-[1.5px] ring-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-card)]' : 'bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card-on-white)]'}`}
+                        aria-label={`${isActive ? '当前' : '切换至'}${space.title}，${versionLabel}，${sourceTypeLabel}${schoolTypeLabel ? `，${schoolTypeLabel}` : ''}`}
+                        onClick={() => {
+                            onClose();
+                            onSelectSpace(space.id);
+                        }}
+                        className="flex min-h-[72px] w-full items-center justify-between rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-4 py-3 text-left shadow-none [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]"
                     >
                         <span className="flex min-w-0 flex-1 items-center gap-3">
-                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${isActive ? 'text-[var(--tm-brand-primary)]' : 'text-[var(--tm-text-secondary)]'}`}>
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center text-[var(--tm-text-secondary)]">
                                 <ClassSourceIcon type={space.type} className="h-5 w-5" />
                             </span>
-                            <span className="min-w-0 truncate text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)]">{space.title}</span>
+                            <span className="min-w-0 flex-1 space-y-1">
+                                <span className="block truncate text-[length:var(--tm-font-size-body)] font-medium leading-5 text-[var(--tm-text-primary)]">{space.title}</span>
+                                <span className="flex flex-wrap items-center gap-1.5">
+                                    <MobileTag tone="brand">{versionLabel}</MobileTag>
+                                    {schoolTypeLabel && <MobileTag tone="secondary">{schoolTypeLabel}</MobileTag>}
+                                </span>
+                            </span>
                         </span>
-                        <span className="ml-3 flex shrink-0 items-center gap-2">
-                            {schoolTypeLabel && <span className={`rounded-full px-3 py-1 text-[13px] font-medium leading-[18px] ${isActive ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-pressed)]' : 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]'}`}>{schoolTypeLabel}</span>}
-                            {isActive && <span className="rounded-full bg-[var(--tm-brand-primary)] px-3 py-1 text-[13px] font-semibold leading-[18px] text-[var(--tm-text-inverse)]">当前</span>}
+                        <span className="ml-3 flex h-5 w-5 shrink-0 items-center justify-center" aria-hidden="true">
+                            {isActive && <Check className="h-5 w-5 text-[var(--tm-brand-primary)]" strokeWidth={2.5} />}
                         </span>
                     </button>
                 );
@@ -283,7 +209,7 @@ const MeView: React.FC<MeViewProps> = ({
         },
         {
             id: 'coinIssuance',
-            title: '成长币规则',
+            title: '成长币发放',
             icon: Coins,
             onClick: onOpenCoinIssuance,
         },
@@ -347,7 +273,7 @@ const MeView: React.FC<MeViewProps> = ({
         >
             <div className="relative px-5 pt-5">
                 <div className="relative z-10 flex min-h-[132px] items-center">
-                    <div className="relative z-10 flex w-full items-start gap-4">
+                    <div className="relative z-10 flex w-full items-center gap-4">
                         <button
                             type="button"
                             onClick={onEditTeacherProfile}
@@ -368,33 +294,33 @@ const MeView: React.FC<MeViewProps> = ({
                             </span>
                         </button>
 
-                        <div className="min-w-0 flex-1 pt-3">
-                            <button
-                                type="button"
-                                onClick={onEditTeacherProfile}
-                                className="flex min-h-11 max-w-full items-center text-left"
-                                aria-label="编辑姓名"
-                            >
-                                <h2 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]">{teacherName}</h2>
-                            </button>
+                        <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={onEditTeacherProfile}
+                                    className="flex min-h-11 max-w-full items-center text-left min-w-0 flex-1"
+                                    aria-label="编辑姓名"
+                                >
+                                    <h2 className="truncate text-[22px] font-extrabold leading-tight tracking-tight text-[var(--tm-text-primary)]">{teacherName}</h2>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={onOpenSettings}
+                                    className={settingsButtonClass}
+                                    aria-label="设置"
+                                >
+                                    <Settings className="h-[22px] w-[22px]" strokeWidth={2.2} />
+                                </button>
+                            </div>
                             <ClassSourceTrigger
                                 name={classSourceName}
                                 type={currentSpace.type}
                                 onClick={onToggleSpaceSheet}
                                 expanded={isSpaceSheetOpen}
-                                className="mt-2"
                                 density="compact"
                             />
                         </div>
-
-                        <button
-                            type="button"
-                            onClick={onOpenSettings}
-                            className={settingsButtonClass}
-                            aria-label="设置"
-                        >
-                            <Settings className="h-[22px] w-[22px]" strokeWidth={2.2} />
-                        </button>
                     </div>
                 </div>
             </div>
