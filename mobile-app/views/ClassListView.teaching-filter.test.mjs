@@ -16,17 +16,21 @@ requireText(classListSource, 'visibleClasses', '班级列表渲染应使用过�
 requireText(classListSource, '任教班级', '学校版筛选行应提供“任教班级”选项。');
 requireText(classListSource, "isSchoolSpace && gradeFilter !== '全部'", '年级筛选只能作用于学校版。');
 requireText(classListSource, 'isSchoolSpace && showTeachingOnly && !assignedClassIds.has(classInfo.id)', '任教筛选只能作用于学校版，并依据真实任教关系过滤。');
-requireText(classListSource, 'className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control)]', '任教班级应保持开放式轻量样式并保留44px触控高度。');
+requireText(classListSource, 'className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control-compact)]', '任教班级应保持开放式轻量样式并保留44px触控高度。');
 requireText(classListSource, 'inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)]', '学校版年级筛选触发器应保持96px固定宽度，并提供44px触控高度。');
 requireText(classListSource, 'gap-[var(--tm-space-1)]', '学校版年级筛选的当前值与箭头应紧邻排列。');
 requireText(classListSource, 'showAllGradesOption', '学校版年级筛选应由公共组件展示“全部年级”。');
 requireText(classListSource, 'allGradesValue="全部"', '学校版年级筛选应兼容既有“全部”筛选值。');
-requireText(classListSource, "gradeFilter !== '全部' ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'", '选择具体年级后，年级触发器文字应切换为主文字色；全部年级保持次级文字色。');
+const gradeTrigger = classListSource.slice(classListSource.indexOf('aria-label="按年级筛选班级"'), classListSource.indexOf("<span>{gradeFilter ==="));
+requireText(gradeTrigger, 'text-[var(--tm-text-primary)]', '年级当前值（包括全部年级）应统一使用主文字色。');
+if (gradeTrigger.includes('text-[var(--tm-text-secondary)]')) {
+  throw new Error('全部年级是有效筛选值，不应使用次级文字色。');
+}
 requireText(classListSource, "showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white'", '任教班级选中态应只强化勾选框本体。');
-requireText(classListSource, '共{visibleClasses.length}个班级', '学校版筛选行应以“共x个班级”展示年级与任教条件共同作用后的班级数量。');
+requireText(classListSource, '共{visibleClasses.length}个', '学校版筛选行应以“共x个”展示年级与任教条件共同作用后的班级数量。');
 requireText(classListSource, 'aria-live="polite"', '筛选结果数量变化应提供动态读屏反馈。');
-requireText(classListSource, 'rounded-[var(--tm-class-list-card-radius)] bg-white px-4 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]', '班级卡片应使用统一圆角与普通卡片阴影令牌。');
-requireText(classListSource, 'flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control)]', '班级卡片底部操作按钮应满足 44px 最小触控高度。');
+requireText(classListSource, 'rounded-[var(--tm-class-list-card-radius)] bg-white px-5 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]', '班级卡片应使用统一圆角与普通卡片阴影令牌。');
+requireText(classListSource, 'flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)]', '班级卡片底部操作按钮应满足 44px 最小触控高度。');
 requireText(appSource, 'teacherProfile={teacherProfile}', 'App 应把当前教师资料传给班级列表。');
 
 if (classListSource.includes('共 {classes.length} 个班级')) {

@@ -683,7 +683,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         aria-haspopup="dialog"
                                         aria-expanded={showGradeFilter}
                                         onClick={() => setShowGradeFilter(true)}
-                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] pl-[var(--tm-space-1)] pr-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${gradeFilter !== '全部' ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] pl-[var(--tm-space-1)] pr-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] text-[var(--tm-text-primary)]`}
                                     >
                                         <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
                                         <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
@@ -692,7 +692,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         type="button"
                                         aria-pressed={showTeachingOnly}
                                         onClick={() => setShowTeachingOnly(current => !current)}
-                                        className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] ${showTeachingOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                        className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] text-[var(--tm-text-primary)]`}
                                     >
                                         <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
                                             {showTeachingOnly && <Check className="h-3 w-3" strokeWidth={3} />}
