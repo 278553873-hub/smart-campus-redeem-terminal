@@ -30,7 +30,7 @@ assert.equal(DEFAULT_COIN_BRANDING.iconUrl, '/assets/growth-coins/coin-star.png'
 memory.set('school-growth-coin-branding:v1:school-legacy', JSON.stringify({ name: '向阳币', iconUrl: '/assets/coin.png' }));
 assert.deepEqual(readCoinBranding('school-legacy'), { name: '向阳币', iconUrl: DEFAULT_COIN_BRANDING.iconUrl }, '旧蓝底金币自动升级，保留本校名称');
 assert.equal(saveCoinBranding('school-legacy', { name: '向阳币', iconUrl: '/assets/coin.png' }).iconUrl, DEFAULT_COIN_BRANDING.iconUrl, '保存旧草稿也使用新默认图标');
-for (const iconUrl of ['/assets/c4d_growth.png', '/assets/c4d_shop.png', '/assets/c4d_bank.png', '/assets/growth-coins/coin-sprout.png', '/assets/growth-coins/coin-sun.png', '/assets/growth-coins/coin-laurel.png']) {
+for (const iconUrl of ['/assets/c4d_growth.png', '/assets/c4d_shop.png', '/assets/c4d_bank.png', '/assets/growth-coins/coin-sprout.png', '/assets/growth-coins/coin-sun.png', '/assets/growth-coins/coin-laurel.png', '/assets/growth-coins/icon-flower.png']) {
   assert.equal(validateCoinBranding({ name: '旧校币', iconUrl }).iconUrl, iconUrl, '旧图标继续兼容');
 }
 saveCoinBranding('school-a', DEFAULT_COIN_BRANDING);

@@ -44,6 +44,8 @@ import {
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
 import { ParentExchangePasswordSheet } from './parent-app/ParentExchangePasswordSheet';
 import HoloCardViewer from './parent-app/HoloCardViewer';
+import ParentCoinFlowView from './parent-app/ParentCoinFlowView';
+import { createDemoGrowthCoinFlows } from '../shared/demoGrowthCoinFlow';
 import {
   parentMobileCssVariables,
   parentSegmentTone,
@@ -89,7 +91,7 @@ interface ParentAppProps {
   onScreenChange?: (screen: Screen) => void;
 }
 
-type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine' | 'cardCollection' | 'cardDetail';
+type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine' | 'cardCollection' | 'cardDetail' | 'coinFlow';
 type ReportType = 'month' | 'term';
 type BankTab = 'deposit' | 'list';
 type GrowthRangeMode = 'day' | 'week' | 'month' | 'term';
@@ -1431,9 +1433,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
     return (
       <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
         <div className="flex items-center justify-between px-4 pt-3 pb-1">
-          <h2 className="text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">
+          <h2 className="min-w-0 flex-1 truncate text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">
             {GROWTH_COIN_TERMS.name}
           </h2>
+          <button type="button" onClick={() => setScreen('coinFlow')} className={`ml-auto mr-3 inline-flex min-h-11 shrink-0 items-center gap-0.5 whitespace-nowrap text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] ${PARENT_PRESSABLE_CLASS}`} aria-label={`查看${GROWTH_COIN_TERMS.name}收支明细`}>
+            收支明细<ChevronRight size={14} aria-hidden="true" />
+          </button>
           <button
             type="button"
             onClick={() => setScreen('bank')}
@@ -2899,6 +2904,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
     if (screen === 'questionnaireDetail') return QuestionnaireDetail();
     if (screen === 'reportDetail') return ReportDetail();
     if (screen === 'bank') return Bank();
+    if (screen === 'coinFlow' && activeChild) return <ParentCoinFlowView key={activeChild.id} records={createDemoGrowthCoinFlows(activeChild.id)} canViewEvaluationDetails={showPositiveDetails}
+      header={<Header title={GROWTH_COIN_TERMS.details} showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />} />;
     if (screen === 'mine') return MinePage();
     return Growth();
   };

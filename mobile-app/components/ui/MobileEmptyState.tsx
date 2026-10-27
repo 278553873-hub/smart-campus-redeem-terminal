@@ -11,7 +11,7 @@ const MobileEmptyState: React.FC<MobileEmptyStateProps> = ({
     imageSrc,
     title,
     className = '',
-    imageClassName = 'w-[68%] min-w-[168px] max-w-[224px]',
+    imageClassName = 'h-[var(--tm-empty-state-image-size,160px)] w-[var(--tm-empty-state-image-size,160px)] shrink-0',
 }) => (
     <div className={`flex flex-col items-center justify-center text-center ${className}`} role="status">
         <img src={imageSrc} alt="" className={`${imageClassName} object-contain`} />

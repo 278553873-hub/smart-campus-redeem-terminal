@@ -5,6 +5,7 @@ const appSource = read('../App.tsx');
 const typesSource = read('../types.ts');
 const constantsSource = read('../constants.ts');
 const dashboardSource = read('./DashboardView.tsx');
+const assetBandSource = read('../components/student-detail/StudentCoinAssetBand.tsx');
 const screenBackgroundSource = read('../components/TeacherMobileScreenBackground.tsx');
 const tokenSource = read('../styles/teacherMobileTokens.ts');
 const basicEditSource = read('./StudentBasicEditView.tsx');
@@ -16,7 +17,8 @@ const evaluationRecordsSource = read('./StudentEvaluationRecordsView.tsx');
 const termSelectorSource = read('../components/student-detail/StudentTermSelector.tsx');
 const timeRangeSelectorSource = read('../components/student-detail/StudentTimeRangeSelector.tsx');
 const coinFormatSource = read('../utils/coinFormat.ts');
-const coinFlowSource = read('../domain/campusCoinFlow.ts');
+const coinFlowSource = read('../../shared/growthCoinFlow.ts');
+const coinDemoSource = read('../../shared/demoGrowthCoinFlow.ts');
 const questionnaireStoreSource = read('../../shared/questionnaireStore.ts');
 const collectionHistorySource = read('./student-collection/StudentCollectionHistoryTab.tsx');
 const collectionDetailSource = read('./student-collection/StudentCollectionRecordDetailView.tsx');
@@ -47,8 +49,8 @@ requireText(constantsSource, 'consumeRecords', '校园币 Mock 应包含消耗�
 requireText(constantsSource, 'settlementEstimate', '校园币 Mock 应包含结算预估。');
 requireText(constantsSource, 'sunshinePool', '校园币预估应读取阳光保底比例计算保底奖池。');
 requireText(constantsSource, 'rankingPool', '校园币预估应读取积分排行比例计算排行奖池。');
-requireText(constantsSource, "category: 'growth_award'", '成长嘉奖流水应使用明确分类，不根据文案猜测。');
-requireText(constantsSource, "startDate: '2025-12-29', endDate: '2026-01-04'", 'Mock 数据应直接展示跨年成长嘉奖边界。');
+requireText(coinDemoSource, "category: 'growth_award'", '成长嘉奖流水应使用明确分类，不根据文案猜测。');
+requireText(coinDemoSource, "startDate: '2025-12-29', endDate: '2026-01-04'", 'Mock 数据应直接展示跨年成长嘉奖边界。');
 requireText(coinFlowSource, "start.year !== end.year", '成长嘉奖跨年时应展示完整年份。');
 requireText(coinFlowSource, "`每周奖励（${start.month}月${start.day}日-${end.month}月${end.day}日）`", '同年周奖励应标明每周发放、省略年份并保留完整月日。');
 requireText(coinFlowSource, "`每月奖励（${month}月）`", '月奖励应标明每月发放并展示所属月份。');
@@ -109,7 +111,7 @@ for (const token of [
   '--tm-student-detail-asset-chevron-space',
 ]) {
   requireText(tokenSource, `'${token}'`, `学生详情组合卡缺少资产带组件 Token：${token}`);
-  requireText(dashboardSource, `var(${token})`, `学生详情资产带未消费组件 Token：${token}`);
+  requireText(assetBandSource, `var(${token})`, `学生详情资产带未消费组件 Token：${token}`);
 }
 requireText(appSource, "hasPlainBackground ? 'z-[2]' : 'z-auto'", '学生详情内容层必须高于纯白标题背景，避免返回、档案和学籍入口被遮挡。');
 requireText(appSource, "'student_collection_detail'", 'App 路由应包含学生采集记录详情页。');
@@ -164,32 +166,32 @@ requireText(dashboardSource, 'formatCompactClassName', '学生详情页班级标
 if (dashboardSource.includes('{student.grade}{student.class}')) {
   throw new Error('学生详情页班级标签不应显示年级学段和完整中文班名，只显示 2025级1班。');
 }
-requireText(dashboardSource, 'GROWTH_COIN_TERMS.name', '学生详情顶部应独立展示成长币名称。');
-requireText(dashboardSource, 'GROWTH_COIN_TERMS.available', '学生详情顶部应展示可用金额。');
-requireText(dashboardSource, 'GROWTH_COIN_TERMS.saved', '学生详情顶部应展示已存金额。');
-requireText(dashboardSource, 'src="/assets/coin.png"', '成长币金额应使用货柜机同款金币图标。');
+requireText(assetBandSource, 'terms.name', '学生详情顶部应独立展示成长币名称。');
+requireText(assetBandSource, 'terms.available', '学生详情顶部应展示可用金额。');
+requireText(assetBandSource, 'terms.saved', '学生详情顶部应展示已存金额。');
+requireText(assetBandSource, 'GrowthCoinIcon', '成长币金额应使用货柜机同款金币图标。');
 if (dashboardSource.includes('发放、消耗与本月结算预估') || dashboardSource.includes('最近发放') || dashboardSource.includes('本月预估')) {
   throw new Error('学生详情总览页不应再展示校园币发放、消耗或月预估信息。');
 }
 requireText(dashboardSource, 'onViewCampusCoins', '学生详情顶部资产区应保留查看明细入口回调。');
 requireText(dashboardSource, 'B. Student Assets Band', '成长币余额应放在组合信息卡内部的资产带。');
-requireText(dashboardSource, 'h-[var(--tm-student-detail-asset-height)]', '资产带应使用组件 Token 固定高度，避免内容变化引发布局跳动。');
-requireText(dashboardSource, 'grid-cols-[var(--tm-student-detail-asset-label-width)_1px_minmax(0,1fr)_1px_minmax(0,1fr)_var(--tm-student-detail-asset-chevron-space)]', '成长币名称、两项等宽余额和箭头必须使用相互独立的栅格区域。');
-requireText(tokenSource, "'--tm-student-detail-asset-label-width': '80px'", '成长币标题区应使用组件 Token 固定宽度。');
-requireText(dashboardSource, 'text-sm font-semibold tabular-nums', '资产金额应使用 14px 半粗字重降低视觉重量。');
-requireText(dashboardSource, 'tabular-nums text-[var(--tm-text-primary)]', '资产金额应使用主文字暖黑色，不重复使用奖励金文字色。');
-requireText(dashboardSource, 'flex h-full items-center justify-center', '资产下钻箭头应使用独立固定宽度区域，不得挤压已存余额。');
+requireText(assetBandSource, 'min-h-[var(--tm-student-detail-asset-height)]', '资产带应保留最小触控高度并可自然增高。');
+requireText(assetBandSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '可用与已存应固定为两列，中间短竖线独立占位。');
+requireText(tokenSource, "'--tm-student-detail-asset-label-width': '100px'", '货币名称区域应固定100像素，余额位置不受名称影响。');
+requireText(assetBandSource, 'font-semibold tabular-nums', '资产金额应使用半粗等宽数字。');
+requireText(assetBandSource, 'tabular-nums text-[var(--tm-text-primary)]', '资产金额应使用主文字色。');
+requireText(assetBandSource, 'w-[var(--tm-student-detail-asset-chevron-space)]', '资产箭头应预留独立占位，不遮挡金额。');
 if (dashboardSource.includes('absolute right-3')) {
   throw new Error('资产下钻箭头不应继续叠加在已存余额区域。');
 }
-requireText(dashboardSource, 'aria-label={`查看${GROWTH_COIN_TERMS.details}', '资产摘要条整行应提供完整的可访问下钻语义。');
+requireText(assetBandSource, 'aria-label={`查看校园币明细', '资产摘要条整行应提供完整的可访问下钻语义。');
 if (dashboardSource.includes('明细 <ChevronRight')) {
   throw new Error('资产摘要条不应重复展示“明细”文字按钮。');
 }
 if (dashboardSource.includes('bg-blue-50 px-3 text-[11px] font-bold text-blue-600')) {
   throw new Error('查看明细操作不应使用蓝色强调按钮样式。');
 }
-requireText(dashboardSource, 'formatCoinAmount', '学生详情页金额应使用统一校园币格式化函数。');
+requireText(assetBandSource, 'formatCoinAmount', '学生详情页金额应使用统一校园币格式化函数。');
 requireText(dashboardSource, 'A. Student Profile Card', '学生信息卡应独立置顶。');
 requireText(dashboardSource, 'Student Detail Navigation', '学生详情页应提供独立导航层。');
 requireText(dashboardSource, 'aria-label="返回"', '学生详情独立导航层必须保留返回按钮。');
@@ -219,10 +221,10 @@ const studentCombinedCardSource = dashboardSource.slice(
   dashboardSource.indexOf('{/* A. Student Profile Card */}'),
   dashboardSource.indexOf('{/* 2. Scrollable Content */}'),
 );
-if (!studentCombinedCardSource.includes('GROWTH_COIN_TERMS.name') || !studentCombinedCardSource.includes('GROWTH_COIN_TERMS.available') || !studentCombinedCardSource.includes('GROWTH_COIN_TERMS.saved')) {
+if (!studentCombinedCardSource.includes('StudentCoinAssetBand') || !assetBandSource.includes('terms.name') || !assetBandSource.includes('terms.available') || !assetBandSource.includes('terms.saved')) {
   throw new Error('成长币名称、可用和已存必须并入学生组合信息卡。');
 }
-const studentAssetBandSource = studentCombinedCardSource.slice(studentCombinedCardSource.indexOf('{/* B. Student Assets Band */}'));
+const studentAssetBandSource = assetBandSource;
 if (studentAssetBandSource.includes('text-base font-bold') || studentAssetBandSource.includes('className="block')) {
   throw new Error('可用和已存应单行轻量展示，不得继续使用上下两行或大号粗体金额。');
 }
@@ -561,7 +563,7 @@ requireText(basicEditSource, '从相册选择', '头像操作蒙层应提供从�
 requireText(basicEditSource, 'cameraInputRef', '头像操作应复用拍照文件入口。');
 requireText(basicEditSource, 'albumInputRef', '头像操作应复用相册文件入口。');
 
-for (const required of ['收入', '支出', '${GROWTH_COIN_TERMS.name}收支记录', 'GROWTH_COIN_TERMS.details']) {
+for (const required of ['收入', '支出', '${GROWTH_COIN_TERMS.name}收支记录', '校园币明细']) {
   requireText(coinDetailSource, required, `校园币详情页缺少收支流水能力：${required}`);
 }
 requireText(coinDetailSource, 'CampusCoinDetail', '校园币详情页应使用校园币详情类型。');
@@ -587,7 +589,7 @@ if (coinDetailSource.includes('showFilterSheet') || coinDetailSource.includes('<
 }
 requireText(coinDetailSource, '<MobileEmptyState', '校园币筛选无结果时应复用公共缺省组件。');
 requireText(coinDetailSource, 'ASSETS.DEFAULT_STATE.MAGNIFIER', '校园币筛选无结果时应使用搜索无结果缺省图。');
-requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '成长币资产摘要应保持可用与已存等分，并支持长金额收缩。');
+requireText(coinDetailSource, 'grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]', '成长币资产摘要应保持两项余额等宽，并以独立短竖线分区。');
 requireText(coinDetailSource, 'groupedFlowItems', '校园币流水应按月份分组。');
 requireText(coinDetailSource, 'divide-y divide-[var(--tm-border-subtle)]', '同月流水应使用连续列表与分隔线组织。');
 requireText(textSelectionSource, 'min-h-[var(--tm-selection-touch-height)]', '校园币分类按钮应使用选择控件触控尺寸 Token，且不低于 44px。');

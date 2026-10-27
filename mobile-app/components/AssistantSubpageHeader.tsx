@@ -5,6 +5,7 @@ const centeredContentClassName = 'absolute left-1/2 flex min-w-0 -translate-x-1/
 
 interface AssistantSubpageHeaderProps {
   title?: string;
+  leadingAction?: React.ReactNode;
   centerContent?: React.ReactNode;
   onBack: () => void;
   backLabel?: string;
@@ -13,6 +14,7 @@ interface AssistantSubpageHeaderProps {
 
 const AssistantSubpageHeader: React.FC<AssistantSubpageHeaderProps> = ({
   title,
+  leadingAction,
   centerContent,
   onBack,
   backLabel = '返回',
@@ -27,6 +29,8 @@ const AssistantSubpageHeader: React.FC<AssistantSubpageHeaderProps> = ({
     >
       <ChevronLeft className="h-5 w-5" strokeWidth={2.2} />
     </button>
+
+    {leadingAction}
 
     {centerContent ? (
       <div className={centeredContentClassName}>

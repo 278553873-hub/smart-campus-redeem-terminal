@@ -514,7 +514,6 @@ const ArchiveDesignView: React.FC<ArchiveDesignViewProps> = ({ onBack, teacherPr
             imageSrc={ASSETS.DEFAULT_STATE.WORRIED_CLIPBOARD}
             title="暂无档案"
             className="flex-1 pb-14"
-            imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
           />
         )}
       </section>

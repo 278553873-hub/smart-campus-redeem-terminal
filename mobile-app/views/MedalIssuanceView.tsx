@@ -210,7 +210,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         )}
 
         {scope === 'school' && (
-          <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" imageClassName="w-[58%] min-w-[152px] max-w-[196px]" />
+          <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" />
         )}
 
         {scope === 'class' && <div className="grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]" role="list" aria-label="班级奖章">

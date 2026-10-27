@@ -1,3 +1,4 @@
+import { GROWTH_COIN_FLOW_LABELS, GROWTH_COIN_INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES, type GrowthCoinFlowCategory } from '../../shared/growthCoinFlow';
 import { GrowthCoinIcon, useGrowthCoinTerms } from '../../components/GrowthCoinBranding';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, Clock, Eraser, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
@@ -17,7 +18,7 @@ interface StudentCoinDetailViewProps {
 }
 
 type FlowFilter = 'income' | 'expense';
-type FlowCategory = 'all' | 'growth_award' | 'class_reward' | 'bank_interest' | 'vending_exchange' | 'class_exchange' | 'manual_clear';
+type FlowCategory = 'all' | GrowthCoinFlowCategory;
 
 interface CoinFlowItem {
   id: string;
@@ -29,15 +30,7 @@ interface CoinFlowItem {
   category: FlowCategory;
 }
 
-const categoryLabels: Record<FlowCategory, string> = {
-  all: '全部',
-  growth_award: '成长嘉奖',
-  class_reward: '班级奖励',
-  bank_interest: '银行利息',
-  vending_exchange: '货柜兑换',
-  class_exchange: '班级兑换',
-  manual_clear: '手动清空',
-};
+const categoryLabels: Record<FlowCategory, string> = { all: '全部', ...GROWTH_COIN_FLOW_LABELS };
 
 const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
   { value: 'income', label: '收入' },
@@ -45,8 +38,8 @@ const flowFilterOptions: Array<{ value: FlowFilter; label: string }> = [
 ];
 
 const categoryOptionsByFilter: Record<FlowFilter, FlowCategory[]> = {
-  income: ['all', 'growth_award', 'class_reward', 'bank_interest'],
-  expense: ['all', 'vending_exchange', 'class_exchange', 'manual_clear'],
+  income: ['all', ...GROWTH_COIN_INCOME_CATEGORIES],
+  expense: ['all', ...GROWTH_COIN_EXPENSE_CATEGORIES],
 };
 
 const getFlowIcon = (category: FlowCategory, type: FlowFilter) => {
@@ -153,17 +146,17 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
           <button type="button" onClick={onBack} className="-ml-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-[transform,background-color] [transition-duration:var(--tm-duration-fast)] ease-out active:scale-[0.96] active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100" aria-label="返回学生详情">
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>{GROWTH_COIN_TERMS.details}</h1>
+          <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>校园币明细</h1>
         </header>
 
         <section className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pb-[var(--tm-space-8)] no-scrollbar" aria-label={`${student.name}的${GROWTH_COIN_TERMS.name}收支记录`}>
           <section className="pt-[var(--tm-space-4)]" aria-labelledby="coin-overview-title">
             <div className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
-              <h2 id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">{GROWTH_COIN_TERMS.name}</h2>
+              <h2 id="coin-overview-title" className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-2)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-primary)]">
+                <GrowthCoinIcon className="h-6 w-6 shrink-0" alt="" />
+                {GROWTH_COIN_TERMS.name}
+              </h2>
               <section className="flex min-h-[var(--tm-size-touch)] items-center gap-[var(--tm-space-3)] px-[var(--tm-space-4)]" aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-reward-soft)]">
-                  <GrowthCoinIcon className="h-4 w-4" alt="" />
-                </span>
                 <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)]">
                   <div className="flex min-w-0 items-baseline gap-[var(--tm-space-2)]">
                     <span className="shrink-0 text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.available}</span>
@@ -239,6 +232,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
 
               <CompactSegmentedControl
                 shape="subtle"
+                motion="sliding"
                 value={activeFilter}
                 items={flowFilterOptions}
                 onChange={selectFilter}
@@ -262,7 +256,6 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                   <MobileEmptyState
                     imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
                     title="暂无符合条件的流水记录"
-                    imageClassName="w-[58%] min-w-[156px] max-w-[196px]"
                   />
                 </div>
               ) : (

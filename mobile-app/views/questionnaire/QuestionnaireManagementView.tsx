@@ -179,6 +179,11 @@ type ResponseFilter = 'completed' | 'pending' | 'unreachable';
 type PreviewReturnMode = 'create' | 'list';
 type RespondentSheetMode = 'entry';
 
+const listFilterOptions: Array<{ value: ListFilter; label: string }> = [
+  { value: 'active', label: '收集中' },
+  { value: 'ended', label: '已结束' },
+];
+
 const detailTabOptions: Array<{ value: DetailTab; label: string }> = [
   { value: 'data', label: '数据' },
   { value: 'responses', label: '答卷' },
@@ -1736,22 +1741,16 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="问卷采集" onBack={onBack} />
         <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
-          <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="采集状态">
-            {([['active', '收集中'], ['ended', '已结束']] as const).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={listFilter === value}
-                onClick={() => setListFilter(value)}
-                className="flex h-11 items-center p-1 text-[length:var(--tm-font-size-compact)] font-semibold"
-              >
-                <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-form-segment-active-radius)] transition-all ${listFilter === value ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary-strong)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>
-                  {label}
-                </span>
-              </button>
-            ))}
-          </div>
+          <CompactSegmentedControl
+            shape="subtle"
+            motion="sliding"
+            value={listFilter}
+            items={listFilterOptions}
+            onChange={setListFilter}
+            ariaLabel="采集状态"
+            fullWidth
+            className="text-[length:var(--tm-font-size-compact)]"
+          />
 
           {listFilter === 'ended' && archivedRecords.length > 0 && (
             <div className="mt-2 flex justify-end">
@@ -2433,6 +2432,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <CompactSegmentedControl
             shape="subtle"
             value={studentRecordFilter}
+            motion="sliding"
             items={studentRecordFilterOptions}
             onChange={setStudentRecordFilter}
             ariaLabel="填写进度"
@@ -2465,7 +2465,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
               imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
               title="暂无匹配学生"
               className="min-h-64 py-4"
-              imageClassName="w-[52%] min-w-[140px] max-w-[176px]"
             />
           )}
         </section>
@@ -2616,6 +2615,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
         <CompactSegmentedControl
           shape="subtle"
           value={responseFilter}
+          motion="sliding"
           items={responseFilterOptions}
           onChange={setResponseFilter}
           ariaLabel="答卷状态"
@@ -2784,6 +2784,7 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
           <CompactSegmentedControl
             shape="subtle"
             value={detailTab}
+            motion="sliding"
             items={detailTabOptions}
             onChange={setDetailTab}
             ariaLabel="采集详情视图"
@@ -2913,7 +2914,6 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
                 imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
                 title="暂无匹配回答"
                 className="min-h-64 py-4"
-                imageClassName="w-[52%] min-w-[140px] max-w-[176px]"
               />
             )}
           </div>

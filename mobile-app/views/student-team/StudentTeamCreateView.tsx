@@ -276,7 +276,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
             {memberScope === 'authorized' && classes.length > 0 ? (
               <>
                 <StudentCompactSelectGrid sections={[{ id: activeClassId || 'authorized-class', students: visibleStudents }]} isSelected={studentId => selectedIds.has(studentId)} isDisabled={studentId => existingMemberIds.has(studentId)} getSecondaryLabel={student => existingMemberIds.has(student.id) ? '已加入' : undefined} onToggle={toggleStudent} className="pt-2" />
-                {visibleStudents.length === 0 && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER} title="没有匹配的学生" className="min-h-56 py-4" imageClassName="w-[52%] min-w-[140px] max-w-[176px]" />}
+                {visibleStudents.length === 0 && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER} title="没有匹配的学生" className="min-h-56 py-4" />}
               </>
             ) : memberScope === 'authorized' ? (
               <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.CHAIR} title="暂无可选班级" className="min-h-[320px] py-4" />
@@ -294,7 +294,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
                   />
                 )}
                 {submittedExactName && exactSearchResults.length === 0 && (
-                  <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER} title="未找到该姓名的学生" className="min-h-64 py-4" imageClassName="w-[52%] min-w-[140px] max-w-[176px]" />
+                  <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER} title="未找到该姓名的学生" className="min-h-64 py-4" />
                 )}
               </div>
             )}

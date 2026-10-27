@@ -1,3 +1,4 @@
+import AssistantConversationHistory, { useAssistantConversationHistory } from '../components/assistant-chat/AssistantConversationHistory';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     ChartNoAxesCombined,
@@ -777,7 +778,8 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [generationStepCount, setGenerationStepCount] = useState(1);
     const [historyOpen, setHistoryOpen] = useState(false);
     const [reportOrigin, setReportOrigin] = useState<'overview' | 'history'>('overview');
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const conversationHistory = useAssistantConversationHistory<ChatMessage>('headteacher');
+    const { messages, setMessages } = conversationHistory;
     const [draft, setDraft] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const [replyingCapability, setReplyingCapability] = useState<HeadteacherAssistantCapability | 'unknown'>('class');
@@ -807,7 +809,6 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const clearConversation = () => {
         if (replyTimerRef.current !== null) window.clearTimeout(replyTimerRef.current);
         replyTimerRef.current = null;
-        setMessages([]);
         setDraft('');
         setIsReplying(false);
     };
@@ -928,18 +929,18 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         return buildUnknownQuestionAnswer(capabilities);
     };
 
-    const submitQuestion = (rawQuestion: string) => {
+    const submitQuestion = (rawQuestion: string, regenerateId?: string) => {
         const question = rawQuestion.trim();
         if (!question || isReplying) return;
 
-        const replyId = 'assistant-' + Date.now();
+        const replyId = regenerateId || 'assistant-' + Date.now();
         resumeFollowing();
-        setMessages(current => [...current, {
+        setMessages(current => regenerateId ? current.map(message => message.id === regenerateId ? { ...message, answer: undefined } : message) : [...current, {
             id: 'user-' + Date.now(),
             role: 'user',
             content: question,
         }, { id: replyId, role: 'assistant' }]);
-        setDraft('');
+        if (!regenerateId) setDraft('');
         setIsReplying(true);
         const route = resolveQuestionRoute(question, capabilities);
         setReplyingCapability(route.enabled ? route.capability : 'unknown');
@@ -1015,6 +1016,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     return (
         <div className="ai-assistant-theme-headteacher relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent text-[var(--tm-text-primary)]">
             <AssistantSubpageHeader
+                leadingAction={!activeReport && !isGenerating && !historyOpen ? <AssistantConversationHistory previewEnabled history={conversationHistory} busy={isReplying} /> : undefined}
                 onBack={handleHeaderBack}
                 backLabel={activeReport || isGenerating
                     ? (reportOrigin === 'history' ? '返回历史报告' : '返回概览')
@@ -1024,6 +1026,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     ? <AssistantClassSwitchButton activeClass={activeClass} onClick={() => setShowClassPicker(true)} />
                     : undefined}
             />
+
 
             {activeReport || isGenerating ? (
                 <main ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 pb-5 pt-3 no-scrollbar" aria-live="polite">
@@ -1130,6 +1133,11 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                             replyingLabel={HEADTEACHER_ASSISTANT_REPLYING_LABELS[replyingCapability]}
                             ariaLabel={conversationLabel}
                             onReplyComplete={() => setIsReplying(false)}
+                            onRegenerate={messageId => {
+                                const index = messages.findIndex(message => message.id === messageId);
+                                const question = messages.slice(0, index).reverse().find(message => message.role === 'user')?.content;
+                                if (question) submitQuestion(question, messageId);
+                            }}
                         />
                     )}
                 </div>

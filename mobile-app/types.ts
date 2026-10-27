@@ -111,22 +111,8 @@ export interface GroupPlan {
   groups: StudentGroup[];
 }
 
-export type CampusCoinIncomeCategory = 'growth_award' | 'class_reward' | 'bank_interest';
-
-export type CampusCoinGrowthAwardPeriod =
-  | { type: 'weekly'; startDate: string; endDate: string }
-  | { type: 'monthly'; month: string };
-
-interface CampusCoinIssueRecordBase {
-  id: string;
-  amount: number;
-  time: string;
-}
-
-export type CampusCoinIssueRecord = CampusCoinIssueRecordBase & (
-  | { category: 'growth_award'; period: CampusCoinGrowthAwardPeriod }
-  | { category: 'class_reward' | 'bank_interest'; detail: string }
-);
+export type { GrowthCoinIncomeCategory as CampusCoinIncomeCategory, GrowthCoinAwardPeriod as CampusCoinGrowthAwardPeriod, GrowthCoinIssueRecord as CampusCoinIssueRecord } from '../shared/growthCoinFlow';
+import type { GrowthCoinIssueRecord as CampusCoinIssueRecord } from '../shared/growthCoinFlow';
 
 // manual_clear = 老师手动清空成长币（一次清空计一条，可用与已存的金额合并展示），计入支出流水，便于学生和家长追溯。
 export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange' | 'manual_clear';

@@ -1,0 +1,70 @@
+{
+  "skill": "/Users/mayday/.codex/skills/meta-refactor-ui/SKILL.md",
+  "context": "content",
+  "scope": "三名学生工具四独立 A4 报告；家长阅读，兼容手机浏览",
+  "before": "NEEDS_WORK",
+  "after": "PASS",
+  "priority_fixes": [
+    "严格恢复原表项目、选项、填空句式",
+    "统一字段与值的层级",
+    "以家长能理解的短句填写",
+    "按主题分为 5 页 A4"
+  ],
+  "skill_breakdown": {
+    "visual-hierarchy": {
+      "status": "PASS",
+      "finding": "原版判断段落与资料同等权重，固定字段不易识别。",
+      "applied": "以原表栏目为标题；初步判断使用统一浅蓝结果条；原选项使用勾选。"
+    },
+    "typography-scale": {
+      "status": "PASS",
+      "finding": "原版三方资料字号较小，五育长标签易在词中换行。",
+      "applied": "A4 三方正文 14px、重点正文 16px；五育字名与完整释义分行，字号角色一致。"
+    },
+    "color-palette": {
+      "status": "PASS",
+      "finding": "需要沿用既有期末报告视觉风格。",
+      "applied": "保留深蓝文字、浅蓝结果区、浅绿建议区与淡紫引用；采用明确色值。"
+    },
+    "consistent-spacing": {
+      "status": "PASS",
+      "finding": "原版多块内容聚在末页，阅读节奏不均。",
+      "applied": "按五个主题页面组织；字段内 8px，卡片内 16px，分区 24px 或 32px。"
+    },
+    "button-hierarchy": {
+      "status": "PASS",
+      "finding": "导出操作已明确。",
+      "applied": "保留一个导出/打印主操作；补齐键盘焦点样式和 48px 操作高度。"
+    },
+    "visual-clutter": {
+      "status": "PASS",
+      "finding": "额外描述、数据核对说明混入家长报告。",
+      "applied": "去掉额外画像副标题和教师研读标签；核对事项放在阅读说明，报告保留专家原表项目。"
+    },
+    "empty-states": {
+      "status": "PASS",
+      "finding": "缺少直接回答时，原版用间接材料代替。",
+      "applied": "遇难态度的孩子来源明确写暂缺及资料边界，不编造孩子原话。"
+    },
+    "shadows": {
+      "status": "PASS",
+      "finding": "静态报告无需多层卡片浮起效果。",
+      "applied": "内容区无阴影，只用纸张与屏幕背景之间的轻阴影；打印去除阴影。"
+    },
+    "color-contrast": {
+      "status": "PASS",
+      "finding": "字段标签需要弱化但不能难读。",
+      "applied": "标签 #50677c，正文 #263e55；选项同时使用勾选和加粗，不依靠颜色单独区分。"
+    },
+    "group-related-elements": {
+      "status": "PASS",
+      "finding": "字段标题、值与来源需建立直接联系。",
+      "applied": "统一标签和值；每个观察维度后紧跟初步判断；三力证据与三力名同行。"
+    }
+  },
+  "adaptations": [
+    "独立打印报告沿用用户已确认的报告配色；家长小程序品牌红导航规范不直接套用。",
+    "静态文档按实际语义使用有限色阶，不为凑齐复杂应用调色板引入额外颜色。",
+    "原表章节内部说明保持原文；填写值使用亲切表达。"
+  ]
+}

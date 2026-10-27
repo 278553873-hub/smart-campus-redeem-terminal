@@ -13,7 +13,9 @@ interface CoinIssuanceSettingsProps {
     onChange: (value: CoinIssuanceConfig) => void;
 }
 
-import { getEditableGrowthCoinConfig, saveGrowthCoinRule, type GrowthCoinSaveNotice } from '../shared/growthCoinRuleSchedule';
+import { getEditableGrowthCoinConfig, saveGrowthCoinRule, getEffectiveGrowthCoinConfig } from '../shared/growthCoinRuleSchedule';
+
+import { getCoinRuleConfirmation } from '../shared/coinRuleConfirmation';
 
 const SAMPLE_CLASS_SIZE = 50;
 
@@ -34,7 +36,9 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
     const brandingEditor = useCoinBrandingEditor();
     const coinTerms = useGrowthCoinTerms();
     const [draft, setDraft] = useState(() => getEditableGrowthCoinConfig(value));
-    const [saveNotice, setSaveNotice] = useState<GrowthCoinSaveNotice | null>(null);
+    const [confirmation, setConfirmation] = useState<{ before: CoinIssuanceConfig; after: CoinIssuanceConfig } | null>(null);
+    const [saving, setSaving] = useState(false);
+    const savingRef = React.useRef(false);
     const pendingChange = value.pendingChange && Date.parse(value.pendingChange.effectiveAt) > Date.now() ? value.pendingChange : undefined;
 
     useEffect(() => {
@@ -63,10 +67,25 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
 
     const handleSave = () => {
         const result = saveGrowthCoinRule(value, draft);
-        onChange(result.config);
-        setSaveNotice(result.notice);
-        if (!result.notice) Message.success('保存成功');
+        if (result.notice) {
+            setConfirmation({ before: getEffectiveGrowthCoinConfig(value), after: result.config });
+        } else Message.success('保存成功');
     };
+
+    const confirmSave = async () => {
+        if (!confirmation || savingRef.current) return;
+        savingRef.current = true;
+        setSaving(true);
+        try {
+            await onChange(saveGrowthCoinRule(value, confirmation.after).config);
+            setConfirmation(null);
+            Message.success('新规则已生效');
+        } catch {
+            Message.error('保存失败，原规则仍然有效，请重试');
+        } finally { savingRef.current = false; setSaving(false); }
+    };
+
+    const notice = confirmation && getCoinRuleConfirmation(confirmation.before, confirmation.after);
 
     return (
         <div className="pc-form bg-white">
@@ -295,10 +314,13 @@ const CoinIssuanceSettings: React.FC<CoinIssuanceSettingsProps> = ({ value, onCh
             {(!draft.enabled || activeTab === 'rules') && <div className="flex shrink-0 items-center justify-end gap-3 border-t border-[#E5E6EB] px-6 py-4">
                 <Button type="primary" disabled={brandingEditor.busy} onClick={handleSave}>保存</Button>
             </div>}
-            <Modal visible={Boolean(saveNotice)} title="提示" onCancel={() => setSaveNotice(null)}
-                footer={<Button type="primary" onClick={() => setSaveNotice(null)}>知道了</Button>}>
-                <p className="text-sm font-semibold leading-6 text-[#1D2129]">{saveNotice?.message}</p>
-            </Modal>
+        <Modal visible={Boolean(confirmation)} title={notice?.title} maskClosable={!saving} escToExit={!saving} closable={!saving}
+            onCancel={() => { if (!saving) setConfirmation(null); }}
+            footer={<><Button disabled={saving} onClick={() => setConfirmation(null)}>取消</Button><Button type="primary" loading={saving} onClick={confirmSave}>同意并立即生效</Button></>}>
+            {notice && <div className="space-y-4 text-sm leading-6 text-[#1D2129]">
+                <p className="m-0 leading-7">{notice.message}</p>
+            </div>}
+        </Modal>
         </div>
     );
 };

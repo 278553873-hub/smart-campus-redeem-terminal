@@ -1,3 +1,4 @@
+import PreviewSegmentTrack from './PreviewSegmentTrack';
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import {
@@ -21,7 +22,7 @@ const TerminalShopLayoutPreviewControls: React.FC<TerminalShopLayoutPreviewContr
   const currentPreset = getTerminalShopLayoutPreset(value);
 
   const options = (
-    <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1" role="radiogroup" aria-label="商品展示方式预览">
+    <PreviewSegmentTrack index={TERMINAL_SHOP_LAYOUT_PRESETS.findIndex(preset => preset.id === value)} count={3} gap={4} className="grid grid-cols-3 gap-1 rounded-lg bg-slate-100 p-1" role="radiogroup" aria-label="商品展示方式预览">
       {TERMINAL_SHOP_LAYOUT_PRESETS.map(preset => {
         const selected = preset.id === value;
         return (
@@ -35,7 +36,7 @@ const TerminalShopLayoutPreviewControls: React.FC<TerminalShopLayoutPreviewContr
               setCompactOpen(false);
             }}
             className={`min-h-11 min-w-0 rounded-md px-1 py-1 text-center transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${selected
-              ? 'bg-white text-blue-700 shadow-sm'
+              ? 'text-blue-700'
               : 'text-slate-500 hover:text-slate-800'
               }`}
           >
@@ -46,7 +47,7 @@ const TerminalShopLayoutPreviewControls: React.FC<TerminalShopLayoutPreviewContr
           </button>
         );
       })}
-    </div>
+    </PreviewSegmentTrack>
   );
 
   return (

@@ -1,3 +1,4 @@
+import PreviewSegmentTrack from './PreviewSegmentTrack';
 import React from 'react';
 import type {
   ParentEvaluationVisibility,
@@ -25,7 +26,7 @@ const ParentEvaluationVisibilityPreviewControls: React.FC<ParentEvaluationVisibi
   ) => (
     <fieldset className="m-0 min-w-0 border-0 p-0">
       <legend className="mb-2 text-[12px] font-semibold text-slate-700">{label}</legend>
-      <div className="grid grid-cols-3 rounded-lg bg-slate-100 p-1" role="group" aria-label={`${label}展示方案`}>
+      <PreviewSegmentTrack index={OPTIONS.findIndex(option => option.value === settings[direction])} count={3} gap={0} className="grid grid-cols-3 rounded-lg bg-slate-100 p-1" role="group" aria-label={`${label}展示方案`}>
         {OPTIONS.map(option => {
           const selected = settings[direction] === option.value;
           return (
@@ -34,13 +35,13 @@ const ParentEvaluationVisibilityPreviewControls: React.FC<ParentEvaluationVisibi
               type="button"
               onClick={() => onChange({ ...settings, [direction]: option.value })}
               aria-pressed={selected}
-              className={`min-h-9 min-w-0 rounded-md px-1 text-[11px] font-semibold leading-tight transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 ${selected ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              className={`min-h-9 min-w-0 rounded-md px-1 text-[11px] font-semibold leading-tight transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 ${selected ? 'text-emerald-700' : 'text-slate-500 hover:text-slate-800'}`}
             >
               {option.label}
             </button>
           );
         })}
-      </div>
+      </PreviewSegmentTrack>
     </fieldset>
   );
 

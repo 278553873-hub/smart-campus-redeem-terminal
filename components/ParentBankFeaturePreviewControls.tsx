@@ -1,3 +1,4 @@
+import PreviewSegmentTrack from './PreviewSegmentTrack';
 import React from 'react';
 
 interface ParentBankFeaturePreviewControlsProps {
@@ -14,7 +15,7 @@ const ParentBankFeaturePreviewControls: React.FC<ParentBankFeaturePreviewControl
     aria-label="积分银行功能开放预览配置"
   >
     <h2 className="mb-3 text-[13px] font-bold text-slate-900">积分银行功能开放</h2>
-    <div className="grid grid-cols-2 rounded-lg bg-slate-100 p-1" role="group" aria-label="积分银行功能开放状态">
+    <PreviewSegmentTrack index={enabled ? 0 : 1} count={2} gap={0} className="grid grid-cols-2 rounded-lg bg-slate-100 p-1" role="group" aria-label="积分银行功能开放状态">
       {[
         { value: true, label: '开放' },
         { value: false, label: '未开放' },
@@ -26,13 +27,13 @@ const ParentBankFeaturePreviewControls: React.FC<ParentBankFeaturePreviewControl
             type="button"
             onClick={() => onChange(option.value)}
             aria-pressed={selected}
-            className={`min-h-9 rounded-md px-2 text-[12px] font-semibold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 ${selected ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`min-h-9 rounded-md px-2 text-[12px] font-semibold transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 ${selected ? 'text-emerald-700' : 'text-slate-500 hover:text-slate-800'}`}
           >
             {option.label}
           </button>
         );
       })}
-    </div>
+    </PreviewSegmentTrack>
   </section>
 );
 

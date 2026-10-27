@@ -1,0 +1,361 @@
+{
+  "requestId": "example-request-tool4-002",
+  "status": "needs_review",
+  "answers": {
+    "example_tool4_01": "爱笑、慢热、好奇。",
+    "example_tool4_02": "说自己爱画画；刚开始回答简短，聊到画画时说得更多。",
+    "example_tool4_03": "刚开始较安静，熟悉后愿意回应。",
+    "example_tool4_04": {
+      "selectedOptions": [
+        "三方吻合"
+      ],
+      "customText": {}
+    },
+    "example_tool4_05": "喜欢画画、搭积木、听故事。",
+    "example_tool4_06": "说自己爱画画，会画小动物。",
+    "example_tool4_07": "自由活动时多次选择画画。",
+    "example_tool4_08": "核心兴趣方向：画画，也喜欢搭积木和听故事。",
+    "example_tool4_09": "先观察，熟悉后加入；会与同伴商量轮流。",
+    "example_tool4_10": "提到了经常一起玩的好朋友。",
+    "example_tool4_11": "争用材料时会商量轮流，也会主动递画笔给同伴。",
+    "example_tool4_12": "核心交往模式：先熟悉再加入，愿意商量，也关心同伴。",
+    "example_tool4_13": "先自己试一试，不行再找大人帮忙。",
+    "example_tool4_14": "暂缺。访谈没有直接记录孩子遇到困难时的做法。",
+    "example_tool4_15": "拼图遇到困难时，先自己试，再举手求助。",
+    "example_tool4_16": "应对模式初显：愿意先试一试，需要时再找人帮忙。",
+    "example_tool4_17": "希望每天开心、养成好习惯。",
+    "example_tool4_18": "期待画画、交朋友，也担心找不到教室。",
+    "example_tool4_19": "提醒后能跟上集体活动，整理画笔也需要提醒。",
+    "example_tool4_20": "重点关切点：陪孩子熟悉教室和活动安排，安心参加学校生活。",
+    "example_tool4_21": "和家人一起画画的时候最开心。",
+    "example_tool4_22": "我是一个爱画画的小孩。\n我会画小动物。",
+    "example_tool4_23": "面对困难时：拼图遇到困难时，会先自己试，再举手求助。\n关心同伴时：看到同伴缺画笔时，会主动递给对方。",
+    "example_tool4_25": "愿意和同伴商量轮流；看到别人缺画笔时，会主动递过去。",
+    "example_tool4_26": "家长说孩子爱问为什么；老师也听到过关于小虫的问题，遇到困难愿意先试。",
+    "example_tool4_24": "暂缺。现有资料没有直接记录孩子的运动表现、作息或健康习惯。",
+    "example_tool4_27": "三方都提到了画画。孩子曾把圆形画成小动物，并说明自己的想法。",
+    "example_tool4_28": "在家能自己穿脱衣服、上厕所、收拾玩具，也会扣纽扣、剪纸；在学校整理画笔时还需要提醒。",
+    "example_tool4_29": "自由活动时多次选择画画；拼图遇到困难，会先自己试一试。",
+    "example_tool4_30": "与同伴争用材料时会商量轮流；拼图遇难先试，再举手求助。",
+    "example_tool4_31": "把圆形画成小动物，并向老师解释了自己的想法。",
+    "example_tool4_32": "学活",
+    "example_tool4_33": "尚美；孩子举的例子是“我会画小动物。”",
+    "example_tool4_34": "乐健（身体棒、心态阳光）、从善（有爱心、品行端正）",
+    "example_tool4_35": "自由活动时多次选择画画，也会介绍自己画里的想法。",
+    "example_tool4_36": "可以把“学活”和“尚美”放在一起试试：从喜欢的画画开始，请孩子画出一个新发现，再说说自己的想法，留意孩子是否愿意继续尝试。",
+    "example_tool4_37": "1. 在家能收拾玩具，在学校整理画笔还需要提醒。可以留意：把步骤说清楚后，孩子能自己完成哪些部分。\n2. 孩子说怕找不到教室。可以陪孩子走一走，听听具体担心在哪里。\n3. 访谈没有直接记录遇到困难时的做法，之后可以听听孩子自己的说法。",
+    "example_tool4_38": {
+      "fillValues": {
+        "example-trait-1": "喜欢画画",
+        "example-trait-2": "愿意尝试",
+        "example-trait-3": "关心同伴"
+      }
+    },
+    "example_tool4_39": "孩子需要一点熟悉环境的时间；可以从喜欢的画画聊起，也听听对找教室的担心，陪孩子慢慢安心。",
+    "example_tool4_40": "我对接下来的陪伴，想先从孩子画画后的分享和收拾画笔的过程开始留意。"
+  },
+  "fieldEvidence": {
+    "example_tool4_01": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p1"
+      ]
+    },
+    "example_tool4_02": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c1",
+        "c8"
+      ]
+    },
+    "example_tool4_03": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t1"
+      ]
+    },
+    "example_tool4_04": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p1",
+        "c8",
+        "t1"
+      ]
+    },
+    "example_tool4_05": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p2"
+      ]
+    },
+    "example_tool4_06": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c1",
+        "c7"
+      ]
+    },
+    "example_tool4_07": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t2"
+      ]
+    },
+    "example_tool4_08": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p2",
+        "c1",
+        "c7",
+        "t2"
+      ]
+    },
+    "example_tool4_09": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p3"
+      ]
+    },
+    "example_tool4_10": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c2"
+      ]
+    },
+    "example_tool4_11": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t3",
+        "t8"
+      ]
+    },
+    "example_tool4_12": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p3",
+        "c2",
+        "t3",
+        "t8"
+      ]
+    },
+    "example_tool4_13": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p4"
+      ]
+    },
+    "example_tool4_14": {
+      "state": "missing",
+      "sourceItemIds": []
+    },
+    "example_tool4_15": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t4"
+      ]
+    },
+    "example_tool4_16": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p4",
+        "t4"
+      ]
+    },
+    "example_tool4_17": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p5"
+      ]
+    },
+    "example_tool4_18": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c3",
+        "c4"
+      ]
+    },
+    "example_tool4_19": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t5",
+        "t6"
+      ]
+    },
+    "example_tool4_20": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p5",
+        "c3",
+        "c4",
+        "t5"
+      ]
+    },
+    "example_tool4_21": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p9"
+      ]
+    },
+    "example_tool4_22": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c1",
+        "c7"
+      ]
+    },
+    "example_tool4_23": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t4",
+        "t8"
+      ]
+    },
+    "example_tool4_25": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p3",
+        "t3",
+        "t8"
+      ]
+    },
+    "example_tool4_26": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p7",
+        "t9",
+        "t4"
+      ]
+    },
+    "example_tool4_24": {
+      "state": "missing",
+      "sourceItemIds": []
+    },
+    "example_tool4_27": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p2",
+        "c1",
+        "t2",
+        "t7"
+      ]
+    },
+    "example_tool4_28": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p6",
+        "p10",
+        "t6"
+      ]
+    },
+    "example_tool4_29": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t2",
+        "t4"
+      ]
+    },
+    "example_tool4_30": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t3",
+        "t4"
+      ]
+    },
+    "example_tool4_31": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t7"
+      ]
+    },
+    "example_tool4_32": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c5"
+      ]
+    },
+    "example_tool4_33": {
+      "state": "supported",
+      "sourceItemIds": [
+        "c6",
+        "c7"
+      ]
+    },
+    "example_tool4_34": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p8"
+      ]
+    },
+    "example_tool4_35": {
+      "state": "supported",
+      "sourceItemIds": [
+        "t2",
+        "t7"
+      ]
+    },
+    "example_tool4_36": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "c5",
+        "c6",
+        "p2",
+        "t2",
+        "t7"
+      ]
+    },
+    "example_tool4_37": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p6",
+        "t6",
+        "c4"
+      ]
+    },
+    "example_tool4_38": {
+      "state": "supported",
+      "sourceItemIds": [
+        "p2",
+        "c1",
+        "t2",
+        "t4",
+        "t8"
+      ]
+    },
+    "example_tool4_39": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "p1",
+        "c8",
+        "t1",
+        "c4"
+      ]
+    },
+    "example_tool4_40": {
+      "state": "tentative",
+      "sourceItemIds": [
+        "t2",
+        "t6",
+        "t7"
+      ]
+    }
+  },
+  "reviewIssues": [
+    {
+      "code": "missing_answer",
+      "fieldKeys": [
+        "example_tool4_14"
+      ],
+      "sourceItemIds": [],
+      "message": "孩子访谈没有直接记录遇到困难时的做法，保留暂缺，待教师补充。"
+    },
+    {
+      "code": "missing_answer",
+      "fieldKeys": [
+        "example_tool4_24"
+      ],
+      "sourceItemIds": [],
+      "message": "缺少运动、作息和健康习惯的直接资料，体保留暂缺；生活自理与整理内容归入劳。"
+    }
+  ],
+  "promptVersion": "tool4-v1.1.0"
+}

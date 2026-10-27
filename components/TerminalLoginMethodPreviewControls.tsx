@@ -1,3 +1,4 @@
+import PreviewSegmentTrack from './PreviewSegmentTrack';
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -22,7 +23,7 @@ const TerminalLoginMethodPreviewControls: React.FC<TerminalLoginMethodPreviewCon
   const currentLabel = OPTIONS.find(option => option.value === value)?.label ?? OPTIONS[1].label;
 
   const options = (
-    <div className="grid grid-cols-3 rounded-lg bg-slate-100 p-1" role="radiogroup" aria-label="货柜机登录方式预览">
+    <PreviewSegmentTrack index={OPTIONS.findIndex(option => option.value === value)} count={3} gap={0} className="grid grid-cols-3 rounded-lg bg-slate-100 p-1" role="radiogroup" aria-label="货柜机登录方式预览">
       {OPTIONS.map(option => {
         const selected = option.value === value;
         return (
@@ -36,7 +37,7 @@ const TerminalLoginMethodPreviewControls: React.FC<TerminalLoginMethodPreviewCon
               setCompactOpen(false);
             }}
             className={`min-h-9 min-w-0 whitespace-nowrap rounded-md px-1 text-[11px] font-semibold leading-tight transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 ${selected
-              ? 'bg-white text-blue-700 shadow-sm'
+              ? 'text-blue-700'
               : 'text-slate-500 hover:text-slate-800'
               }`}
           >
@@ -44,7 +45,7 @@ const TerminalLoginMethodPreviewControls: React.FC<TerminalLoginMethodPreviewCon
           </button>
         );
       })}
-    </div>
+    </PreviewSegmentTrack>
   );
 
   return (

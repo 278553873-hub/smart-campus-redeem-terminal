@@ -54,11 +54,4 @@ export enum TermType {
   ONE_YEAR = 365
 }
 
-export interface TransactionRecord {
-  id: string;
-  category: 'growth_award' | 'class_reward' | 'bank_interest' | 'vending_exchange' | 'class_exchange';
-  detail: string;
-  amount: number;
-  type: 'income' | 'expense';
-  date: string;
-}
+export type { GrowthCoinFlowRecord as TransactionRecord } from './shared/growthCoinFlow';

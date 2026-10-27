@@ -1,3 +1,4 @@
+import { COIN_RULE_PAGE_EVENT, COIN_RULE_PREVIEW_EVENT, COIN_RULE_SCENARIOS, getCoinRuleConfirmation, makeCoinRulePreview, type CoinRuleScenario } from '../../shared/coinRuleConfirmation';
 import GrowthCoinBrandFields, { useCoinBrandingEditor } from '../../components/GrowthCoinBrandFields';
 import GrowthCoinRuleDescription from '../../components/GrowthCoinRuleDescription';
 import React from 'react';
@@ -32,7 +33,7 @@ import {
 } from '../styles/teacherGradientPreview';
 import { getClassBudgetTotal, roundCoinAmount } from '../domain/campusCoinIssuance';
 import { ScoreCoinAmountFields, ScoreCoinLimitFields } from '../components/ScoreCoinRuleFields';
-import { getEditableGrowthCoinConfig, saveGrowthCoinRule, type GrowthCoinSaveNotice } from '../../shared/growthCoinRuleSchedule';
+import { getEditableGrowthCoinConfig, saveGrowthCoinRule, getEffectiveGrowthCoinConfig } from '../../shared/growthCoinRuleSchedule';
 import { getGrowthCoinMode, getScoreCoinRule, GROWTH_COIN_ENABLE_HELP, GROWTH_COIN_MODES } from '../../shared/growthCoinRules';
 
 export interface SchoolSubjectItem {
@@ -319,7 +320,6 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
                 imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD}
                 title="暂无科目"
                 className="min-h-0 flex-1 pb-14"
-                imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
             />
         )}
     </FeaturePageBody>
@@ -355,7 +355,6 @@ export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> =
                 imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD}
                 title="暂无部门"
                 className="min-h-0 flex-1 pb-14"
-                imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
             />
         )}
     </FeaturePageBody>
@@ -366,7 +365,25 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
     const tabsId = React.useId();
     const brandingEditor = useCoinBrandingEditor();
     const [config, setConfig] = React.useState(() => getEditableGrowthCoinConfig(savedConfig));
-    const [saveNotice, setSaveNotice] = React.useState<GrowthCoinSaveNotice | null>(null);
+    const [confirmation, setConfirmation] = React.useState<{ before: CoinIssuanceConfig; after: CoinIssuanceConfig; preview: boolean } | null>(null);
+    const [saving, setSaving] = React.useState(false);
+    const savingRef = React.useRef(false);
+    const [saveError, setSaveError] = React.useState('');
+    React.useEffect(() => {
+        window.dispatchEvent(new CustomEvent(COIN_RULE_PAGE_EVENT, { detail: true }));
+        return () => { window.dispatchEvent(new CustomEvent(COIN_RULE_PAGE_EVENT, { detail: false })); };
+    }, []);
+    React.useEffect(() => {
+        const preview = (event: Event) => {
+            const scenario = (event as CustomEvent<CoinRuleScenario>).detail;
+            if (!savingRef.current && COIN_RULE_SCENARIOS.some(item => item.value === scenario)) {
+                setSaveError('');
+                setConfirmation(makeCoinRulePreview(getEffectiveGrowthCoinConfig(savedConfig), config, scenario));
+            }
+        };
+        window.addEventListener(COIN_RULE_PREVIEW_EVENT, preview);
+        return () => window.removeEventListener(COIN_RULE_PREVIEW_EVENT, preview);
+    }, [savedConfig, config]);
     React.useEffect(() => {
         const editable = getEditableGrowthCoinConfig(savedConfig);
         setConfig(editable);
@@ -381,11 +398,27 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
     const pendingChange = savedConfig.pendingChange && Date.parse(savedConfig.pendingChange.effectiveAt) > Date.now() ? savedConfig.pendingChange : undefined;
     const handleSave = () => {
         const result = saveGrowthCoinRule(savedConfig, config);
-        onChange(result.config);
-        setSaveNotice(result.notice);
-        setToastVersion(version => result.notice ? 0 : version + 1);
-        onSave?.();
+        setSaveError('');
+        if (result.notice) {
+            setToastVersion(0);
+            setConfirmation({ before: getEffectiveGrowthCoinConfig(savedConfig), after: result.config, preview: false });
+        } else { setToastVersion(version => version + 1); onSave?.(); }
     };
+    const confirmSave = async () => {
+        if (!confirmation || savingRef.current) return;
+        if (confirmation.preview) { setConfirmation(null); return; }
+        savingRef.current = true;
+        setSaving(true);
+        setSaveError('');
+        try {
+            await onChange(saveGrowthCoinRule(savedConfig, confirmation.after).config);
+            setConfirmation(null);
+            setToastVersion(version => version + 1);
+            onSave?.();
+        } catch { setSaveError('保存失败，原规则仍然有效，请重试。'); }
+        finally { savingRef.current = false; setSaving(false); }
+    };
+    const notice = confirmation && getCoinRuleConfirmation(confirmation.before, confirmation.after);
     const mode = getGrowthCoinMode(config);
     const scoreRule = getScoreCoinRule(config);
     const [showIssuanceHelp, setShowIssuanceHelp] = React.useState(false);
@@ -662,9 +695,15 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                 </div>
             )}
             <MobileToast message={toastVersion ? '保存成功' : ''} />
-            <MobileBottomSheet open={Boolean(saveNotice)} title="提示" onClose={() => setSaveNotice(null)}
-                footer={<button type="button" onClick={() => setSaveNotice(null)} className={featureFormPrimaryButtonClass}>知道了</button>}>
-                <p className="text-[14px] font-semibold leading-6 text-[var(--tm-text-primary)]">{saveNotice?.message}</p>
+            <MobileBottomSheet open={Boolean(confirmation)} title={notice?.title ?? '确认修改发币规则'} onClose={() => { if (!savingRef.current) setConfirmation(null); }}
+                footer={<div className="flex gap-3">
+                    <button type="button" disabled={saving} onClick={() => setConfirmation(null)} className="min-h-12 flex-1 rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface-muted)] text-[14px] font-semibold text-[var(--tm-text-primary)] disabled:opacity-50">取消</button>
+                    <button type="button" disabled={saving} onClick={confirmSave} className={`${featureFormPrimaryButtonClass} flex-[2] disabled:opacity-50`}>{saving ? '保存中…' : '同意并立即生效'}</button>
+                </div>}>
+                {notice && <div className="space-y-4 text-[14px] leading-6 text-[var(--tm-text-primary)]">
+                    <p className="m-0 leading-7">{notice.message}</p>
+                    {saveError && <p role="alert">{saveError}</p>}
+                </div>}
             </MobileBottomSheet>
         </FeaturePageBody>
     );

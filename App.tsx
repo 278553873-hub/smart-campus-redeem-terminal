@@ -1,3 +1,7 @@
+import CoinFlowReviewNotes from './components/CoinFlowReviewNotes';
+import { COIN_RULE_PAGE_EVENT, COIN_RULE_PREVIEW_EVENT, COIN_RULE_SCENARIOS, type CoinRuleScenario } from './shared/coinRuleConfirmation';
+import PreviewSegmentTrack from './components/PreviewSegmentTrack';
+import { ASSISTANT_HISTORY_OPEN_EVENT, ASSISTANT_HISTORY_MODE_EVENT, type AssistantHistoryPreviewMode } from './shared/assistantHistoryPreview';
 import ClassReportOutlinePreviewControls from './components/ClassReportOutlinePreviewControls';
 import ClassListLoadingPreviewControls from './components/ClassListLoadingPreviewControls';
 import { defaultClassListLoadingPreview } from './shared/classListLoadingPreview';
@@ -1442,10 +1446,28 @@ const AppSwitcher: React.FC = () => {
   const [teacherGradientStyle, setTeacherGradientStyle] = useState<TeacherGradientStyleId>(defaultTeacherGradientPreview.styleId);
   const [parentGradientScheme, setParentGradientScheme] = useState<TeacherGradientSchemeId>(defaultParentGradientPreview.schemeId);
   const [parentGradientStyle, setParentGradientStyle] = useState<TeacherGradientStyleId>(defaultParentGradientPreview.styleId);
+  const [showTeacherColorPreview, setShowTeacherColorPreview] = useState(false);
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [studentTeamInvitePreview, setStudentTeamInvitePreview] = useState(false);
   const [isStudentTeamListViewActive, setIsStudentTeamListViewActive] = useState(false);
   const [classListLoadingPreview, setClassListLoadingPreview] = useState(defaultClassListLoadingPreview);
+  const [coinRulePageVisible, setCoinRulePageVisible] = useState(false);
+  const [coinRulePreviewScenario, setCoinRulePreviewScenario] = useState<CoinRuleScenario>('periodic-periodic');
+  useEffect(() => {
+    const update = (event: Event) => setCoinRulePageVisible(Boolean((event as CustomEvent).detail));
+    window.addEventListener(COIN_RULE_PAGE_EVENT, update);
+    return () => window.removeEventListener(COIN_RULE_PAGE_EVENT, update);
+  }, []);
+  const [assistantHistoryPreviewOpen, setAssistantHistoryPreviewOpen] = useState(false);
+  const [assistantHistoryPreviewMode, setAssistantHistoryPreviewMode] = useState<AssistantHistoryPreviewMode>('records');
+  useEffect(() => {
+    const listener = (event: Event) => {
+      setAssistantHistoryPreviewOpen(Boolean((event as CustomEvent).detail));
+      setAssistantHistoryPreviewMode('records');
+    };
+    window.addEventListener(ASSISTANT_HISTORY_OPEN_EVENT, listener);
+    return () => window.removeEventListener(ASSISTANT_HISTORY_OPEN_EVENT, listener);
+  }, []);
   const [headteacherAssistantScopePreview, setHeadteacherAssistantScopePreview] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [headteacherAssistantScopePreviewDefault, setHeadteacherAssistantScopePreviewDefault] = useState<HeadteacherAssistantScopePreviewMode | null>(null);
   const [isHeadteacherAssistantViewActive, setIsHeadteacherAssistantViewActive] = useState(false);
@@ -1825,6 +1847,7 @@ const AppSwitcher: React.FC = () => {
           <MobileApp
             showPhoneShell={showPhoneShell}
             screenRef={teacherPhoneScreenRef}
+            onGradientPreviewVisibilityChange={setShowTeacherColorPreview}
             campaignPreviewEveryEntry
             headteacherAssistantScopePreview={headteacherAssistantScopePreviewMode ?? undefined}
             onHeadteacherAssistantScopePreviewDefaultChange={setHeadteacherAssistantScopePreviewDefault}
@@ -1969,6 +1992,7 @@ const AppSwitcher: React.FC = () => {
                   <Camera className="h-4 w-4" aria-hidden="true" />
                 )}
               </button>
+              {(showTeacherColorPreview || isHeadteacherAssistantViewActive || isClassReportViewActive) && (
               <button
                 type="button"
                 onClick={() => setIsTeacherGradientControlsOpen(prev => !prev)}
@@ -1978,7 +2002,10 @@ const AppSwitcher: React.FC = () => {
               >
                 <Palette className="h-5 w-5" />
               </button>
+              )}
             </div>
+
+            <CoinFlowReviewNotes />
 
             {teacherDeveloperNotesContext && (
               <TeacherMobileDeveloperNotes
@@ -1988,6 +2015,7 @@ const AppSwitcher: React.FC = () => {
               />
             )}
 
+            {showTeacherColorPreview && (
             <div className={`w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl ${isTeacherGradientControlsOpen ? 'max-[900px]:block' : 'max-[900px]:hidden'}`}>
               <label className="flex min-h-11 items-center gap-2">
                 <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
@@ -2022,6 +2050,22 @@ const AppSwitcher: React.FC = () => {
                 </span>
               </label>
             </div>
+            )}
+
+            {coinRulePageVisible && (
+              <section className="w-full rounded-lg border border-slate-200 bg-white p-3" aria-label="发币规则弹窗预览">
+                <h2 className="mb-3 text-[13px] font-bold text-slate-900">发币规则弹窗预览</h2>
+                <select aria-label="选择发币规则预览情形" value={coinRulePreviewScenario} onChange={event => {
+                  const scenario = event.target.value as CoinRuleScenario;
+                  setCoinRulePreviewScenario(scenario);
+                  window.dispatchEvent(new CustomEvent(COIN_RULE_PREVIEW_EVENT, { detail: scenario }));
+                }} className="h-11 w-full rounded-lg border border-slate-200 bg-white px-2 text-[12px] text-slate-700">
+                  {COIN_RULE_SCENARIOS.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+                </select>
+                <button type="button" onClick={() => window.dispatchEvent(new CustomEvent(COIN_RULE_PREVIEW_EVENT, { detail: coinRulePreviewScenario }))} className="mt-3 min-h-11 w-full rounded-lg bg-slate-100 text-[12px] font-semibold text-slate-700">查看弹窗</button>
+                <p className="mb-0 mt-2 text-[11px] text-slate-500">预览不会保存或生效。</p>
+              </section>
+            )}
 
             {isStudentTeamListViewActive && (
               <ClassListLoadingPreviewControls value={classListLoadingPreview} onChange={setClassListLoadingPreview} />
@@ -2057,6 +2101,18 @@ const AppSwitcher: React.FC = () => {
                   value={headteacherAssistantScopePreviewMode}
                   onChange={setHeadteacherAssistantScopePreview}
                 />
+              </div>
+            )}
+
+            {assistantHistoryPreviewOpen && (
+              <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-sm">
+                <span className="mb-1 block pl-1 text-[11px] font-bold text-slate-500">历史记录</span>
+                <PreviewSegmentTrack index={assistantHistoryPreviewMode === 'records' ? 0 : 1} count={2} role="tablist" aria-label="历史记录预览" className="grid grid-cols-2 rounded-lg bg-slate-100 p-1">
+                  {([['records', '有记录'], ['empty', '无记录']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={assistantHistoryPreviewMode === value} onClick={() => {
+                    setAssistantHistoryPreviewMode(value);
+                    window.dispatchEvent(new CustomEvent(ASSISTANT_HISTORY_MODE_EVENT, { detail: value }));
+                  }} className={`min-h-9 rounded-md text-[11px] font-semibold ${assistantHistoryPreviewMode === value ? 'text-rose-700' : 'text-slate-500'}`}>{label}</button>)}
+                </PreviewSegmentTrack>
               </div>
             )}
           </div>

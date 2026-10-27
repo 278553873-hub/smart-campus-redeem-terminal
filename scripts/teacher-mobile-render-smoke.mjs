@@ -247,12 +247,12 @@ await renderPage('成长币发放（学校名称与图标）', () => loadCoinSco
 await renderPage('学生明细（学校名称与图标）', () => loadCoinScoped(() => import('../mobile-app/views/StudentCoinDetailView')), {
   student: demoStudents[0], coinDetail: legacyCoinDetail, onBack: noop,
 }, html => {
-  if (!html.includes('向阳币明细') || !html.includes('/assets/c4d_growth.png')) throw new Error('学生明细未同步货币外观');
+  if (!html.includes('校园币明细</h1>') || html.includes('向阳币明细</h1>') || !html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('学生明细标题应固定，卡片仍同步学校货币外观');
 });
 await renderPage('学生明细（学校隔离）', () => loadCoinScoped(() => import('../mobile-app/views/StudentCoinDetailView'), 'another-school'), {
   student: demoStudents[0], coinDetail: legacyCoinDetail, onBack: noop,
 }, html => {
-  if (html.includes('向阳币') || !html.includes('成长币明细')) throw new Error('其他学校读到了本校货币名称');
+  if (html.includes('向阳币') || !html.includes('校园币明细</h1>')) throw new Error('其他学校读到了本校货币名称或页面标题不固定');
 });
 await renderPage('学校后台（名称与图标配置）', () => import('../components/CoinIssuanceSettings'), {
   value: DEFAULT_COIN_ISSUANCE_CONFIG, onChange: noop,
@@ -262,12 +262,45 @@ await renderPage('学校后台（名称与图标配置）', () => import('../com
 await renderPage('家长端（学校名称与图标）', () => import('../components/ParentApp'), {}, html => {
   if (!html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('家长端未同步当前孩子学校的名称与图标');
 });
+const { createDemoGrowthCoinFlows } = await import('../shared/demoGrowthCoinFlow');
+const demoCoinFlows = createDemoGrowthCoinFlows(demoStudents[0].id);
+for (const canViewEvaluationDetails of [true, false]) {
+  await renderPage('家长收支列表（评价明细权限' + canViewEvaluationDetails + '）', () => import('../components/parent-app/ParentCoinFlowView'), {
+    records: demoCoinFlows, header: null, canViewEvaluationDetails,
+  }, html => {
+    const text = plainText(html);
+    if (!text.includes('成长嘉奖') || !text.includes('加分奖励') || !text.includes('每周奖励') || !text.includes('每月奖励')) throw new Error('家长流水缺少成长嘉奖奖励类型');
+    if (canViewEvaluationDetails && !text.includes('加分奖励（尊师孝亲，+2分）')) throw new Error('家长流水未展示短指标及加分值');
+    if (!canViewEvaluationDetails && (text.includes('尊师孝亲') || text.includes('团结互助'))) throw new Error('家长无明细权限时透出了评价指标');
+    if (html.includes('aria-haspopup="dialog"')) throw new Error('本次不应新增单笔流水详情弹窗');
+  });
+}
+await renderPage('货柜流水（周期与加分奖励）', () => import('../components/TransactionView'), {
+  student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('成长嘉奖') || !text.includes('加分奖励（尊师孝亲，+2分）') || !text.includes('每月奖励')) throw new Error('货柜流水未使用三端统一奖励说明');
+});
 await renderPage('货柜首页（学校名称与图标）', () => import('../components/Dashboard'), {
   student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, bankBalance: 100, onNavigate: noop,
 }, html => {
   if (!html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('货柜首页未同步名称与图标');
 });
 define('localStorage', coinStorageBefore);
+
+for (const [balance, bankDeposit] of [[320.5, 1200.25], [1234567.89, 98765432.12], [123456789012.34, 987654321098.76]]) {
+  await renderPage('学生资产带（完整小数金额' + balance + '）', () => import('../mobile-app/components/student-detail/StudentCoinAssetBand'), {
+    balance, bankDeposit, onOpen: noop,
+  }, html => {
+    const text = plainText(html);
+    for (const value of [balance, bankDeposit]) {
+      const full = value.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+      if (!text.includes(full)) throw new Error('资产带金额未完整保留小数：' + full);
+    }
+    if (html.includes('truncate') || html.includes('line-clamp')) throw new Error('资产带不能省略长金额');
+    if (!html.includes('grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]') || html.includes('flex-wrap') || !html.includes('min-h-[var(--tm-student-detail-asset-height)]')) throw new Error('资产带两项余额应固定分栏、以短竖线分区并保留最低触控高度');
+  });
+}
 
 const { DEFAULT_SCHOOL_PARENT_EVALUATION_CONFIG } = await import('../mobile-app/domain/parentEvaluationVisibility');
 for (const allowHomeroomTeacherCustomization of [true, false]) {
@@ -623,7 +656,8 @@ await renderPage('学生成长币明细页（按月发放）', () => import('../
   },
   onBack: noop,
 }, html => {
-  if (!plainText(html).includes('每月奖励（2月）')) throw new Error('按月发放时成长嘉奖应展示每月奖励与所属月份');
+  const text = plainText(html);
+  if (!text.includes('每月奖励（1月）') || !text.includes('每周奖励（2月16日-2月22日）') || !text.includes('加分奖励（尊师孝亲，+2分）')) throw new Error('切换当前周期后，历史月/周/加分奖励应继续按各自快照展示');
 });
 
 await renderPage('兑换奖励（空班）', () => import('../mobile-app/views/reward-verification/RewardVerificationView'), {

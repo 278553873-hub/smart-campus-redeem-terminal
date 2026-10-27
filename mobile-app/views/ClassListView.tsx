@@ -508,7 +508,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             {...skeletonBlock(3, 'line', 0.78, 14)}
                             type="button"
                             onClick={() => onSelectClass(classInfo.id)}
-                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
                         >
                             <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             学生列表
@@ -518,7 +518,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                             type="button"
                             onClick={() => onViewClassReport(classInfo.id)}
                             data-skeleton-anchor={`class-action-end-${classInfo.id}`}
-                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
                         >
                             <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                             班级报告
@@ -567,7 +567,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         {...skeletonBlock(3, 'line', 0.78, 14)}
                         type="button"
                         onClick={() => onSelectStudentTeam(team.id)}
-                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
                     >
                         <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                         成员列表
@@ -577,7 +577,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         type="button"
                         onClick={() => onSelectStudentTeamReport(team.id)}
                         data-skeleton-anchor={`team-action-end-${team.id}`}
-                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-secondary)]"
+                        className="flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
                     >
                         <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
                         数据概览
@@ -728,7 +728,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                         type="button"
                                         aria-pressed={showParticipatingTeamsOnly}
                                         onClick={() => setShowParticipatingTeamsOnly(current => !current)}
-                                        className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-transparent pl-[var(--tm-space-1)] pr-[var(--tm-space-4)] text-[13px] font-medium focus-visible:bg-[var(--tm-bg-surface-soft)] ${showParticipatingTeamsOnly ? 'text-[var(--tm-text-primary)]' : 'text-[var(--tm-text-secondary)]'}`}
+                                        className={`flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-[var(--tm-radius-control-compact)] bg-transparent pl-[var(--tm-space-1)] pr-[var(--tm-space-4)] text-[13px] font-medium focus-visible:bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-primary)]`}
                                     >
                                         <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showParticipatingTeamsOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
                                             {showParticipatingTeamsOnly && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -819,7 +819,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                                 <MobileEmptyState
                                     imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
                                     title={isSchoolSpace ? '没有符合条件的班级' : classes.length === 0 ? '暂无班级' : '暂无显示班级'}
-                                    imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                                 />
                                 {!isSchoolSpace && (classes.length === 0 ? (
                                     <div className="mt-3 grid gap-1.5">
@@ -845,7 +844,6 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                         <MobileEmptyState
                             imageSrc={ASSETS.DEFAULT_STATE.CHAIR}
                             title={showParticipatingTeamsOnly && studentTeams.length > 0 ? '还没有参与社团或团队' : '暂无社团或团队'}
-                            imageClassName="w-[72%] min-w-[188px] max-w-[236px]"
                         />
                     </section>
                 )}

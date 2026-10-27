@@ -1,3 +1,4 @@
+import { createDemoGrowthCoinIssueRecords } from '../shared/demoGrowthCoinFlow';
 import { getEffectiveGrowthCoinConfig } from '../shared/growthCoinRuleSchedule';
 import { getGrowthCoinMode, getScoreCoinRuleSummary } from '../shared/growthCoinRules';
 import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan, type CoinIssuanceConfig } from './types';
@@ -109,9 +110,6 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   const issuanceConfig = getEffectiveGrowthCoinConfig(savedIssuanceConfig);
   const seed = student.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   const balance = 320 + (seed % 80);
-  const basePerformance = 100 + (seed % 25);
-  const rankingReward = 12 + (seed % 9);
-  const classBonus = 8 + (seed % 6);
   const normalizedSunshineRatio = Math.min(100, Math.max(0, issuanceConfig.sunshineRatio));
   const normalizedBudgetAmount = Math.max(0, issuanceConfig.budgetAmount);
   const normalizedClassStudentCount = Math.max(1, Math.floor(classStudentCount));
@@ -134,44 +132,11 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
   const roundCoin = (value: number) => Math.round(value * 100) / 100;
   const sunshineReward = isEligible ? roundCoin(sunshinePool / normalizedClassStudentCount) : 0;
   const estimatedRankingReward = isEligible ? roundCoin(rankingPool * mockRankingShare) : 0;
-  const isWeeklySettlement = issuanceConfig.period === 'weekly';
-  const settlementPeriod = isWeeklySettlement
-    ? { type: 'weekly' as const, startDate: '2026-02-16', endDate: '2026-02-22' }
-    : { type: 'monthly' as const, month: '2026-02' };
 
   return {
     balance,
     bankDeposit: 1200 + (seed % 5) * 100,
-    issueRecords: [
-      {
-        id: `${student.id}-issue-1`,
-        category: 'growth_award',
-        period: settlementPeriod,
-        amount: basePerformance,
-        time: '2026-02-23 09:00',
-      },
-      {
-        id: `${student.id}-issue-2`,
-        category: 'class_reward',
-        detail: '流动红旗',
-        amount: rankingReward,
-        time: '2026-02-03 10:30',
-      },
-      {
-        id: `${student.id}-issue-3`,
-        category: 'bank_interest',
-        detail: '定期7天',
-        amount: classBonus,
-        time: '2026-02-05 16:20',
-      },
-      {
-        id: `${student.id}-issue-cross-year`,
-        category: 'growth_award',
-        period: { type: 'weekly', startDate: '2025-12-29', endDate: '2026-01-04' },
-        amount: basePerformance - 8,
-        time: '2026-01-05 09:00',
-      },
-    ],
+    issueRecords: createDemoGrowthCoinIssueRecords(student.id),
     consumeRecords: [
       {
         id: `${student.id}-consume-1`,

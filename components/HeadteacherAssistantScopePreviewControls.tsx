@@ -1,3 +1,4 @@
+import PreviewSegmentTrack from './PreviewSegmentTrack';
 import React from 'react';
 import {
   HEADTEACHER_ASSISTANT_SCOPE_PREVIEW_OPTIONS,
@@ -15,7 +16,7 @@ const HeadteacherAssistantScopePreviewControls: React.FC<HeadteacherAssistantSco
   value,
   onChange,
 }) => (
-  <div
+  <PreviewSegmentTrack index={HEADTEACHER_ASSISTANT_SCOPE_PREVIEW_OPTIONS.findIndex(option => option.value === value)} count={3} gap={0}
     className="grid grid-cols-3 rounded-lg bg-slate-100 p-1"
     role="radiogroup"
     aria-label="班主任助理评价能力预览"
@@ -32,7 +33,7 @@ const HeadteacherAssistantScopePreviewControls: React.FC<HeadteacherAssistantSco
           title={option.fullLabel}
           onClick={() => onChange(option.value)}
           className={`min-h-9 min-w-0 whitespace-nowrap rounded-md px-1 text-[11px] font-semibold leading-tight transition-[background-color,color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-1 ${selected
-            ? 'bg-white text-rose-700 shadow-sm'
+            ? 'text-rose-700'
             : 'text-slate-500 hover:text-slate-800'
             }`}
         >
@@ -40,7 +41,7 @@ const HeadteacherAssistantScopePreviewControls: React.FC<HeadteacherAssistantSco
         </button>
       );
     })}
-  </div>
+  </PreviewSegmentTrack>
 );
 
 export default HeadteacherAssistantScopePreviewControls;

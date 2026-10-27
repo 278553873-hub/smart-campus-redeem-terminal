@@ -1,0 +1,3133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "工具四输出约束：仅适用于本虚构输入；正式使用需按实际绑定编译",
+  "type": "object",
+  "properties": {
+    "requestId": {
+      "const": "example-request-tool4-002"
+    },
+    "status": {
+      "enum": [
+        "draft_ready",
+        "needs_review",
+        "blocked"
+      ]
+    },
+    "answers": {
+      "type": "object"
+    },
+    "fieldEvidence": {
+      "type": "object"
+    },
+    "reviewIssues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "enum": [
+              "missing_source",
+              "missing_answer",
+              "conflicting_answers",
+              "identity_mismatch",
+              "invalid_source_value",
+              "template_mismatch",
+              "binding_error",
+              "length_limit"
+            ]
+          },
+          "fieldKeys": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "example_tool4_01",
+                "example_tool4_02",
+                "example_tool4_03",
+                "example_tool4_04",
+                "example_tool4_05",
+                "example_tool4_06",
+                "example_tool4_07",
+                "example_tool4_08",
+                "example_tool4_09",
+                "example_tool4_10",
+                "example_tool4_11",
+                "example_tool4_12",
+                "example_tool4_13",
+                "example_tool4_14",
+                "example_tool4_15",
+                "example_tool4_16",
+                "example_tool4_17",
+                "example_tool4_18",
+                "example_tool4_19",
+                "example_tool4_20",
+                "example_tool4_21",
+                "example_tool4_22",
+                "example_tool4_23",
+                "example_tool4_24",
+                "example_tool4_25",
+                "example_tool4_26",
+                "example_tool4_27",
+                "example_tool4_28",
+                "example_tool4_29",
+                "example_tool4_30",
+                "example_tool4_31",
+                "example_tool4_32",
+                "example_tool4_33",
+                "example_tool4_34",
+                "example_tool4_35",
+                "example_tool4_36",
+                "example_tool4_37",
+                "example_tool4_38",
+                "example_tool4_39",
+                "example_tool4_40"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "sourceItemIds": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "p1",
+                "p2",
+                "p3",
+                "p4",
+                "p5",
+                "p6",
+                "p7",
+                "p8",
+                "p9",
+                "p10",
+                "c1",
+                "c2",
+                "c3",
+                "c4",
+                "c5",
+                "c6",
+                "c7",
+                "c8",
+                "t1",
+                "t2",
+                "t3",
+                "t4",
+                "t5",
+                "t6",
+                "t7",
+                "t8",
+                "t9"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          }
+        },
+        "required": [
+          "code",
+          "fieldKeys",
+          "sourceItemIds",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "promptVersion": {
+      "const": "tool4-v1.1.0"
+    }
+  },
+  "required": [
+    "requestId",
+    "status",
+    "answers",
+    "fieldEvidence",
+    "reviewIssues",
+    "promptVersion"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "properties": {
+        "status": {
+          "enum": [
+            "draft_ready",
+            "needs_review"
+          ]
+        },
+        "answers": {
+          "type": "object",
+          "properties": {
+            "example_tool4_01": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_02": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_03": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_04": {
+              "type": "object",
+              "properties": {
+                "selectedOptions": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "三方吻合",
+                      "家长与教师观察有差异",
+                      "尚不清晰"
+                    ]
+                  },
+                  "minItems": 1,
+                  "maxItems": 1,
+                  "uniqueItems": true
+                },
+                "customText": {
+                  "type": "object",
+                  "maxProperties": 0
+                }
+              },
+              "required": [
+                "selectedOptions",
+                "customText"
+              ],
+              "additionalProperties": false
+            },
+            "example_tool4_05": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_06": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_07": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_08": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^核心兴趣方向："
+            },
+            "example_tool4_09": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_10": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_11": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_12": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^核心交往模式："
+            },
+            "example_tool4_13": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_14": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_15": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_16": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^应对模式初显："
+            },
+            "example_tool4_17": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_18": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_19": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_20": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^重点关切点："
+            },
+            "example_tool4_21": {
+              "type": "string",
+              "maxLength": 320
+            },
+            "example_tool4_22": {
+              "type": "string",
+              "maxLength": 320
+            },
+            "example_tool4_23": {
+              "type": "string",
+              "maxLength": 320
+            },
+            "example_tool4_25": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_26": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_24": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_27": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_28": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_29": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_30": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_31": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_32": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_33": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_34": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_35": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_36": {
+              "type": "string",
+              "maxLength": 180
+            },
+            "example_tool4_37": {
+              "type": "string",
+              "maxLength": 360
+            },
+            "example_tool4_38": {
+              "type": "object",
+              "properties": {
+                "fillValues": {
+                  "type": "object",
+                  "properties": {
+                    "example-trait-1": {
+                      "type": "string",
+                      "maxLength": 120
+                    },
+                    "example-trait-2": {
+                      "type": "string",
+                      "maxLength": 120
+                    },
+                    "example-trait-3": {
+                      "type": "string",
+                      "maxLength": 120
+                    }
+                  },
+                  "required": [
+                    "example-trait-1",
+                    "example-trait-2",
+                    "example-trait-3"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "fillValues"
+              ],
+              "additionalProperties": false
+            },
+            "example_tool4_39": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "example_tool4_40": {
+              "type": "string",
+              "maxLength": 120,
+              "pattern": "^我对接下来的陪伴，想先从[\\s\\S]*开始留意。$"
+            }
+          },
+          "required": [
+            "example_tool4_01",
+            "example_tool4_02",
+            "example_tool4_03",
+            "example_tool4_04",
+            "example_tool4_05",
+            "example_tool4_06",
+            "example_tool4_07",
+            "example_tool4_08",
+            "example_tool4_09",
+            "example_tool4_10",
+            "example_tool4_11",
+            "example_tool4_12",
+            "example_tool4_13",
+            "example_tool4_14",
+            "example_tool4_15",
+            "example_tool4_16",
+            "example_tool4_17",
+            "example_tool4_18",
+            "example_tool4_19",
+            "example_tool4_20",
+            "example_tool4_21",
+            "example_tool4_22",
+            "example_tool4_23",
+            "example_tool4_25",
+            "example_tool4_26",
+            "example_tool4_24",
+            "example_tool4_27",
+            "example_tool4_28",
+            "example_tool4_29",
+            "example_tool4_30",
+            "example_tool4_31",
+            "example_tool4_32",
+            "example_tool4_33",
+            "example_tool4_34",
+            "example_tool4_35",
+            "example_tool4_36",
+            "example_tool4_37",
+            "example_tool4_38",
+            "example_tool4_39",
+            "example_tool4_40"
+          ],
+          "additionalProperties": false
+        },
+        "fieldEvidence": {
+          "type": "object",
+          "properties": {
+            "example_tool4_01": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_02": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_03": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_04": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_05": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_06": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_07": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_08": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_09": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_10": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_11": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_12": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_13": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_14": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_15": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_16": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_17": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_18": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_19": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_20": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_21": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_22": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_23": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_25": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_26": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_24": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_27": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_28": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_29": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_30": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_31": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_32": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_33": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_34": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_35": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_36": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_37": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_38": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_39": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            },
+            "example_tool4_40": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "supported",
+                    "tentative",
+                    "missing",
+                    "conflict"
+                  ]
+                },
+                "sourceItemIds": {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "p1",
+                      "p2",
+                      "p3",
+                      "p4",
+                      "p5",
+                      "p6",
+                      "p7",
+                      "p8",
+                      "p9",
+                      "p10",
+                      "c1",
+                      "c2",
+                      "c3",
+                      "c4",
+                      "c5",
+                      "c6",
+                      "c7",
+                      "c8",
+                      "t1",
+                      "t2",
+                      "t3",
+                      "t4",
+                      "t5",
+                      "t6",
+                      "t7",
+                      "t8",
+                      "t9"
+                    ]
+                  },
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "state",
+                "sourceItemIds"
+              ],
+              "additionalProperties": false,
+              "oneOf": [
+                {
+                  "properties": {
+                    "state": {
+                      "const": "missing"
+                    }
+                  }
+                },
+                {
+                  "properties": {
+                    "state": {
+                      "enum": [
+                        "supported",
+                        "tentative",
+                        "conflict"
+                      ]
+                    },
+                    "sourceItemIds": {
+                      "minItems": 1
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "example_tool4_01",
+            "example_tool4_02",
+            "example_tool4_03",
+            "example_tool4_04",
+            "example_tool4_05",
+            "example_tool4_06",
+            "example_tool4_07",
+            "example_tool4_08",
+            "example_tool4_09",
+            "example_tool4_10",
+            "example_tool4_11",
+            "example_tool4_12",
+            "example_tool4_13",
+            "example_tool4_14",
+            "example_tool4_15",
+            "example_tool4_16",
+            "example_tool4_17",
+            "example_tool4_18",
+            "example_tool4_19",
+            "example_tool4_20",
+            "example_tool4_21",
+            "example_tool4_22",
+            "example_tool4_23",
+            "example_tool4_25",
+            "example_tool4_26",
+            "example_tool4_24",
+            "example_tool4_27",
+            "example_tool4_28",
+            "example_tool4_29",
+            "example_tool4_30",
+            "example_tool4_31",
+            "example_tool4_32",
+            "example_tool4_33",
+            "example_tool4_34",
+            "example_tool4_35",
+            "example_tool4_36",
+            "example_tool4_37",
+            "example_tool4_38",
+            "example_tool4_39",
+            "example_tool4_40"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    {
+      "properties": {
+        "status": {
+          "const": "blocked"
+        },
+        "answers": {
+          "maxProperties": 0
+        },
+        "fieldEvidence": {
+          "maxProperties": 0
+        },
+        "reviewIssues": {
+          "minItems": 1
+        }
+      }
+    }
+  ]
+}

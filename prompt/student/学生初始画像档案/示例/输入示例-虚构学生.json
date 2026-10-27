@@ -1,0 +1,1497 @@
+{
+  "exampleOnly": true,
+  "requestId": "example-request-tool4-002",
+  "student": {
+    "spaceId": "example-school",
+    "studentId": "example-student",
+    "name": "示例学生",
+    "currentGrade": 1
+  },
+  "generatedAt": "2026-10-27T10:00:00+08:00",
+  "targetTemplate": {
+    "id": "example-template-tool4",
+    "version": 2,
+    "spaceId": "example-school",
+    "name": "学生初始画像档案",
+    "layoutMode": "grouped",
+    "systemFields": [
+      "name"
+    ],
+    "growthFields": [],
+    "sections": [
+      {
+        "id": "example-section-1",
+        "label": "一、基础信息汇总（AI汇总、对比）"
+      },
+      {
+        "id": "example-section-2",
+        "label": "二、成像卡（AI分析，老师手动修改）"
+      },
+      {
+        "id": "example-section-3",
+        "label": "五育初印象（发展基线）（尝试AI分析、教师手动修改）"
+      },
+      {
+        "id": "example-section-4",
+        "label": "三力小萌芽（从行为描述中识别“萌芽”）（尝试AI分析、教师手动修改）"
+      },
+      {
+        "id": "example-section-5",
+        "label": "光芒图初始方向（由AI交叉比对、教师确认）"
+      },
+      {
+        "id": "example-section-6",
+        "label": "需要留意的“待观察区”"
+      },
+      {
+        "id": "example-section-7",
+        "label": "成像寄语（给老师自己的一句话提醒）"
+      }
+    ],
+    "fields": [
+      {
+        "id": "example-field-01",
+        "semanticKey": "example_tool4_01",
+        "sectionId": "example-section-1",
+        "label": "孩子的气质与关键词｜家长问卷（家长说）",
+        "type": "text",
+        "order": 1,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-02",
+        "semanticKey": "example_tool4_02",
+        "sectionId": "example-section-1",
+        "label": "孩子的气质与关键词｜学生访谈（孩子说）",
+        "type": "text",
+        "order": 2,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-03",
+        "semanticKey": "example_tool4_03",
+        "sectionId": "example-section-1",
+        "label": "孩子的气质与关键词｜教师观察（老师看到了）",
+        "type": "text",
+        "order": 3,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-04",
+        "semanticKey": "example_tool4_04",
+        "sectionId": "example-section-1",
+        "label": "孩子的气质与关键词｜初步判断",
+        "type": "single",
+        "order": 4,
+        "required": true,
+        "options": [
+          "三方吻合",
+          "家长与教师观察有差异",
+          "尚不清晰"
+        ],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-05",
+        "semanticKey": "example_tool4_05",
+        "sectionId": "example-section-1",
+        "label": "最突出的兴趣/光｜家长问卷（家长说）",
+        "type": "text",
+        "order": 5,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-06",
+        "semanticKey": "example_tool4_06",
+        "sectionId": "example-section-1",
+        "label": "最突出的兴趣/光｜学生访谈（孩子说）",
+        "type": "text",
+        "order": 6,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-07",
+        "semanticKey": "example_tool4_07",
+        "sectionId": "example-section-1",
+        "label": "最突出的兴趣/光｜教师观察（老师看到了）",
+        "type": "text",
+        "order": 7,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-08",
+        "semanticKey": "example_tool4_08",
+        "sectionId": "example-section-1",
+        "label": "最突出的兴趣/光｜初步判断",
+        "type": "text",
+        "order": 8,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-09",
+        "semanticKey": "example_tool4_09",
+        "sectionId": "example-section-1",
+        "label": "交往风格｜家长问卷（家长说）",
+        "type": "text",
+        "order": 9,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-10",
+        "semanticKey": "example_tool4_10",
+        "sectionId": "example-section-1",
+        "label": "交往风格｜学生访谈（孩子说）",
+        "type": "text",
+        "order": 10,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-11",
+        "semanticKey": "example_tool4_11",
+        "sectionId": "example-section-1",
+        "label": "交往风格｜教师观察（老师看到了）",
+        "type": "text",
+        "order": 11,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-12",
+        "semanticKey": "example_tool4_12",
+        "sectionId": "example-section-1",
+        "label": "交往风格｜初步判断",
+        "type": "text",
+        "order": 12,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-13",
+        "semanticKey": "example_tool4_13",
+        "sectionId": "example-section-1",
+        "label": "面对困难的态度｜家长问卷（家长说）",
+        "type": "text",
+        "order": 13,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-14",
+        "semanticKey": "example_tool4_14",
+        "sectionId": "example-section-1",
+        "label": "面对困难的态度｜学生访谈（孩子说）",
+        "type": "text",
+        "order": 14,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-15",
+        "semanticKey": "example_tool4_15",
+        "sectionId": "example-section-1",
+        "label": "面对困难的态度｜教师观察（老师看到了）",
+        "type": "text",
+        "order": 15,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-16",
+        "semanticKey": "example_tool4_16",
+        "sectionId": "example-section-1",
+        "label": "面对困难的态度｜初步判断",
+        "type": "text",
+        "order": 16,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-17",
+        "semanticKey": "example_tool4_17",
+        "sectionId": "example-section-1",
+        "label": "入学期待/担忧｜家长问卷（家长说）",
+        "type": "text",
+        "order": 17,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-18",
+        "semanticKey": "example_tool4_18",
+        "sectionId": "example-section-1",
+        "label": "入学期待/担忧｜学生访谈（孩子说）",
+        "type": "text",
+        "order": 18,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-19",
+        "semanticKey": "example_tool4_19",
+        "sectionId": "example-section-1",
+        "label": "入学期待/担忧｜教师观察（老师看到了）",
+        "type": "text",
+        "order": 19,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-20",
+        "semanticKey": "example_tool4_20",
+        "sectionId": "example-section-1",
+        "label": "入学期待/担忧｜初步判断",
+        "type": "text",
+        "order": 20,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-21",
+        "semanticKey": "example_tool4_21",
+        "sectionId": "example-section-2",
+        "label": "家长说……",
+        "type": "text",
+        "order": 21,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-22",
+        "semanticKey": "example_tool4_22",
+        "sectionId": "example-section-2",
+        "label": "孩子说……",
+        "type": "text",
+        "order": 22,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-23",
+        "semanticKey": "example_tool4_23",
+        "sectionId": "example-section-2",
+        "label": "老师看到了……",
+        "type": "text",
+        "order": 23,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-25",
+        "semanticKey": "example_tool4_25",
+        "sectionId": "example-section-3",
+        "label": "德（交往热情）",
+        "type": "text",
+        "order": 24,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-26",
+        "semanticKey": "example_tool4_26",
+        "sectionId": "example-section-3",
+        "label": "智（好奇心与认知兴趣）",
+        "type": "text",
+        "order": 25,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-24",
+        "semanticKey": "example_tool4_24",
+        "sectionId": "example-section-3",
+        "label": "体（生活适应力）",
+        "type": "text",
+        "order": 26,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-27",
+        "semanticKey": "example_tool4_27",
+        "sectionId": "example-section-3",
+        "label": "美（审美表达与创造力）",
+        "type": "text",
+        "order": 27,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-28",
+        "semanticKey": "example_tool4_28",
+        "sectionId": "example-section-3",
+        "label": "劳（自理与动手）",
+        "type": "text",
+        "order": 28,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-29",
+        "semanticKey": "example_tool4_29",
+        "sectionId": "example-section-4",
+        "label": "内驱力（我要学）",
+        "type": "text",
+        "order": 29,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-30",
+        "semanticKey": "example_tool4_30",
+        "sectionId": "example-section-4",
+        "label": "判断力（我判断）",
+        "type": "text",
+        "order": 30,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-31",
+        "semanticKey": "example_tool4_31",
+        "sectionId": "example-section-4",
+        "label": "创造力（我创造）",
+        "type": "text",
+        "order": 31,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-32",
+        "semanticKey": "example_tool4_32",
+        "sectionId": "example-section-5",
+        "label": "孩子自己最想要的超能力",
+        "type": "text",
+        "order": 32,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-33",
+        "semanticKey": "example_tool4_33",
+        "sectionId": "example-section-5",
+        "label": "孩子觉得自己最厉害的超能力",
+        "type": "text",
+        "order": 33,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-34",
+        "semanticKey": "example_tool4_34",
+        "sectionId": "example-section-5",
+        "label": "家长最希望优先发展的方向",
+        "type": "text",
+        "order": 34,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-35",
+        "semanticKey": "example_tool4_35",
+        "sectionId": "example-section-5",
+        "label": "教师观察到的兴趣显性倾向",
+        "type": "text",
+        "order": 35,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-36",
+        "semanticKey": "example_tool4_36",
+        "sectionId": "example-section-5",
+        "label": "交汇建议（核心光芒可能方向）",
+        "type": "text",
+        "order": 36,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-37",
+        "semanticKey": "example_tool4_37",
+        "sectionId": "example-section-6",
+        "label": "需要留意的“待观察区”",
+        "type": "text",
+        "order": 37,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-38",
+        "semanticKey": "example_tool4_38",
+        "sectionId": "example-section-7",
+        "label": "这个孩子最让我印象深刻的三个特质是",
+        "type": "multi_fill",
+        "order": 38,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": [],
+        "subFields": [
+          {
+            "id": "example-trait-1",
+            "label": "①",
+            "required": true
+          },
+          {
+            "id": "example-trait-2",
+            "label": "②",
+            "required": true
+          },
+          {
+            "id": "example-trait-3",
+            "label": "③",
+            "required": true
+          }
+        ]
+      },
+      {
+        "id": "example-field-39",
+        "semanticKey": "example_tool4_39",
+        "sectionId": "example-section-7",
+        "label": "他/她来到我们面前时，最需要被理解的是",
+        "type": "text",
+        "order": 39,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-field-40",
+        "semanticKey": "example_tool4_40",
+        "sectionId": "example-section-7",
+        "label": "我对接下来的陪伴，想先从________开始留意。",
+        "type": "text",
+        "order": 40,
+        "required": true,
+        "options": [],
+        "customAnswerOptions": []
+      },
+      {
+        "id": "example-date",
+        "semanticKey": "example_imaging_month",
+        "label": "成像日期",
+        "type": "date",
+        "sectionId": "example-section-2",
+        "required": true,
+        "options": [],
+        "settings": {
+          "dateFormat": "ym"
+        },
+        "order": 41
+      }
+    ]
+  },
+  "fieldBindings": [
+    {
+      "semanticKey": "example_tool4_01",
+      "ruleKey": "summary.temperament.parent"
+    },
+    {
+      "semanticKey": "example_tool4_02",
+      "ruleKey": "summary.temperament.child"
+    },
+    {
+      "semanticKey": "example_tool4_03",
+      "ruleKey": "summary.temperament.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_04",
+      "ruleKey": "summary.temperament.judgment"
+    },
+    {
+      "semanticKey": "example_tool4_05",
+      "ruleKey": "summary.interest.parent"
+    },
+    {
+      "semanticKey": "example_tool4_06",
+      "ruleKey": "summary.interest.child"
+    },
+    {
+      "semanticKey": "example_tool4_07",
+      "ruleKey": "summary.interest.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_08",
+      "ruleKey": "summary.interest.judgment"
+    },
+    {
+      "semanticKey": "example_tool4_09",
+      "ruleKey": "summary.social.parent"
+    },
+    {
+      "semanticKey": "example_tool4_10",
+      "ruleKey": "summary.social.child"
+    },
+    {
+      "semanticKey": "example_tool4_11",
+      "ruleKey": "summary.social.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_12",
+      "ruleKey": "summary.social.judgment"
+    },
+    {
+      "semanticKey": "example_tool4_13",
+      "ruleKey": "summary.difficulty.parent"
+    },
+    {
+      "semanticKey": "example_tool4_14",
+      "ruleKey": "summary.difficulty.child"
+    },
+    {
+      "semanticKey": "example_tool4_15",
+      "ruleKey": "summary.difficulty.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_16",
+      "ruleKey": "summary.difficulty.judgment"
+    },
+    {
+      "semanticKey": "example_tool4_17",
+      "ruleKey": "summary.expectation.parent"
+    },
+    {
+      "semanticKey": "example_tool4_18",
+      "ruleKey": "summary.expectation.child"
+    },
+    {
+      "semanticKey": "example_tool4_19",
+      "ruleKey": "summary.expectation.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_20",
+      "ruleKey": "summary.expectation.judgment"
+    },
+    {
+      "semanticKey": "example_tool4_21",
+      "ruleKey": "card.voice.parent"
+    },
+    {
+      "semanticKey": "example_tool4_22",
+      "ruleKey": "card.voice.child"
+    },
+    {
+      "semanticKey": "example_tool4_23",
+      "ruleKey": "card.voice.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_25",
+      "ruleKey": "card.five.virtue"
+    },
+    {
+      "semanticKey": "example_tool4_26",
+      "ruleKey": "card.five.inquiry"
+    },
+    {
+      "semanticKey": "example_tool4_24",
+      "ruleKey": "card.five.body"
+    },
+    {
+      "semanticKey": "example_tool4_27",
+      "ruleKey": "card.five.aesthetic"
+    },
+    {
+      "semanticKey": "example_tool4_28",
+      "ruleKey": "card.five.practical"
+    },
+    {
+      "semanticKey": "example_tool4_29",
+      "ruleKey": "card.three.motivation"
+    },
+    {
+      "semanticKey": "example_tool4_30",
+      "ruleKey": "card.three.judgment"
+    },
+    {
+      "semanticKey": "example_tool4_31",
+      "ruleKey": "card.three.creativity"
+    },
+    {
+      "semanticKey": "example_tool4_32",
+      "ruleKey": "card.light.want"
+    },
+    {
+      "semanticKey": "example_tool4_33",
+      "ruleKey": "card.light.strong"
+    },
+    {
+      "semanticKey": "example_tool4_34",
+      "ruleKey": "card.light.parent"
+    },
+    {
+      "semanticKey": "example_tool4_35",
+      "ruleKey": "card.light.teacher"
+    },
+    {
+      "semanticKey": "example_tool4_36",
+      "ruleKey": "card.light.synthesis"
+    },
+    {
+      "semanticKey": "example_tool4_37",
+      "ruleKey": "card.watch"
+    },
+    {
+      "semanticKey": "example_tool4_38",
+      "ruleKey": "card.message.traits",
+      "subFieldBindings": {
+        "trait_1": "example-trait-1",
+        "trait_2": "example-trait-2",
+        "trait_3": "example-trait-3"
+      }
+    },
+    {
+      "semanticKey": "example_tool4_39",
+      "ruleKey": "card.message.need"
+    },
+    {
+      "semanticKey": "example_tool4_40",
+      "ruleKey": "card.message.begin"
+    }
+  ],
+  "ruleCatalog": {
+    "version": "tool4-rules-v1.1.0",
+    "sourceDocument": "工具四.docx",
+    "sourceDocumentSha256": "c52f92141f2e3140a8d202378e5d9c7f921395a378d66e2775f8d43524bae26e",
+    "description": "固定项目来自学校原表；长度上限为本次技术约定，不是专家量表要求。字段显示名称和真实标识由学校实际档案模板提供。",
+    "systemFilledItems": [
+      "学生姓名",
+      "成像日期"
+    ],
+    "rules": [
+      {
+        "ruleKey": "summary.temperament.parent",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "家长问卷（家长说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "只从该来源填写“孩子的气质与关键词”。缺少直接资料时明确暂缺。",
+        "observationDimension": "孩子的气质与关键词",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.temperament.child",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "学生访谈（孩子说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只从该来源填写“孩子的气质与关键词”。缺少直接资料时明确暂缺。",
+        "observationDimension": "孩子的气质与关键词",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.temperament.teacher",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "教师观察（老师看到了）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "只从该来源填写“孩子的气质与关键词”。缺少直接资料时明确暂缺。",
+        "observationDimension": "孩子的气质与关键词",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.temperament.judgment",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "初步判断",
+        "answerType": "single",
+        "storageMode": "value_only",
+        "maxChars": 0,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "按三方可比较的气质/表达表现选择唯一原选项；依据不足选尚不清晰。",
+        "options": [
+          "三方吻合",
+          "家长与教师观察有差异",
+          "尚不清晰"
+        ],
+        "observationDimension": "孩子的气质与关键词"
+      },
+      {
+        "ruleKey": "summary.interest.parent",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "家长问卷（家长说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "只从该来源填写“最突出的兴趣/光”。缺少直接资料时明确暂缺。",
+        "observationDimension": "最突出的兴趣/光",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.interest.child",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "学生访谈（孩子说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只从该来源填写“最突出的兴趣/光”。缺少直接资料时明确暂缺。",
+        "observationDimension": "最突出的兴趣/光",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.interest.teacher",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "教师观察（老师看到了）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "只从该来源填写“最突出的兴趣/光”。缺少直接资料时明确暂缺。",
+        "observationDimension": "最突出的兴趣/光",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.interest.judgment",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "初步判断",
+        "answerType": "text",
+        "storageMode": "prefix_in_value",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "用一句话概括有依据的初步判断，不填长篇分析。",
+        "prefix": "核心兴趣方向：",
+        "observationDimension": "最突出的兴趣/光",
+        "recommendedChars": "25—65"
+      },
+      {
+        "ruleKey": "summary.social.parent",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "家长问卷（家长说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "只从该来源填写“交往风格”。缺少直接资料时明确暂缺。",
+        "observationDimension": "交往风格",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.social.child",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "学生访谈（孩子说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只从该来源填写“交往风格”。缺少直接资料时明确暂缺。",
+        "observationDimension": "交往风格",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.social.teacher",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "教师观察（老师看到了）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "只从该来源填写“交往风格”。缺少直接资料时明确暂缺。",
+        "observationDimension": "交往风格",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.social.judgment",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "初步判断",
+        "answerType": "text",
+        "storageMode": "prefix_in_value",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "用一句话概括有依据的初步判断，不填长篇分析。",
+        "prefix": "核心交往模式：",
+        "observationDimension": "交往风格",
+        "recommendedChars": "25—65"
+      },
+      {
+        "ruleKey": "summary.difficulty.parent",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "家长问卷（家长说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "只从该来源填写“面对困难的态度”。缺少直接资料时明确暂缺。",
+        "observationDimension": "面对困难的态度",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.difficulty.child",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "学生访谈（孩子说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只从该来源填写“面对困难的态度”。缺少直接资料时明确暂缺。",
+        "observationDimension": "面对困难的态度",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.difficulty.teacher",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "教师观察（老师看到了）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "只从该来源填写“面对困难的态度”。缺少直接资料时明确暂缺。",
+        "observationDimension": "面对困难的态度",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.difficulty.judgment",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "初步判断",
+        "answerType": "text",
+        "storageMode": "prefix_in_value",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "用一句话概括有依据的初步判断，不填长篇分析。",
+        "prefix": "应对模式初显：",
+        "observationDimension": "面对困难的态度",
+        "recommendedChars": "25—65"
+      },
+      {
+        "ruleKey": "summary.expectation.parent",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "家长问卷（家长说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "只从该来源填写“入学期待/担忧”。缺少直接资料时明确暂缺。",
+        "observationDimension": "入学期待/担忧",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.expectation.child",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "学生访谈（孩子说）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只从该来源填写“入学期待/担忧”。缺少直接资料时明确暂缺。",
+        "observationDimension": "入学期待/担忧",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.expectation.teacher",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "教师观察（老师看到了）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "只从该来源填写“入学期待/担忧”。缺少直接资料时明确暂缺。",
+        "observationDimension": "入学期待/担忧",
+        "recommendedChars": "20—60"
+      },
+      {
+        "ruleKey": "summary.expectation.judgment",
+        "sectionTitle": "一、基础信息汇总（AI汇总、对比）",
+        "canonicalFieldLabel": "初步判断",
+        "answerType": "text",
+        "storageMode": "prefix_in_value",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "用一句话概括有依据的初步判断，不填长篇分析。",
+        "prefix": "重点关切点：",
+        "observationDimension": "入学期待/担忧",
+        "recommendedChars": "25—65"
+      },
+      {
+        "ruleKey": "card.voice.parent",
+        "sectionTitle": "二、成像卡（AI分析，老师手动修改）",
+        "canonicalFieldLabel": "家长说……",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 320,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "家长与孩子逐字摘录1—2句原话；教师摘录1—2个表现，可用原题补足情境，不能编故事。",
+        "recommendedChars": "1—2句",
+        "verbatim": true
+      },
+      {
+        "ruleKey": "card.voice.child",
+        "sectionTitle": "二、成像卡（AI分析，老师手动修改）",
+        "canonicalFieldLabel": "孩子说……",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 320,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "家长与孩子逐字摘录1—2句原话；教师摘录1—2个表现，可用原题补足情境，不能编故事。",
+        "recommendedChars": "1—2句",
+        "verbatim": true
+      },
+      {
+        "ruleKey": "card.voice.teacher",
+        "sectionTitle": "二、成像卡（AI分析，老师手动修改）",
+        "canonicalFieldLabel": "老师看到了……",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 320,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "家长与孩子逐字摘录1—2句原话；教师摘录1—2个表现，可用原题补足情境，不能编故事。",
+        "recommendedChars": "1—2句",
+        "verbatim": false
+      },
+      {
+        "ruleKey": "card.five.virtue",
+        "sectionTitle": "五育初印象（发展基线）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "德（交往热情）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "只写待人、关心帮助、分享轮流、尊重、规则意识与文明礼仪的具体表现。有问候、致谢、礼貌求助等直接资料时可加入，没有就不写。区分家长期待与孩子已经做到；不由开朗、听指令推断品德或礼貌，不写自理、整理和运动。 只写当前可见状态，不新增分数或等级；与其他四育按具体行为去重。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.five.inquiry",
+        "sectionTitle": "五育初印象（发展基线）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "智（好奇心与认知兴趣）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "只写好奇提问、观察思考、阅读理解、复述、解决问题等认知表现。关注孩子怎样想、怎样学；动手本身不等于认知能力，艺术作品本身不等于智力证据。 只写当前可见状态，不新增分数或等级；与其他四育按具体行为去重。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.five.body",
+        "sectionTitle": "五育初印象（发展基线）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "体（生活适应力）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "只写身体运动、跑跳协调、运动兴趣，以及明确记录的作息、休息和健康生活习惯。自述运动本领要标明是孩子自己说的，不推断体能等级。穿脱、上厕所、吃饭自理、收拾整理归劳；一般集体节奏、听指令和课堂专注不作为体的替代证据。缺少运动或健康资料时明确暂缺。 只写当前可见状态，不新增分数或等级；与其他四育按具体行为去重。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.five.aesthetic",
+        "sectionTitle": "五育初印象（发展基线）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "美（审美表达与创造力）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "只写画画、歌唱、舞蹈、故事创编等审美兴趣、感受和艺术表达，具体作品与表达过程。手工的画面、造型、想法归美；剪裁、扣纽扣等操作及整理归劳，不重复同一事实。 只写当前可见状态，不新增分数或等级；与其他四育按具体行为去重。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.five.practical",
+        "sectionTitle": "五育初印象（发展基线）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "劳（自理与动手）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "只写穿脱衣服、上厕所、吃饭等生活自理，收拾整理、照料、劳动参与和具体工具操作。关注能否自己完成、是否需要提醒。跑跳协调与运动归体；艺术作品的想法和美感归美。避免把握笔会画画直接等同劳动表现。 只写当前可见状态，不新增分数或等级；与其他四育按具体行为去重。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.three.motivation",
+        "sectionTitle": "三力小萌芽（从行为描述中识别“萌芽”）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "内驱力（我要学）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "填写具体行为证据。只有兴趣时不能推断能力强，缺少行为过程要明确说明。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.three.judgment",
+        "sectionTitle": "三力小萌芽（从行为描述中识别“萌芽”）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "判断力（我判断）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "填写具体行为证据。只有兴趣时不能推断能力强，缺少行为过程要明确说明。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.three.creativity",
+        "sectionTitle": "三力小萌芽（从行为描述中识别“萌芽”）（尝试AI分析、教师手动修改）",
+        "canonicalFieldLabel": "创造力（我创造）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "填写具体行为证据。只有兴趣时不能推断能力强，缺少行为过程要明确说明。",
+        "recommendedChars": "40—90"
+      },
+      {
+        "ruleKey": "card.light.want",
+        "sectionTitle": "光芒图初始方向（由AI交叉比对、教师确认）",
+        "canonicalFieldLabel": "孩子自己最想要的超能力",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只提取孩子最想拥有的本领，不能用本学期想进步的本领替换。"
+      },
+      {
+        "ruleKey": "card.light.strong",
+        "sectionTitle": "光芒图初始方向（由AI交叉比对、教师确认）",
+        "canonicalFieldLabel": "孩子觉得自己最厉害的超能力",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "child_interview"
+        ],
+        "instruction": "只提取孩子自认最厉害的本领，可附其原始例子，不换成客观能力等级。"
+      },
+      {
+        "ruleKey": "card.light.parent",
+        "sectionTitle": "光芒图初始方向（由AI交叉比对、教师确认）",
+        "canonicalFieldLabel": "家长最希望优先发展的方向",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire"
+        ],
+        "instruction": "保留家长优先选择的方向及原有解释，不能改写为孩子已经具备。"
+      },
+      {
+        "ruleKey": "card.light.teacher",
+        "sectionTitle": "光芒图初始方向（由AI交叉比对、教师确认）",
+        "canonicalFieldLabel": "教师观察到的兴趣显性倾向",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "teacher_entry_observation"
+        ],
+        "instruction": "只写教师记录到的兴趣表现，未记录时明确说明。"
+      },
+      {
+        "ruleKey": "card.light.synthesis",
+        "sectionTitle": "光芒图初始方向（由AI交叉比对、教师确认）",
+        "canonicalFieldLabel": "交汇建议（核心光芒可能方向）",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 180,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "提出一个可尝试的方向，并保留待验证语气。不是能力结论，不承诺效果。",
+        "recommendedChars": "60—140",
+        "fixedDisplayNote": "（此为“待验证的假设”，而非定论。）"
+      },
+      {
+        "ruleKey": "card.watch",
+        "sectionTitle": "需要留意的“待观察区”",
+        "canonicalFieldLabel": "需要留意的“待观察区”",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 360,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "按实际证据列1—3个差异或留白，并说明下一步留意什么；不要凑问题。没有明显差异可以据实说明。",
+        "recommendedChars": "每点40—100"
+      },
+      {
+        "ruleKey": "card.message.traits",
+        "sectionTitle": "成像寄语（给老师自己的一句话提醒）",
+        "canonicalFieldLabel": "这个孩子最让我印象深刻的三个特质是",
+        "answerType": "multi_fill",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "填写三个有依据的简短特质；不足三项时空缺项留空并标记待核对，不编造。",
+        "slots": [
+          "trait_1",
+          "trait_2",
+          "trait_3"
+        ],
+        "recommendedChars": "每项2—8"
+      },
+      {
+        "ruleKey": "card.message.need",
+        "sectionTitle": "成像寄语（给老师自己的一句话提醒）",
+        "canonicalFieldLabel": "他/她来到我们面前时，最需要被理解的是",
+        "answerType": "text",
+        "storageMode": "value_only",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "用亲切具体的话说出最需要被理解的地方。仅填冒号后的内容。",
+        "recommendedChars": "30—90"
+      },
+      {
+        "ruleKey": "card.message.begin",
+        "sectionTitle": "成像寄语（给老师自己的一句话提醒）",
+        "canonicalFieldLabel": "我对接下来的陪伴，想先从________开始留意。",
+        "answerType": "text",
+        "storageMode": "sentence_in_value",
+        "maxChars": 120,
+        "allowedSources": [
+          "parent_questionnaire",
+          "child_interview",
+          "teacher_entry_observation"
+        ],
+        "instruction": "按原句式填写一个具体、可观察的陪伴起点，保持句子通顺。",
+        "prefix": "我对接下来的陪伴，想先从",
+        "suffix": "开始留意。",
+        "recommendedChars": "25—70"
+      }
+    ],
+    "fiveEducationPolicy": {
+      "revision": "2026-10-27",
+      "basis": "用户转达的领导反馈：顺序改为德智体美劳；礼仪只按资料补充；五育边界清晰。",
+      "displayOrder": [
+        "德",
+        "智",
+        "体",
+        "美",
+        "劳"
+      ],
+      "ruleOrder": [
+        "card.five.virtue",
+        "card.five.inquiry",
+        "card.five.body",
+        "card.five.aesthetic",
+        "card.five.practical"
+      ],
+      "preserveCanonicalLabels": true,
+      "courtesy": "文明礼仪为可选内容。仅在原始资料明确记有问候、致谢、礼貌求助、轮流、尊重他人等具体行为时如实写入；不能由爱笑、开朗、交朋友或听指令推断懂礼貌。没有相关资料就不写，不单列缺失提醒。",
+      "deduplication": "按具体行为的含义归类。同一行为事实在五育内只写一次；同一来源条目有多个不同表现时，可拆开分别归类。不用不同说法在两育重复同一结论。",
+      "generalAdaptation": "仅能跟上集体节奏、听指令、课堂注意等一般适应表现，保留在基础信息汇总等适合栏目，不自动当作体育或道德证据。",
+      "missing": "某一育缺少直接证据时明确暂缺，不借另一育的资料凑内容。礼仪可选项的缺失不等于整个德育缺失。"
+    }
+  },
+  "systemAnswers": {
+    "example_imaging_month": "2026-10"
+  },
+  "sources": [
+    {
+      "recordId": "example-record-parent_questionnaire",
+      "spaceId": "example-school",
+      "studentId": "example-student",
+      "sourceRole": "parent_questionnaire",
+      "module": "archive",
+      "isOriginal": true,
+      "selectedRevision": 1,
+      "recordedAt": "2026-10-20T10:00:00+08:00",
+      "items": [
+        {
+          "sourceItemId": "p1",
+          "question": "用三个关键词描述孩子",
+          "answerText": "爱笑、慢热、好奇"
+        },
+        {
+          "sourceItemId": "p2",
+          "question": "孩子平时最喜欢做什么",
+          "answerText": "画画、搭积木、听故事"
+        },
+        {
+          "sourceItemId": "p3",
+          "question": "与同伴相处时的表现",
+          "answerText": "到陌生同伴中先观察，熟悉后会加入；都想用同一件东西时，会商量轮流。"
+        },
+        {
+          "sourceItemId": "p4",
+          "question": "遇到困难时通常怎样做",
+          "answerText": "自己先试一试，不行再找大人帮忙。"
+        },
+        {
+          "sourceItemId": "p5",
+          "question": "对小学生活最期待什么",
+          "answerText": "每天开开心心，养成好习惯。"
+        },
+        {
+          "sourceItemId": "p6",
+          "question": "生活中能自己做什么",
+          "answerText": "自己穿脱衣服、上厕所、收拾玩具。"
+        },
+        {
+          "sourceItemId": "p7",
+          "question": "面对新事物的表现",
+          "answerText": "喜欢问为什么。"
+        },
+        {
+          "sourceItemId": "p8",
+          "question": "希望优先发展的方向",
+          "answerText": "乐健（身体棒、心态阳光）、从善（有爱心、品行端正）"
+        },
+        {
+          "sourceItemId": "p9",
+          "question": "孩子什么时候最开心",
+          "answerText": "和家人一起画画的时候最开心。"
+        },
+        {
+          "sourceItemId": "p10",
+          "question": "精细动作",
+          "answerText": "能扣纽扣，用剪刀沿直线裁剪。"
+        }
+      ]
+    },
+    {
+      "recordId": "example-record-child_interview",
+      "spaceId": "example-school",
+      "studentId": "example-student",
+      "sourceRole": "child_interview",
+      "module": "questionnaire",
+      "isOriginal": true,
+      "selectedRevision": 1,
+      "recordedAt": "2026-10-20T10:00:00+08:00",
+      "items": [
+        {
+          "sourceItemId": "c1",
+          "question": "孩子怎么介绍自己",
+          "answerText": "我是一个爱画画的小孩。"
+        },
+        {
+          "sourceItemId": "c2",
+          "question": "是否提到好朋友",
+          "answerText": "有一个经常一起玩的好朋友。"
+        },
+        {
+          "sourceItemId": "c3",
+          "question": "期待什么",
+          "answerText": "想在学校画画，也想交朋友。"
+        },
+        {
+          "sourceItemId": "c4",
+          "question": "有什么担心",
+          "answerText": "怕找不到教室。"
+        },
+        {
+          "sourceItemId": "c5",
+          "question": "最想拥有哪一种本领",
+          "answerText": "学活"
+        },
+        {
+          "sourceItemId": "c6",
+          "question": "觉得自己最厉害的本领",
+          "answerText": "尚美"
+        },
+        {
+          "sourceItemId": "c7",
+          "question": "举一个例子",
+          "answerText": "我会画小动物。"
+        },
+        {
+          "sourceItemId": "c8",
+          "question": "访谈中的回答状态",
+          "answerText": "开始回答较简短，聊到画画时说得多。"
+        }
+      ]
+    },
+    {
+      "recordId": "example-record-teacher_entry_observation",
+      "spaceId": "example-school",
+      "studentId": "example-student",
+      "sourceRole": "teacher_entry_observation",
+      "module": "questionnaire",
+      "isOriginal": true,
+      "selectedRevision": 1,
+      "recordedAt": "2026-10-20T10:00:00+08:00",
+      "items": [
+        {
+          "sourceItemId": "t1",
+          "question": "与老师说话时的表现",
+          "answerText": "起初较安静，熟悉后愿意回应。"
+        },
+        {
+          "sourceItemId": "t2",
+          "question": "反复出现的兴趣",
+          "answerText": "自由活动时多次选择画画。"
+        },
+        {
+          "sourceItemId": "t3",
+          "question": "遇到冲突时怎么做",
+          "answerText": "与同伴争用材料时，会商量轮流。"
+        },
+        {
+          "sourceItemId": "t4",
+          "question": "面对有难度的任务",
+          "answerText": "拼图遇到困难时，会先自己试，再举手求助。"
+        },
+        {
+          "sourceItemId": "t5",
+          "question": "能否跟上集体活动",
+          "answerText": "提醒后能跟上集体活动。"
+        },
+        {
+          "sourceItemId": "t6",
+          "question": "收拾自己的物品时",
+          "answerText": "提醒后能把画笔放回原处。"
+        },
+        {
+          "sourceItemId": "t7",
+          "question": "独特的想法或作品",
+          "answerText": "把圆形画成小动物，并解释了自己的想法。"
+        },
+        {
+          "sourceItemId": "t8",
+          "question": "关心或帮助别人的表现",
+          "answerText": "看到同伴缺画笔时，会主动递给对方。"
+        },
+        {
+          "sourceItemId": "t9",
+          "question": "提出的问题",
+          "answerText": "观察小虫时问它为什么有这么多脚。"
+        }
+      ]
+    }
+  ]
+}

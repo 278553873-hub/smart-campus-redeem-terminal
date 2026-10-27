@@ -15,13 +15,14 @@ export const COIN_ICON_PRESETS = [
   { url: '/assets/growth-coins/coin-star.png', name: '星星金币' },
   { url: '/assets/growth-coins/icon-shell.png', name: '星贝' },
   { url: '/assets/growth-coins/icon-cloud.png', name: '云朵' },
-  { url: '/assets/growth-coins/icon-flower.png', name: '小红花' },
+  { url: '/assets/growth-coins/icon-gem.png', name: '绿宝石' },
 ] as const;
 
 // 兼容学校已保存的旧图标，不因预设更新重置外观。
 const LEGACY_COIN_ICONS = [
   '/assets/coin.png', '/assets/c4d_growth.png', '/assets/c4d_shop.png', '/assets/c4d_bank.png',
   '/assets/growth-coins/coin-sprout.png', '/assets/growth-coins/coin-sun.png', '/assets/growth-coins/coin-laurel.png',
+  '/assets/growth-coins/icon-flower.png',
 ];
 
 export const DEFAULT_COIN_BRANDING: Readonly<GrowthCoinBranding> = {

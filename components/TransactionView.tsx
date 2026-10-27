@@ -1,95 +1,21 @@
+import { createDemoGrowthCoinFlows } from '../shared/demoGrowthCoinFlow';
+import { GROWTH_COIN_FLOW_LABELS as CATEGORY_LABELS, GROWTH_COIN_INCOME_CATEGORIES as INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES as EXPENSE_CATEGORIES, formatCampusCoinFlowTime as formatFlowTime, getGrowthCoinFlowDetail } from '../shared/growthCoinFlow';
 import { GrowthCoinIcon } from './GrowthCoinBranding';
 import React, { useState } from 'react';
-import { ArrowLeft, Clock, ShoppingBag, TrendingUp, Landmark, Sparkles } from 'lucide-react';
-import { Student, TransactionRecord } from '../types';
+import { Clock, ShoppingBag, TrendingUp, Landmark, Sparkles } from 'lucide-react';
+import type { Student, TransactionRecord } from '../types';
 
 interface TransactionViewProps {
   student: Student;
   onBack: () => void;
 }
 
-const MOCK_TRANSACTIONS: TransactionRecord[] = [
-  {
-    id: 'tx_1',
-    category: 'vending_exchange',
-    detail: '炫彩盲盒 ×1',
-    amount: 35.00,
-    type: 'expense',
-    date: '2026-03-05 14:15',
-  },
-  {
-    id: 'tx_2',
-    category: 'growth_award',
-    detail: '3月奖励',
-    amount: 145.50,
-    type: 'income',
-    date: '2026-03-01 08:30',
-  },
-  {
-    id: 'tx_3',
-    category: 'class_reward',
-    detail: '流动红旗',
-    amount: 50.00,
-    type: 'income',
-    date: '2026-02-25 10:00',
-  },
-  {
-    id: 'tx_4',
-    category: 'bank_interest',
-    detail: '活期存单',
-    amount: 102.38,
-    type: 'income',
-    date: '2026-02-15 09:00',
-  },
-  {
-    id: 'tx_5',
-    category: 'growth_award',
-    detail: '2025年12月29日-2026年1月4日奖励',
-    amount: 120.00,
-    type: 'income',
-    date: '2026-02-01 08:30',
-  },
-  {
-    id: 'tx_6',
-    category: 'class_exchange',
-    detail: '卡通笔袋 ×1',
-    amount: 45.00,
-    type: 'expense',
-    date: '2026-01-20 16:40',
-  },
-  {
-    id: 'tx_7',
-    category: 'growth_award',
-    detail: '8月17日-8月23日奖励',
-    amount: 128.00,
-    type: 'income',
-    date: '2025-08-24 08:30',
-  }
-];
-
-const CATEGORY_LABELS: Record<TransactionRecord['category'], string> = {
-  growth_award: '成长嘉奖',
-  class_reward: '班级奖励',
-  bank_interest: '银行利息',
-  vending_exchange: '货柜兑换',
-  class_exchange: '班级兑换',
-};
-
-const INCOME_CATEGORIES: Array<TransactionRecord['category']> = ['growth_award', 'class_reward', 'bank_interest'];
-const EXPENSE_CATEGORIES: Array<TransactionRecord['category']> = ['vending_exchange', 'class_exchange'];
-
-const formatFlowTime = (value: string) => {
-  const [date, time] = value.split(' ');
-  const [, month, day] = date.split('-');
-  return `${Number(month)}月${Number(day)}日${time ? ` ${time.slice(0, 5)}` : ''}`;
-};
-
 const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [activeYear, setActiveYear] = useState<string>('2026'); // defaulted to current display year
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  const filteredTransactions = MOCK_TRANSACTIONS
+  const filteredTransactions = createDemoGrowthCoinFlows(student.id)
     .filter(t =>
       (activeFilter === 'all' ? true : t.type === activeFilter) &&
       (activeCategory === 'all' ? true : t.category === activeCategory) &&
@@ -108,7 +34,8 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
   const getIcon = (category: string) => {
     switch(category) {
       case 'vending_exchange':
-      case 'class_exchange': return <ShoppingBag size={20} className="text-pink-500" />;
+      case 'class_exchange':
+      case 'manual_clear': return <ShoppingBag size={20} className="text-pink-500" />;
       case 'growth_award': return <TrendingUp size={20} className="text-orange-500" />;
       case 'class_reward': return <Sparkles size={20} className="text-yellow-500" />;
       case 'bank_interest': return <Landmark size={20} className="text-blue-500" />;
@@ -119,7 +46,8 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
   const getBgColor = (category: string) => {
     switch(category) {
       case 'vending_exchange':
-      case 'class_exchange': return 'bg-pink-50 ring-pink-100';
+      case 'class_exchange':
+      case 'manual_clear': return 'bg-pink-50 ring-pink-100';
       case 'growth_award': return 'bg-orange-50 ring-orange-100';
       case 'class_reward': return 'bg-yellow-50 ring-yellow-100';
       case 'bank_interest': return 'bg-blue-50 ring-blue-100';
@@ -224,7 +152,7 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
                           <GrowthCoinIcon className="h-[0.9em] w-[0.9em]" alt="成长币" />
                         </div>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-500">{tx.detail}</p>
+                      <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-500">{getGrowthCoinFlowDetail(tx)}</p>
                       <time dateTime={tx.date} className="mt-1 block text-xs font-bold leading-4 text-slate-400">{formatFlowTime(tx.date)}</time>
                     </div>
                   </div>

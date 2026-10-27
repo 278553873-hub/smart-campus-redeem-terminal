@@ -4,6 +4,9 @@ import type { AssistantAnswerBreakdown, AssistantAiInsight } from '../../domain/
 import { splitAssistantReply } from './assistantReplyChunks';
 import { useAssistantBubbleSurface } from './useAssistantBubbleSurface';
 import './assistantReply.css';
+import MobileToast from '../ui/MobileToast';
+import { Copy, RotateCcw } from 'lucide-react';
+import { copyText } from '../../utils/copyText';
 
 export interface AssistantChatAnswer {
     answerType: string;
@@ -35,9 +38,22 @@ const AssistantReplyBubble: React.FC<{
     active: boolean;
     thinkingLabel: string;
     onComplete: () => void;
-}> = ({ answer, active, thinkingLabel, onComplete }) => {
+    onRegenerate?: () => void;
+    busy?: boolean;
+}> = ({ answer, active, thinkingLabel, onComplete, onRegenerate, busy }) => {
     const paragraphs = useMemo(() => answer ? getAssistantAnswerParagraphs(answer).map(splitAssistantReply) : [], [answer]);
     const chunks = useMemo(() => paragraphs.flat(), [paragraphs]);
+    const [copyStatus, setCopyStatus] = useState('');
+    useEffect(() => {
+        setCopyStatus('');
+    }, [answer, active, busy]);
+
+    useEffect(() => {
+        if (!copyStatus) return;
+        const timer = window.setTimeout(() => setCopyStatus(''), 1800);
+        return () => window.clearTimeout(timer);
+    }, [copyStatus]);
+
     const [visible, setVisible] = useState(0);
     const [finished, setFinished] = useState(false);
     const { bubbleRef } = useAssistantBubbleSurface();
@@ -57,13 +73,13 @@ const AssistantReplyBubble: React.FC<{
         const reveal = () => {
             count += 1;
             setVisible(count);
-            if (count >= chunks.length) timer = window.setTimeout(complete, 240);
-            else timer = window.setTimeout(reveal, /[。！？；\n]\s*$/.test(chunks[count - 1]) ? 150 : 80);
+            if (count >= chunks.length) timer = window.setTimeout(complete, 160);
+            else timer = window.setTimeout(reveal, /[。！？；\n]\s*$/.test(chunks[count - 1]) ? 100 : 53);
         };
         setVisible(0);
         setFinished(false);
         if (motion.matches || !chunks.length) complete();
-        else timer = window.setTimeout(reveal, 60);
+        else timer = window.setTimeout(reveal, 40);
         const onMotionChange = () => { if (motion.matches) { window.clearTimeout(timer); complete(); } };
         motion.addEventListener('change', onMotionChange);
         return () => { window.clearTimeout(timer); motion.removeEventListener('change', onMotionChange); };
@@ -75,7 +91,7 @@ const AssistantReplyBubble: React.FC<{
     return (
         <div ref={bubbleRef} className="min-w-0 assistant-reply-bubble" data-thinking={!answer ? 'true' : undefined}>
             <div className="assistant-agent-glass assistant-reply-surface" aria-hidden="true" />
-            <div className="assistant-reply-content px-4 py-3.5">
+            <div className="assistant-reply-content px-4 pt-3.5 pb-2">
                 {!answer ? (
                     <div className="assistant-thinking" role="status" aria-label={'正在思考，' + thinkingLabel}>
                         <span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" />
@@ -107,6 +123,14 @@ const AssistantReplyBubble: React.FC<{
                                 );
                             })}
                         </div>
+                        {!streaming && <div className="mt-2 flex flex-wrap items-center gap-0 border-t border-[var(--tm-border-subtle)] pt-[5px] text-[13px] text-[var(--tm-text-secondary)]">
+                            <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg focus-visible:outline focus-visible:outline-2" aria-label="复制答案" title="复制答案" onClick={async () => {
+                                const copied = await copyText(getAssistantAnswerParagraphs(answer).join('\n\n'));
+                                setCopyStatus(copied ? '已复制' : '复制失败，请重试');
+                            }}><span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--tm-text-primary)_4%,white)]"><Copy size={15} strokeWidth={1.75} aria-hidden="true" /></span></button>
+                            {onRegenerate && <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg focus-visible:outline focus-visible:outline-2 disabled:opacity-50" aria-label="重新生成答案" title="重新生成答案" disabled={busy} onClick={onRegenerate}><span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[color-mix(in_srgb,var(--tm-text-primary)_4%,white)]"><RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" /></span></button>}
+                            <MobileToast message={copyStatus} />
+                        </div>}
                         {streaming && <span className="sr-only" role="status">正在回复</span>}
                     </>
                 )}
@@ -120,12 +144,13 @@ interface AssistantConversationThreadProps {
     replying: boolean;
     replyingLabel: string;
     ariaLabel: string;
+    onRegenerate?: (messageId: string) => void;
     onReplyComplete?: () => void;
     latestAssistantRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 const AssistantConversationThread: React.FC<AssistantConversationThreadProps> = ({
-    messages, replying, replyingLabel, ariaLabel, onReplyComplete = () => {}, latestAssistantRef,
+    messages, replying, replyingLabel, ariaLabel, onRegenerate, onReplyComplete = () => {}, latestAssistantRef,
 }) => (
     <section className="mx-4 mt-5 space-y-4" aria-label={ariaLabel} aria-live="polite" aria-relevant="additions text">
         {messages.map((message, index) => (
@@ -136,7 +161,8 @@ const AssistantConversationThread: React.FC<AssistantConversationThreadProps> = 
                     </div>
                 ) : (
                     <AssistantReplyBubble answer={message.answer} active={replying && index === messages.length - 1}
-                        thinkingLabel={replyingLabel} onComplete={onReplyComplete} />
+                        thinkingLabel={replyingLabel} onComplete={onReplyComplete}
+                        busy={replying} onRegenerate={onRegenerate && index === messages.length - 1 ? () => onRegenerate(message.id) : undefined} />
                 )}
             </div>
         ))}

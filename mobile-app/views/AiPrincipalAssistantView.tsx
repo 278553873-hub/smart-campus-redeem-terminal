@@ -1,3 +1,4 @@
+import AssistantConversationHistory, { useAssistantConversationHistory } from '../components/assistant-chat/AssistantConversationHistory';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Building2, CalendarRange, ChevronRight, ScanSearch } from 'lucide-react';
 import { ASSETS } from '../assets/images';
@@ -95,7 +96,8 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
     const assistantMessage = useMemo(getAssistantMessage, []);
     const typedMessage = useAssistantTypewriter(assistantMessage);
     const [notice, setNotice] = useState<AssistantNotice | null>(null);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const conversationHistory = useAssistantConversationHistory<ChatMessage>('principal');
+    const { messages, setMessages } = conversationHistory;
     const [draft, setDraft] = useState('');
     const [isReplying, setIsReplying] = useState(false);
     const snapshot = useMemo(() => getPrincipalAssistantSnapshot(), []);
@@ -127,18 +129,18 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
         setNotice(availability);
     };
 
-    const submitQuestion = (rawQuestion: string) => {
+    const submitQuestion = (rawQuestion: string, regenerateId?: string) => {
         const question = rawQuestion.trim();
         if (!question || isReplying) return;
 
-        const replyId = 'assistant-' + Date.now();
+        const replyId = regenerateId || 'assistant-' + Date.now();
         resumeFollowing();
-        setMessages(current => [...current, {
+        setMessages(current => regenerateId ? current.map(message => message.id === regenerateId ? { ...message, answer: undefined } : message) : [...current, {
             id: 'user-' + Date.now(),
             role: 'user',
             content: question,
         }, { id: replyId, role: 'assistant' }]);
-        setDraft('');
+        if (!regenerateId) setDraft('');
         setIsReplying(true);
 
         replyTimerRef.current = window.setTimeout(() => {
@@ -158,7 +160,7 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
 
     return (
         <div className="ai-assistant-theme-principal relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent font-sans text-[var(--tm-text-primary)]">
-            <AssistantSubpageHeader onBack={onBack} surface="transparent" />
+            <AssistantSubpageHeader onBack={onBack} surface="transparent" leadingAction={<AssistantConversationHistory previewEnabled history={conversationHistory} busy={isReplying} />} />
 
             <div ref={scrollRef} data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto pb-5 no-scrollbar assistant-conversation-scroll">
                 <section className="relative h-[148px] overflow-hidden px-5">
@@ -203,6 +205,11 @@ const AiPrincipalAssistantView: React.FC<AiPrincipalAssistantViewProps> = ({
                         replyingLabel={PRINCIPAL_ASSISTANT_REPLYING_LABEL}
                         ariaLabel="校长助理对话"
                         onReplyComplete={() => setIsReplying(false)}
+                            onRegenerate={messageId => {
+                                const index = messages.findIndex(message => message.id === messageId);
+                                const question = messages.slice(0, index).reverse().find(message => message.role === 'user')?.content;
+                                if (question) submitQuestion(question, messageId);
+                            }}
                     />
                 )}
             </div>

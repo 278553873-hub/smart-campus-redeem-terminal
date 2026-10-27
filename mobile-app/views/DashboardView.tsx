@@ -1,4 +1,5 @@
-import { GrowthCoinIcon, useGrowthCoinTerms } from '../../components/GrowthCoinBranding';
+import StudentCoinAssetBand from '../components/student-detail/StudentCoinAssetBand';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import React, { useState, useMemo } from 'react';
 import { Student, ScoreItem, GrowthReportItem, CampusCoinDetail, ClassInfo } from '../types';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
@@ -9,7 +10,6 @@ import {
 } from '../components/Icons';
 import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Ellipsis, FolderOpen, Pencil, X } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
-import { formatCoinAmount } from '../utils/coinFormat';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
@@ -308,7 +308,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onOpenStudentArchive,
     initialSection = 'evaluation',
 }) => {
-  const GROWTH_COIN_TERMS = useGrowthCoinTerms();
     const [activeTab, setActiveTab] = useState<'evaluation' | 'report'>(initialSection === 'report' ? 'report' : 'evaluation');
 
     // UI States
@@ -610,60 +609,26 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
 
                 {/* B. Student Assets Band */}
-                <button
-                    type="button"
-                    onClick={onViewCampusCoins}
-                    aria-label={`查看${GROWTH_COIN_TERMS.details}，${GROWTH_COIN_TERMS.available}${formatCoinAmount(campusCoinDetail.balance)}，${GROWTH_COIN_TERMS.saved}${formatCoinAmount(campusCoinDetail.bankDeposit)}`}
-                    className="grid h-[var(--tm-student-detail-asset-height)] w-full grid-cols-[var(--tm-student-detail-asset-label-width)_1px_minmax(0,1fr)_1px_minmax(0,1fr)_var(--tm-student-detail-asset-chevron-space)] items-center border-t border-[var(--tm-student-detail-asset-border)] bg-[var(--tm-student-detail-asset-bg)] text-left active:bg-[var(--tm-bg-surface-soft)]"
-                >
-                    <span className="flex min-w-0 items-center justify-center gap-1.5 px-2">
-                        <GrowthCoinIcon className="h-4 w-4 shrink-0" alt="" />
-                        <span className="shrink-0 text-[11px] font-semibold text-[var(--tm-text-primary)]">{GROWTH_COIN_TERMS.name}</span>
-                    </span>
-                    <span className="h-5 bg-[var(--tm-student-detail-asset-border)]" aria-hidden="true" />
-                    <span className="flex min-w-0 items-center justify-center gap-2 px-2">
-                        <span className="shrink-0 text-[11px] font-medium text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.available}</span>
-                        <span className="min-w-0 truncate text-sm font-semibold tabular-nums text-[var(--tm-text-primary)]">
-                            {formatCoinAmount(campusCoinDetail.balance)}
-                        </span>
-                    </span>
-                    <span className="h-5 bg-[var(--tm-student-detail-asset-border)]" aria-hidden="true" />
-                    <span className="flex min-w-0 items-center justify-center gap-2 px-2">
-                        <span className="shrink-0 text-[11px] font-medium text-[var(--tm-text-secondary)]">{GROWTH_COIN_TERMS.saved}</span>
-                        <span className="min-w-0 truncate text-sm font-semibold tabular-nums text-[var(--tm-text-primary)]">
-                            {formatCoinAmount(campusCoinDetail.bankDeposit)}
-                        </span>
-                    </span>
-                    <span className="flex h-full items-center justify-center" aria-hidden="true">
-                        <ChevronRight className="h-5 w-5 text-[var(--tm-text-tertiary)]" />
-                    </span>
-                </button>
+                <StudentCoinAssetBand balance={campusCoinDetail.balance} bankDeposit={campusCoinDetail.bankDeposit} onOpen={onViewCampusCoins} />
             </section>
 
             {/* 2. Scrollable Content */}
             <div className="space-y-[var(--tm-layout-card-gap)] p-4">
                 {/* C. Tabs */}
                 <div className="sticky top-0 z-30 bg-[var(--tm-page-plain-content-bg)] py-2">
-                    <div className="grid h-11 grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)]" role="tablist" aria-label="学生详情内容">
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activeTab === 'evaluation'}
-                            onClick={() => setActiveTab('evaluation')}
-                            className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
-                        >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-form-segment-active-radius)] transition-all ${activeTab === 'evaluation' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>评价记录</span>
-                        </button>
-                        <button
-                            type="button"
-                            role="tab"
-                            aria-selected={activeTab === 'report'}
-                            onClick={() => setActiveTab('report')}
-                            className="flex min-h-11 items-center p-1 text-[13px] font-semibold"
-                        >
-                            <span className={`flex h-9 w-full items-center justify-center rounded-[var(--tm-form-segment-active-radius)] transition-all ${activeTab === 'report' ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}>成长报告</span>
-                        </button>
-                    </div>
+                    <CompactSegmentedControl<'evaluation' | 'report'>
+                        value={activeTab}
+                        items={[
+                            { value: 'evaluation', label: '评价记录' },
+                            { value: 'report', label: '成长报告' },
+                        ]}
+                        onChange={setActiveTab}
+                        ariaLabel="学生详情内容"
+                        semantics="tabs"
+                        shape="subtle"
+                        motion="sliding"
+                        fullWidth
+                    />
                 </div>
 
                 {/* D. Content Area */}

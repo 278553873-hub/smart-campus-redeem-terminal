@@ -473,6 +473,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
 ];
 
 interface MobileAppProps {
+    onGradientPreviewVisibilityChange?: (visible: boolean) => void;
     classListLoadingPreview?: import('../shared/classListLoadingPreview').ClassListLoadingPreview;
     classReportOutline?: ClassReportOutlineItem[];
     onClassReportViewChange?: (active: boolean) => void;
@@ -500,6 +501,7 @@ const App: React.FC<MobileAppProps> = ({
     classListLoadingPreview,
     classReportOutline,
     onClassReportViewChange,
+    onGradientPreviewVisibilityChange,
     showPhoneShell = true,
     headteacherAssistantScopePreview = null,
     onHeadteacherAssistantScopePreviewDefaultChange,
@@ -602,6 +604,12 @@ const App: React.FC<MobileAppProps> = ({
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
     const [isClassGroupingEditorOpen, setIsClassGroupingEditorOpen] = useState(false);
     const [teacherProfilesBySpace, setTeacherProfilesBySpace] = useState<Record<string, TeacherProfile>>(INITIAL_TEACHER_PROFILES_BY_SPACE);
+    useEffect(() => {
+        const visible = isAuthenticated && ['home_log', 'class_list', 'me'].includes(currentView) && !(currentView === 'class_list' && isStudentTeamFullPageOpen);
+        onGradientPreviewVisibilityChange?.(visible);
+        return () => onGradientPreviewVisibilityChange?.(false);
+    }, [currentView, isAuthenticated, isStudentTeamFullPageOpen, onGradientPreviewVisibilityChange]);
+
     const [headteacherAssistantClassId, setHeadteacherAssistantClassId] = useState(DEFAULT_WEEKLY_ADVICE_CLASS_ID);
     const principalWeeklyReportTask = useReportGenerationTask({ stepCount: 4 });
     const principalMonthlyReportTask = useReportGenerationTask({ stepCount: 4 });

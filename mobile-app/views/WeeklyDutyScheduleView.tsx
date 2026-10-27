@@ -303,7 +303,6 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
                 imageSrc={ASSETS.DEFAULT_STATE.MAGNIFIER}
                 title="没有匹配的教师"
                 className="min-h-72 py-[var(--tm-space-4)]"
-                imageClassName="w-[58%] min-w-[156px] max-w-[196px]"
               />
             )}
           </div>

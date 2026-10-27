@@ -547,7 +547,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     };
 
     const handleOpenCardDisplaySettings = (target: EvaluationRecountTarget) => {
-        if (!canConfigureCardDisplay) return;
+        if (target === 'group' && !canConfigureCardDisplay) return;
         setMoreActionTarget(null);
         setCardDisplayTarget(target);
     };
@@ -1165,7 +1165,6 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     imageSrc={hasSearchQuery ? ASSETS.DEFAULT_STATE.MAGNIFIER : ASSETS.DEFAULT_STATE.CHAIR}
                     title={hasSearchQuery ? '没有匹配的学生' : '暂无学生'}
                     className="flex-1 pb-14"
-                    imageClassName="w-[68%] min-w-[178px] max-w-[224px]"
                 />
             )}
 
@@ -1374,12 +1373,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onClose={() => setMoreActionTarget(null)}
             >
                 <div className="space-y-1 pb-2">
-                    {moreActionTarget === 'student' && !canConfigureCardDisplay && !canResetStudentEvaluationCounts && (
-                        <p role="status" className="px-3 py-4 text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">
-                            当前暂无可用操作
-                        </p>
-                    )}
-                    {canConfigureCardDisplay && moreActionTarget && (
+                    {moreActionTarget && (moreActionTarget === 'student' || canConfigureCardDisplay) && (
                         <button
                             type="button"
                             onClick={() => handleOpenCardDisplaySettings(moreActionTarget)}
