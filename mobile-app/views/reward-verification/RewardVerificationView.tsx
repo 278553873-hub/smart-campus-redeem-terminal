@@ -77,6 +77,18 @@ const INITIAL_GOODS: ClassGood[] = [
   { id: 'g5', name: '黑色中性笔一支', price: 50, icon: 'stationery' },
 ];
 
+const RewardPrice = ({ amount, perPerson = false }: { amount: number; perPerson?: boolean }) => {
+  const terms = useGrowthCoinTerms();
+  return (
+    <span className="inline-flex items-center gap-1 text-[length:var(--tm-font-size-meta)] font-semibold tabular-nums text-[var(--tm-brand-reward-strong)]">
+      <GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />
+      <span className="sr-only">{terms.name}</span>
+      <span>{formatCoinAmount(amount)}</span>
+      {perPerson && <span>/ 人</span>}
+    </span>
+  );
+};
+
 const inputClass = 'h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)] focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)] disabled:cursor-not-allowed disabled:border-[var(--tm-input-disabled-border)] disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:opacity-100 read-only:border-[var(--tm-input-readonly-border)] read-only:bg-[var(--tm-input-readonly-bg)] read-only:text-[var(--tm-input-readonly-text)]';
 
 const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
@@ -558,7 +570,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
               return (
                 <div key={good.id} className="flex min-h-[68px] items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]">
                   <RewardIconAvatar icon={good.icon} />
-                  <span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><small className="text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(good.price)} {GROWTH_COIN_TERMS.name} / 人</small></span>
+                  <span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><RewardPrice amount={good.price} perPerson /></span>
                   <button type="button" disabled={!canAfford} onClick={() => redeemGood(good)} className="min-h-[var(--tm-size-touch)] shrink-0 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">{canAfford ? '兑换' : '余额不足'}</button>
                 </div>
               );
@@ -569,7 +581,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
         {sheetMode === 'manage' && (
           <div>
             <div className="space-y-[var(--tm-layout-list-gap-compact)]">
-              {goods.map(good => <div key={good.id} className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]"><RewardIconAvatar icon={good.icon} /><span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><small className="font-semibold text-[var(--tm-brand-reward-strong)]">{formatCoinAmount(good.price)} {GROWTH_COIN_TERMS.name}</small></span></div>)}
+              {goods.map(good => <div key={good.id} className="flex items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-[var(--tm-space-3)]"><RewardIconAvatar icon={good.icon} /><span className="min-w-0 flex-1"><strong className="block truncate text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{good.name}</strong><RewardPrice amount={good.price} /></span></div>)}
             </div>
             <button type="button" onClick={startEditing} className="mt-[var(--tm-form-section-gap)] flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-brand-primary)]"><Pencil className="h-[18px] w-[18px]" />批量编辑奖品</button>
           </div>
@@ -604,7 +616,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
                       );
                     })}
                   </div>
-                  <label className="mt-[var(--tm-space-2)] grid grid-cols-[44px_minmax(0,1fr)] items-center gap-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]"><span>售价</span><input type="number" min="1" value={good.price} onChange={event => updateDraft(good.id, { price: Number(event.target.value) })} className={inputClass} /></label>
+                  <label className="mt-[var(--tm-space-2)] grid grid-cols-[44px_minmax(0,1fr)] items-center gap-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]"><span>售价</span><span className="relative min-w-0"><GrowthCoinIcon alt="" aria-hidden="true" className="pointer-events-none absolute left-[var(--tm-space-3)] top-1/2 h-4 w-4 -translate-y-1/2" /><input type="number" min="1" value={good.price} onChange={event => updateDraft(good.id, { price: Number(event.target.value) })} className={`${inputClass} pl-[calc(var(--tm-space-3)+1rem+var(--tm-space-2))]`} aria-label={`${good.name || '奖品'}售价（${GROWTH_COIN_TERMS.name}）`} /></span></label>
                 </div>
               ))}
             </div>
