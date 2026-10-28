@@ -56,7 +56,7 @@ const CardEvaluationDisplaySettings: React.FC<CardEvaluationDisplaySettingsProps
               value={contentMode}
               items={CONTENT_MODE_OPTIONS}
               onChange={handleContentModeChange}
-              ariaLabel="表扬/待改进显示内容"
+                ariaLabel="表扬/待改进显示内容"
               semantics="group"
               variant="settings"
             />

@@ -37,7 +37,7 @@ assert.match(detailSource, /aria-label="小组更多操作"/, '分组页应就�
 assert.match(detailSource, /open=\{Boolean\(moreActionTarget\)\}[\s\S]*title="更多操作"/, '学生与分组的外层操作抽屉应统一使用“更多操作”。');
 assert.match(detailSource, /moreActionTarget === 'group' \? '小组卡片展示' : '学生卡片展示'/, '学生与分组操作菜单应展示对应的卡片设置入口。');
 assert.match(detailSource, /title=\{cardDisplayTarget === 'group' \? '小组卡片展示' : '学生卡片展示'\}/, '卡片展示设置应使用独立公共底部弹窗。');
-assert.match(levelSettingsSource, /label="显示等级"[\s\S]*等级形式/, '等级设置应在总开关下渐进披露等级形式。');
+assert.match(levelSettingsSource, /显示总分[\s\S]*showLevel &&[\s\S]*STUDENT_TOTAL_DISPLAY_OPTIONS/, '显示总分开启后才展示三种互斥内容。');
 assert.match(detailSource, /<CardLevelDisplaySettings[\s\S]*<CardEvaluationDisplaySettings/, '学生设置应分开等级与评价数据。');
 assert.match(teamDetailSource, /<CardLevelDisplaySettings/, '团队详情成员页应复用同一等级展示设置。');
 assert.match(evaluationSettingsSource, /label="显示表扬\/待改进"[\s\S]*checked=\{settings\.showEvaluation\}/, '表扬/待改进设置应先提供独立总开关。');
@@ -47,7 +47,7 @@ assert.match(evaluationSettingsSource, /settings\.showEvaluation && \([\s\S]*显
 assert.doesNotMatch(evaluationSettingsSource, /bg-\[var\(--tm-bg-surface-soft\)\]/, '加扣分设置不应继续使用大面积灰色容器。');
 assert.equal((evaluationSettingsSource.match(/variant="settings"/g) ?? []).length, 1, '显示内容应统一使用设置项分段控件。');
 assert.doesNotMatch(evaluationSettingsSource, /数值形式|value: 'count'|value: 'score'|valueMode/, '加扣分固定按分值展示，不再提供次数或分值选择。');
-assert.match(levelSettingsSource, /showLevel && \([\s\S]*等级形式/, '显示等级开启后才应展示等级形式。');
+assert.match(levelSettingsSource, /显示总分[\s\S]*showLevel &&[\s\S]*STUDENT_TOTAL_DISPLAY_OPTIONS/, '显示总分开启后才展示三种互斥内容。');
 assert.match(levelSettingsSource, /value: 'icon', label: '图标'[\s\S]*value: 'score', label: '分值'/, '等级形式应提供图标与分值二选一。');
 assert.match(levelSettingsSource, /<CompactSegmentedControl[\s\S]*ariaLabel="等级展示形式"[\s\S]*semantics="group"/, '等级形式必须复用设计系统紧凑分段控件。');
 assert.match(levelSettingsSource, /ariaLabel="等级展示形式"[\s\S]*variant="settings"/, '等级形式应使用与加扣分一致的设置项规格。');
@@ -67,7 +67,7 @@ assert.equal((detailSource.match(/displaySettings=\{studentCardDisplaySettings\}
 assert.equal((detailSource.match(/showPraise=\{groupCardDisplaySettings\.showEvaluation && groupCardDisplaySettings\.showPraise\}/g) ?? []).length, 1, '小组加分显示设置应受总开关控制。');
 assert.equal((detailSource.match(/showCriticism=\{groupCardDisplaySettings\.showEvaluation && groupCardDisplaySettings\.showCriticism\}/g) ?? []).length, 1, '小组扣分显示设置应受总开关控制。');
 assert.doesNotMatch(detailSource, /valueMode/, '小组加分和扣分固定按分值展示，不再传递次数或分值模式。');
-assert.match(rosterCardSource, /displaySettings\.showLevel \? `等级分值/, '隐藏等级后读屏文案不应继续播报等级。');
+assert.match(rosterCardSource, /displaySettings\.showLevel \? `总分（/, '隐藏等级后读屏文案不应继续播报等级。');
 assert.match(rosterCardSource, /displaySettings\.showEvaluation && displaySettings\.showPraise[\s\S]*累计表扬/, '表扬读屏文案应受总开关控制并固定播报累计表扬。');
 assert.match(rosterCardSource, /displaySettings\.showEvaluation && displaySettings\.showCriticism[\s\S]*累计待改进/, '待改进读屏文案应受总开关控制并固定播报累计待改进。');
 assert.doesNotMatch(rosterCardSource, /被表扬|被批评|valueMode/, '加分扣分读屏文案不应再包含次数文案或数值模式。');
@@ -85,8 +85,8 @@ assert.match(domainSource, /showLevel: true[\s\S]*levelForm: 'icon'[\s\S]*DEFAUL
 assert.doesNotMatch(appSource, /onUpdateStudentLevelDisplayMode|canConfigureLevelDisplay/, '应用层不应再保留统计范围配置入口。');
 assert.match(appSource, /getStudentLevelNetScore\([\s\S]*'term'[\s\S]*CURRENT_PRINCIPAL_TERM/, '花名册等级应固定按本学期净得分计算。');
 assert.match(rosterCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'icon'/, '只有图标形式才展示星级图标。');
-assert.match(rosterCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'score'/, '只有分值形式才展示净得分。');
-assert.match(rosterCardSource, /<StudentPerformanceLevelScore netScore=\{shownLevelNetScore\} className="mt-\[2px\]" \/>/, '分值形式应在等级行展示净得分，并上移2像素居中。');
+assert.match(rosterCardSource, /displaySettings\.showLevel && \(displaySettings\.levelForm === 'score'/, '只有分值形式才展示净得分。');
+assert.match(rosterCardSource, /<StudentPerformanceLevelScore netScore=\{shownTotalScore\} className="mt-\[2px\]" \/>/, '分值形式应在等级行展示净得分，并上移2像素居中。');
 assert.match(rosterCardSource, /showLevelProgress=\{showLevelIcons\}/, '分值形式不应展示头像等级进度环。');
 assert.match(performanceMetaSource, /isNegative \? 'bg-\[var\(--tm-student-criticism-soft\)\] text-\[var\(--tm-student-criticism\)\]' : 'bg-\[var\(--tm-student-level-score-soft\)\] text-\[var\(--tm-student-level-score\)\]'/, '等级总分应使用蓝色圆角色片，负分切换为负向色片。');
 assert.match(performanceMetaSource, /rounded-\[5px\]/, '等级总分色片应与加扣分色片共用圆角规格。');
@@ -97,6 +97,6 @@ assert.match(performanceMetaSource, /formatScore\(normalizedScore\)\}/, '等级�
 assert.match(performanceMetaSource, /h-\[var\(--tm-student-card-level-row-height\)\]/, '等级图标与等级分值应共用同一等级行高度。');
 assert.match(tokenSource, /'--tm-student-card-level-row-height': '16px'[\s\S]*'--tm-student-card-level-score-font-size': '12px'/, '等级行高度与分值字号应由教师手机端 Token 统一管理。');
 assert.match(guidelinesSource, /学生页与分组页普通态工具栏的三点入口[\s\S]*设置按班级保存并默认全部开启/, '教师手机端规范应记录就近入口、默认值和保存范围。');
-assert.match(guidelinesSource, /等级形式[\s\S]*图标[\s\S]*分值/, '教师手机端规范应记录等级形式的二选一规则。');
+assert.match(guidelinesSource, /显示总分[\s\S]*总分[\s\S]*总分\+基础分/, '教师手机端规范应记录总分展示的三选一规则。');
 
 console.log('学生与小组卡片显示设置校验通过。');

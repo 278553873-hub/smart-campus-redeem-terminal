@@ -2005,7 +2005,7 @@ const AppSwitcher: React.FC = () => {
               )}
             </div>
 
-            <CoinFlowReviewNotes />
+            {coinRulePageVisible && <CoinFlowReviewNotes />}
 
             {teacherDeveloperNotesContext && (
               <TeacherMobileDeveloperNotes

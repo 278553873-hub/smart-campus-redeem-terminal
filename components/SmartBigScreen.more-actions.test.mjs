@@ -9,7 +9,7 @@ for (const text of [
   'aria-label="更多操作"',
   'aria-label="课堂大屏更多操作"',
   'title="更多操作"',
-  '显示学生等级',
+  '显示学生总分',
   '显示学生表扬/待改进',
   '显示内容',
   "label: '表扬'",
@@ -48,8 +48,8 @@ assert.match(screenSource, /shell\.classMenuWidth[\s\S]*shell\.classMenuItemHeig
 assert.match(screenSource, /classroom-display-input[\s\S]*classroomDisplayInputStyle/, 'Arco 输入框内部文字应通过局部样式跟随展示档位');
 assert.match(screenSource, /min-h-0 flex-1 overflow-y-auto custom-scrollbar/, '随机点名结果区应在弹窗内独立滚动');
 assert.match(screenSource, /gridTemplateColumns: `repeat\(auto-fill, minmax\(\$\{classroomDisplay\.modal\.avatarOptionMinWidth\}px, 1fr\)\)`/, '头像选择网格应按展示档位自适应列数');
-assert.match(screenSource, /checked=\{activeCardDisplaySettings\.showLevel\}[\s\S]*aria-label=\{viewMode === 'group' \? '显示小组等级' : '显示学生等级'\}/, '等级开关应使用公共状态并区分学生与小组');
-assert.match(screenSource, /activeCardDisplaySettings\.showLevel && \([\s\S]*等级形式[\s\S]*label: '图标'[\s\S]*'总分'/, '学生等级形式应渐进披露图标与总分');
+assert.match(screenSource, /checked=\{activeCardDisplaySettings\.showLevel\}[\s\S]*aria-label=\{viewMode === 'group' \? '显示小组等级' : '显示学生总分'\}/, '等级开关应使用公共状态并区分学生与小组');
+assert.match(screenSource, /activeCardDisplaySettings\.showLevel &&[\s\S]*STUDENT_TOTAL_DISPLAY_OPTIONS/, '学生总分展示应渐进披露三种内容');
 assert.doesNotMatch(screenSource, /relative h-7 w-12[\s\S]*translate-x-6/, '课堂大屏不应手写开关轨道、圆点和位移');
 assert.match(screenSource, /checked=\{activeCardDisplaySettings\.showEvaluation\}[\s\S]*aria-label=\{viewMode === 'group' \? '显示小组表扬\/待改进' : '显示学生表扬\/待改进'\}/, '表扬/待改进应先使用公共开关控制整体显示');
 assert.match(screenSource, /activeCardDisplaySettings\.showEvaluation && \([\s\S]*aria-label="表扬\/待改进显示内容"[\s\S]*\{ value: 'all' as const, label: '全部' \}[\s\S]*\{ value: 'praise' as const, label: '表扬' \}[\s\S]*\{ value: 'criticism' as const, label: '待改进' \}/, '开启后应渐进展示全部、表扬、待改进三种互斥内容模式');

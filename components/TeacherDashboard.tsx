@@ -1,6 +1,6 @@
 import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useEffect, useState } from 'react';
-import { Alert, Breadcrumb, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Typography, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
+import { Alert, Breadcrumb, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Tabs, Typography, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
@@ -15,6 +15,8 @@ import GrowthDataSettingsView from './GrowthDataSettingsView';
 import TeacherCampaignPreview from '../mobile-app/components/TeacherCampaignPreview';
 import { PasswordRevealButton } from '../mobile-app/components/ui/PasswordRevealButton';
 import CoinIssuanceSettings from './CoinIssuanceSettings';
+import PcGrowthCoinBrandFields from './PcGrowthCoinBrandFields';
+import { useCoinBrandingEditor } from './GrowthCoinBrandFields';
 import type { CoinIssuanceConfig } from '../mobile-app/types';
 import {
     readTeacherCampaigns,
@@ -252,7 +254,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     });
 
     // 发币配置页面内部 Tab
-    const [issuanceTab, setIssuanceTab] = useState<'auto' | 'manual'>('auto');
+    const coinBrandingEditor = useCoinBrandingEditor();
+    const [issuanceTab, setIssuanceTab] = useState<'auto' | 'manual' | 'branding'>('auto');
 
     // 手动发币状态
     const [manualClass, setManualClass] = useState('');
@@ -3086,41 +3089,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                     {/* 货币发放管理 - 增加标签页切换以分离自动模型和手动发币 */}
                     {(['成长币发放', '货币发放', '货币发放管理'].includes(activeMenu)) && (
                         <div className="w-full overflow-hidden rounded border border-[#E5E6EB] bg-white transform">
-                            <div className="border-b border-[#E5E6EB] bg-white px-6 py-4">
-                                {/* 内部 Tab 切换器 */}
-                                <div className="flex" role="tablist" aria-label="成长币管理">
-                                    <button
-                                        type="button"
-                                        role="tab"
-                                        aria-selected={issuanceTab === 'auto'}
-                                        onClick={() => setIssuanceTab('auto')}
-                                        className={`border-b-2 px-1 pb-3 text-sm ${issuanceTab === 'auto' ? 'border-[#165DFF] font-medium text-[#165DFF]' : 'border-transparent text-[#4E5969] hover:text-[#1D2129]'}`}
-                                    >
-                                        发放规则
-                                    </button>
-                                    <button
-                                        type="button"
-                                        role="tab"
-                                        aria-selected={issuanceTab === 'manual'}
-                                        onClick={() => setIssuanceTab('manual')}
-                                        className={`ml-6 border-b-2 px-1 pb-3 text-sm ${issuanceTab === 'manual' ? 'border-[#165DFF] font-medium text-[#165DFF]' : 'border-transparent text-[#4E5969] hover:text-[#1D2129]'}`}
-                                    >
-                                        手动发放
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                {/* 自动发币模型配置区域 */}
-                                {issuanceTab === 'auto' && (
+                            <Tabs activeTab={issuanceTab} onChange={tab => setIssuanceTab(tab as 'auto' | 'manual' | 'branding')}
+                                destroyOnHide={false} lazyload={false} className="pc-coin-management-tabs">
+                                <Tabs.TabPane key="auto" title="自动发放">
                                     <CoinIssuanceSettings
                                         value={coinIssuanceConfig}
                                         onChange={setCoinIssuanceConfig}
                                     />
-                                )}
-
-                                {/* 手动定向发放区段 */}
-                                {issuanceTab === 'manual' && (
+                                </Tabs.TabPane>
+                                <Tabs.TabPane key="manual" title="手动发放">
                                     <div className="pc-form">
                                         <div className="px-6 pt-4">
                                             <Typography.Title heading={6} style={{ margin: 0 }}>班级定向发放</Typography.Title>
@@ -3154,13 +3131,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                             style={{ width: 160 }}
                                                             aria-label="每人发放数量"
                                                         />
-                                                        <span className="text-sm text-[#4E5969]">{coinTerms.name} / 人</span>
+                                                        <span className="text-sm text-[#4E5969]">币 / 人</span>
                                                     </div>
                                                 </div>
                                                 <div className="mt-5 flex flex-wrap items-baseline gap-x-2 border-t border-[#F2F3F5] pt-4 text-sm text-[#4E5969]">
                                                     <span>本次发放总计</span>
                                                     <span className="text-base font-semibold tabular-nums text-[#1D2129]">{totalManualIssuance.toLocaleString()}</span>
-                                                    <span>{coinTerms.name}</span>
+                                                    <span>币</span>
                                                     <span className="text-xs text-[#86909C]">（{selectedClassStudentCount} 人 × {manualPerStudent} 币/人）</span>
                                                 </div>
                                             </section>
@@ -3194,7 +3171,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 )}
                                                 <div className="mt-5 flex items-start gap-2 border-t border-[#F2F3F5] pt-4 text-xs leading-5 text-[#86909C]">
                                                     <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                                                    <span>发放确认后，{coinTerms.name}将实时打入对应班级每位学生的可用余额，并产生流水记录，此操作无法撤销。</span>
+                                                    <span>发放确认后，币将实时打入对应班级每位学生的可用余额，并产生流水记录，此操作无法撤销。</span>
                                                 </div>
                                             </section>
                                         </div>
@@ -3205,17 +3182,23 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                                 disabled={!manualClass || manualPerStudent <= 0}
                                                 onClick={() => {
                                                     if (!manualClass || manualPerStudent <= 0) return;
-                                                    alert('已成功发放 ' + totalManualIssuance + ' ' + coinTerms.name + '至 ' + manualClass);
+                                                    alert('已成功发放 ' + totalManualIssuance + ' 币至 ' + manualClass);
                                                     setManualClass('');
                                                     setManualPerStudent(0);
                                                 }}
                                             >
-                                                立即发放
+                                                确认发放
                                             </Button>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+                                </Tabs.TabPane>
+                                <Tabs.TabPane key="branding" title="名称与图标">
+                                    <div className="pc-form pc-coin-settings px-6 py-6">
+                                        <p className="mb-6 text-[13px] text-[var(--color-text-2)]">名称与图标在全校统一使用。</p>
+                                        <PcGrowthCoinBrandFields editor={coinBrandingEditor} />
+                                    </div>
+                                </Tabs.TabPane>
+                            </Tabs>
                         </div>
                     )}
 
@@ -4278,7 +4261,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
 
                                     <div className="mb-6 flex items-center justify-between gap-4">
                                         <span className="text-sm text-[#4E5969]">货币名称与图标</span>
-                                        <Button type="text" onClick={() => { setActiveMenu('成长币发放'); setIssuanceTab('auto'); }}>前往成长币发放设置</Button>
+                                        <Button type="text" onClick={() => { setActiveMenu('成长币发放'); setIssuanceTab('branding'); }}>设置名称与图标</Button>
                                     </div>
 
                                     <div className="border-t border-[#F2F3F5] pt-5 flex justify-end gap-2">

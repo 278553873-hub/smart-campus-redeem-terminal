@@ -1,4 +1,5 @@
 import React from 'react';
+import { DEMO_STUDENT_BASE_SCORE, getStudentCardTotalScore } from '../../domain/studentCardDisplay';
 import { ASSETS } from '../../assets/images';
 import type { Student, StudentCardDisplaySettings } from '../../types';
 import { CheckIcon, CircleIcon, PlusIcon } from '../Icons';
@@ -66,8 +67,9 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
   const studentNo = student.studentNo || student.id;
   const shownLevelNetScore = levelNetScore ?? performance.netScore;
   const level = getStudentPerformanceLevel(shownLevelNetScore);
+  const shownTotalScore = getStudentCardTotalScore(shownLevelNetScore, displaySettings.levelForm, student.baseScore ?? DEMO_STUDENT_BASE_SCORE);
   const showLevelIcons = displaySettings.showLevel && displaySettings.levelForm === 'icon';
-  const showLevelScore = displaySettings.showLevel && displaySettings.levelForm === 'score';
+  const showLevelScore = displaySettings.showLevel && (displaySettings.levelForm === 'score' || displaySettings.levelForm === 'scoreWithBase');
   const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
   const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
   const showPerformanceValues = showPraise || showCriticism;
@@ -82,7 +84,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
     `${student.name}，学号${studentNo}`,
     student.gender === 'male' ? '男生' : '女生',
     contextLabel ?? '',
-    displaySettings.showLevel ? `等级分值${shownLevelNetScore}分` : '',
+    displaySettings.showLevel ? `总分（${displaySettings.levelForm === 'scoreWithBase' ? '含基础分' : '不含基础分'}）${shownTotalScore}分` : '',
     showPraise
       ? `累计表扬${performance.praiseScore}分`
       : '',
@@ -114,7 +116,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       )}
       <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-[3px]">
         {showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
-        {showLevelScore && <StudentPerformanceLevelScore netScore={shownLevelNetScore} className="mt-[2px]" />}
+        {showLevelScore && <StudentPerformanceLevelScore netScore={shownTotalScore} className="mt-[2px]" />}
         <span className={`relative flex h-[58px] w-[58px] shrink-0 items-center justify-center ${showLevelScore ? '-mt-[2px]' : ''}`}>
           <StudentPerformanceAvatar
             compact

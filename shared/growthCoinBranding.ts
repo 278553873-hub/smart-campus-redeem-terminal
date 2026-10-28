@@ -3,6 +3,8 @@ import { GROWTH_COIN_TERMS } from './growthCoinTerminology.ts';
 export interface GrowthCoinBranding {
   name: string;
   iconUrl: string;
+  /** 最近一次上传的图片，切换预设后仍保留。 */
+  customIconUrl?: string;
 }
 
 /** 当前演示中的教师学校、家长学校编号与货柜预览对应同一份演示配置。 */
@@ -30,15 +32,26 @@ export const DEFAULT_COIN_BRANDING: Readonly<GrowthCoinBranding> = {
   iconUrl: COIN_ICON_PRESETS[0].url,
 };
 
-export const validateCoinBranding = (value: GrowthCoinBranding): GrowthCoinBranding => {
-  const name = value.name.trim();
+export const validateCoinName = (value: string): string => {
+  const name = value.trim();
   if (!name || Array.from(name).length > 8 || /[\r\n\t]/.test(name)) throw new Error('请输入1至8个字的货币名称');
+  return name;
+};
+
+const isUploadedIcon = (url: string) => (
+  /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(url) && url.length <= 600000
+);
+
+export const validateCoinBranding = (value: GrowthCoinBranding): GrowthCoinBranding => {
+  const name = validateCoinName(value.name);
   const validIcon = COIN_ICON_PRESETS.some(icon => icon.url === value.iconUrl)
     || LEGACY_COIN_ICONS.includes(value.iconUrl)
-    || (/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(value.iconUrl) && value.iconUrl.length <= 600000);
+    || isUploadedIcon(value.iconUrl);
   if (!validIcon) throw new Error('请选择图标，或重新上传PNG、JPG、WebP图片');
+  if (value.customIconUrl !== undefined && !isUploadedIcon(value.customIconUrl)) throw new Error('请重新上传PNG、JPG、WebP自定义图标');
+  const customIconUrl = isUploadedIcon(value.iconUrl) ? value.iconUrl : value.customIconUrl;
   // 旧蓝底金币统一升级为金色星星金币，保留学校名称及其他自选图标。
-  return { name, iconUrl: value.iconUrl === '/assets/coin.png' ? DEFAULT_COIN_BRANDING.iconUrl : value.iconUrl };
+  return { name, iconUrl: value.iconUrl === '/assets/coin.png' ? DEFAULT_COIN_BRANDING.iconUrl : value.iconUrl, ...(customIconUrl ? { customIconUrl } : {}) };
 };
 
 export const getCoinBrandTerms = (branding: GrowthCoinBranding) => ({

@@ -1421,6 +1421,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                     ) : cardDisplayTarget === 'group' ? (
                         <>
                             <CardLevelDisplaySettings
+                                target="group"
                                 showLevel={groupCardDisplaySettings.showLevel}
                                 levelForm={groupCardDisplaySettings.levelForm}
                                 onChange={({ showLevel, levelForm }) => onUpdateGroupCardDisplaySettings({ ...groupCardDisplaySettings, showLevel, levelForm })}

@@ -1,3 +1,5 @@
+import PreviewSegmentTrack from './PreviewSegmentTrack';
+import { STUDENT_TOTAL_DISPLAY_OPTIONS } from '../mobile-app/domain/studentCardDisplay';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button, Drawer, Input, Modal, Switch } from '@arco-design/web-react';
@@ -2289,33 +2291,33 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
               <div className="space-y-5">
                 <div className="overflow-hidden rounded-lg border border-slate-100 bg-slate-50/60 px-4">
                   <div className="flex items-center justify-between gap-4" style={{ minHeight: classroomDisplay.moreActions.rowHeight }}>
-                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>显示等级</span>
+                    <span className="font-bold text-slate-700" style={{ fontSize: classroomDisplay.moreActions.bodyFontSize }}>{viewMode === 'student' ? '显示总分' : '显示等级'}</span>
                     <Switch
                       checked={activeCardDisplaySettings.showLevel}
                       onChange={showLevel => updateActiveCardDisplaySettings({ showLevel })}
-                      aria-label={viewMode === 'group' ? '显示小组等级' : '显示学生等级'}
+                      aria-label={viewMode === 'group' ? '显示小组等级' : '显示学生总分'}
                     />
                   </div>
                   {activeCardDisplaySettings.showLevel && (
                     <div className="border-t border-slate-200/70 pb-4 pt-3">
-                      <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>等级形式</div>
-                      <div className="grid grid-cols-2 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="等级展示形式">
-                        {[
+                      <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>{viewMode === 'student' ? '显示方式' : '等级形式'}</div>
+                      <PreviewSegmentTrack count={viewMode === 'student' ? 3 : 2} index={activeCardDisplaySettings.levelForm === 'icon' ? 0 : activeCardDisplaySettings.levelForm === 'score' ? 1 : 2} className={`grid ${viewMode === 'student' ? 'grid-cols-3' : 'grid-cols-2'} rounded-xl bg-slate-200/70 p-1`} role="group" aria-label={viewMode === 'student' ? '显示方式' : '等级展示形式'}>
+                        {(viewMode === 'student' ? STUDENT_TOTAL_DISPLAY_OPTIONS : [
                           { value: 'icon' as const, label: '图标' },
-                          { value: 'score' as const, label: viewMode === 'student' ? '总分' : '分值' },
-                        ].map(item => (
+                          { value: 'score' as const, label: '分值' },
+                        ]).map(item => (
                           <button
                             key={item.value}
                             type="button"
                             aria-pressed={activeCardDisplaySettings.levelForm === item.value}
                             onClick={() => updateActiveCardDisplaySettings({ levelForm: item.value })}
-                            className={`rounded-lg px-3 font-bold transition-colors ${activeCardDisplaySettings.levelForm === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`whitespace-nowrap rounded-lg px-3 font-bold transition-colors ${activeCardDisplaySettings.levelForm === item.value ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                             style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
                           >
                             {item.label}
                           </button>
                         ))}
-                      </div>
+                      </PreviewSegmentTrack>
                     </div>
                   )}
                 </div>
@@ -2331,7 +2333,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                   {activeCardDisplaySettings.showEvaluation && (
                     <div className="border-t border-slate-200/70 pb-4 pt-3">
                       <div className="mb-2 font-bold text-slate-500" style={{ fontSize: classroomDisplay.moreActions.descriptionFontSize }}>显示内容</div>
-                      <div className="grid grid-cols-3 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="表扬/待改进显示内容">
+                      <PreviewSegmentTrack count={3} index={activeCardContentMode === 'all' ? 0 : activeCardContentMode === 'praise' ? 1 : 2} className="grid grid-cols-3 rounded-xl bg-slate-200/70 p-1" role="group" aria-label="表扬/待改进显示内容">
                         {[
                           { value: 'all' as const, label: '全部' },
                           { value: 'praise' as const, label: '表扬' },
@@ -2345,13 +2347,13 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                               showPraise: item.value === 'all' || item.value === 'praise',
                               showCriticism: item.value === 'all' || item.value === 'criticism',
                             })}
-                            className={`rounded-lg px-3 font-bold transition-colors ${activeCardContentMode === item.value ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`rounded-lg px-3 font-bold transition-colors ${activeCardContentMode === item.value ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                             style={{ height: classroomDisplay.modal.buttonHeight - 8, fontSize: classroomDisplay.moreActions.bodyFontSize }}
                           >
                             {item.label}
                           </button>
                         ))}
-                      </div>
+                      </PreviewSegmentTrack>
                     </div>
                   )}
                 </div>

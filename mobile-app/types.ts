@@ -20,6 +20,8 @@ export interface GuardianContact {
 }
 
 export interface Student {
+  /** 当前学期学校计分配置提供的基础分。 */
+  baseScore?: number;
   id: string;
   name: string;
   gender: 'male' | 'female';
@@ -157,7 +159,7 @@ export interface CampusCoinDetail {
 
 export type StudentLevelDisplayMode = 'term' | 'cumulative';
 
-export type StudentLevelForm = 'icon' | 'score';
+export type StudentLevelForm = 'icon' | 'score' | 'scoreWithBase';
 
 export interface EvaluationCardDisplaySettings {
   showEvaluation: boolean;

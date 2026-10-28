@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { getStudentCardDisplaySettings } from '../../mobile-app/domain/studentCardDisplay';
+import { DEMO_STUDENT_BASE_SCORE, getStudentCardTotalScore, getStudentCardDisplaySettings } from '../../mobile-app/domain/studentCardDisplay';
 import { getStudentPerformanceLevel, type StudentPerformanceSummary } from '../../mobile-app/domain/studentPerformance';
 import type { StudentCardDisplaySettings } from '../../mobile-app/types';
 import { getClassroomDisplayConfig, type ClassroomDisplayConfig } from '../../shared/classroomDisplay';
@@ -13,6 +13,7 @@ import ClassroomRosterBadge from './ClassroomRosterBadge';
  * 尺寸、字号与间距全部来自大屏分辨率配置，不使用手机端触控 Token。
  */
 export interface ClassroomStudentCardStudent {
+  baseScore?: number;
   id: string;
   name: string;
   avatar: string;
@@ -46,10 +47,11 @@ const ClassroomStudentCard: React.FC<ClassroomStudentCardProps> = ({
 }) => {
   const resolvedLevelNetScore = levelNetScore ?? performance.netScore;
   const level = getStudentPerformanceLevel(resolvedLevelNetScore);
+  const shownTotalScore = getStudentCardTotalScore(resolvedLevelNetScore, displaySettings.levelForm, student.baseScore ?? DEMO_STUDENT_BASE_SCORE);
   const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
   const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
   const showLevelIcons = displaySettings.showLevel && displaySettings.levelForm === 'icon';
-  const showLevelScore = displaySettings.showLevel && displaySettings.levelForm === 'score';
+  const showLevelScore = displaySettings.showLevel && (displaySettings.levelForm === 'score' || displaySettings.levelForm === 'scoreWithBase');
   const visiblePerformanceLabels = [
     showPraise
       ? `累计表扬${performance.praiseScore}分`
@@ -60,7 +62,7 @@ const ClassroomStudentCard: React.FC<ClassroomStudentCardProps> = ({
   ].filter(Boolean);
   const ariaLabel = [
     `${student.name}，学号${student.studentNo}`,
-    displaySettings.showLevel ? `总分${resolvedLevelNetScore}分` : '',
+    displaySettings.showLevel ? `总分（${displaySettings.levelForm === 'scoreWithBase' ? '含基础分' : '不含基础分'}）${shownTotalScore}分` : '',
     ...visiblePerformanceLabels,
   ].filter(Boolean).join('，');
   const hasVisibleValues = showPraise || showCriticism;
@@ -87,7 +89,7 @@ const ClassroomStudentCard: React.FC<ClassroomStudentCardProps> = ({
         <div className="flex w-full shrink-0 items-center justify-center" style={{ height: layout.levelHeight }}>
           {showLevelIcons && <ClassroomStudentLevelIcons level={level} compact iconSize={layout.levelIconSize} />}
           {showLevelScore && (
-            <ClassroomStudentLevelScore netScore={resolvedLevelNetScore} fontSize={layout.levelScoreFontSize} height={layout.levelHeight} />
+            <ClassroomStudentLevelScore netScore={shownTotalScore} fontSize={layout.levelScoreFontSize} height={layout.levelHeight} />
           )}
         </div>
       )}

@@ -17,10 +17,10 @@ assert.doesNotMatch(classInfoSource, /等级展示规则/, '班级详情不应�
 assert.doesNotMatch(classDetailSource, /canConfigureLevelDisplay|onUpdateStudentLevelDisplayMode|LEVEL_DISPLAY_OPTIONS/, '班级详情不应再保留统计范围入口与权限分支。');
 assert.doesNotMatch(classDetailSource, /统计范围|历史累计/, '等级设置不应再提供统计范围选项。');
 assert.match(classDetailSource, /<CardLevelDisplaySettings[\s\S]*levelForm=\{studentCardDisplaySettings\.levelForm\}/, '等级展示形式应通过公共设置组件读写。');
-assert.match(levelSettingsSource, /label="显示等级"[\s\S]*showLevel && \([\s\S]*等级形式/, '显示等级开启后才应渐进展示等级形式。');
+assert.match(levelSettingsSource, /显示总分[\s\S]*showLevel &&[\s\S]*STUDENT_TOTAL_DISPLAY_OPTIONS/, '显示总分开启后才展示三种互斥内容。');
 assert.match(levelSettingsSource, /value: 'icon', label: '图标'[\s\S]*value: 'score', label: '分值'/, '等级形式应为图标与分值二选一。');
 assert.match(rosterCardSource, /levelNetScore \?\? performance\.netScore/, '等级图标与等级分值应使用同一展示分值。');
-assert.match(rosterCardSource, /等级分值\$\{shownLevelNetScore\}分/, '学生卡片读屏名称应与等级展示分值保持一致。');
+assert.match(rosterCardSource, /shownTotalScore[\s\S]*总分（/, '读屏应包含所选总分口径。');
 assert.match(rosterCardSource, /displaySettings\.levelForm === 'icon'/, '图标形式应展示星级图标并保留头像进度环。');
 assert.match(rosterCardSource, /displaySettings\.levelForm === 'score'/, '分值形式应展示净得分。');
 assert.match(rosterCardSource, /<StudentPerformanceValues[\s\S]*summary=\{performance\}/, '加扣分数据应使用共享卡片数值组件。');
