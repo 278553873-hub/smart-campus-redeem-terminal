@@ -694,8 +694,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     
     // Preload audio and set initial volumes
     const sounds = {
-      praise: 'https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3',
-      rain: 'https://assets.mixkit.co/active_storage/sfx/731/731-preview.mp3',
+      praise: `${import.meta.env.BASE_URL}assets/audio/classroom/positive.mp3`,
+      rain: `${import.meta.env.BASE_URL}assets/audio/classroom/negative.mp3`,
       finish: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3',
       click: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'
     };
