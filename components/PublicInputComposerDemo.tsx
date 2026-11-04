@@ -1,3 +1,4 @@
+import MobilePhotoCapture from '../mobile-app/components/ui/MobilePhotoCapture';
 import React, { useState } from 'react';
 import PhoneMockup from './PhoneMockup';
 import MobileInputComposer, { type VoicePressState } from '../mobile-app/components/ui/MobileInputComposer';
@@ -27,11 +28,20 @@ export default function PublicInputComposerDemo() {
   const [statePreview, setStatePreview] = useState<'interactive' | VoicePressState>('interactive');
   const [status, setStatus] = useState('尚未提交');
   const [fallback, setFallback] = useState(false);
-  const cameraInput = React.useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [photos, setPhotos] = useState<{ id: string; url: string }[]>([]);
+  const [sent, setSent] = useState<{ id: string; url: string }[]>([]);
+  const urls = React.useRef(new Set<string>());
+  React.useEffect(() => () => urls.current.forEach(url => URL.revokeObjectURL(url)), []);
+  const removePhoto = (id: string) => {
+    const photo = photos.find(item => item.id === id);
+    if (photo) { URL.revokeObjectURL(photo.url); urls.current.delete(photo.url); }
+    setPhotos(items => items.filter(item => item.id !== id));
+  };
   const submit = (text: string) => {
-    if (!text.trim() || disabled) return;
-    setStatus(`已提交：${text.trim()}`);
-    setDraft('');
+    if (disabled || (!text.trim() && !photos.length)) return;
+    sent.forEach(photo => { URL.revokeObjectURL(photo.url); urls.current.delete(photo.url); });
+    setStatus(`已提交：${text.trim()}${photos.length ? `（${photos.length}张照片）` : ''}`); setSent(photos); setPhotos([]); setDraft('');
   };
   const voice = useHoldToTalk(submit, () => { setFallback(true); setMode('text'); });
   const title = scene === 'record' ? '记录' : scene === 'headteacher' ? '班主任助理' : '校长助理';
@@ -48,20 +58,25 @@ export default function PublicInputComposerDemo() {
   return <section className="grid h-full min-h-0 grid-cols-[440px_minmax(0,1fr)] overflow-hidden max-[1120px]:grid-cols-1 max-[1120px]:overflow-y-auto" aria-label="语音与文字输入组件说明">
     <div className="teacher-mobile-app relative min-h-0 overflow-hidden max-[1120px]:h-[700px]">
       <div className="absolute inset-y-4 left-[46%] w-[900px] -translate-x-1/2">
-        <PhoneMockup showDeviceFrame contentTopInsetMode="status-bar" screenOverlayRootId="teacher-mobile-overlay-root" screenBackground={<TeacherMobileScreenBackground variant="record" />}>
+        <PhoneMockup showDeviceFrame hideCapsule={cameraOpen} contentTopInsetMode={cameraOpen ? "none" : "status-bar"} chromeAppearance={cameraOpen ? "dark" : "light"} screenOverlayRootId="teacher-mobile-overlay-root" screenBackground={<TeacherMobileScreenBackground variant="record" />}>
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
             <header className="flex h-11 shrink-0 items-center px-5 text-[17px] font-semibold text-[var(--tm-text-primary)]">{title}</header>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-32 pt-3">
+              {sent.length > 0 && <div className="grid grid-cols-3 gap-2" aria-label="已发送照片">{sent.map(photo => <img key={photo.id} src={photo.url} alt="已发送的照片" className="aspect-square w-full rounded-lg object-cover" />)}</div>}
               {samples.concat(samples).map((text, index) => <article key={index} className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
                 <p className="text-[12px] text-[var(--tm-text-tertiary)]">{index < 3 ? '今天' : '昨天'}</p>
                 <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-primary)]">{text}</p>
               </article>)}
             </div>
+            {cameraOpen && <MobilePhotoCapture remaining={9 - photos.length} thumbnail={photos.at(-1)?.url} onClose={() => setCameraOpen(false)} onSelect={files => {
+              const additions = files.slice(0, 9 - photos.length).map(file => { const url = URL.createObjectURL(file); urls.current.add(url); return { id: url, url }; });
+              setPhotos(items => [...items, ...additions].slice(0, 9)); setCameraOpen(false);
+            }} />}
             <div className="absolute inset-x-3 bottom-6">
-              <MobileInputComposer mode={mode} value={draft} disabled={disabled} shadow={shadow} voice={previewVoice}
+              <MobileInputComposer mode={mode} value={draft} disabled={disabled} shadow={shadow} voice={previewVoice} attachments={photos} onRemoveAttachment={removePhoto} sendLabel="发送记录"
                 placeholder={fallback ? '当前环境暂不支持语音，请输入文字' : '请输入'}
                 onModeChange={next => { setMode(next); setFallback(false); }} onChange={setDraft} onSubmit={() => submit(draft)}
-                onCameraClick={camera ? () => cameraInput.current?.click() : undefined} />
+                onCameraClick={camera ? () => { voice.cancel(); if (photos.length < 9) setCameraOpen(true); } : undefined} />
             </div>
           </div>
         </PhoneMockup>
@@ -83,7 +98,7 @@ export default function PublicInputComposerDemo() {
         <label className="block text-sm text-slate-600">输入模式<select className={`mt-1 ${controlClass}`} value={mode} onChange={event => { voice.cancel(); setMode(event.target.value as typeof mode); setStatePreview('interactive'); }}><option value="voice">语音</option><option value="text">文字</option></select></label>
         <label className="block text-sm text-slate-600">语音状态<select className={`mt-1 ${controlClass}`} value={statePreview} onChange={event => { voice.cancel(); setStatePreview(event.target.value as typeof statePreview); setMode('voice'); }}><option value="interactive">跟随实际操作</option><option value="listening">按住录音</option><option value="canceling">上移取消</option></select></label>
         <label className="flex min-h-11 items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={disabled} onChange={event => { voice.cancel(); setDisabled(event.target.checked); }} className="h-4 w-4 accent-[var(--tm-brand-primary)]" />禁用提交</label>
-        <p className="text-xs leading-5 text-slate-500">状态选项只展示外观；选择“跟随实际操作”后，按住说话会使用浏览器语音能力。拍照入口在本预览中打开图片选择，不上传文件。</p>
+        <p className="text-xs leading-5 text-slate-500">状态选项只展示外观；选择“跟随实际操作”后，按住说话会使用浏览器语音能力。拍照默认进入相机，可从左下角选择相册，最多添加9张照片；演示不上传文件。</p>
       </section>
       <p role="status" className="mb-5 break-words rounded-lg bg-slate-50 p-3 text-sm text-slate-700">{status}</p>
       <section className="border-t border-slate-200 py-5" aria-labelledby="composer-parameters">
@@ -96,7 +111,6 @@ export default function PublicInputComposerDemo() {
       <section className="border-t border-slate-200 py-5" aria-labelledby="composer-usage"><h3 id="composer-usage" className="text-sm font-semibold text-slate-950">使用示例</h3><pre className="mt-3 overflow-x-auto rounded-lg bg-slate-950 p-4 text-xs leading-5 text-slate-100"><code>{usage}</code></pre>
         <p className="mt-3 text-xs leading-5 text-slate-500">语音控制器由 useHoldToTalk 提供；记录页演示通过 createSession 注入评价会话，业务层负责最终提交。</p>
       </section>
-      <input ref={cameraInput} type="file" accept="image/*" className="hidden" aria-label="选择预览图片" onChange={event => { const file = event.target.files?.[0]; if (file) setStatus(`已选择图片：${file.name}`); event.target.value = ''; }} />
     </article>
   </section>;
 }

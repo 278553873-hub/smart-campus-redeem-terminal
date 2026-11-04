@@ -11,6 +11,8 @@ interface PhoneMockupProps {
   screenOverlayRootId?: string;
   screenRef?: React.Ref<HTMLDivElement>;
   showDeviceFrame?: boolean;
+  hideCapsule?: boolean;
+  chromeAppearance?: 'light' | 'dark';
   contentTopInsetMode?: 'full-chrome' | 'status-bar' | 'none';
 }
 
@@ -24,6 +26,8 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   screenRef,
   showDeviceFrame = true,
   contentTopInsetMode = 'full-chrome',
+  chromeAppearance = 'light',
+  hideCapsule = false,
 }) => {
   const screenWidth = 393;
   const screenHeight = 852;
@@ -106,7 +110,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
           />
         )}
 
-        <SimulatedMiniProgramChrome />
+        <SimulatedMiniProgramChrome appearance={chromeAppearance} hideCapsule={hideCapsule} />
 
         {screenOverlay && (
           <div

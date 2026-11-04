@@ -1,0 +1,37 @@
+.mobile-photo-capture { position:absolute; inset:0; z-index:60; display:flex; flex-direction:column; overflow:hidden; background:var(--tm-camera-bg,#000); color:var(--tm-camera-text,#fff); }
+.mobile-photo-capture button { display:flex; align-items:center; justify-content:center; flex-shrink:0; min-width:44px; min-height:44px; color:inherit; touch-action:manipulation; }
+.mobile-photo-capture button:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
+.mobile-photo-capture button:disabled { opacity:.35; }
+.mobile-photo-capture header { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; padding:12px 12px 36px; flex-shrink:0; }
+.mobile-photo-capture header h2 { text-align:center; font-size:22px; font-weight:700; }
+.mobile-photo-capture header svg { width:26px; height:26px; }
+.mobile-photo-capture__preview { position:relative; flex:1; min-height:0; overflow:hidden; background:var(--tm-camera-preview-bg,#191919); }
+.mobile-photo-capture__preview video { width:100%; height:100%; object-fit:cover; }
+.mobile-photo-capture__frame { position:absolute; inset:20% 10%; pointer-events:none; }
+.mobile-photo-capture__frame i { position:absolute; width:48px; height:48px; border:2px solid currentColor; }
+.mobile-photo-capture__frame i:nth-child(1) { top:0; left:0; border-right:0; border-bottom:0; border-radius:24px 0 0; }
+.mobile-photo-capture__frame i:nth-child(2) { top:0; right:0; border-left:0; border-bottom:0; border-radius:0 24px 0 0; }
+.mobile-photo-capture__frame i:nth-child(3) { bottom:0; left:0; border-right:0; border-top:0; border-radius:0 0 0 24px; }
+.mobile-photo-capture__frame i:nth-child(4) { bottom:0; right:0; border-left:0; border-top:0; border-radius:0 0 24px; }
+.mobile-photo-capture__status { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:32px; text-align:center; font-size:15px; }
+.mobile-photo-capture__status button { text-decoration:underline; }
+.mobile-photo-capture__zoom { position:absolute; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; }
+.mobile-photo-capture__zoom button { border-radius:50%; font-size:17px; font-weight:600; background:var(--tm-camera-control-bg, #0006); }
+.mobile-photo-capture__zoom button[aria-pressed=true] { color:var(--tm-camera-zoom-active,#f7d338); }
+.mobile-photo-capture footer { flex-shrink:0; padding:32px 28px max(14px,env(safe-area-inset-bottom)); }
+.mobile-photo-capture__controls { display:flex; align-items:center; justify-content:space-between; }
+.mobile-photo-capture__album,.mobile-photo-capture__switch { width:50px; height:50px; border-radius:16px; background:var(--tm-camera-control-bg,#222); }
+.mobile-photo-capture__album svg,.mobile-photo-capture__switch svg { width:28px; height:28px; }
+.mobile-photo-capture__shutter { width:76px; height:76px; border:4px solid currentColor; padding:3px; border-radius:50%; }
+.mobile-photo-capture__shutter span { width:100%; height:100%; border-radius:50%; background:currentColor; }
+.mobile-photo-capture__chevron { display:block; margin:24px auto 0; width:20px; height:20px; opacity:.6; }
+.mobile-photo-capture__notice { position:absolute; top:12px; left:12px; right:12px; text-align:center; font-size:14px; }
+/* 相机演示隐藏模拟胶囊，标题栏只避让状态栏。 */
+.mobile-photo-capture { padding-top:var(--mini-program-status-bar-height, env(safe-area-inset-top, 0px)); }
+.mobile-photo-capture header { padding:0 12px 20px; }
+.mobile-photo-capture header h2 { font-size:var(--tm-font-size-section-title); font-weight:600; }
+.mobile-photo-capture header svg { width:24px; height:24px; }
+.mobile-photo-capture__album,.mobile-photo-capture__switch { width:48px; height:48px; border-radius:16px; background:var(--tm-text-primary); overflow:hidden; }
+.mobile-photo-capture__album img { width:100%; height:100%; object-fit:cover; }
+.mobile-photo-capture__album svg { width:26px; height:26px; stroke-width:1.8; }
+.mobile-photo-capture__switch svg { width:28px; height:28px; }
