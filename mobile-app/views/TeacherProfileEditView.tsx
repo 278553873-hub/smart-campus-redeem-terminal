@@ -2,7 +2,6 @@ import { mobileSheetActionClass } from '../components/ui/mobileSheetActionStyles
 import React, { useMemo, useRef, useState } from 'react';
 import {
     Camera,
-    Check,
     ChevronLeft,
     ChevronRight,
     Image,
@@ -13,6 +12,7 @@ import type { TeacherSpaceOption } from './MeView';
 import { MobileCard } from '../components/ui/MobileCard';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileGradePickerSheet from '../components/ui/MobileGradePickerSheet';
+import MobileOptionPickerSheet from '../components/ui/MobileOptionPickerSheet';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import { phoneText } from '../styles/teacherMobileTokens';
@@ -113,7 +113,8 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     const [mode, setMode] = useState<EditorMode>('idle');
     const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(new Set());
     const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set());
-    const [selectedDepartmentId, setSelectedDepartmentId] = useState(profile.departmentId);
+    const departmentIds = draft.departmentIds ?? (draft.departmentId ? [draft.departmentId] : []);
+    const departmentSummary = departmentIds.map(id => departments.find(item => item.id === id)?.name ?? (id === draft.departmentId ? draft.departmentName : '')).filter(Boolean).join('、');
     const [selectedSubject, setSelectedSubject] = useState('');
     const [editingTeachingSubject, setEditingTeachingSubject] = useState<string | null>(null);
     const [activeGrade, setActiveGrade] = useState('');
@@ -175,15 +176,6 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
         setMode('gradeLeader');
     };
 
-    const toggleGrade = (grade: string) => {
-        setSelectedGrades(prev => {
-            const next = new Set(prev);
-            if (next.has(grade)) next.delete(grade);
-            else next.add(grade);
-            return next;
-        });
-    };
-
     const saveGradeLeaderGrades = (grades = Array.from(selectedGrades)) => {
         applyProfileChange(prev => ({ ...prev, gradeLeaderGrades: grades }));
         setSelectedGrades(new Set());
@@ -197,22 +189,22 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     };
 
     const openDepartmentSelector = () => {
-        setSelectedDepartmentId(draft.departmentId);
         setMode('department');
     };
 
-    const selectDepartment = (department?: TeacherDepartment) => {
-        setSelectedDepartmentId(department?.id ?? '');
+    const saveDepartments = (ids: string[]) => {
+        const selectedDepartments = departments.filter(department => ids.includes(department.id));
         applyProfileChange(prev => ({
             ...prev,
-            departmentId: department?.id ?? '',
-            departmentName: department?.name ?? '',
+            departmentIds: selectedDepartments.map(department => department.id),
+            departmentId: selectedDepartments[0]?.id ?? '',
+            departmentName: selectedDepartments[0]?.name ?? '',
         }));
         setMode('idle');
     };
 
     const clearDepartment = () => {
-        selectDepartment();
+        saveDepartments([]);
     };
 
     const openTeachingEditor = (group?: TeachingGroup) => {
@@ -366,39 +358,19 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
     );
 
     const renderDepartmentSelectorSheet = () => (
-        <MobileBottomSheet
+        <MobileOptionPickerSheet
             open
             title="选择部门"
             onClose={() => setMode('idle')}
-            footerDivider={false}
-            footer={selectedDepartmentId ? (
-                <button
-                    type="button"
-                    onClick={clearDepartment}
-                    className={`${mobileSheetActionClass} flex w-full items-center justify-center font-medium text-[var(--tm-text-tertiary)] active:bg-[var(--tm-bg-surface-soft)]`}
-                >
-                    清空部门
-                </button>
-            ) : undefined}
-        >
-            <div className="divide-y divide-[var(--tm-border-subtle)] pb-1">
-                {departments.map(department => {
-                    const selected = selectedDepartmentId === department.id;
-                    return (
-                        <button
-                            key={department.id}
-                            type="button"
-                            onClick={() => selectDepartment(department)}
-                            aria-pressed={selected}
-                            className="flex min-h-14 w-full items-center justify-between text-left text-sm font-medium text-[var(--tm-text-primary)] active:bg-[var(--tm-bg-surface-soft)]"
-                        >
-                            <span>{department.name}</span>
-                            {selected && <Check className="h-4 w-4 text-[var(--tm-brand-primary)]" aria-hidden="true" />}
-                        </button>
-                    );
-                })}
-            </div>
-        </MobileBottomSheet>
+            selectionMode="multiple"
+            options={departments.map(department => ({ value: department.id, label: department.name }))}
+            values={departmentIds}
+            onConfirm={saveDepartments}
+            showClearButton
+            onClear={clearDepartment}
+            clearLabel="清空部门"
+            ariaLabel="部门选项"
+        />
     );
 
     const renderAvatarSheet = () => (
@@ -598,10 +570,10 @@ const TeacherProfileEditView: React.FC<TeacherProfileEditViewProps> = ({ profile
                                     <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
                                 </span>
                             </MobileEditableRow>
-                            <MobileEditableRow onClick={openDepartmentSelector} className={editableRowLayoutClass} aria-label={`修改部门，当前${draft.departmentName || '未设置'}`}>
+                            <MobileEditableRow onClick={openDepartmentSelector} className={editableRowLayoutClass} aria-label={`修改部门，当前${departmentSummary || '未设置'}`}>
                                 <span className={fieldLabelClass}>部门</span>
-                                <span className={`flex min-w-0 items-center justify-end gap-2 text-sm ${draft.departmentName ? 'font-semibold text-[var(--tm-text-primary)]' : 'font-medium text-[var(--tm-text-tertiary)]'}`}>
-                                    <span className="truncate">{draft.departmentName || '未设置'}</span>
+                                <span className={`flex min-w-0 items-center justify-end gap-2 text-sm ${departmentSummary ? 'font-semibold text-[var(--tm-text-primary)]' : 'font-medium text-[var(--tm-text-tertiary)]'}`}>
+                                    <span className="text-right">{departmentSummary || '未设置'}</span>
                                     <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" aria-hidden="true" />
                                 </span>
                             </MobileEditableRow>

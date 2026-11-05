@@ -113,11 +113,13 @@ if (teachingCardSource.includes('<Trash2')) {
   throw new Error('任教信息卡不应直接暴露删除操作。');
 }
 
-requireText(editSource, 'selectDepartment()', '部门应支持保存为空。');
+requireText(editSource, 'saveDepartments([])', '部门应支持保存为空。');
 if (editSource.includes('<span>未设置</span>')) {
   throw new Error('部门选择列表顶部不应把未设置作为普通选项。');
 }
-requireText(editSource, 'onClick={() => selectDepartment(department)}', '选择部门后应直接生效。');
+requireText(editSource, '<MobileOptionPickerSheet', '部门应复用与年级一致的公共按钮选择弹窗。');
+requireText(editSource, 'onConfirm={saveDepartments}', '部门选择应在完成后保存。');
+requireText(typesSource, 'departmentIds?: string[];', '教师资料应兼容旧单部门数据并支持多个部门。');
 requireText(editSource, '清空部门', '已有部门时应在弹窗底部提供灰色清空操作。');
 if (editSource.includes('disabled={!selectedDepartmentId}')) {
   throw new Error('部门允许为空，不应因未选择部门而禁用保存。');

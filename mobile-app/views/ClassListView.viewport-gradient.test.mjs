@@ -19,7 +19,7 @@ requireText(mobileApp, 'TeacherMobileScreenBackground', '班级页面应使用�
 requireText(background, "variant = 'ambient'", '公共背景组件应默认使用长页面环境背景。');
 requireText(mobileApp, 'variant="class-list" classListMode={classListTab} preview={gradientPreview}', '班级与社团页签应驱动公共背景方向。');
 requireText(mobileApp, 'const hasScreenLevelBackground', '有屏幕级背景的页面，内容容器应保持透明。');
-requireText(classList, 'text-lg font-[550] text-[var(--tm-text-primary)]', '班级卡片标题字号应为 18px，并使用550字重。');
+requireText(classList, 'text-lg font-medium text-[var(--tm-text-primary)]', '班级与团队卡片标题字号应为18像素，并使用500字重。');
 requireText(classList, 'bg-[var(--tm-brand-secondary-soft)] px-2 py-0.5 text-[11px] tm-font-regular text-[var(--tm-brand-secondary)]', '普通学科标签应使用紧凑的11px浅橙标签样式。');
 requireText(classList, "addDemoTopBreathingSpace ? 'pt-5' : 'pt-0'", '真实手机效果下班级列表不应在小程序标题栏下重复增加顶距。');
 if (classList.includes('ClassSourceTrigger')) failures.push('班级页不应继续展示班级来源触发器。');

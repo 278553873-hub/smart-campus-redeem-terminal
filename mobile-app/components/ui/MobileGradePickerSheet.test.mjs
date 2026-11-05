@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
-const source = fs.readFileSync(new URL('./MobileGradePickerSheet.tsx', import.meta.url), 'utf8');
+const gradeSource = fs.readFileSync(new URL('./MobileGradePickerSheet.tsx', import.meta.url), 'utf8');
+const pickerSource = fs.readFileSync(new URL('./MobileOptionPickerSheet.tsx', import.meta.url), 'utf8');
+const source = gradeSource + pickerSource;
 const bottomSheet = fs.readFileSync(new URL('./MobileBottomSheet.tsx', import.meta.url), 'utf8');
 const classList = fs.readFileSync(new URL('../../views/ClassListView.tsx', import.meta.url), 'utf8');
 const leaderboard = fs.readFileSync(new URL('../../views/ClassLeaderboardView.tsx', import.meta.url), 'utf8');
@@ -46,8 +48,8 @@ for (const required of [
   'const displayOptions = showAllGradesOption',
   "{ id: 'all-grades', stage: undefined, options: allGradeOptions }",
   "{ id: 'grades', stage: undefined, options: concreteOptions }",
-  'const allGradesSelected = multipleProps',
-  'value === allGradesValue',
+  'exclusiveValue={showAllGradesOption ? allGradesValue : undefined}',
+  'value === exclusiveValue',
 ]) {
   assert.ok(source.includes(required), `公共年级选择弹窗缺少：${required}`);
 }
@@ -97,9 +99,9 @@ assert.doesNotMatch(publicComponentsDemo, /pickerOpen|setPickerOpen|setGrade|Che
 assert.doesNotMatch(source, /<Check|from 'lucide-react'/);
 assert.doesNotMatch(source, /selectedCount > 0 \? `（\$\{selectedCount\}）`/);
 assert.doesNotMatch(source, /showClearButton && selectedCount > 0/);
-assert.match(source, /next\.clear\(\);\s*next\.add\(allGradesValue\);/, '选择全部年级时应只保留全部年级范围值。');
-assert.match(source, /next\.delete\(allGradesValue\);\s*if \(next\.has\(value\)\)/, '切换到具体年级时应退出全部年级范围。');
-assert.match(source, /multipleProps\.onConfirm\(displayOptions\.map\(option => option\.value\)\.filter\(value => draftValues\.has\(value\)\)\)/, '确认时应回传当前选中的展示值。');
+assert.match(source, /next\.clear\(\);\s*next\.add\(exclusiveValue\);/, '选择全部年级时应只保留全部年级范围值。');
+assert.match(source, /next\.delete\(exclusiveValue\);\s*if \(next\.has\(value\)\)/, '切换到具体年级时应退出全部年级范围。');
+assert.match(source, /multipleProps\.onConfirm\(options\.map\(option => option\.value\)\.filter\(value => draftValues\.has\(value\)\)\)/, '确认时应回传当前选中的展示值。');
 assert.match(inventory, /id="grade-picker"/);
 assert.match(inventory, /MobileGradePickerSheet/);
 assert.match(teacherMobileGuidelines, /MobileGradePickerSheet[\s\S]*固定每行三项/);
@@ -128,7 +130,7 @@ for (const [token, value] of [
 
 assert.doesNotMatch(teacherMobileTokens, /'--tm-choice-pill-default-border': teacherBrandPalette\.neutral\[300\]/);
 
-const optionButtonSource = source.slice(source.indexOf('const optionButtonClass'), source.indexOf('const MobileGradePickerSheet'));
+const optionButtonSource = pickerSource.slice(pickerSource.indexOf('const optionButtonClass'), pickerSource.indexOf('const MobileOptionPickerSheet'));
 const confirmButtonSource = source.slice(source.indexOf('onClick={handleConfirm}'), source.indexOf('</button>', source.indexOf('onClick={handleConfirm}')));
 const clearButtonSource = source.slice(source.indexOf('onClick={handleClear}'), source.indexOf('</button>', source.indexOf('onClick={handleClear}')));
 const sheetCloseButtonSource = bottomSheet.slice(bottomSheet.lastIndexOf('onClick={onClose}'), bottomSheet.indexOf('</button>', bottomSheet.lastIndexOf('onClick={onClose}')));

@@ -926,6 +926,9 @@ export const teacherBrandCssVariables = {
   '--tm-sheet-header-height': '56px',
   '--tm-sheet-inline': 'var(--tm-space-4)',
   '--tm-sheet-content-gap': 'var(--tm-space-2)',
+  // 固定操作区独立承载上方留白；分区选择弹窗不再叠加正文底部内边距。
+  '--tm-sheet-footer-gap': 'var(--tm-space-3)',
+  '--tm-sheet-section-footer-gap': 'var(--tm-space-6)',
   // 日期快捷项可见高度；外层仍保留 44px 触控区。
   '--tm-date-shortcut-height': '34px',
   '--tm-date-control-radius': 'var(--tm-radius-control-compact)',

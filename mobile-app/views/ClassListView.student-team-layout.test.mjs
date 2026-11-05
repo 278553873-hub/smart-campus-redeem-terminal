@@ -17,7 +17,7 @@ assert.ok(
   '团队卡片应复用班级列表专用圆角。',
 );
 assert.ok(
-  classListSource.includes('block truncate text-lg font-[550] text-[var(--tm-text-primary)]">{team.name}'),
+  classListSource.includes('block truncate text-lg font-medium text-[var(--tm-text-primary)]">{team.name}'),
   '团队名称应与班级名称使用相同字号和字重。',
 );
 assert.ok(

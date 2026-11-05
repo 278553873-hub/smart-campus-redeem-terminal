@@ -211,6 +211,8 @@ export interface TeacherProfile {
   schoolName: string;
   departmentId: string;
   departmentName: string;
+  // 多部门选择；旧资料未提供时沿用 departmentId，以上两个字段保留首个部门。
+  departmentIds?: string[];
   teachingAssignments: TeacherTeachingAssignment[];
   homeroomClassIds: string[];
   deputyHomeroomClassIds?: string[];

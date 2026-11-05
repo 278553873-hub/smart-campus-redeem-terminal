@@ -546,7 +546,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     <img src={avatarSrc} alt="" className="h-full w-full object-cover" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                    <span {...skeletonBlock(1, 'line', 1, 18)} data-skeleton-right-to={`team-action-end-${team.id}`} className="block truncate text-lg font-[550] text-[var(--tm-text-primary)]">{team.name}</span>
+                    <span {...skeletonBlock(1, 'line', 1, 18)} data-skeleton-right-to={`team-action-end-${team.id}`} className="block truncate text-lg font-medium text-[var(--tm-text-primary)]">{team.name}</span>
                     <span {...skeletonBlock(2, 'line', 0.82, 13)} className="mt-1 flex min-w-0 items-center gap-1.5">
                         <span className="truncate text-[13px] font-[450] text-[var(--tm-text-secondary)]">{team.ownerName}负责 · {team.memberIds.length}人</span>
                         <span className={`inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-semibold ${isPublicTeam ? 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]' : 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]'}`}>
