@@ -26,6 +26,17 @@ export interface ClassroomStudentCardLayout {
   fullHeight: number;
   countsHeight: number;
   identityOnlyHeight: number;
+  pet: {
+    width: number;
+    cardHeight: number;
+    nameFontSize: number;
+    nameLineHeight: number;
+    rosterFontSize: number;
+    rosterWidth: number;
+    rosterHeight: number;
+    identityHeight: number;
+    fontSize: number;
+  };
 }
 
 export interface ClassroomGroupCardLayout {
@@ -230,6 +241,7 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
       fullHeight: 155,
       countsHeight: 134,
       identityOnlyHeight: 112,
+      pet: { width: 172, cardHeight: 256, nameFontSize: 12, nameLineHeight: 18, rosterFontSize: 12, rosterWidth: 22, rosterHeight: 18, identityHeight: 20, fontSize: 10 },
     },
     groupCard: { width: 280, gap: 12, compactHeight: 120, fullHeight: 128, avatarSize: 60, titleFontSize: 17, memberFontSize: 12, ...PERFORMANCE_VALUE_LAYOUTS.standard },
     memberSelect: { columnMinWidth: 82, gap: 8, minHeight: 96, avatarSize: 48, nameFontSize: 12, studentNoFontSize: 12 },
@@ -270,6 +282,7 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
       fullHeight: 179,
       countsHeight: 153,
       identityOnlyHeight: 128,
+      pet: { width: 212, cardHeight: 304, nameFontSize: 14, nameLineHeight: 20, rosterFontSize: 12, rosterWidth: 22, rosterHeight: 18, identityHeight: 22, fontSize: 10 },
     },
     groupCard: { width: 320, gap: 16, compactHeight: 136, fullHeight: 148, avatarSize: 72, titleFontSize: 20, memberFontSize: 14, ...PERFORMANCE_VALUE_LAYOUTS.classroom },
     memberSelect: { columnMinWidth: 96, gap: 12, minHeight: 112, avatarSize: 60, nameFontSize: 13, studentNoFontSize: 14 },
@@ -310,6 +323,7 @@ const DISPLAY_CONFIGS: Record<ResolvedClassroomDisplayMode, ClassroomDisplayConf
       fullHeight: 204,
       countsHeight: 176,
       identityOnlyHeight: 147,
+      pet: { width: 280, cardHeight: 376, nameFontSize: 16, nameLineHeight: 22, rosterFontSize: 14, rosterWidth: 24, rosterHeight: 20, identityHeight: 24, fontSize: 12 },
     },
     groupCard: { width: 360, gap: 20, compactHeight: 160, fullHeight: 172, avatarSize: 80, titleFontSize: 22, memberFontSize: 16, ...PERFORMANCE_VALUE_LAYOUTS.distant },
     memberSelect: { columnMinWidth: 116, gap: 16, minHeight: 132, avatarSize: 72, nameFontSize: 14, studentNoFontSize: 16 },
@@ -343,3 +357,23 @@ export const getClassroomDisplayConfig = (
   viewportWidth = 0,
   viewportHeight = 0,
 ): ClassroomDisplayConfig => DISPLAY_CONFIGS[resolveClassroomDisplayMode(mode, viewportWidth, viewportHeight)];
+
+
+// 主页面固定“小”档的紧凑操作区；弹窗和内容档位配置保持独立。
+export const CLASSROOM_PAGE_CONTROLS = {
+  shell: {
+    ...DISPLAY_CONFIGS.standard.shell,
+    classSwitcherHeight: 40,
+    viewSwitcherHeight: 36,
+  },
+  toolbar: { ...DISPLAY_CONFIGS.standard.toolbar, height: 44 },
+  layout: {
+    contentTopPadding: 12,
+    contentBottomPadding: 16,
+    filterBottomGap: 12,
+    gridBottomPadding: 16,
+    standaloneFilterHeight: 48,
+    footerPadding: 12,
+    historyIconContainerSize: 24,
+  },
+};

@@ -1,0 +1,22 @@
+.pet-evolution-frame {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: center;
+  isolation: isolate;
+  pointer-events: none;
+  background: transparent;
+}
+
+/* 以完整图片画布定位，不依赖生图中头部或身体的位置。 */
+.pet-evolution-frame > .pet-artwork-frame {
+  position: relative;
+  z-index: 1;
+  transform: scale(.6);
+  transform-origin: center;
+}
+.pet-evolution-text { position: absolute; inset: 0; display: block; pointer-events: none; }
+.pet-evolution-text canvas { display: block; width: 100%; height: 100%; }
+.pet-evolution-text--back { z-index: 0; }
+.pet-evolution-text--front { z-index: 2; }

@@ -19,7 +19,8 @@ assert.doesNotMatch(appSource, /退出登录功能演示中/, '教师端不应�
 assert.match(appSource, /screenBackground=\{gradientPreview[\s\S]*?<TeacherMobileScreenBackground variant="preview" preview=\{gradientPreview\} \/>/, '渐变预览时登录页应复用统一屏幕背景。');
 assert.match(appSource, /gradientPreview \? 'bg-transparent' : 'bg-\[var\(--tm-bg-surface\)\]'/, '正常登录页承载层应保留教师端基础表面色，预览时允许透出渐变。');
 
-assert.match(loginSource, />\s*一键登录\s*<\/button>/, '登录页应把一键登录作为主操作。');
+assert.match(loginSource, /showWechatLogin = true/, '手机端默认保留一键登录。');
+assert.match(loginSource, /onClick=\{\(\) => openSheet\('wechat'\)\}[\s\S]*?一键登录[\s\S]*?<\/button>/, '一键登录应打开授权弹窗。');
 assert.match(loginSource, />最近登录<[\s\S]*>190\*\*\*\*0000</, '登录页应在最近登录文案下方展示较小字号的脱敏手机号。');
 assert.match(loginSource, /const \[agreed, setAgreed\] = useState\(true\)/, '教师端 Demo 登录页应默认勾选隐私保护指引。');
 assert.match(loginSource, /loginWithRecentAccount[\s\S]*请先阅读并同意隐私保护指引[\s\S]*completeLogin\(\)/, '最近登录应校验协议后直接登录。');

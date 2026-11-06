@@ -70,6 +70,9 @@ export const teacherBrandPalette = {
 } as const;
 
 export const teacherPlatformPalette = {
+  bluetooth: {
+    500: '#008DFF',
+  },
   wechat: {
     500: '#07C160',
     600: '#06AD56',
@@ -77,6 +80,7 @@ export const teacherPlatformPalette = {
 } as const;
 
 export const teacherPlatformSemantic = {
+  bluetooth: teacherPlatformPalette.bluetooth[500],
   wechat: teacherPlatformPalette.wechat[500],
   wechatPressed: teacherPlatformPalette.wechat[600],
 } as const;
@@ -528,6 +532,7 @@ export const teacherBrandCssVariables = {
   '--tm-brand-reward-strong': teacherBrandSemantic.rewardStrong,
   '--tm-brand-reward-soft': teacherBrandSemantic.rewardSoft,
   '--tm-platform-wechat': teacherPlatformSemantic.wechat,
+  '--tm-platform-bluetooth': teacherPlatformSemantic.bluetooth,
   '--tm-platform-wechat-pressed': teacherPlatformSemantic.wechatPressed,
   '--tm-status-positive': teacherBrandSemantic.positive,
   '--tm-status-positive-strong': teacherBrandSemantic.positiveStrong,
@@ -559,6 +564,12 @@ export const teacherBrandCssVariables = {
   '--tm-record-negative-bg': teacherBrandSemantic.negativeSoft,
   '--tm-record-negative-border': teacherBrandPalette.red[100],
   '--tm-record-negative-text': teacherEvaluationScoreSemantic.negative,
+  '--tm-pet-stage-egg': '#DCE3EC',
+  '--tm-pet-stage-juvenile': '#68CF68',
+  '--tm-pet-stage-growth': '#60A5FA',
+  '--tm-pet-stage-mature': '#B578FF',
+  '--tm-pet-stage-complete': '#F4C14B',
+  '--tm-pet-stage-ultimate': '#FF6973',
   '--tm-edu-virtue': teacherFiveEducationSemantic.virtue,
   '--tm-edu-wisdom': teacherFiveEducationSemantic.wisdom,
   '--tm-edu-fitness': teacherFiveEducationSemantic.fitness,
@@ -593,6 +604,11 @@ export const teacherBrandCssVariables = {
   '--tm-student-praise-soft': teacherStudentLevelSemantic.praiseSoft,
   '--tm-student-criticism': teacherStudentLevelSemantic.criticism,
   '--tm-student-criticism-soft': teacherStudentLevelSemantic.criticismSoft,
+  '--tm-student-pet-card-padding': 'var(--tm-space-2)',
+  '--tm-student-pet-card-gap': 'var(--tm-space-1)',
+  '--tm-student-pet-stage-top': '28px',
+  '--tm-student-pet-stage-text': 'var(--tm-text-primary)',
+  '--tm-student-pet-progress-height': '4px',
   '--tm-student-card-height-full': '120px',
   '--tm-student-card-height-compact': '104px',
   '--tm-student-card-height-minimal': '88px',
@@ -924,6 +940,7 @@ export const teacherBrandCssVariables = {
   '--tm-form-segment-active-radius': 'calc(var(--tm-form-control-radius) - var(--tm-space-1))',
   '--tm-sheet-footer-divider-width': '0px',
   '--tm-sheet-header-height': '56px',
+  '--tm-sheet-max-width': '28rem',
   '--tm-sheet-inline': 'var(--tm-space-4)',
   '--tm-sheet-content-gap': 'var(--tm-space-2)',
   // 固定操作区独立承载上方留白；分区选择弹窗不再叠加正文底部内边距。
@@ -1005,6 +1022,13 @@ export const teacherBrandCssVariables = {
   '--tm-voice-breathe-duration': '2400ms',
   // 手机端所有页面及弹层的缺省插图使用同一显示尺寸。
   '--tm-empty-state-image-size': '160px',
+  // 极速版蓝牙设备：状态提示、真实同步进度和附近设备列表。
+  '--tm-airec-status-dot-size': '6px',
+  '--tm-airec-status-halo-size': '12px',
+  '--tm-airec-status-breathe-duration': '2400ms',
+  '--tm-airec-progress-duration': '300ms',
+  '--tm-airec-scan-size': '280px',
+  '--tm-airec-device-row-height': '56px',
   '--tm-font-size-document-title': '26px',
   '--tm-font-size-page-title': '22px',
   '--tm-font-size-group-title': '18px',

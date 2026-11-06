@@ -1,3 +1,4 @@
+import { buildClassRecordDemoAnalysis } from '../domain/classRecordDemoAnalysis';
 import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -28,6 +29,8 @@ const CLASS_RECORD_GUIDE_EXAMPLES = [
 ] as const;
 
 interface ClassRecordLogViewProps {
+    headerRightAccessory?: React.ReactNode;
+    onStudentEvaluationChange?: (record: { id: string; studentIds: string[]; score: number; recordedAt: string }, remove?: boolean) => void;
     classNameStr?: string;
     onBack: () => void;
     onStartRecord?: () => void;
@@ -39,6 +42,7 @@ interface ClassRecordLogViewProps {
     activeTab: 'student' | 'class';
     onTabChange: (tab: 'student' | 'class') => void;
     canRecordClass?: boolean;
+    availableRecordScopes?: readonly ('student' | 'class')[];
     showFirstRecordGuide?: boolean;
     onViewIndicators: () => void;
     classes?: ClassInfo[];
@@ -64,6 +68,7 @@ interface LogItem {
     scores?: { label: string, value: number }[];
     theme?: 'neutral' | 'negative' | 'positive';
     audioDuration?: string;
+    recordedAt?: string;
     rawDate?: string; // For the editable field
     scope: 'student' | 'class';
 }
@@ -155,9 +160,11 @@ const INITIAL_LOGS: LogItem[] = [
 
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
-    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, showFirstRecordGuide = false,
-    onViewIndicators, classes = [], currentSpace
+    addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, availableRecordScopes = ['student', 'class'], showFirstRecordGuide = false,
+    onViewIndicators, classes = [], currentSpace, onStudentEvaluationChange, headerRightAccessory
 }) => {
+    const recordScopes = availableRecordScopes.filter(scope => scope !== 'class' || canRecordClass);
+    const showRecordScopeSwitch = recordScopes.length > 1;
     // State
     const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
     const processedRecordIdsRef = useRef<Set<string>>(new Set());
@@ -234,6 +241,8 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
                 // For this demo, we simulate a very realistic response based on the prompt's logic
                 setTimeout(() => {
+                    const targetIds: string[] = newRecordData.mockStudents?.length ? newRecordData.mockStudents : ['s1'];
+                    if (activeTab === 'student') onStudentEvaluationChange?.({ id: newId, studentIds: targetIds, score: 2, recordedAt: now.toISOString() });
                     setLogs(prev => prev.map(log => {
                         if (log.id === newId) {
                             return {
@@ -241,14 +250,14 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 status: 'done',
                                 aiSummary: '在课堂上表现非常主动，能够积极举手回答问题，展现了良好的学习热情。',
                                 theme: 'positive',
-                                students: [
-                                    { id: 's1', name: '林小杰 (2025级1班)' }
-                                ],
+                                students: targetIds.map(id => ({ id, name: MOCK_STUDENTS_CLASS_1.find(student => student.id === id)?.name ?? id })),
                                 score: { label: '智育-专注有序-课堂专注', value: 2 },
                                 scores: [{ label: '智育-专注有序-课堂专注', value: 2 }],
+                                ...(activeTab === 'class' ? buildClassRecordDemoAnalysis(newRecordData.text ?? '', classes) : {}),
                                 audioDuration: '8s',
                                 rawDate: now.toISOString().split('T')[0],
-                                scope: 'student'
+                                scope: activeTab,
+                                recordedAt: now.toISOString()
                             };
                         }
                         return log;
@@ -270,7 +279,13 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         setShowClassSelect(false);
     };
 
+    const notifyPetEvaluation = (log: LogItem, score: number, remove = false) => {
+        if (log.scope !== 'student' || !log.recordedAt) return;
+        onStudentEvaluationChange?.({ id: log.id, studentIds: (log.students ?? []).map(student => student.id), score, recordedAt: log.recordedAt }, remove);
+    };
     const handleUpdateLogScore = (id: string, label: string, value: number) => {
+        const log = logs.find(item => item.id === id);
+        if (log) notifyPetEvaluation(log, value);
         setLogs(prev => prev.map(log => log.id === id ? { ...log, score: { label, value } } : log));
         setShowScoreEdit(false);
     };
@@ -297,7 +312,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                         <RetryIcon className="w-3.5 h-3.5" /> 重新识别
                     </button>
                     <div className="mx-2 h-px bg-[var(--tm-bg-surface-muted)]"></div>
-                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-xs font-medium text-[var(--tm-status-negative)]" onClick={() => { setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
+                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-xs font-medium text-[var(--tm-status-negative)]" onClick={() => { const log = logs.find(item => item.id === id); if (log) notifyPetEvaluation(log, 0, true); setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
                         <DeleteIcon className="w-3.5 h-3.5" /> 删除记录
                     </button>
                 </div>
@@ -489,7 +504,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                     )}
 
                     <div>
-                        {canRecordClass && (
+                        {showRecordScopeSwitch && (
                             <div className="[padding-right:var(--mini-program-capsule-right-inset,0px)]">
                                 <MobileSlidingSegmentedControl
                                     shape="subtle"
@@ -507,7 +522,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                             indicatorClassName: 'bg-[var(--tm-record-class-selected-bg)]',
                                             activeTextClassName: 'text-[var(--tm-record-class-text)]',
                                         },
-                                    ]}
+                                    ].filter(item => recordScopes.includes(item.value as 'student' | 'class'))}
                                     onChange={onTabChange}
                                     ariaLabel="记录对象"
                                     semantics="group"
@@ -515,7 +530,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 />
                             </div>
                         )}
-                        <div className={`relative flex h-[var(--mini-program-title-bar-height,44px)] items-center ${canRecordClass ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}`}>
+                        <div role="group" aria-label="记录工具" className={`relative flex h-[var(--mini-program-title-bar-height,44px)] items-center ${showRecordScopeSwitch ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}`}>
                             <button
                                 type="button"
                                 onClick={onViewIndicators}
@@ -525,10 +540,13 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 <span>指标</span>
                                 <ChevronRightIcon className="h-3.5 w-3.5" />
                             </button>
-                            <p className={canRecordClass
+                            <p className={headerRightAccessory
+                                ? 'min-w-0 flex-1 truncate px-1 text-center text-[11px] font-medium leading-4 text-[var(--tm-text-disabled)]'
+                                : showRecordScopeSwitch
                                 ? 'ml-auto text-right text-[11px] font-medium leading-4 text-[var(--tm-text-disabled)]'
                                 : 'pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-center text-[11px] font-medium leading-4 text-[var(--tm-text-disabled)]'
                             }>内容由AI生成</p>
+                            {headerRightAccessory}
                         </div>
                     </div>
                 </div>

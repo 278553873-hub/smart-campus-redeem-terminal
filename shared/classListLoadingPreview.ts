@@ -6,7 +6,7 @@ export interface ClassListLoadingPreview {
 }
 
 export const defaultClassListLoadingPreview: ClassListLoadingPreview = {
-  durationMs: 1800,
+  durationMs: 500,
   replayKey: 0,
   mode: 'timed',
 };

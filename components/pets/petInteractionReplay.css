@@ -1,0 +1,10 @@
+@media (prefers-reduced-motion: no-preference) {
+  .pet-interaction-target[data-pet-restarting="true"] .pet-egg-artwork,
+  .pet-interaction-target[data-pet-restarting="true"] .pet-companion-artwork,
+  .pet-interaction-target[data-pet-restarting="true"] .pet-companion-contact-shadow,
+  .pet-interaction-target[data-pet-restarting="true"] .pet-companion-foil-sweep,
+  .pet-interaction-target[data-pet-restarting="true"] .pet-companion-aura,
+  .pet-interaction-target[data-pet-restarting="true"] .pet-companion-sparks i {
+    animation: none !important;
+  }
+}

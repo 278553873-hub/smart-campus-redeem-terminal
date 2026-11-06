@@ -176,7 +176,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
             ? 'cubic-bezier(0.22, 1, 0.36, 1)'
             : 'cubic-bezier(0.4, 0, 1, 1)',
         }}
-        className={`relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] will-change-[transform,opacity] transition-[transform,opacity] motion-reduce:transition-none ${visible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'} ${size === 'full' ? 'h-[94%] max-h-[94%]' : size === 'tall' ? 'h-[86%] max-h-[86%]' : 'max-h-[86%]'}`}
+        className={`relative z-10 flex w-full max-w-[var(--tm-sheet-max-width,28rem)] flex-col overflow-hidden rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] will-change-[transform,opacity] transition-[transform,opacity] motion-reduce:transition-none ${visible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'} ${size === 'full' ? 'h-[94%] max-h-[94%]' : size === 'tall' ? 'h-[86%] max-h-[86%]' : 'max-h-[86%]'}`}
       >
         <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">
           {showHandle && <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--tm-border-subtle)]" aria-hidden="true" />}

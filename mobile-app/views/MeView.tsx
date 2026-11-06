@@ -1,11 +1,14 @@
 import React from 'react';
 import {
     BookOpen,
+    Bluetooth,
+    PawPrint,
     CalendarRange,
     Camera,
     Check,
     ChevronRight,
     ClipboardList,
+    PackageCheck,
     Coins,
     FileCog,
     FileSliders,
@@ -36,29 +39,38 @@ const getClassSourceTypeLabel = (space: TeacherSpaceOption) => (
 );
 
 interface MeViewProps {
+    showUnreleasedTools?: boolean;
+    availableTools?: {
+        managementTools: readonly TeacherManagementToolId[];
+        moreTools: readonly TeacherMoreToolId[];
+    };
     teacherProfile: TeacherProfile;
     currentSpace: TeacherSpaceOption;
     isSpaceSheetOpen: boolean;
-    onNavigateToFiles: () => void;
+    onNavigateToFiles?: () => void;
     onEditTeacherProfile: () => void;
-    onOpenTermGenerateModal: () => void;
-    onViewLeaderReport: () => void;
-    onOpenMoralEducationCockpit: () => void;
-    onOpenWeeklyDutySchedule: () => void;
-    onOpenParentEvaluationVisibility: () => void;
-    onOpenHomeworkBatchImport: () => void;
+    onOpenTermGenerateModal?: () => void;
+    onViewLeaderReport?: () => void;
+    onOpenMoralEducationCockpit?: () => void;
+    onOpenWeeklyDutySchedule?: () => void;
+    onOpenParentRecordingSettings?: () => void;
+    onOpenParentEvaluationVisibility?: () => void;
+    onOpenClassPetSettings?: () => void;
+    onOpenHomeworkBatchImport?: () => void;
     onOpenSettings: () => void;
-    onOpenSubjectManagement: () => void;
-    onOpenDepartmentManagement: () => void;
-    onOpenCoinIssuance: () => void;
-    onOpenSuggestionFeedback: () => void;
-    onOpenQuestionnaire: () => void;
+    onOpenSubjectManagement?: () => void;
+    onOpenDepartmentManagement?: () => void;
+    onOpenCoinIssuance?: () => void;
+    onOpenVendingExchange?: () => void;
+    onOpenSuggestionFeedback?: () => void;
+    onOpenBluetoothDevices?: () => void;
+    onOpenQuestionnaire?: () => void;
     pendingCollectionCount: number;
-    onOpenAssignedCollections: () => void;
-    onOpenArchiveDesign: () => void;
-    onOpenReportManagement: () => void;
-    onOpenAiHeadteacherAssistant: () => void;
-    onOpenAiPrincipalAssistant: () => void;
+    onOpenAssignedCollections?: () => void;
+    onOpenArchiveDesign?: () => void;
+    onOpenReportManagement?: () => void;
+    onOpenAiHeadteacherAssistant?: () => void;
+    onOpenAiPrincipalAssistant?: () => void;
     onToggleSpaceSheet: () => void;
 }
 
@@ -115,6 +127,8 @@ export const ClassSourceSheet: React.FC<{
 );
 
 const MeView: React.FC<MeViewProps> = ({
+    showUnreleasedTools = false,
+    availableTools,
     teacherProfile,
     currentSpace,
     isSpaceSheetOpen,
@@ -124,13 +138,17 @@ const MeView: React.FC<MeViewProps> = ({
     onViewLeaderReport,
     onOpenMoralEducationCockpit,
     onOpenWeeklyDutySchedule,
+    onOpenParentRecordingSettings,
     onOpenParentEvaluationVisibility,
+    onOpenClassPetSettings,
     onOpenHomeworkBatchImport,
     onOpenSettings,
     onOpenSubjectManagement,
     onOpenDepartmentManagement,
     onOpenCoinIssuance,
+    onOpenVendingExchange,
     onOpenSuggestionFeedback,
+    onOpenBluetoothDevices,
     onOpenQuestionnaire,
     pendingCollectionCount,
     onOpenAssignedCollections,
@@ -141,8 +159,10 @@ const MeView: React.FC<MeViewProps> = ({
     onToggleSpaceSheet,
 }) => {
     const menuPolicy = getTeacherSpaceMenuPolicy(currentSpace);
-    const allowedManagementTools = new Set(menuPolicy.managementTools);
-    const allowedMoreTools = new Set(menuPolicy.moreTools);
+    const allowedManagementTools = new Set(menuPolicy.managementTools.filter(id => !availableTools || availableTools.managementTools.includes(id)));
+    const allowedMoreTools = new Set(menuPolicy.moreTools.filter(id => !availableTools || availableTools.moreTools.includes(id)));
+    // 设备是 App 本机能力，由版本开放，不依赖学校管理工具权限。
+    if (availableTools?.moreTools.includes('bluetoothDevices') && onOpenBluetoothDevices) allowedMoreTools.add('bluetoothDevices');
 
     const allPrimaryTools: MenuEntry<TeacherManagementToolId>[] = [
         {
@@ -197,15 +217,15 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenTermGenerateModal,
         },
     ];
-    const primaryTools = allPrimaryTools.filter(item => allowedManagementTools.has(item.id));
+    const primaryTools = allPrimaryTools.filter(item => allowedManagementTools.has(item.id) && Boolean(item.onClick));
 
     const allMoreTools: MenuEntry<TeacherMoreToolId>[] = [
         {
-            id: 'homeworkBatchImport',
-            title: '作业录入',
-            labelLines: ['作业录入'],
-            icon: ScanLine,
-            onClick: onOpenHomeworkBatchImport,
+            id: 'bluetoothDevices',
+            title: '蓝牙设备',
+            icon: Bluetooth,
+            iconColorClassName: 'bg-[var(--tm-platform-bluetooth)] text-[var(--tm-text-inverse)]',
+            onClick: onOpenBluetoothDevices,
         },
         {
             id: 'coinIssuance',
@@ -214,10 +234,10 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenCoinIssuance,
         },
         {
-            id: 'questionnaire',
-            title: '问卷采集',
-            icon: ClipboardList,
-            onClick: onOpenQuestionnaire,
+            id: 'vendingExchange',
+            title: '货柜兑换',
+            icon: PackageCheck,
+            onClick: onOpenVendingExchange,
         },
         {
             id: 'weeklyDutySchedule',
@@ -226,16 +246,22 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenWeeklyDutySchedule,
         },
         {
+            id: 'parentRecordingSettings',
+            title: '家长记录设置',
+            icon: UsersRound,
+            onClick: onOpenParentRecordingSettings,
+        },
+        {
             id: 'parentEvaluationVisibility',
             title: '家长端展示',
             icon: MonitorSmartphone,
             onClick: onOpenParentEvaluationVisibility,
         },
         {
-            id: 'reportManagement',
-            title: '报告配置',
-            icon: FileSliders,
-            onClick: onOpenReportManagement,
+            id: 'questionnaire',
+            title: '问卷采集',
+            icon: ClipboardList,
+            onClick: onOpenQuestionnaire,
         },
         {
             id: 'archiveDesign',
@@ -261,8 +287,28 @@ const MeView: React.FC<MeViewProps> = ({
             icon: MessageCircle,
             onClick: onOpenSuggestionFeedback,
         },
+        {
+            id: 'homeworkBatchImport',
+            title: '作业录入',
+            labelLines: ['作业录入'],
+            icon: ScanLine,
+            onClick: onOpenHomeworkBatchImport,
+        },
+        {
+            id: 'classPetSettings',
+            title: 'AI宠物',
+            icon: PawPrint,
+            onClick: onOpenClassPetSettings,
+        },
+        {
+            id: 'reportManagement',
+            title: '报告配置',
+            icon: FileSliders,
+            onClick: onOpenReportManagement,
+        },
     ];
-    const moreTools = allMoreTools.filter(item => allowedMoreTools.has(item.id));
+    const moreTools = allMoreTools.filter(item => allowedMoreTools.has(item.id) && Boolean(item.onClick)
+        && (showUnreleasedTools || !['homeworkBatchImport', 'classPetSettings', 'reportManagement'].includes(item.id)));
 
     const teacherName = teacherProfile.name || '刘飞';
     const classSourceName = currentSpace.title || '成都市未来实验小学';

@@ -38,9 +38,14 @@ import {
 import { getStudentCardDisplaySettings } from '../domain/studentCardDisplay';
 import { getGroupCardDisplaySettings } from '../domain/groupCardDisplay';
 
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import { readSchoolClassPetSettings } from '../../shared/classPetSettings';
+import { CLASS_PET_ROSTER_EVENT, readClassPetRoster, saveClassPetRoster, claimClassPetEggs, getClaimedPetGrowth } from '../../shared/classPetRoster';
+
 type EvaluationRecountTarget = 'student' | 'group';
 
 interface ClassDetailViewProps {
+    schoolId?: string;
     classInfo: ClassInfo;
     students: Student[];
     currentTeacherName: string;
@@ -161,6 +166,7 @@ const MobileActionToast: React.FC<{ message: string }> = ({ message }) => (
 );
 
 const ClassDetailView: React.FC<ClassDetailViewProps> = ({
+    schoolId = '',
     classInfo,
     students,
     currentTeacherName,
@@ -182,6 +188,55 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     onUpdateStudentCardDisplaySettings,
     onUpdateGroupCardDisplaySettings,
 }) => {
+    const [petSettings, setPetSettings] = useState(() => readSchoolClassPetSettings(schoolId));
+    const [petRoster, setPetRoster] = useState(() => readClassPetRoster(schoolId, classInfo.id));
+    const [showPetClaim, setShowPetClaim] = useState(false);
+    const [petClaimError, setPetClaimError] = useState('');
+    const [petNotice, setPetNotice] = useState('');
+    useEffect(() => {
+        const refresh = () => {
+            setPetSettings(readSchoolClassPetSettings(schoolId));
+            setPetRoster(readClassPetRoster(schoolId, classInfo.id));
+        };
+        refresh();
+        window.addEventListener(CLASS_PET_ROSTER_EVENT, refresh);
+        window.addEventListener('school-class-pet-settings-updated', refresh);
+        window.addEventListener('storage', refresh);
+        return () => {
+            window.removeEventListener(CLASS_PET_ROSTER_EVENT, refresh);
+            window.removeEventListener('school-class-pet-settings-updated', refresh);
+            window.removeEventListener('storage', refresh);
+        };
+    }, [schoolId, classInfo.id]);
+    useEffect(() => {
+        if (!petNotice) return;
+        const timer = window.setTimeout(() => setPetNotice(''), 2500);
+        return () => window.clearTimeout(timer);
+    }, [petNotice]);
+    const showPets = petSettings.enabled && petRoster?.view === 'pet';
+    const changeStudentView = (view: 'pet' | 'student-info') => {
+        if (view === 'pet' && !petRoster) {
+            if (petSettings.claimMethod === 'teacher') {
+                setCardDisplayTarget(null);
+                setPetClaimError('');
+                setShowPetClaim(true);
+            } else setPetNotice('请学生先领取宠物');
+            return;
+        }
+        if (petRoster) {
+            try { saveClassPetRoster(schoolId, classInfo.id, { ...petRoster, view }); }
+            catch { setPetNotice('保存失败，请重试'); }
+        }
+    };
+    const confirmPetClaim = () => {
+        setPetClaimError('');
+        try {
+            const roster = claimClassPetEggs(schoolId, classInfo.id, students.map(student => student.id));
+            setPetRoster(roster);
+            setShowPetClaim(false);
+            setPetNotice('已为全班学生领取初始蛋');
+        } catch (error) { setPetClaimError(error instanceof Error ? error.message : '领取失败，请重试'); }
+    };
     const studentCardDisplaySettings = getStudentCardDisplaySettings(classInfo.studentCardDisplaySettings);
     const groupCardDisplaySettings = getGroupCardDisplaySettings(classInfo.groupCardDisplaySettings);
     const [activeView, setActiveView] = useState<'student' | 'group'>('student');
@@ -1145,6 +1200,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                             performance={performance}
                             levelNetScore={levelNetScoreByStudentId[student.id]}
                             displaySettings={studentCardDisplaySettings}
+                            pet={showPets ? (petRoster?.students[student.id] ? getClaimedPetGrowth(petRoster.students[student.id].evaluations, petSettings, petRoster.students[student.id].highestStage) : 'unclaimed') : undefined}
                             showSelection={isStudentSelectionActive}
                             selected={isSelected}
                             onClick={() => handleStudentClick(student)}
@@ -1153,6 +1209,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 })}
                 {canAddStudent && !isStudentSelectionActive && !hasSearchQuery && (
                     <StudentRosterAddCard
+                        petView={Boolean(showPets)}
                         shape="subtle"
                         displaySettings={studentCardDisplaySettings}
                         onClick={onAddStudent}
@@ -1408,6 +1465,13 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 <div className="space-y-[var(--tm-layout-card-gap)] pb-2">
                     {cardDisplayTarget === 'student' ? (
                         <>
+                            {petSettings.enabled && (
+                                <div className="flex min-h-[var(--tm-size-touch)] items-center justify-between gap-3">
+                                    <span className="text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">展示内容</span>
+                                    <CompactSegmentedControl shape="subtle" value={showPets ? 'pet' : 'student-info'} items={[{ value: 'student-info', label: '学生' }, { value: 'pet', label: '宠物' }]} onChange={changeStudentView} ariaLabel="学生卡片展示内容" semantics="group" variant="settings" sizing="content" />
+                                </div>
+                            )}
+                            {!showPets && <>
                             <CardLevelDisplaySettings
                                 showLevel={studentCardDisplaySettings.showLevel}
                                 levelForm={studentCardDisplaySettings.levelForm}
@@ -1417,6 +1481,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 settings={studentCardDisplaySettings}
                                 onChange={settings => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, ...settings })}
                             />
+                            </>}
                         </>
                     ) : cardDisplayTarget === 'group' ? (
                         <>
@@ -1784,7 +1849,8 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 onConfirm={handleConfirmDiscardGrouping}
             />
 
-            <MobileToast message={groupingToastMessage} />
+            <MobileConfirmSheet open={showPetClaim && petSettings.enabled && petSettings.claimMethod === 'teacher'} shape="subtle" title="在本班开启AI宠物" description="学校已开启AI宠物。AI将结合每位学生的画像、评价记录等信息，生成专属宠物。领取后，本班所有学生将获得初始蛋；从领取时起，新增评价将影响宠物的成长与进化。是否在本班使用？" errorMessage={petClaimError} cancelLabel="暂不使用" confirmLabel="领取初始蛋" onClose={() => setShowPetClaim(false)} onConfirm={confirmPetClaim} />
+            <MobileToast message={petNotice || groupingToastMessage} />
 
         </div>
     );

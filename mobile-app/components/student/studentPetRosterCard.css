@@ -1,0 +1,88 @@
+.tm-student-pet-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tm-student-pet-card-gap);
+  padding: var(--tm-student-pet-card-padding);
+  border-radius: var(--tm-radius-card-compact);
+  background: var(--tm-bg-surface);
+  color: var(--tm-text-primary);
+  box-shadow: var(--tm-shadow-card);
+}
+
+.tm-student-pet-card:focus-visible {
+  outline: 2px solid var(--tm-brand-primary);
+  outline-offset: 2px;
+}
+
+.tm-student-pet-card__identity {
+  display: inline-flex;
+  width: 100%;
+  height: var(--tm-student-card-identity-height);
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+}
+
+.tm-student-pet-card[data-selectable] .tm-student-pet-card__identity {
+  padding-right: var(--tm-space-2);
+}
+
+.tm-student-pet-card .tm-student-pet-card__stage {
+  position: absolute;
+  top: var(--tm-student-pet-stage-top);
+  right: -4px;
+  z-index: 1;
+  padding: 2px 6px;
+  font-size: var(--tm-font-size-badge);
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--tm-student-pet-stage-text);
+  pointer-events: none;
+}
+
+/* 全宽方形画布以内容确定高度；伙伴沿用大屏底部基线，不吸收卡片剩余空间。 */
+.tm-student-pet-card__artwork {
+  display: flex;
+  width: calc(100% + var(--tm-student-pet-card-padding) * 2);
+  aspect-ratio: 1;
+  flex: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.tm-student-pet-card__progress {
+  display: flex;
+  width: 100%;
+  flex: none;
+  flex-direction: column;
+  gap: var(--tm-student-pet-card-gap);
+}
+
+.tm-student-pet-card__values {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tm-student-pet-card-gap);
+  color: var(--tm-text-secondary);
+  font-size: var(--tm-font-size-meta);
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tm-student-pet-card__empty {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  color: var(--tm-text-secondary);
+  font-size: var(--tm-font-size-meta);
+}

@@ -122,11 +122,15 @@ export type TeacherManagementToolId =
     | 'principalAssistant';
 
 export type TeacherMoreToolId =
+    | 'bluetoothDevices'
     | 'homeworkBatchImport'
     | 'coinIssuance'
+    | 'vendingExchange'
     | 'questionnaire'
     | 'weeklyDutySchedule'
+    | 'parentRecordingSettings'
     | 'parentEvaluationVisibility'
+    | 'classPetSettings'
     | 'reportManagement'
     | 'archiveDesign'
     | 'subjectManagement'
@@ -172,6 +176,8 @@ const ALL_MORE_TOOLS: TeacherMoreToolId[] = [
     'questionnaire',
     'weeklyDutySchedule',
     'parentEvaluationVisibility',
+    'parentRecordingSettings',
+    'classPetSettings',
     'reportManagement',
     'archiveDesign',
     'subjectManagement',
@@ -227,6 +233,11 @@ export const getTeacherSpaceMenuPolicy = (space: TeacherSpaceOption): TeacherSpa
     }
 
     const moreTools = [...policy.moreTools];
+    // 货柜兑换是学校内的只读查询工具，个人和协作空间不开放。
+    if (space.type === 'school' && ['administrator', 'leader', 'homeroomTeacher', 'teacher'].includes(space.role)) {
+        const coinIndex = moreTools.indexOf('coinIssuance');
+        moreTools.splice(coinIndex >= 0 ? coinIndex + 1 : 0, 0, 'vendingExchange');
+    }
     if (
         space.type === 'school'
         && space.homeworkAiEnabled === true
@@ -277,6 +288,12 @@ export const resolveHeadteacherAssistantScopes = (
 
 export const canTeacherSpaceRecordClass = (space: TeacherSpaceOption): boolean => (
     space.type === 'school' && space.classRecordEnabled === true
+);
+
+/** 记录入口与当前学校开通的评价范围保持一致，班级记录仍受独立开关限制。 */
+export const getTeacherRecordScopes = (space: TeacherSpaceOption): HeadteacherAssistantScope[] => (
+    (space.type === 'school' ? space.evaluationScopes ?? ['student', 'class'] : ['student'])
+        .filter((scope): scope is HeadteacherAssistantScope => scope === 'student' || (scope === 'class' && canTeacherSpaceRecordClass(space)))
 );
 
 export const canManagePersonalClasses = (space: TeacherSpaceOption): boolean => (

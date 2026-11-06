@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const parent = readFileSync(new URL('./ParentApp.tsx', import.meta.url), 'utf8');
+assert.ok(app.includes('parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled}'));
+assert.ok(parent.includes("if (screen === 'bank') setScreen('growth');"));
+assert.ok(parent.includes("if (screen === 'coinFlow') setScreen('growth');"));
+assert.ok(parent.includes('if (!isBankEnabled || !activeChild || !selectedBankScheme) return;'));
+assert.ok(parent.includes('if (!isBankEnabled || !activeChild) return;'));
+assert.ok(parent.includes('if (!parentGrowthCoinEnabled || !exchangePasswordChild) return null;'));
+console.log('成长币与银行页面权限及操作防护检查通过。');

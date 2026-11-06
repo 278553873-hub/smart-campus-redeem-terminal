@@ -1,0 +1,200 @@
+[
+  {
+    "name": "蛋",
+    "key": "egg",
+    "score": 5,
+    "records": [
+      [
+        "09-01",
+        "求真",
+        "观察操场影子的长度变化",
+        2
+      ],
+      [
+        "09-02",
+        "悦群",
+        "帮助整理天空主题绘本",
+        3
+      ]
+    ],
+    "concept": "光与天空的线索",
+    "mapping": "影子观察转为光影弧线，天空读物转为扇形星图纹。琥珀菱形作为谱系标记。",
+    "prompt": "【一、基础规范｜所有学生与阶段共用】\n为学生成长伙伴生成一张原创静态角色素材。采用统一的精致三维游戏插画风格，柔和光照、清楚的大轮廓。正方形画布，真实透明背景，完整呈现主体与全部附肢，四周保留足够透明留白。不要文字、水印、场景、地面投影或外围粒子。不得复制已有动漫角色。阶段必须在96像素小图下可辨，不能只增加饰品、纹样或改变姿势。\n\n【二、评价记录分析｜每名学生、每个阶段更新】\n学校模式：自动生成；本案例没有学生意愿。先整理以下虚构评价事件，区分发生的行为与艺术表达。提取持续主题、新尝试及合作经历，不能仅按最高分指标选物种；不得据此判断智力、人格或道德等级。每项视觉设计须指出对应记录；记录没有提到的经历不能虚构。分数只用于成长资格，不决定形象的尊贵程度。\n09-01｜求真｜观察操场影子的长度变化｜成长值+2\n09-02｜悦群｜帮助整理天空主题绘本｜成长值+3\n\n设计分析结果（本次由人工整理，非自动后台输出）：影子观察转为光影弧线，天空读物转为扇形星图纹。琥珀菱形作为谱系标记。\n\n【三、保持一致性｜同一伙伴沿用，允许身体重构】\n保留少量谱系标志：深靛蓝与奶油白主配色、青蓝眼睛、额头琥珀色菱形、三角鳍耳、末端三瓣扇形的单条尾巴。蛋只保留配色和纹章暗示。身体比例、四肢、运动结构、脸部成熟度可发生显著变化；不要求复制上一阶段姿势和身体。引用上一阶段图片辨认谱系，允许从软团到四足、滑翔、直立的结构跃迁。\n参考方式：本次原型的蛋是补设计：参考已经生成的幼年期谱系；生产流程需在首次生图前建立身份方案。\n\n【四、本阶段进化要求｜随阶段更新】\n蛋：完整直立的椭圆蛋壳，无脸、四肢或裂缝。影子观察对应一道青色光影弧线，天空绘本对应三片扇形星图区域，前方保留琥珀菱形。\n\n【五、出图检查｜后台验收，不作为学生重抽入口】\n检查主体完整、透明背景、明显肢体异常、身份标志和小图轮廓差异。无法满足时返回质量问题；技术重试设上限，学生不能要求重新生成。",
+    "historicalPrompt": "Create EGG stage sprite of the lineage in the supplied juvenile reference, based on fictional pre-hatching evaluation evidence: 09-01 observed changing length of a playground shadow +2 求真; 09-02 helped arrange picture books about the sky +3 悦群. School mode automatic, no student choices. Artistic mapping: shadow observation -> one bold sweeping cyan light/shadow arc; sky books -> three simple fan-shaped constellation panels; helping not coded as ability score. Ivory and deep indigo smooth matte egg shell, ONE amber diamond emblem on front identical lineage identity, three cyan fan markings near bottom, clean bold simple pattern legible at 96px. Upright intact egg, no face, no appendages, no cracked shell, no visible creature. Match soft polished 3D rendering of supplied reference. Egg centered within square with 15% margins, true transparent background, no nest, ground shadow, props, lettering, scenery or particles."
+  },
+  {
+    "name": "幼年期",
+    "key": "juvenile",
+    "score": 25,
+    "records": [
+      [
+        "09-03",
+        "求真",
+        "比较早晨与中午的影子",
+        5
+      ],
+      [
+        "09-06",
+        "求真",
+        "测试两种纸飞机折法",
+        5
+      ],
+      [
+        "09-10",
+        "学活",
+        "分享星座观察读物",
+        5
+      ],
+      [
+        "09-12",
+        "悦群",
+        "帮助同学分类实验材料",
+        5
+      ]
+    ],
+    "concept": "软团里的探索欲",
+    "mapping": "纸飞机与天空阅读提炼为空气、光与运动主题；以软团和短鳍耳表达初生。",
+    "prompt": "【一、基础规范｜所有学生与阶段共用】\n为学生成长伙伴生成一张原创静态角色素材。采用统一的精致三维游戏插画风格，柔和光照、清楚的大轮廓。正方形画布，真实透明背景，完整呈现主体与全部附肢，四周保留足够透明留白。不要文字、水印、场景、地面投影或外围粒子。不得复制已有动漫角色。阶段必须在96像素小图下可辨，不能只增加饰品、纹样或改变姿势。\n\n【二、评价记录分析｜每名学生、每个阶段更新】\n学校模式：自动生成；本案例没有学生意愿。先整理以下虚构评价事件，区分发生的行为与艺术表达。提取持续主题、新尝试及合作经历，不能仅按最高分指标选物种；不得据此判断智力、人格或道德等级。每项视觉设计须指出对应记录；记录没有提到的经历不能虚构。分数只用于成长资格，不决定形象的尊贵程度。\n09-03｜求真｜比较早晨与中午的影子｜成长值+5\n09-06｜求真｜测试两种纸飞机折法｜成长值+5\n09-10｜学活｜分享星座观察读物｜成长值+5\n09-12｜悦群｜帮助同学分类实验材料｜成长值+5\n\n设计分析结果（本次由人工整理，非自动后台输出）：纸飞机与天空阅读提炼为空气、光与运动主题；以软团和短鳍耳表达初生。\n\n【三、保持一致性｜同一伙伴沿用，允许身体重构】\n保留少量谱系标志：深靛蓝与奶油白主配色、青蓝眼睛、额头琥珀色菱形、三角鳍耳、末端三瓣扇形的单条尾巴。蛋只保留配色和纹章暗示。身体比例、四肢、运动结构、脸部成熟度可发生显著变化；不要求复制上一阶段姿势和身体。引用上一阶段图片辨认谱系，允许从软团到四足、滑翔、直立的结构跃迁。\n参考方式：本阶段为首次角色生成，不引用现成角色图。\n\n【四、本阶段进化要求｜随阶段更新】\n幼年期：接近无四肢的软糯圆团，只有两只极小脚掌、短鳍耳和小扇尾，不要成年角色缩小版。由纸飞机、光影和星空记录提炼为空气与光的初生生命。\n\n【五、出图检查｜后台验收，不作为学生重抽入口】\n检查主体完整、透明背景、明显肢体异常、身份标志和小图轮廓差异。无法满足时返回质量问题；技术重试设上限，学生不能要求重新生成。",
+    "historicalPrompt": "Design an ORIGINAL juvenile virtual companion based on this fictional student's evaluation evidence, not a preselected pet. Records: 09-03 compared shadows at morning and noon +5 (求真); 09-06 asked why paper airplanes turn and tested two folds +5 (求真); 09-10 shared a constellation observation book +5 (学活); 09-12 helped classmates sort experiment materials +5 (悦群). School AUTO mode: no student preferences, no questionnaire. AI artistic synthesis: exploring air, light and motion with collaborative curiosity -> a tiny sky-observation lifeform. These are visual metaphors, not personality diagnosis. Invent one coherent creature from evidence. Juvenile MUST be a soft ROUND nearly limbless ball, no developed torso, no human arms, only two tiny paddle feet. Cream white and deep indigo body, cyan luminous eyes, ONE tiny amber diamond marking on forehead, two stubby triangular fin-like ears, tiny fan tail with three segments. Single original creature, not Digimon or Pokemon copy. Polished stylized 3D game asset with smooth matte plush surface, clear bold silhouette and minimal details. Friendly curious face. This will later evolve into quadruped aerodynamic glider then large sky guardian; do not draw later stages now. Full body front three-quarter, centered square frame with 15% empty margins. TRUE transparent background, no scenery, no ground shadow, no text, no props, no sparkles. Juvenile rounded body occupies only 55% of square height."
+  },
+  {
+    "name": "成长期",
+    "key": "growth",
+    "score": 45,
+    "records": [
+      [
+        "09-18",
+        "求真",
+        "测试纸滑翔机的翼宽",
+        5
+      ],
+      [
+        "09-21",
+        "求真",
+        "用自制风向标记录风向",
+        5
+      ],
+      [
+        "09-24",
+        "乐健",
+        "参加班级接力活动",
+        5
+      ],
+      [
+        "09-28",
+        "悦群",
+        "向小组说明模型调整",
+        5
+      ]
+    ],
+    "concept": "风与运动的初体验",
+    "mapping": "翼宽和风向实验转为肩部折叠鳍膜，接力参与转为灵巧四足结构。",
+    "prompt": "【一、基础规范｜所有学生与阶段共用】\n为学生成长伙伴生成一张原创静态角色素材。采用统一的精致三维游戏插画风格，柔和光照、清楚的大轮廓。正方形画布，真实透明背景，完整呈现主体与全部附肢，四周保留足够透明留白。不要文字、水印、场景、地面投影或外围粒子。不得复制已有动漫角色。阶段必须在96像素小图下可辨，不能只增加饰品、纹样或改变姿势。\n\n【二、评价记录分析｜每名学生、每个阶段更新】\n学校模式：自动生成；本案例没有学生意愿。先整理以下虚构评价事件，区分发生的行为与艺术表达。提取持续主题、新尝试及合作经历，不能仅按最高分指标选物种；不得据此判断智力、人格或道德等级。每项视觉设计须指出对应记录；记录没有提到的经历不能虚构。分数只用于成长资格，不决定形象的尊贵程度。\n09-18｜求真｜测试纸滑翔机的翼宽｜成长值+5\n09-21｜求真｜用自制风向标记录风向｜成长值+5\n09-24｜乐健｜参加班级接力活动｜成长值+5\n09-28｜悦群｜向小组说明模型调整｜成长值+5\n\n设计分析结果（本次由人工整理，非自动后台输出）：翼宽和风向实验转为肩部折叠鳍膜，接力参与转为灵巧四足结构。\n\n【三、保持一致性｜同一伙伴沿用，允许身体重构】\n保留少量谱系标志：深靛蓝与奶油白主配色、青蓝眼睛、额头琥珀色菱形、三角鳍耳、末端三瓣扇形的单条尾巴。蛋只保留配色和纹章暗示。身体比例、四肢、运动结构、脸部成熟度可发生显著变化；不要求复制上一阶段姿势和身体。引用上一阶段图片辨认谱系，允许从软团到四足、滑翔、直立的结构跃迁。\n参考方式：本次生成以幼年期原图作为参考。\n\n【四、本阶段进化要求｜随阶段更新】\n成长期：明确变为横向四足幼兽，身体与头部分离，四只短脚清晰，长尾末端保持三瓣扇形。翼宽与风向实验对应肩部小型折叠鳍膜，接力经历对应灵活运动结构；尚无大型翅膀。\n\n【五、出图检查｜后台验收，不作为学生重抽入口】\n检查主体完整、透明背景、明显肢体异常、身份标志和小图轮廓差异。无法满足时返回质量问题；技术重试设上限，学生不能要求重新生成。",
+    "historicalPrompt": "Evolve the reference juvenile into GROWTH stage of SAME lineage, dramatically DIFFERENT SILHOUETTE not same ball enlarged. Evidence new fictional student records: 09-18 tested paper glider wing widths +5 求真; 09-21 recorded wind direction with handmade vane +5 求真; 09-24 ran relay with classmates +5 乐健; 09-28 explained model adjustments to group +5 悦群. Map glider and wind experiments to aerodynamic small fin ridges, relay to an agile FOUR-LEGGED creature. This is artistic synthesis, not character diagnosis.\nLOCK ONLY lineage anchors: indigo upper/ivory underside palette, cyan eyes, ONE amber diamond forehead mark, two triangular fin-ears, THREE-segment fan tail tip. Face may mature; anatomy MUST transform. New silhouette: compact fox/otter-like aerodynamic quadruped with clear horizontal torso, four visible short paws, narrow shoulders, long tail ending in existing three-segment fan, tiny folded fin membranes on shoulders (not full wings yet). Head ~35% length, adorable confident creature, no humanoid standing pose, no armor. Original monster, not recognizable franchise character. Match soft polished 3D render quality. Full-body side-three-quarter showing all anatomy, square with generous margins, no background, no ground shadow, TRUE transparent. No text, props or particles."
+  },
+  {
+    "name": "成熟期",
+    "key": "mature",
+    "score": 85,
+    "records": [
+      [
+        "10-08",
+        "求真",
+        "制作风筝，失败后调整升力",
+        10
+      ],
+      [
+        "10-15",
+        "学活",
+        "记录云与风的变化",
+        10
+      ],
+      [
+        "10-22",
+        "悦群",
+        "与同学合作放飞风筝",
+        10
+      ],
+      [
+        "10-28",
+        "乐健",
+        "完成自己的耐力跑目标",
+        10
+      ]
+    ],
+    "concept": "展开滑翔结构",
+    "mapping": "风筝升力与合作放飞，使短鳍发展为大面积滑翔膜，轮廓从横向四足变为菱形翼展。",
+    "prompt": "【一、基础规范｜所有学生与阶段共用】\n为学生成长伙伴生成一张原创静态角色素材。采用统一的精致三维游戏插画风格，柔和光照、清楚的大轮廓。正方形画布，真实透明背景，完整呈现主体与全部附肢，四周保留足够透明留白。不要文字、水印、场景、地面投影或外围粒子。不得复制已有动漫角色。阶段必须在96像素小图下可辨，不能只增加饰品、纹样或改变姿势。\n\n【二、评价记录分析｜每名学生、每个阶段更新】\n学校模式：自动生成；本案例没有学生意愿。先整理以下虚构评价事件，区分发生的行为与艺术表达。提取持续主题、新尝试及合作经历，不能仅按最高分指标选物种；不得据此判断智力、人格或道德等级。每项视觉设计须指出对应记录；记录没有提到的经历不能虚构。分数只用于成长资格，不决定形象的尊贵程度。\n10-08｜求真｜制作风筝，失败后调整升力｜成长值+10\n10-15｜学活｜记录云与风的变化｜成长值+10\n10-22｜悦群｜与同学合作放飞风筝｜成长值+10\n10-28｜乐健｜完成自己的耐力跑目标｜成长值+10\n\n设计分析结果（本次由人工整理，非自动后台输出）：风筝升力与合作放飞，使短鳍发展为大面积滑翔膜，轮廓从横向四足变为菱形翼展。\n\n【三、保持一致性｜同一伙伴沿用，允许身体重构】\n保留少量谱系标志：深靛蓝与奶油白主配色、青蓝眼睛、额头琥珀色菱形、三角鳍耳、末端三瓣扇形的单条尾巴。蛋只保留配色和纹章暗示。身体比例、四肢、运动结构、脸部成熟度可发生显著变化；不要求复制上一阶段姿势和身体。引用上一阶段图片辨认谱系，允许从软团到四足、滑翔、直立的结构跃迁。\n参考方式：本次生成以成长期原图作为参考。\n\n【四、本阶段进化要求｜随阶段更新】\n成熟期：由紧凑四足跃迁为滑翔兽，肩部到后肢之间形成大型风筝状膜翼，菱形翼展主导轮廓。风筝调整与合作放飞是形态来源。身体修长、尾巴承担方向舵意象；不是在幼兽背上加两片小翅膀。\n\n【五、出图检查｜后台验收，不作为学生重抽入口】\n检查主体完整、透明背景、明显肢体异常、身份标志和小图轮廓差异。无法满足时返回质量问题；技术重试设上限，学生不能要求重新生成。",
+    "historicalPrompt": "Evolve reference creature into MATURE stage, major anatomical silhouette leap. New FICTIONAL evaluation records: 10-08 built a kite and adjusted lift after failures +10 求真; 10-15 recorded changes in clouds and wind +10 学活; 10-22 cooperated to launch kite with classmates +10 悦群; 10-28 completed a running endurance goal +10 乐健. Synthesis: lift and cooperative flight -> new broad kite-shaped flight membranes; endurance -> strong elongated torso. No personality diagnosis.\nKEEP only lineage anchors: indigo/ivory/cyan palette, cyan eyes, one amber diamond forehead, two triangular fin-ears, a single tail ending in THREE fan segments. ALLOW species-like metamorphosis. Unlike compact four-legged cub reference, this is a sleek FOUR-LEGGED GLIDING SKY BEAST with huge triangular kite membranes extending from shoulders to hind legs, wide diamond-shaped silhouette, long streamlined neck and long rudder tail. Clearly a fantasy flying mammal, NOT a larger fox with tiny wings. Arms/legs function as membrane supports and end in soft paws, no extra limbs. Broad membranes dominate silhouette with cyan structural lines inspired by kite experiments, indigo perimeter and ivory translucent inner membrane. Relaxed airborne glide, torso diagonal, face clearly same lineage but more mature. Nonaggressive, original, no weapons/armor. Soft stylized 3D illustration matching reference material quality. Entire silhouette including membranes and tail inside square frame with generous margin. TRUE transparent background, no clouds/background/ground/text/effects."
+  },
+  {
+    "name": "完全体",
+    "key": "complete",
+    "score": 145,
+    "records": [
+      [
+        "11-05",
+        "求真",
+        "组装旋转太阳系模型",
+        15
+      ],
+      [
+        "11-12",
+        "学活",
+        "比较搭建模型的齿轮比例",
+        15
+      ],
+      [
+        "11-19",
+        "悦群",
+        "协调小组展示模型",
+        15
+      ],
+      [
+        "11-26",
+        "尚美",
+        "修订并重绘星座图",
+        15
+      ]
+    ],
+    "concept": "轨道与结构的发现",
+    "mapping": "太阳系与齿轮活动转为背部轨道结构；身体转为直立领航形态，双臂释放出来。",
+    "prompt": "【一、基础规范｜所有学生与阶段共用】\n为学生成长伙伴生成一张原创静态角色素材。采用统一的精致三维游戏插画风格，柔和光照、清楚的大轮廓。正方形画布，真实透明背景，完整呈现主体与全部附肢，四周保留足够透明留白。不要文字、水印、场景、地面投影或外围粒子。不得复制已有动漫角色。阶段必须在96像素小图下可辨，不能只增加饰品、纹样或改变姿势。\n\n【二、评价记录分析｜每名学生、每个阶段更新】\n学校模式：自动生成；本案例没有学生意愿。先整理以下虚构评价事件，区分发生的行为与艺术表达。提取持续主题、新尝试及合作经历，不能仅按最高分指标选物种；不得据此判断智力、人格或道德等级。每项视觉设计须指出对应记录；记录没有提到的经历不能虚构。分数只用于成长资格，不决定形象的尊贵程度。\n11-05｜求真｜组装旋转太阳系模型｜成长值+15\n11-12｜学活｜比较搭建模型的齿轮比例｜成长值+15\n11-19｜悦群｜协调小组展示模型｜成长值+15\n11-26｜尚美｜修订并重绘星座图｜成长值+15\n\n设计分析结果（本次由人工整理，非自动后台输出）：太阳系与齿轮活动转为背部轨道结构；身体转为直立领航形态，双臂释放出来。\n\n【三、保持一致性｜同一伙伴沿用，允许身体重构】\n保留少量谱系标志：深靛蓝与奶油白主配色、青蓝眼睛、额头琥珀色菱形、三角鳍耳、末端三瓣扇形的单条尾巴。蛋只保留配色和纹章暗示。身体比例、四肢、运动结构、脸部成熟度可发生显著变化；不要求复制上一阶段姿势和身体。引用上一阶段图片辨认谱系，允许从软团到四足、滑翔、直立的结构跃迁。\n参考方式：本次生成以成熟期原图作为参考。\n\n【四、本阶段进化要求｜随阶段更新】\n完全体：由滑翔姿态跃迁为双足直立的星轨领航生命，双臂释放，背后两片高耸折叠帆翼形成纵向轮廓。太阳系模型和齿轮实验对应连接帆翼的琥珀轨道环；保留友善可辨的脸，不加武器。\n\n【五、出图检查｜后台验收，不作为学生重抽入口】\n检查主体完整、透明背景、明显肢体异常、身份标志和小图轮廓差异。无法满足时返回质量问题；技术重试设上限，学生不能要求重新生成。",
+    "historicalPrompt": "Generate COMPLETE-stage metamorphosis of reference sky glider lineage based on NEW FICTIONAL records: 11-05 assembled a simple rotating solar-system model +15 求真; 11-12 compared gear ratios in a construction activity +15 学活; 11-19 coordinated teammates presenting the model +15 悦群; 11-26 revised and redrew an accurate constellation map +15 尚美. Synthesis: orbital motion + mechanical structures + collaborative presentation -> an upright celestial navigator creature with integrated orbital structures, NOT battle armor. These motifs must visibly change the primary anatomy.\nPreserve only lineage anchors: indigo/ivory body, cyan eyes, amber DIAMOND forehead, triangular fin ears, single tail with three-section fan. Must be recognizably same lineage but NOT the mature glider simply larger. NEW PRIMARY SILHOUETTE: TWO-LEGGED upright anthropomorphic fantasy sky navigator, two arms free, broad rounded feet, narrower waist, head around 25% height. Former gliding membranes reconfigure into TWO tall folded sail panels behind shoulders making a strong vertical silhouette, with an integrated thin amber orbital ring linking the panels behind upper back (one ring, not floating props). Ivory chest and indigo natural plates with sparse cyan orbital linework. One hand extended, calm curious demeanor. Original gentle powerful guardian, no weapons, no copied franchise imagery, no robot helmet obscuring face. Same polished 3D game style. Full-body three-quarter square composition, comfortable margins, all fins and tail in view. True transparent background, no particles, ground, shadow, labels or scenery."
+  },
+  {
+    "name": "究极体",
+    "key": "ultimate",
+    "score": 225,
+    "records": [
+      [
+        "12-03",
+        "求真",
+        "将观察数据整理成星座展览",
+        20
+      ],
+      [
+        "12-10",
+        "悦群",
+        "帮助低年级同学制作安全纸滑翔机",
+        20
+      ],
+      [
+        "12-17",
+        "尚美",
+        "合作完成光影剧场",
+        20
+      ],
+      [
+        "12-24",
+        "学活",
+        "展示轨道与飞行模型",
+        20
+      ]
+    ],
+    "concept": "连接天空的领航者",
+    "mapping": "星座展、光影剧场与教低年级制作滑翔机，转为六向帆翼与完整星轨结构。",
+    "prompt": "【一、基础规范｜所有学生与阶段共用】\n为学生成长伙伴生成一张原创静态角色素材。采用统一的精致三维游戏插画风格，柔和光照、清楚的大轮廓。正方形画布，真实透明背景，完整呈现主体与全部附肢，四周保留足够透明留白。不要文字、水印、场景、地面投影或外围粒子。不得复制已有动漫角色。阶段必须在96像素小图下可辨，不能只增加饰品、纹样或改变姿势。\n\n【二、评价记录分析｜每名学生、每个阶段更新】\n学校模式：自动生成；本案例没有学生意愿。先整理以下虚构评价事件，区分发生的行为与艺术表达。提取持续主题、新尝试及合作经历，不能仅按最高分指标选物种；不得据此判断智力、人格或道德等级。每项视觉设计须指出对应记录；记录没有提到的经历不能虚构。分数只用于成长资格，不决定形象的尊贵程度。\n12-03｜求真｜将观察数据整理成星座展览｜成长值+20\n12-10｜悦群｜帮助低年级同学制作安全纸滑翔机｜成长值+20\n12-17｜尚美｜合作完成光影剧场｜成长值+20\n12-24｜学活｜展示轨道与飞行模型｜成长值+20\n\n设计分析结果（本次由人工整理，非自动后台输出）：星座展、光影剧场与教低年级制作滑翔机，转为六向帆翼与完整星轨结构。\n\n【三、保持一致性｜同一伙伴沿用，允许身体重构】\n保留少量谱系标志：深靛蓝与奶油白主配色、青蓝眼睛、额头琥珀色菱形、三角鳍耳、末端三瓣扇形的单条尾巴。蛋只保留配色和纹章暗示。身体比例、四肢、运动结构、脸部成熟度可发生显著变化；不要求复制上一阶段姿势和身体。引用上一阶段图片辨认谱系，允许从软团到四足、滑翔、直立的结构跃迁。\n参考方式：本次生成以完全体原图作为参考。\n\n【四、本阶段进化要求｜随阶段更新】\n究极体：形成六向星形大轮廓，三对背部帆翼分别向上、向两侧和向下展开；中央是较紧凑的双足领航生命。星座展、光影剧场和轨道模型对应完整星轨与星图结构。不是完全体简单放大或堆装饰。\n\n【五、出图检查｜后台验收，不作为学生重抽入口】\n检查主体完整、透明背景、明显肢体异常、身份标志和小图轮廓差异。无法满足时返回质量问题；技术重试设上限，学生不能要求重新生成。",
+    "historicalPrompt": "Create final ULTIMATE stage of reference celestial navigator based on NEW fictional evaluation records: 12-03 organized observation data into a constellation exhibit +20 求真; 12-10 taught younger classmates to build safe paper gliders +20 悦群; 12-17 coordinated a group light-and-shadow theater performance +20 尚美; 12-24 presented a model demonstrating orbit and flight +20 学活. Synthesize orbital systems + guiding others + light performance into a powerful peaceful celestial guide with a grand compass silhouette. Not a rating of intelligence or personality.\nKeep lineage anchors indigo and ivory, cyan eyes, single amber diamond forehead, two triangular fin ears, single three-fan-tip tail. Must be drastic new structural culmination, NOT merely add decorations to upright complete-stage figure.\nNEW silhouette: broad symmetric six-rayed star/compass outline made from THREE PAIRS of aerodynamic sail vanes attached to back, upper pair tall, middle pair horizontal, lower pair sweeping down. Central creature is compact dignified biped with two arms and strong legs, not overly human. Amber orbit structure integrated behind shoulders, ivory chest diamond-shaped natural plate (not weapon armor), deep indigo and cyan sails with simple clear constellation geometry. Keep head expressive and recognizable; full-body poised hovering with arms slightly open. No weapons, no copied franchises, no scenery or particles. Soft premium stylized 3D, true transparent background.\nCRITICAL framing: ENTIRE character and ALL vanes and tail must fit in central 78% of square image, 11% EMPTY TRANSPARENT MARGIN ON EACH SIDE. Do not crop tips or paws. No text, ground or shadow."
+  }
+]

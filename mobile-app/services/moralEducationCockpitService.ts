@@ -465,7 +465,7 @@ const createProblemDimensions = (
     const detailTotals = createProblemDetailTotals(configs);
     return BASE_PROBLEM_DIMENSIONS.map(dimension => {
         const categories = dimension.categories.map(category => {
-            const details = category.details.map(detail => {
+            const details: MoralEducationProblemDetailStat[] = category.details.map(detail => {
                 const total = detailTotals.get(detail.id) ?? { recordCount: 0, deductionTenths: 0 };
                 const gradeRecordCounts = distributeInteger(total.recordCount, gradeWeights);
                 const gradeDeductionTenths = distributeInteger(total.deductionTenths, gradeRecordCounts);

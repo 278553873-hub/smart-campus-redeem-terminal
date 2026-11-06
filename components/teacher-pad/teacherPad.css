@@ -1,0 +1,34 @@
+/* 业务组件直接继承教师手机端样式；这里只定义设备内的宽度、留白与分栏。 */
+.teacher-pad{height:100%;box-sizing:border-box;padding-top:var(--mini-program-status-bar-height,0px);padding-bottom:var(--mini-program-bottom-safe-area,0px);position:relative;display:flex;flex-direction:column;overflow:hidden;color:var(--tm-text-primary);font-family:inherit;font-size:var(--tm-font-size-body);background:var(--tm-bg-page)}
+.teacher-pad *{box-sizing:border-box}
+.teacher-pad>nav{bottom:0;height:calc(var(--tp-navigation-height) + var(--mini-program-bottom-safe-area,0px));padding-bottom:var(--mini-program-bottom-safe-area,0px)}
+.teacher-pad button:focus-visible,.teacher-pad select:focus-visible{outline:2px solid var(--tm-focus-ring);outline-offset:3px}
+.pad-main{position:relative;z-index:1;flex:1;min-height:0;overflow:hidden}
+.pad-primary-page>.pad-main{margin-bottom:var(--tp-navigation-height)}
+.pad-preserved-record{height:100%;min-height:0}.pad-preserved-record[hidden]{display:none}
+.pad-record-workspace{height:100%;display:flex;flex-direction:column;position:relative;min-height:0}
+.pad-record-base{display:contents}.pad-record-base[hidden]{display:none}
+.pad-record-adapted{flex:1;min-height:0;overflow:hidden;padding:0 calc(var(--tp-page-gutter) - 20px)}
+.pad-record-adapted>div{height:100%;background:transparent}
+.pad-shared-input{position:static}.pad-shared-input>div{max-width:var(--tp-record-input-max);bottom:16px}
+.pad-input-overlay{position:absolute;inset:0;z-index:100;overflow:hidden;background:var(--tm-bg-surface)}
+.pad-input-overlay textarea{width:100%;max-width:880px;align-self:center}
+.pad-input-overlay .px-8{max-width:960px;width:100%;margin-inline:auto}
+.pad-secondary-page{height:100%;display:flex;flex-direction:column;min-height:0;background:var(--tm-page-plain-content-bg)}
+.pad-secondary-scroll{flex:1;min-height:0;overflow:auto}
+.pad-page-ranking .max-w-md{max-width:var(--tp-content-max)}
+.pad-page-ranking .pad-secondary-scroll{padding:var(--tm-space-4)}
+.pad-page-report,.pad-page-assistant,.pad-page-indicators,.pad-page-duty,.pad-page-profile{height:100%;overflow:hidden}
+.pad-class-page{height:100%;display:flex;flex-direction:column;min-height:0}
+.pad-class-header{padding-inline:var(--tp-page-gutter);flex-shrink:0}
+.pad-class-header>div:first-child{margin-right:var(--mini-program-capsule-right-inset,0px)}
+.pad-class-scroll{min-height:0;flex:1;overflow:auto;padding:var(--tm-space-2) var(--tp-page-gutter) var(--tp-page-gutter)}
+.pad-class-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--tm-layout-card-gap)}
+.pad-me-page{height:100%;overflow:auto;padding:0 calc(var(--tp-page-gutter) - 20px) var(--tp-page-gutter)}
+.pad-me-page .teacher-me-tool-grid{grid-template-columns:repeat(auto-fill,var(--tp-tool-item-width));column-gap:var(--tp-tool-column-gap)}
+@container teacher-pad (min-width:1000px){
+ .pad-record-adapted .space-y-\[var\(--tm-layout-card-gap\)\]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--tp-grid-gap);align-items:start}
+ .pad-record-adapted .space-y-\[var\(--tm-layout-card-gap\)\]>:not([hidden])~:not([hidden]){margin-top:0}
+ .pad-class-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@container teacher-pad (max-width:850px){.teacher-pad{--tp-page-gutter:24px;--tp-grid-gap:16px}}

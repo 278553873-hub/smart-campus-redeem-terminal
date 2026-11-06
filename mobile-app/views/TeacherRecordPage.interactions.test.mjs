@@ -19,8 +19,9 @@ const forbidText = (source, needle, message) => {
 };
 
 requireText(recordSource, 'canRecordClass?: boolean;', '记录页应接收当前来源的班级记录权限。');
-requireText(recordSource, "${canRecordClass ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}", '单一记录对象的指标行必须消费微信胶囊右侧安全区。');
-requireText(recordSource, 'className="w-[192px]"', '记录对象切换应与班级页顶部切换统一为 192 像素宽度。');
+requireText(recordSource, "${showRecordScopeSwitch ? '' : '[padding-right:var(--mini-program-capsule-right-inset,0px)]'}", '单一记录对象的指标行必须消费微信胶囊右侧安全区。');
+requireText(recordSource, 'const showRecordScopeSwitch = recordScopes.length > 1;', '只有两个记录对象时才显示切换控件，单对象不得显示标题替代。');
+requireText(recordSource, 'className="w-[192px]"', '双对象切换保持原192像素宽度。');
 requireText(recordSource, '<MobileSlidingSegmentedControl', '记录对象切换必须使用公共滑块控件。');
 requireText(slidingSegmentedSource, 'h-[var(--mini-program-title-bar-height,44px)]', '记录对象切换行应与微信标题栏等高。');
 requireText(slidingSegmentedSource, 'h-[var(--tm-record-scope-visual-height)]', '记录对象切换胶囊应通过独立变量限制可见高度。');
@@ -35,7 +36,7 @@ forbidText(recordSource, 'onOpenClassSourceSwitcher', '记录页不应再接收�
 forbidText(recordSource, 'absolute left-1/2 top-0 flex min-h-11 -translate-x-1/2', '指标入口不应再与来源共用一行并依赖绝对定位。');
 forbidText(recordSource, '<div className="flex h-11 items-center justify-center">', '单一记录对象的指标入口不应再使用居中布局。');
 requireText(recordSource, '<span>指标</span>', '单一记录对象已隐含学生上下文，指标入口应使用精简文案。');
-requireText(recordSource, '{canRecordClass && (', '记录对象切换应只对支持记录班级的来源披露。');
+requireText(recordSource, '{showRecordScopeSwitch && (', '记录对象切换只对两个对象均可用的来源披露。');
 forbidText(recordSource, 'grid-cols-[224px_minmax(0,1fr)]', '移除来源后不应继续使用占满下一行的宽分段控件。');
 requireText(recordSource, 'items-center gap-0.5 rounded-[var(--tm-radius-control-compact)]', '指标入口应在独立下一行保持左对齐。');
 requireText(recordSource, 'px-1 text-[14px] font-semibold text-[var(--tm-text-secondary)]', '指标入口应保持 14 像素半粗次级文字，清晰但不抢占高频输入控件层级。');
@@ -59,7 +60,8 @@ forbidText(recordSource, '<div className="pr-[116px]">', '顶部切换不应再�
 requireText(appSource, 'canRecordClass={canRecordClassForActiveSpace}', '应将当前来源的班级记录权限传入记录页。');
 forbidText(appSource, "currentView === 'home_log' || currentView === 'class_list') && showTeacherSpaceSheet", '记录页不应再挂载班级来源选择抽屉。');
 requireText(appSource, "currentView === 'me' && showTeacherSpaceSheet", '班级来源抽屉应只保留在“我的”页。');
-requireText(appSource, "activeLogTab === 'class' && !canTeacherSpaceRecordClass(nextSpace)", '切换到不支持班级记录的来源时应回到记录学生。');
+requireText(appSource, 'nextRecordScopes.includes(activeLogTab) ? activeLogTab : nextRecordScopes[0]', '切换来源后应保留可用对象，或切到该来源支持的对象。');
+requireText(appSource, 'availableRecordScopes={getTeacherRecordScopes(activeTeacherSpace)}', '手机端记录范围须读取学校配置。');
 requireText(spaceAccessSource, "space.type === 'school' && space.classRecordEnabled === true", '只有已开通能力的学校来源可以记录班级。');
 
 requireText(inputSource, "const shouldShowStudentContext = mode !== 'camera'", '拍照页应在无学生时隐藏学生占位文案。');

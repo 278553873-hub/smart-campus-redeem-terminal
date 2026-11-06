@@ -1,3 +1,8 @@
+import TeacherPadPreview from './components/teacher-pad/TeacherPadPreview';
+import AirecDevicePreviewControls from './components/AirecDevicePreviewControls';
+import TeacherDevicePreviewControls from './components/TeacherDevicePreviewControls';
+import type { DevicePreviewBounds } from './components/PhoneMockup';
+import { parentGrowthSchemeOptions, type ParentGrowthScheme } from './components/parent-app/parentGrowthTheme';
 import CoinFlowReviewNotes from './components/CoinFlowReviewNotes';
 import { COIN_RULE_PAGE_EVENT, COIN_RULE_PREVIEW_EVENT, COIN_RULE_SCENARIOS, type CoinRuleScenario } from './shared/coinRuleConfirmation';
 import PreviewSegmentTrack from './components/PreviewSegmentTrack';
@@ -8,7 +13,7 @@ import { defaultClassListLoadingPreview } from './shared/classListLoadingPreview
 import { createDefaultClassReportOutline, normalizeClassReportOutline } from './shared/classReportOutline';
 import { GrowthCoinIcon, GrowthCoinName, useGrowthCoinTerms } from './components/GrowthCoinBranding';
 
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { ViewState, Student, Product, BankAccount, Deposit } from './types';
 import { EXCHANGE_RATE, BANK_CONFIG, MOCK_PRODUCTS } from './constants';
 import FaceScanner from './components/FaceScanner';
@@ -26,8 +31,9 @@ import MobileApp from './mobile-app/App';
 import TeacherDevelopmentApp from './mobile-app/teacher-development/TeacherDevelopmentApp';
 import CompanionApp from './components/CompanionApp';
 import ParentApp from './components/ParentApp';
-import ParentBankFeaturePreviewControls from './components/ParentBankFeaturePreviewControls';
+import ParentGrowthCoinFeaturePreviewControls from './components/ParentGrowthCoinFeaturePreviewControls';
 import ParentEvaluationVisibilityPreviewControls from './components/ParentEvaluationVisibilityPreviewControls';
+import ParentEvaluationFeaturePreviewControls from './components/ParentEvaluationFeaturePreviewControls';
 import TerminalLoginMethodPreviewControls, { type StudentLoginPreviewMode } from './components/TerminalLoginMethodPreviewControls';
 import TerminalShopLayoutPreviewControls from './components/TerminalShopLayoutPreviewControls';
 import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
@@ -35,6 +41,10 @@ import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
 import UiRenovationDemo from './components/UiRenovationDemo';
+// 两套候选大屏独立维护：学校 PC 顶部入口与 Demo 独立项目不可共用展示组件。
+import SchoolPcDataScreen from './components/data-screen/StudentEvaluationDataScreen';
+import DemoStudentEvaluationDataScreen from './components/demo-data-screen/StudentEvaluationDataScreen';
+import { Button as ArcoButton } from '@arco-design/web-react';
 import TeacherMobileDeveloperNotes, { type TeacherMobileDeveloperNotesContext } from './components/TeacherMobileDeveloperNotes';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
@@ -67,10 +77,11 @@ import {
   type ParentEvaluationVisibilitySettings,
 } from './shared/parentEvaluationVisibility';
 import {
-  PARENT_BANK_FEATURE_UPDATED_EVENT,
-  readParentBankFeatureEnabled,
-  writeParentBankFeatureEnabled,
-} from './shared/parentBankFeature';
+  PARENT_GROWTH_COIN_FEATURE_UPDATED_EVENT,
+  readParentGrowthCoinFeatures,
+  writeParentGrowthCoinFeatures,
+  type ParentGrowthCoinFeatureSettings,
+} from './shared/parentGrowthCoinFeature';
 
 
 interface ScoreConfig { score: number; count: number; }
@@ -1373,7 +1384,7 @@ const PcWorkspace: React.FC = () => {
               return (
                 <div
                   key={tab}
-                  className={`h-9 rounded-xl border flex items-center gap-2 pl-3.5 pr-2.5 transition-all shrink-0 ${
+                  className={`h-9 rounded-lg border flex items-center gap-2 pl-3.5 pr-2.5 transition-all shrink-0 ${
                     active ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                   }`}
                 >
@@ -1400,6 +1411,13 @@ const PcWorkspace: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 pr-5">
+          <ArcoButton
+            type="text"
+            href="?app=school-pc-screen"
+            target="_blank"
+            anchorProps={{ rel: 'noopener noreferrer', title: '打开育人大屏（新窗口）' }}
+            icon={<Monitor size={16} aria-hidden="true" />}
+          >育人大屏</ArcoButton>
           <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
               <span className="text-[13px] font-black">{teacherProfile.name.slice(0, 1)}</span>
@@ -1426,10 +1444,10 @@ const AppSwitcher: React.FC = () => {
   const questionnaireInviteCode = useMemo(() => (
     new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
   ), []);
-  const [currentApp, setCurrentApp] = useState<'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation'>(() => {
+  const [currentApp, setCurrentApp] = useState<'teacher-mobile-lite' | 'teacher-pad' | 'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation' | 'data-screen' | 'school-pc-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation') {
+    if (app === 'teacher-mobile-lite' || app === 'teacher-pad' || app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation' || app === 'data-screen' || app === 'school-pc-screen') {
       return app;
     }
     return 'admin'; // Demo 默认展示教师手机端
@@ -1441,12 +1459,22 @@ const AppSwitcher: React.FC = () => {
   const [shopLayoutPresetId, setShopLayoutPresetId] = useState<TerminalShopLayoutPresetId>(() => (
     readTerminalShopLayoutPresetId()
   ));
-  const [showPhoneShell, setShowPhoneShell] = useState(true);
+  const [showTeacherDeviceFrame, setShowTeacherDeviceFrame] = useState(true);
+  const [teacherPreviewDevice, setTeacherPreviewDevice] = useState<'phone' | 'tablet'>('phone');
+  const isTeacherTabletPreview = showTeacherDeviceFrame && currentApp === 'teacher-mobile-lite' && teacherPreviewDevice === 'tablet';
+  const teacherDeviceToggleLabel = currentApp === 'teacher-mobile-lite' ? '模拟真机' : '模拟真实手机';
+  const [teacherTabletPreviewDockPosition, setTeacherTabletPreviewDockPosition] = useState<{ left: number; top: number } | null>(null);
   const [teacherGradientScheme, setTeacherGradientScheme] = useState<TeacherGradientSchemeId>(defaultTeacherGradientPreview.schemeId);
   const [teacherGradientStyle, setTeacherGradientStyle] = useState<TeacherGradientStyleId>(defaultTeacherGradientPreview.styleId);
-  const [parentGradientScheme, setParentGradientScheme] = useState<TeacherGradientSchemeId>(defaultParentGradientPreview.schemeId);
-  const [parentGradientStyle, setParentGradientStyle] = useState<TeacherGradientStyleId>(defaultParentGradientPreview.styleId);
+  const [parentColorScheme, setParentColorScheme] = useState<ParentGrowthScheme>('teacher');
+  const parentGradientScheme = defaultParentGradientPreview.schemeId;
+  const parentGradientStyle = defaultParentGradientPreview.styleId;
   const [showTeacherColorPreview, setShowTeacherColorPreview] = useState(false);
+  const [showAirecDevicePreview, setShowAirecDevicePreview] = useState(false);
+  const [showClassActionsPreview, setShowClassActionsPreview] = useState(false);
+  const [showUnreleasedClassTools, setShowUnreleasedClassTools] = useState(false);
+  const [showTeacherMePreview, setShowTeacherMePreview] = useState(false);
+  const [showTeacherUnreleasedTools, setShowTeacherUnreleasedTools] = useState(false);
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [studentTeamInvitePreview, setStudentTeamInvitePreview] = useState(false);
   const [isStudentTeamListViewActive, setIsStudentTeamListViewActive] = useState(false);
@@ -1474,13 +1502,14 @@ const AppSwitcher: React.FC = () => {
   const [classReportOutline, setClassReportOutline] = useState(createDefaultClassReportOutline);
   const [isClassReportViewActive, setIsClassReportViewActive] = useState(false);
   const headteacherAssistantScopePreviewMode = headteacherAssistantScopePreview ?? headteacherAssistantScopePreviewDefault;
-  const showParentPhoneShell = false;
+  const [showParentPhoneShell, setShowParentPhoneShell] = useState(true);
   const [parentPreviewClassId, setParentPreviewClassId] = useState(DEFAULT_PARENT_PREVIEW_CLASS_ID);
+  const [parentPreviewSchoolCode, setParentPreviewSchoolCode] = useState('BS2024');
   const [parentEvaluationVisibility, setParentEvaluationVisibility] = useState<ParentEvaluationVisibilitySettings>(() => (
     readParentEvaluationVisibility(DEFAULT_PARENT_PREVIEW_CLASS_ID)
   ));
-  const [parentBankFeatureEnabled, setParentBankFeatureEnabled] = useState(() => (
-    readParentBankFeatureEnabled(DEFAULT_PARENT_PREVIEW_CLASS_ID)
+  const [parentGrowthCoinFeatures, setParentGrowthCoinFeatures] = useState(() => (
+    readParentGrowthCoinFeatures(DEFAULT_PARENT_PREVIEW_CLASS_ID)
   ));
   const [parentScreen, setParentScreen] = useState('growth');
   const [showAdvancedApps, setShowAdvancedApps] = useState(false);
@@ -1546,6 +1575,18 @@ const AppSwitcher: React.FC = () => {
   const skipDemoToggleRef = useRef(false);
   const environmentTitleClickCountRef = useRef(0);
 
+  const handleTeacherPreviewDeviceBoundsChange = useCallback((bounds: DevicePreviewBounds) => {
+    if (window.innerWidth <= 900) {
+      setTeacherTabletPreviewDockPosition(null);
+      return;
+    }
+    const maxLeft = Math.max(16, window.innerWidth - 272 - 16);
+    const position = { left: Math.min(bounds.right + 24, maxLeft), top: Math.max(16, bounds.top) };
+    setTeacherTabletPreviewDockPosition(previous => (
+      previous?.left === position.left && previous.top === position.top ? previous : position
+    ));
+  }, []);
+
   useEffect(() => {
     const refreshParentEvaluationVisibility = () => {
       setParentEvaluationVisibility(readParentEvaluationVisibility(parentPreviewClassId));
@@ -1560,15 +1601,15 @@ const AppSwitcher: React.FC = () => {
   }, [parentPreviewClassId]);
 
   useEffect(() => {
-    const refreshParentBankFeature = () => {
-      setParentBankFeatureEnabled(readParentBankFeatureEnabled(parentPreviewClassId));
+    const refreshParentGrowthCoinFeatures = () => {
+      setParentGrowthCoinFeatures(readParentGrowthCoinFeatures(parentPreviewClassId));
     };
-    refreshParentBankFeature();
-    window.addEventListener(PARENT_BANK_FEATURE_UPDATED_EVENT, refreshParentBankFeature);
-    window.addEventListener('storage', refreshParentBankFeature);
+    refreshParentGrowthCoinFeatures();
+    window.addEventListener(PARENT_GROWTH_COIN_FEATURE_UPDATED_EVENT, refreshParentGrowthCoinFeatures);
+    window.addEventListener('storage', refreshParentGrowthCoinFeatures);
     return () => {
-      window.removeEventListener(PARENT_BANK_FEATURE_UPDATED_EVENT, refreshParentBankFeature);
-      window.removeEventListener('storage', refreshParentBankFeature);
+      window.removeEventListener(PARENT_GROWTH_COIN_FEATURE_UPDATED_EVENT, refreshParentGrowthCoinFeatures);
+      window.removeEventListener('storage', refreshParentGrowthCoinFeatures);
     };
   }, [parentPreviewClassId]);
 
@@ -1580,8 +1621,8 @@ const AppSwitcher: React.FC = () => {
     setParentEvaluationVisibility(writeParentEvaluationVisibility(parentPreviewClassId, settings));
   };
 
-  const updateParentBankFeature = (enabled: boolean) => {
-    setParentBankFeatureEnabled(writeParentBankFeatureEnabled(parentPreviewClassId, enabled));
+  const updateParentGrowthCoinFeatures = (settings: ParentGrowthCoinFeatureSettings) => {
+    setParentGrowthCoinFeatures(writeParentGrowthCoinFeatures(parentPreviewClassId, settings));
   };
 
   const handleRegionalPcLogout = () => {
@@ -1770,7 +1811,7 @@ const AppSwitcher: React.FC = () => {
       });
       console.info('[教师手机端截图] 导出成功', {
         fileName: `教师手机端-${timestamp}.png`,
-        includeNativeChrome: showPhoneShell,
+        includeNativeChrome: showTeacherDeviceFrame,
         logicalSize: `${screen.offsetWidth}x${screen.offsetHeight}`,
       });
       setTeacherScreenshotStatus('success');
@@ -1778,7 +1819,7 @@ const AppSwitcher: React.FC = () => {
     } catch (error) {
       console.error('[教师手机端截图] 导出失败', {
         error,
-        includeNativeChrome: showPhoneShell,
+        includeNativeChrome: showTeacherDeviceFrame,
         logicalSize: `${screen.offsetWidth}x${screen.offsetHeight}`,
       });
       setTeacherScreenshotStatus('error');
@@ -1843,11 +1884,19 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'pc-workspace' && <PcWorkspace />}
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
         {currentApp === 'region-pc-screen' && <RegionalPcAdmin screenOnly />}
-        {currentApp === 'admin' && (
+        {(currentApp === 'admin' || currentApp === 'teacher-mobile-lite') && (
           <MobileApp
-            showPhoneShell={showPhoneShell}
+            edition={currentApp === 'teacher-mobile-lite' ? 'lite' : 'full'}
+            showUnreleasedTools={showTeacherUnreleasedTools}
+            showPhoneShell={showTeacherDeviceFrame}
+            previewDevice={isTeacherTabletPreview ? 'tablet' : 'phone'}
+            onPreviewDeviceBoundsChange={isTeacherTabletPreview ? handleTeacherPreviewDeviceBoundsChange : undefined}
             screenRef={teacherPhoneScreenRef}
             onGradientPreviewVisibilityChange={setShowTeacherColorPreview}
+            onMePreviewVisibilityChange={setShowTeacherMePreview}
+            onAirecPreviewVisibilityChange={setShowAirecDevicePreview}
+            showUnreleasedClassTools={showUnreleasedClassTools}
+            onClassActionsPreviewVisibilityChange={setShowClassActionsPreview}
             campaignPreviewEveryEntry
             headteacherAssistantScopePreview={headteacherAssistantScopePreviewMode ?? undefined}
             onHeadteacherAssistantScopePreviewDefaultChange={setHeadteacherAssistantScopePreviewDefault}
@@ -1855,7 +1904,7 @@ const AppSwitcher: React.FC = () => {
             onHeadteacherAssistantViewChange={setIsHeadteacherAssistantViewActive}
             classReportOutline={normalizeClassReportOutline(classReportOutline)}
             onClassReportViewChange={setIsClassReportViewActive}
-            studentTeamInvitePreview={studentTeamInvitePreview}
+            studentTeamInvitePreview={currentApp === 'admin' && studentTeamInvitePreview}
             onStudentTeamInvitePreviewChange={setStudentTeamInvitePreview}
             onStudentTeamListViewChange={setIsStudentTeamListViewActive}
             classListLoadingPreview={classListLoadingPreview}
@@ -1867,11 +1916,14 @@ const AppSwitcher: React.FC = () => {
           />
         )}
         {currentApp === 'ui-renovation' && <UiRenovationDemo />}
+        {currentApp === 'data-screen' && <DemoStudentEvaluationDataScreen />}
+        {currentApp === 'school-pc-screen' && <SchoolPcDataScreen />}
+        {currentApp === 'teacher-pad' && <TeacherPadPreview />}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && (questionnaireInviteCode
-          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} onScreenChange={setParentScreen} />
-          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentBankFeatureEnabled={parentBankFeatureEnabled} onActiveClassIdChange={setParentPreviewClassId} onScreenChange={setParentScreen} />
+          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled} onActiveClassIdChange={setParentPreviewClassId} onActiveSchoolCodeChange={setParentPreviewSchoolCode} colorScheme={parentColorScheme} onScreenChange={setParentScreen} />
+          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled} onActiveClassIdChange={setParentPreviewClassId} onActiveSchoolCodeChange={setParentPreviewSchoolCode} colorScheme={parentColorScheme} onScreenChange={setParentScreen} />
         )}
       </div>
 
@@ -1904,42 +1956,38 @@ const AppSwitcher: React.FC = () => {
       )}
 
       {currentApp === 'parent' && !questionnaireInviteCode && (
-        <div className="fixed left-1/2 top-1/2 z-[9998] ml-[230px] -translate-y-1/2 max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
+        <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-h-[calc(100dvh-32px)] overflow-y-auto overscroll-contain max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
           <div className="flex flex-col gap-3">
-            {['growth', 'reports', 'mine'].includes(parentScreen) && (
+    <button
+      type="button" role="switch" aria-checked={showParentPhoneShell} aria-label="模拟真实手机"
+      onClick={() => setShowParentPhoneShell(!showParentPhoneShell)}
+      className="flex min-h-11 items-center justify-between gap-2 self-end rounded-full border border-slate-200/80 bg-white/90 px-3 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors active:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-400"
+    >
+      <Smartphone size={16} className="shrink-0 text-slate-600" aria-hidden="true" />
+      <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700">模拟真实手机</span>
+      <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showParentPhoneShell ? 'bg-slate-800' : 'bg-slate-300'}`} aria-hidden="true">
+        <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${showParentPhoneShell ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+      </span>
+    </button>
+            {parentScreen === 'growth' && (
               <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl" aria-label="家长端渐变预览配置">
                 <label className="flex min-h-11 items-center gap-2">
                   <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">配色方案</span>
                   <span className="relative min-w-0 flex-1">
                     <select
                       aria-label="家长端选择渐变配色方案"
-                      value={parentGradientScheme}
-                      onChange={event => setParentGradientScheme(event.target.value as TeacherGradientSchemeId)}
+                      value={parentColorScheme}
+                      onChange={event => setParentColorScheme(event.target.value as ParentGrowthScheme)}
                       className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
                     >
-                      {teacherGradientSchemeOptions.map(option => (
+                      {parentGrowthSchemeOptions.map(option => (
                         <option key={option.id} value={option.id}>{option.label}</option>
                       ))}
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                   </span>
                 </label>
-                <label className="flex min-h-11 items-center gap-2">
-                  <span className="w-14 shrink-0 pl-1 text-[11px] font-bold text-slate-500">渐变样式</span>
-                  <span className="relative min-w-0 flex-1">
-                    <select
-                      aria-label="家长端选择渐变样式"
-                      value={parentGradientStyle}
-                      onChange={event => setParentGradientStyle(event.target.value as TeacherGradientStyleId)}
-                      className="h-9 w-full appearance-none rounded-lg border border-slate-200 bg-white px-2.5 pr-7 text-[12px] font-semibold text-slate-700 outline-none transition-colors focus:border-slate-400"
-                    >
-                      {teacherGradientStyleOptions.map(option => (
-                        <option key={option.id} value={option.id}>{option.label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  </span>
-                </label>
+
               </div>
             )}
             {['growth', 'growthRecords'].includes(parentScreen) && (
@@ -1948,32 +1996,41 @@ const AppSwitcher: React.FC = () => {
                 onChange={updateParentEvaluationVisibility}
               />
             )}
-            {parentScreen === 'growth' && (
-              <ParentBankFeaturePreviewControls
-                enabled={parentBankFeatureEnabled}
-                onChange={updateParentBankFeature}
+            {['growth', 'growthRecords'].includes(parentScreen) && (
+              <ParentEvaluationFeaturePreviewControls schoolCode={parentPreviewSchoolCode} />
+            )}
+            {['growth', 'bank', 'coinFlow'].includes(parentScreen) && (
+              <ParentGrowthCoinFeaturePreviewControls
+                settings={parentGrowthCoinFeatures}
+                onChange={updateParentGrowthCoinFeatures}
               />
             )}
           </div>
         </div>
       )}
 
-      {currentApp === 'admin' && (
-        <div className="fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0">
-          <div className="flex w-[232px] flex-col items-end gap-2 max-[900px]:w-[172px]">
-            <div className="flex items-center gap-1">
+      {(currentApp === 'admin' || currentApp === 'teacher-mobile-lite') && (
+        <div className={isTeacherTabletPreview
+          ? 'fixed right-4 top-4 z-[9998]'
+          : 'fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0'}
+          style={isTeacherTabletPreview && teacherTabletPreviewDockPosition
+            ? { ...teacherTabletPreviewDockPosition, right: 'auto' }
+            : undefined}>
+          <div className={`flex flex-col items-end gap-3 max-[900px]:w-[172px] ${currentApp === 'teacher-mobile-lite' ? 'w-[272px]' : 'w-[232px]'}`}>
+            <div className="flex w-full items-center gap-1">
               <button
                 type="button"
-                onClick={() => setShowPhoneShell(previous => !previous)}
+                onClick={() => setShowTeacherDeviceFrame(previous => !previous)}
                 className="flex h-11 items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl transition-colors active:bg-slate-50 max-[900px]:px-1.5"
-                aria-pressed={showPhoneShell}
-                aria-label="模拟真实手机"
-                title="模拟真实手机"
+                role="switch"
+                aria-checked={showTeacherDeviceFrame}
+                aria-label={teacherDeviceToggleLabel}
+                title={teacherDeviceToggleLabel}
               >
                 <Smartphone className="hidden h-4 w-4 text-slate-600 max-[900px]:block" aria-hidden="true" />
-                <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700 max-[900px]:sr-only">模拟真实手机</span>
-                <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showPhoneShell ? 'bg-slate-800' : 'bg-slate-300'}`} aria-hidden="true">
-                  <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${showPhoneShell ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+                <span className="whitespace-nowrap text-[12px] font-semibold text-slate-700 max-[900px]:sr-only">{teacherDeviceToggleLabel}</span>
+                <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showTeacherDeviceFrame ? 'bg-slate-800' : 'bg-slate-300'}`} aria-hidden="true">
+                  <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${showTeacherDeviceFrame ? 'translate-x-[18px]' : 'translate-x-0'}`} />
                 </span>
               </button>
               <button
@@ -2004,6 +2061,24 @@ const AppSwitcher: React.FC = () => {
               </button>
               )}
             </div>
+
+            {currentApp === 'teacher-mobile-lite' && showTeacherDeviceFrame && (
+              <TeacherDevicePreviewControls value={teacherPreviewDevice} onChange={setTeacherPreviewDevice} />
+            )}
+
+            {currentApp === 'admin' && showTeacherMePreview && <section className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-3" aria-label="未上线功能预览配置">
+              <h2 className="text-xs font-semibold text-slate-700">预览配置</h2>
+              <button type="button" role="switch" aria-checked={showTeacherUnreleasedTools}
+                onClick={() => setShowTeacherUnreleasedTools(value => !value)}
+                className="flex min-h-11 w-full items-center justify-between gap-2 text-left text-xs text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-rose-500">
+                <span>显示未上线功能</span>
+                <span aria-hidden="true" className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showTeacherUnreleasedTools ? 'bg-slate-800' : 'bg-slate-300'}`}>
+                  <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform motion-reduce:transition-none ${showTeacherUnreleasedTools ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+                </span>
+              </button>
+            </section>}
+
+            {currentApp === 'teacher-mobile-lite' && showAirecDevicePreview && <AirecDevicePreviewControls />}
 
             {coinRulePageVisible && <CoinFlowReviewNotes />}
 
@@ -2071,6 +2146,23 @@ const AppSwitcher: React.FC = () => {
               <ClassListLoadingPreviewControls value={classListLoadingPreview} onChange={setClassListLoadingPreview} />
             )}
 
+            {showClassActionsPreview && (
+            <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showUnreleasedClassTools}
+                onClick={() => setShowUnreleasedClassTools(previous => !previous)}
+                className="flex min-h-11 w-full items-center gap-2 text-left"
+              >
+                <span className="min-w-0 flex-1 pl-1 text-[11px] font-bold text-slate-500">显示未上线功能</span>
+                <span className={`relative h-[22px] w-10 shrink-0 rounded-full p-0.5 transition-colors ${showUnreleasedClassTools ? 'bg-slate-800' : 'bg-slate-300'}`} aria-hidden="true">
+                  <span className={`block h-[18px] w-[18px] rounded-full bg-white shadow-sm transition-transform ${showUnreleasedClassTools ? 'translate-x-[18px]' : 'translate-x-0'}`} />
+                </span>
+              </button>
+            </div>
+            )}
+
             {isStudentTeamListViewActive && (
             <div className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-2 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.45)] backdrop-blur-xl">
               <button
@@ -2119,8 +2211,8 @@ const AppSwitcher: React.FC = () => {
         </div>
       )}
 
-      {/* 区域纯屏汇报模式需要保持正式呈现，不显示内部环境切换浮层。 */}
-      {currentApp !== 'region-pc-screen' && (
+      {/* 对外展示的大屏不显示内部环境切换浮层。 */}
+      {currentApp !== 'region-pc-screen' && currentApp !== 'school-pc-screen' && (
         <div
           ref={demoPanelRef}
           className={`fixed z-[9999] touch-none select-none transition-[left,right,top,bottom,transform] duration-300 ${demoPanelPosition ? '' : 'right-0 top-1/2 -translate-y-1/2'} ${isDemoOpen ? demoPanelOpenClass : demoPanelClosedClass}`}
@@ -2164,6 +2256,16 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
             </button>
             <button
+              type="button"
+              onClick={() => setCurrentApp('teacher-mobile-lite')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-mobile-lite' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="教师-手机端(极速版)"
+              aria-label="教师-手机端(极速版)"
+            >
+              <Smartphone size={22} className="mb-1" aria-hidden="true" />
+              <span className="text-[9px] font-bold leading-tight">教师-手机端<span className="block">(极速版)</span></span>
+            </button>
+            <button
               onClick={() => setCurrentApp('terminal')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="货柜机 - 学生端"
@@ -2186,6 +2288,16 @@ const AppSwitcher: React.FC = () => {
             >
               <Palette size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">UI改造</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setCurrentApp('data-screen'); setIsDemoOpen(false); }}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'data-screen' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="数据大屏 - 学生评价"
+              aria-label="数据大屏"
+            >
+              <Monitor size={22} className="mb-1" aria-hidden="true" />
+              <span className="text-[9px] font-bold leading-tight">数据大屏</span>
             </button>
             <button
               onClick={() => setCurrentApp('pc-workspace')}

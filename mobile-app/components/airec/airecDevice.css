@@ -1,0 +1,96 @@
+.airec-artwork {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: var(--tm-airec-scan-size);
+    aspect-ratio: 1;
+    max-width: 100%;
+    margin-inline: auto;
+}
+.airec-microphone-art {
+    position: relative;
+    z-index: 1;
+    width: 176px;
+    height: 176px;
+    object-fit: contain;
+}
+.airec-artwork-compact { width: 144px; height: 144px; }
+.airec-artwork-compact .airec-microphone-art { width: 144px; height: 144px; }
+.airec-artwork-device { width: 80px; height: 96px; margin-inline: 0; }
+.airec-artwork-device .airec-microphone-art { width: 96px; height: 96px; max-width: none; }
+.airec-status-dot {
+    position: relative;
+    width: var(--tm-airec-status-halo-size);
+    height: var(--tm-airec-status-halo-size);
+    flex-shrink: 0;
+    border-radius: 50%;
+}
+.airec-status-dot::before, .airec-status-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+}
+.airec-status-dot::before { opacity: .16; }
+.airec-status-dot::after {
+    width: var(--tm-airec-status-dot-size);
+    height: var(--tm-airec-status-dot-size);
+    margin: auto;
+}
+.airec-status-dot.is-breathing::before { animation: airec-status-breathe var(--tm-airec-status-breathe-duration) ease-in-out infinite; }
+.airec-sync-progress {
+    height: var(--tm-space-1);
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--tm-bg-surface-muted);
+}
+.airec-sync-progress-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--tm-brand-secondary);
+    transform-origin: left center;
+    transition: transform var(--tm-airec-progress-duration) cubic-bezier(.22, 1, .36, 1);
+}
+.airec-sync-progress-fill[data-empty='true'] { transition: none; }
+@keyframes airec-status-breathe {
+    0%, 100% { opacity: .12; }
+    50% { opacity: .36; }
+}
+.airec-scan-rings {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+/* 固定细描边不随扩散缩放；用品牌色的透明度保证浅灰底上仍能辨认。 */
+.airec-scan-ring {
+    fill: none;
+    stroke: var(--tm-brand-primary);
+    stroke-width: .75px;
+    transform-origin: center;
+    opacity: 0;
+    transform: scale(.35);
+}
+.is-scanning .airec-scan-ring { animation: airec-scan-ripple 3.6s linear infinite; }
+.is-scanning .airec-scan-ring-two { animation-delay: -1.2s; }
+.is-scanning .airec-scan-ring-three { animation-delay: -2.4s; }
+.airec-discovered-device { animation: airec-device-appear var(--tm-duration-standard) ease-out both; }
+@keyframes airec-scan-ripple {
+    0% { opacity: 0; transform: scale(.35); }
+    15% { opacity: .38; }
+    100% { opacity: 0; transform: scale(1); }
+}
+@keyframes airec-device-appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+    .airec-status-dot.is-breathing::before { animation: none; }
+    .airec-sync-progress-fill { transition: none; }
+    .is-scanning .airec-scan-ring { animation: none; opacity: .3; transform: scale(1); }
+    .is-scanning .airec-scan-ring-two { transform: scale(.78); }
+    .is-scanning .airec-scan-ring-three { transform: scale(.56); }
+    .airec-discovered-device { animation: none; }
+}

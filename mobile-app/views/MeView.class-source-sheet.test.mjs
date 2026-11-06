@@ -4,7 +4,7 @@ import React from 'react';
 import { transformSync } from 'esbuild';
 
 const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
-const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8') + '\n' + fs.readFileSync(new URL('../data/teacherSpaces.ts', import.meta.url), 'utf8') + '\n' + fs.readFileSync(new URL('../data/teacherProfile.ts', import.meta.url), 'utf8');
 const sourceTriggerSource = fs.readFileSync(new URL('../components/ClassSourceTrigger.tsx', import.meta.url), 'utf8');
 
 const requireText = (source, needle, message) => {

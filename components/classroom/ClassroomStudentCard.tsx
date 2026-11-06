@@ -7,6 +7,7 @@ import { getClassroomDisplayConfig, type ClassroomDisplayConfig } from '../../sh
 import { ClassroomStudentAvatar, ClassroomStudentLevelIcons, ClassroomStudentLevelScore } from '../student-performance/ClassroomStudentPerformance';
 import ClassroomPerformanceValues from './ClassroomPerformanceValues';
 import ClassroomRosterBadge from './ClassroomRosterBadge';
+import { getClassroomStudentCardLayout } from './classroomStudentCardLayout';
 
 /**
  * 课堂大屏学生卡片：完全版承载等级与评价信息，卡片高度随可见内容自动变化；
@@ -66,12 +67,7 @@ const ClassroomStudentCard: React.FC<ClassroomStudentCardProps> = ({
     ...visiblePerformanceLabels,
   ].filter(Boolean).join('，');
   const hasVisibleValues = showPraise || showCriticism;
-  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(hasVisibleValues);
-  const cardHeight = visiblePerformanceRowCount === 2
-    ? layout.fullHeight
-    : visiblePerformanceRowCount === 1
-      ? layout.countsHeight
-      : layout.identityOnlyHeight;
+  const { cardHeight } = getClassroomStudentCardLayout(layout, displaySettings);
 
   return (
     <div

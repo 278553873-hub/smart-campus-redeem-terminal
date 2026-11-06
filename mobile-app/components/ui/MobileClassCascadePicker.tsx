@@ -101,7 +101,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[110px_1fr]" aria-label={ariaLabel}>
-      <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--tm-bg-surface-muted)] py-0 no-scrollbar" aria-label="左侧先选年级">
+      <div className="min-h-0 overflow-y-auto overscroll-contain bg-[var(--tm-bg-surface-muted)] py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="左侧先选年级">
         {groups.map(group => {
           const active = activeGroup?.gradeLabel === group.gradeLabel;
           return (
@@ -121,7 +121,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
       </div>
 
       <div className="flex min-h-0 min-w-0 flex-col bg-[var(--tm-bg-surface)] px-4" aria-label="右侧再选该年级下的班级">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain no-scrollbar">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="pb-1">
           {activeClasses.length === 0 && (
             <div className="flex items-center justify-center py-16 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无可选班级</div>

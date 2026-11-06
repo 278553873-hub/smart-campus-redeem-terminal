@@ -8,6 +8,7 @@ import {
 import { VoiceSiriOrbCanvas } from '../components/VoiceSiriOrbCanvas';
 
 interface RecordInputViewProps {
+    scope?: 'student' | 'class';
     initialStudentIds: string[]; // From batch selection
     candidateStudentIds?: string[];
     studentNameList: string;
@@ -24,7 +25,7 @@ const getAudioContext = () => {
     return AudioContextCtor ? new AudioContextCtor() : null;
 };
 
-const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, candidateStudentIds = [], studentNameList, initialMode = 'voice', onClose, onAnalysisComplete }) => {
+const RecordInputView: React.FC<RecordInputViewProps> = ({ scope = 'student', initialStudentIds, candidateStudentIds = [], studentNameList, initialMode = 'voice', onClose, onAnalysisComplete }) => {
     const [mode, setMode] = useState<InputMode>(initialMode);
     const [inputText, setInputText] = useState("");
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -197,12 +198,12 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
         setTimeout(() => {
             onAnalysisComplete({
                 type: 'voice',
-                text: "今天数学课，" + (studentNameList || "大家") + "表现都很积极，主动回答问题。",
+                text: scope === 'class' ? '三年级2班早操队伍整齐，做操规范。' : "今天数学课，" + (studentNameList || "大家") + "表现都很积极，主动回答问题。",
                 mockStudents: initialStudentIds,
                 candidateStudentIds,
             });
         }, 300);
-    }, [isRecording, cancelThreshold, onAnalysisComplete, initialStudentIds, candidateStudentIds, studentNameList, onClose, stopAudioCapture]);
+    }, [isRecording, cancelThreshold, onAnalysisComplete, initialStudentIds, candidateStudentIds, studentNameList, scope, onClose, stopAudioCapture]);
 
     useEffect(() => {
         if (!isRecording) return;
@@ -220,7 +221,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
 
     const visualVoiceLevel = Math.max(voiceLevel, micState === 'listening' ? 0.24 : 0.34);
     const shouldShowStudentContext = mode !== 'camera' || Boolean(studentNameList) || initialStudentIds.length > 0;
-    const studentContextLabel = studentNameList || '未选择学生';
+    const studentContextLabel = scope === 'class' ? '记录班级' : studentNameList || '未选择学生';
 
     return (
         <div className={`absolute inset-0 z-50 flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 ${mode === 'camera' ? 'bg-black' : 'teacher-record-soft-page'}`}>
@@ -230,6 +231,7 @@ const RecordInputView: React.FC<RecordInputViewProps> = ({ initialStudentIds, ca
                 <div className="flex-1 flex justify-start">
                     <button
                         onClick={onClose}
+                        aria-label="关闭录入"
                         className={`p-2 rounded-full transition-colors ${mode === 'camera' ? 'bg-white/10 /20' : 'bg-white/80 shadow-sm border border-white/80 '}`}
                     >
                         <div className="rotate-90"><ChevronRightIcon className={`w-5 h-5 ${mode === 'camera' ? 'text-white' : 'text-slate-600'}`} /></div>

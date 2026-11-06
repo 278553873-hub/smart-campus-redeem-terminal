@@ -6,6 +6,7 @@ interface MobileConfirmSheetProps {
   shape?: 'default' | 'subtle';
   title: string;
   description: string;
+  errorMessage?: string;
   confirmLabel: string;
   cancelLabel?: string;
   tone?: 'primary' | 'danger';
@@ -19,6 +20,7 @@ const MobileConfirmSheet: React.FC<MobileConfirmSheetProps> = ({
   open,
   title,
   description,
+  errorMessage,
   confirmLabel,
   cancelLabel = '取消',
   shape = 'default',
@@ -28,6 +30,7 @@ const MobileConfirmSheet: React.FC<MobileConfirmSheetProps> = ({
 }) => (
   <MobileBottomSheet open={open} title={title} onClose={onClose}>
     <p className="text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">{description}</p>
+    {errorMessage && <p role="alert" className="mt-3 text-[length:var(--tm-font-size-compact)] leading-5 text-[var(--tm-status-negative-strong)]">{errorMessage}</p>}
     <div className={`grid grid-cols-2 ${shape === 'subtle' ? 'mt-[var(--tm-layout-card-gap)] gap-[var(--tm-layout-card-gap)]' : 'mt-5 gap-3'}`}>
       <button type="button" onClick={onClose} className={`${buttonBase} ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]`}>
         {cancelLabel}

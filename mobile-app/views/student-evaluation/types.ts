@@ -15,6 +15,10 @@ export interface StudentEvaluationRecordRevision {
 }
 
 export interface StudentEvaluationRecord extends StudentEvaluationRecordSnapshot {
+  source?: 'school' | 'parent';
+  guardianRelation?: string;
+  images?: string[];
+  timestamp?: string;
   id: string;
   isBad: boolean;
   description: string;

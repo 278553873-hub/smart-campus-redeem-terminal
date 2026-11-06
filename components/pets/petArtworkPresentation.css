@@ -1,0 +1,29 @@
+.pet-artwork-frame {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 统一底部基线，较小形态保留上方空间；独立容器不覆盖图片的悬停动作。 */
+.pet-artwork-frame__stage {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* 等待进化时停用形象自身动作与全息层，外围状态特效由展示容器独立负责。 */
+.pet-artwork-frame[data-pet-motion="static"] * {
+  animation: none !important;
+  transition: none !important;
+}
+
+.pet-artwork-frame[data-pet-motion="static"] .pet-companion-depth {
+  transform: none;
+}
+
+.pet-artwork-frame[data-pet-motion="static"] :is(.pet-companion-aura, .pet-companion-halo, .pet-companion-holo-light, .pet-companion-foil-sweep, .pet-companion-sparks) {
+  display: none;
+}

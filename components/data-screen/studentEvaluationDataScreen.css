@@ -1,0 +1,270 @@
+/* 学校公共展示屏：仅在模块根节点内生效。 */
+.student-evaluation-data-screen {
+  --es-bg: #030f27; --es-surface: #071d3a; --es-text: #edf4ff; --es-muted: #a9bfde;
+  --es-cyan: #21deef; --es-violet: #b391f8; --es-border: #214f7b;
+  --es-positive: #60edf4; --es-negative: #f4c56f;
+  --es-gap: clamp(12px, 1vw, 24px); --es-pad: clamp(16px, 1.15vw, 28px);
+  --es-panel-pad: clamp(16px, 1.2vw, 28px);
+  position: relative; isolation: isolate; box-sizing: border-box; width: 100%; height: 100dvh;
+  padding: var(--es-pad); display: grid; grid-template-rows: clamp(88px, 10vh, 120px) clamp(102px, 11.2vh, 138px) minmax(0, 1fr) clamp(92px, 10.5vh, 126px);
+  gap: var(--es-gap); overflow: auto; color: var(--es-text);
+  background: radial-gradient(ellipse at 49% 46%, #092b58 0, #04152f 47%, var(--es-bg) 78%);
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  font-size: clamp(14px, 1.02vw, 23px); line-height: 1.45; color-scheme: dark;
+  font-variant-numeric: tabular-nums;
+}
+.student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { box-sizing: border-box; }
+.student-evaluation-data-screen h1, .student-evaluation-data-screen h2, .student-evaluation-data-screen h3, .student-evaluation-data-screen p { margin: 0; }
+.student-evaluation-data-screen ul, .student-evaluation-data-screen ol { margin: 0; padding: 0; list-style: none; }
+.student-evaluation-data-screen strong, .student-evaluation-data-screen b { font-weight: 600; }
+.student-evaluation-data-screen small { font-size: .8em; font-weight: 400; }
+.student-evaluation-data-screen button, .student-evaluation-data-screen select { font: inherit; }
+.student-evaluation-data-screen button { cursor: pointer; }
+.student-evaluation-data-screen button:focus-visible, .student-evaluation-data-screen select:focus-visible { outline: 2px solid var(--es-cyan); outline-offset: 3px; }
+.student-evaluation-data-screen .is-positive { color: var(--es-positive); }
+.student-evaluation-data-screen .is-negative { color: var(--es-negative); }
+.evaluation-screen-ribbons { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.evaluation-screen-header { display: grid; grid-template-columns: 23% 54% 23%; min-width: 0; align-items: start; position: relative; }
+.evaluation-screen-brand { display: flex; align-items: center; gap: 17px; padding: 7px 0 0 22px; font-size: clamp(21px, 1.65vw, 36px); font-weight: 600; letter-spacing: .06em; white-space: nowrap; }
+.evaluation-screen-brand svg { flex-shrink: 0; color: #c2d0ff; }
+.evaluation-screen-brand::after { content: ''; height: 34px; width: 1px; background: #4f668f; margin-left: 18px; }
+.evaluation-screen-header-center { text-align: center; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; padding-bottom: 1px; }
+.evaluation-screen-header h1 { font-size: clamp(25px, 1.95vw, 44px); line-height: 1.2; font-weight: 600; letter-spacing: .025em; white-space: nowrap; }
+.evaluation-screen-tabs { display: flex; width: 76%; min-height: 44px; border: 1px solid #25517f; border-radius: 28px; background: linear-gradient(180deg, #122b50c9, #0a203db3); }
+.evaluation-screen-tabs button { flex: 1; border: 0; border-radius: 28px; color: #dce9ff; background: transparent; font-size: clamp(15px, 1.08vw, 24px); font-weight: 500; padding: 5px 16px; transition: background-color 150ms; white-space: nowrap; }
+.evaluation-screen-tabs button:hover { background: #1b4166; }
+.evaluation-screen-tabs button[aria-selected=true] { background: linear-gradient(180deg, #05bedc, #008aae); box-shadow: inset 0 0 0 1px #4be9f78c; color: #fff; }
+.evaluation-screen-header-right { text-align: right; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.evaluation-screen-term { font-size: clamp(13px, 1vw, 22px); padding-top: 5px; }
+.evaluation-screen-header-right > div { display: flex; gap: 12px; align-items: center; }
+.evaluation-screen-demo-label { color: var(--es-muted); font-size: .82em; }
+.student-evaluation-data-screen .arco-btn.evaluation-screen-settings-trigger { color: var(--es-muted); min-width: 44px; height: 44px; border-radius: 50%; background: transparent; display: grid; place-items: center; padding: 0; }
+.student-evaluation-data-screen .arco-btn.evaluation-screen-settings-trigger:hover { color: var(--es-text); background: #1b3c62; }
+.evaluation-screen-settings { display: grid; gap: 12px; min-width: 190px; color: #203449; font: 14px/1.5 'PingFang SC', sans-serif; }
+.evaluation-screen-settings label { font-weight: 600; }
+.evaluation-screen-settings select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; color: #203449; background: #fff; color-scheme: light; min-height: 44px; }
+.evaluation-screen-settings .arco-btn { min-height: 44px; text-align: left; display: flex; align-items: center; gap: 8px; color: #244a71; }
+.evaluation-screen-settings .arco-btn-icon { display: inline-flex; align-items: center; }
+.evaluation-screen-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; border: 1px solid #126095; border-radius: 16px; background: linear-gradient(105deg, #063059a8, #122c57ac 50%, #052746a3); }
+.evaluation-screen-metric { display: flex; justify-content: center; gap: 22px; align-items: flex-start; min-width: 0; position: relative; }
+.evaluation-screen-metric + .evaluation-screen-metric::before { content: ''; position: absolute; left: 0; top: 12%; bottom: 8%; width: 1px; background: #426d9b; }
+.evaluation-screen-metric > svg { margin-top: 2px; color: #adbdff; flex-shrink: 0; width: clamp(27px, 2.1vw, 46px); height: auto; }
+.evaluation-screen-metric-label { font-size: clamp(16px, 1.15vw, 25px); font-weight: 500; margin-bottom: 3px; }
+.evaluation-screen-metric-value { display: flex; gap: 10px; align-items: baseline; line-height: 1.05; }
+.evaluation-screen-metric-value strong { font-size: clamp(36px, 3vw, 68px); letter-spacing: .015em; }
+.evaluation-screen-metric-value > span { font-size: clamp(17px, 1.25vw, 28px); }
+.evaluation-screen-grid { display: grid; grid-template-columns: 27fr 44fr 27fr; gap: var(--es-gap); min-width: 0; min-height: 0; }
+.evaluation-screen-column { display: grid; grid-template-rows: 1fr 1.08fr; gap: var(--es-gap); min-height: 0; min-width: 0; }
+.evaluation-screen-panel { display: flex; flex-direction: column; padding: var(--es-panel-pad); min-width: 0; min-height: 0; border: 1px solid #2b5d8d; border-radius: 16px; background: linear-gradient(145deg, #0f2b50a8, #051a34b0 65%, #0b31509c); }
+.evaluation-screen-panel-heading { display: flex; align-items: center; gap: 14px; flex-shrink: 0; min-height: 32px; padding-bottom: 14px; border-bottom: 1px solid #28517b; margin-bottom: 14px; }
+.evaluation-screen-panel-heading h2 { font-size: clamp(18px, 1.38vw, 31px); line-height: 1.25; font-weight: 600; letter-spacing: .02em; white-space: nowrap; position: relative; padding-left: 15px; }
+.evaluation-screen-panel-heading h2::before { content: ''; width: 3px; height: .95em; background: #19d5ea; position: absolute; left: 0; top: .12em; border-radius: 2px; }
+.evaluation-screen-panel-detail { font-size: .72em; line-height: 1.4; color: var(--es-muted); margin-left: auto; text-align: right; }
+.evaluation-screen-coverage-rings { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: center; flex: 1; min-height: 0; }
+.evaluation-screen-coverage-ring { min-width: 0; min-height: 0; height: 100%; text-align: center; display: flex; flex-direction: column; }
+.evaluation-screen-coverage-ring svg { display: block; width: 100%; flex: 1; min-height: 0; margin: auto; }
+.evaluation-screen-coverage-ring p { margin-top: 7px; font-size: .9em; white-space: nowrap; flex-shrink: 0; }
+.coverage-value { font-size: 34px; fill: #f0f5ff; font-weight: 600; }
+.coverage-label { font-size: 12px; fill: #d8e9ff; }
+.evaluation-screen-grade-list { display: grid; grid-auto-flow: column; grid-template-columns: 1fr 1fr; column-gap: 22px; row-gap: 8px; flex: 1; min-height: 0; align-items: center; }
+.evaluation-screen-grade-row { display: grid; grid-template-columns: auto minmax(20px, 1fr) 3.2em; align-items: center; gap: 10px; min-width: 0; font-size: .88em; }
+button.evaluation-screen-grade-row { width: 100%; background: transparent; border: 0; border-radius: 6px; color: inherit; min-height: 44px; padding: 4px; text-align: left; }
+button.evaluation-screen-grade-row[aria-pressed=true] { background: #164468; }
+button.evaluation-screen-grade-row:hover { background: #193b60; }
+.evaluation-screen-grade-row > span:first-child { white-space: nowrap; }
+.evaluation-screen-grade-row > b { text-align: right; font-weight: 500; }
+.evaluation-screen-progress-track { display: block; height: clamp(7px, .64vw, 15px); border-radius: 10px; overflow: hidden; background: #294d77; min-width: 0; }
+.evaluation-screen-progress-track > i { display: block; height: 100%; background: linear-gradient(90deg, #00bce7, #60ecf0); border-radius: inherit; transition: width 300ms ease; }
+.evaluation-screen-text-button { color: var(--es-muted); background: transparent; border: 0; min-height: 44px; }
+.evaluation-screen-main-panel { overflow: hidden; position: relative; background: radial-gradient(ellipse at 105% 45%, #19437490, transparent 55%), linear-gradient(135deg, #082549e0, #05192fde 65%, #123669bd); }
+.evaluation-screen-main-panel > .evaluation-screen-panel-heading { margin-bottom: 0; border: 0; padding-bottom: 0; }
+.evaluation-screen-main-panel > .evaluation-screen-panel-heading h2 { font-size: clamp(22px, 1.6vw, 36px); }
+.evaluation-screen-five-education { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.evaluation-screen-donut { display: block; flex: 1; min-height: 0; width: 100%; overflow: visible; }
+.education-label { fill: #ecf4ff; font-size: 20px; font-weight: 500; }
+.education-value { fill: #f4f8ff; font-size: 28px; font-weight: 600; }
+.education-total { fill: #f6f9ff; font-size: 46px; font-weight: 600; }
+.education-total-label { fill: #e1edff; font-size: 19px; font-weight: 500; }
+.evaluation-screen-event-summary { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 14px; color: #dbe9fc; font-size: .86em; padding: 4px 0 16px; }
+.evaluation-screen-event-summary::before, .evaluation-screen-event-summary::after { content: ''; width: 13%; height: 1px; background: linear-gradient(90deg, transparent, #2e74a0); }
+.evaluation-screen-event-summary::after { transform: rotate(180deg); }
+.evaluation-screen-event-summary i { width: 3px; height: 3px; border-radius: 50%; background: #839fbd; }
+.evaluation-screen-main-bottom { display: grid; grid-template-columns: 1fr 1fr; min-height: 210px; height: 34%; flex-shrink: 0; border-top: 1px solid #2e5984; padding-top: 16px; gap: 20px; }
+.evaluation-screen-compact-panel { border: 0; background: none; border-radius: 0; padding: 0; }
+.evaluation-screen-compact-panel + .evaluation-screen-compact-panel { border-left: 1px solid #2d5278; padding-left: 20px; }
+.evaluation-screen-compact-panel .evaluation-screen-panel-heading { padding-bottom: 0; margin-bottom: 12px; border: 0; gap: 6px; min-height: 24px; }
+.evaluation-screen-compact-panel .evaluation-screen-panel-heading h2 { font-size: clamp(16px, 1.14vw, 25px); padding-left: 10px; }
+.evaluation-screen-compact-panel .evaluation-screen-panel-detail { font-size: .62em; white-space: nowrap; }
+.evaluation-screen-compact-panel .evaluation-screen-bars { gap: 4px; }
+.evaluation-screen-compact-panel .evaluation-screen-bars li { font-size: .86em; line-height: 1.25; }
+.evaluation-screen-bars { display: flex; flex-direction: column; justify-content: space-between; gap: 9px; flex: 1; min-height: 0; }
+.evaluation-screen-bars li { display: grid; grid-template-columns: auto minmax(20px, 1fr) 3em; gap: 12px; align-items: center; font-size: .91em; }
+.evaluation-screen-bars li > b { text-align: right; font-weight: 500; }
+.evaluation-screen-bar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 9em; }
+.evaluation-screen-bars.tone-violet .evaluation-screen-progress-track > i { background: linear-gradient(90deg, #8d60ed, #c7a7fb); }
+.evaluation-screen-bars .evaluation-screen-empty { display: block; }
+.evaluation-screen-class-average { display: flex; align-items: baseline; gap: 10px; margin: 0 0 8px; flex-shrink: 0; }
+.evaluation-screen-class-average > span:first-child { margin-right: auto; font-size: .95em; }
+.evaluation-screen-class-average strong { color: var(--es-cyan); font-size: clamp(32px, 2.4vw, 56px); line-height: 1.15; }
+.evaluation-screen-class-dimensions { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; flex: 1; min-height: 0; }
+.evaluation-screen-class-dimensions li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font-size: .86em; line-height: 1.25; }
+.evaluation-screen-class-dimensions b { font-weight: 500; white-space: nowrap; }
+.evaluation-screen-class-dimensions small { color: var(--es-muted); }
+.evaluation-screen-class-dimensions .evaluation-screen-progress-track > i { background: linear-gradient(90deg, #06daec, #7997ff 78%, #c6a1f9); }
+.evaluation-screen-scores { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.evaluation-screen-scores table { width: 100%; border-collapse: collapse; font-size: .92em; line-height: 1.25; flex: 1; table-layout: fixed; }
+.evaluation-screen-scores th { font-weight: 400; }
+.evaluation-screen-scores thead { color: var(--es-muted); font-size: .86em; }
+.evaluation-screen-scores tr { border-bottom: 1px solid #244a71; }
+.evaluation-screen-scores th, .evaluation-screen-scores td { padding: 4px 0; text-align: right; }
+.evaluation-screen-scores th:first-child { text-align: left; }
+.evaluation-screen-score-summary { display: flex; justify-content: space-between; gap: 8px; padding-top: 13px; font-size: .82em; white-space: nowrap; }
+.evaluation-screen-activity { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 18px 24px; border: 1px solid #20628e; border-radius: 16px; background: linear-gradient(110deg, #092c50b0, #0e2747bd); min-height: 0; min-width: 0; }
+.evaluation-screen-activity > section { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; min-width: 0; }
+.evaluation-screen-activity > section + section { border-left: 1px solid #2c527a; padding-left: 24px; }
+.evaluation-screen-activity-heading { display: flex; gap: 12px; align-items: flex-start; padding-right: 18px; border-right: 1px solid #355c83; }
+.evaluation-screen-activity-heading > svg { color: #bdc8f7; flex-shrink: 0; width: 28px; height: 28px; }
+.evaluation-screen-activity-heading h2 { white-space: nowrap; font-size: clamp(15px, 1.13vw, 25px); font-weight: 500; }
+.evaluation-screen-activity-heading span { font-size: .7em; color: var(--es-muted); }
+.evaluation-screen-feed-window { overflow: hidden; min-width: 0; }
+.evaluation-screen-feed-window ol { display: flex; flex-direction: column; gap: 10px; animation: evaluation-screen-feed-in 450ms ease-out; }
+.evaluation-screen-feed-window li { display: flex; gap: 12px; align-items: center; white-space: nowrap; min-width: 0; font-size: clamp(12px, .89vw, 20px); }
+.evaluation-screen-feed-window li > * { flex-shrink: 0; }
+.evaluation-screen-feed-window time { color: var(--es-muted); }
+.evaluation-screen-feed-window strong { font-weight: 500; }
+.evaluation-screen-feed-window .evaluation-screen-feed-indicator { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; min-width: 2em; }
+.evaluation-screen-feed-window b { font-weight: 500; margin-left: auto; }
+.evaluation-screen-loading { grid-row: 2 / -1; display: flex; gap: 18px; align-items: center; justify-content: center; color: var(--es-muted); }
+.evaluation-screen-loading-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--es-cyan); animation: evaluation-screen-loading 1.2s ease-in-out infinite alternate; }
+.evaluation-screen-empty { color: var(--es-muted); margin: auto !important; font-size: .9em; padding: 24px 0; }
+.evaluation-screen-notice { position: absolute; z-index: 10; bottom: 30px; left: 50%; transform: translateX(-50%); background: #102b4d; border-radius: 8px; max-width: 90%; box-shadow: 0 8px 24px #0005; font-size: 16px; }
+.evaluation-screen-notice:not(:empty) { padding: 12px 20px; border: 1px solid #3477a7; }
+.evaluation-screen-class-coverage, .evaluation-screen-class-detail { overflow: auto; }
+.evaluation-screen-detail-summary { display: flex; gap: 32px; color: var(--es-muted); margin: 6px 0 22px; }
+.evaluation-screen-detail-summary b { color: var(--es-cyan); font-size: 1.3em; }
+.evaluation-screen-detail-table { width: 100%; border-collapse: collapse; font-size: .95em; }
+.evaluation-screen-detail-table th { font-weight: 400; }
+.evaluation-screen-detail-table thead { color: var(--es-muted); font-size: .9em; }
+.evaluation-screen-detail-table td, .evaluation-screen-detail-table th { padding: 16px 8px; text-align: right; border-bottom: 1px solid #234a72; }
+.evaluation-screen-detail-table th:first-child { text-align: left; }
+.evaluation-screen-inline-meter { display: inline-block; vertical-align: middle; margin-right: 10px; width: 44px; height: 6px; border-radius: 4px; background: #27476b; overflow: hidden; }
+.evaluation-screen-inline-meter i { display: block; height: 100%; background: var(--es-cyan); }
+.evaluation-screen-grid.section-classes { grid-template-columns: 32fr 66fr; }
+.evaluation-screen-grade-filters { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 0 14px; }
+.evaluation-screen-grade-filters button { color: var(--es-muted); background: #0a2546; border: 1px solid #254e77; border-radius: 22px; padding: 8px 20px; min-height: 44px; }
+.evaluation-screen-grade-filters button[aria-pressed=true] { color: #fff; background: #087c9f; border-color: #21c3da; }
+.evaluation-screen-class-problems { margin-top: 24px; }
+.evaluation-screen-class-problems h3 { font-size: 1em; font-weight: 500; margin-bottom: 18px; }
+.evaluation-screen-class-problems h3 > span { float: right; color: var(--es-muted); font-size: .8em; }
+.evaluation-screen-class-problems .evaluation-screen-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+@keyframes evaluation-screen-feed-in { from { opacity: .45; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes evaluation-screen-loading { to { opacity: .3; } }
+@media (min-width: 1101px) and (max-height: 820px) {
+  .student-evaluation-data-screen { --es-gap: 12px; --es-pad: 16px; --es-panel-pad: 14px; grid-template-rows: 76px 84px minmax(0, 1fr) 84px; }
+  .evaluation-screen-tabs { min-height: 36px; }
+  .evaluation-screen-metric-value strong { font-size: 38px; }
+  .evaluation-screen-panel-heading { padding-bottom: 9px; margin-bottom: 10px; }
+  .evaluation-screen-main-bottom { min-height: 160px; padding-top: 10px; gap: 14px; }
+  .evaluation-screen-compact-panel + .evaluation-screen-compact-panel { padding-left: 14px; }
+  .evaluation-screen-compact-panel .evaluation-screen-panel-heading { margin-bottom: 8px; }
+  .evaluation-screen-bars { gap: 5px; }
+  .evaluation-screen-event-summary { padding-bottom: 9px; }
+  .evaluation-screen-coverage-ring svg { max-height: none; }
+  .evaluation-screen-coverage-ring p { font-size: .8em; margin-top: 0; }
+  .evaluation-screen-class-average { margin-bottom: 6px; }
+  .evaluation-screen-class-average strong { font-size: 32px; }
+  .evaluation-screen-class-dimensions { gap: 3px; }
+  .evaluation-screen-class-dimensions li { font-size: .84em; line-height: 1.2; }
+  .evaluation-screen-scores th, .evaluation-screen-scores td { padding: 2px 0; }
+  .evaluation-screen-score-summary { padding-top: 8px; font-size: .75em; }
+  .evaluation-screen-grade-list { gap: 5px 14px; }
+  .evaluation-screen-grade-row { gap: 7px; }
+  .evaluation-screen-activity { padding: 14px; gap: 16px; }
+  .evaluation-screen-activity > section { gap: 12px; }
+  .evaluation-screen-activity > section + section { padding-left: 16px; }
+  .evaluation-screen-activity-heading { gap: 7px; padding-right: 12px; }
+  .evaluation-screen-activity-heading > svg { width: 23px; height: 23px; }
+  .evaluation-screen-feed-window li { gap: 7px; }
+}
+@media (max-width: 1350px) and (min-width: 1101px) {
+  .evaluation-screen-header h1 { font-size: 25px; }
+  .evaluation-screen-brand { padding-left: 5px; font-size: 21px; gap: 10px; }
+  .evaluation-screen-brand::after { margin-left: 7px; }
+  .evaluation-screen-brand svg { width: 31px; }
+  .evaluation-screen-panel-heading h2 { font-size: 18px; }
+  .evaluation-screen-compact-panel .evaluation-screen-panel-heading { flex-wrap: wrap; row-gap: 3px; }
+  .evaluation-screen-compact-panel .evaluation-screen-panel-heading h2 { font-size: 15px; }
+  .evaluation-screen-compact-panel .evaluation-screen-panel-detail { font-size: 10px; }
+  .evaluation-screen-grade-row { font-size: 12px; }
+  .evaluation-screen-class-dimensions { font-size: 13px; }
+  .evaluation-screen-score-summary { flex-wrap: wrap; }
+  .evaluation-screen-activity-heading > svg { display: none; }
+  .evaluation-screen-activity-heading h2 { font-size: 14px; }
+}
+@media (min-width: 1101px) and (max-height: 690px) {
+  .student-evaluation-data-screen { height: 720px; }
+}
+@media (max-width: 1100px) {
+  .student-evaluation-data-screen { height: auto; min-height: 100dvh; grid-template-rows: auto auto auto auto; gap: 18px; }
+  .evaluation-screen-header { grid-template-columns: 1fr auto; row-gap: 18px; }
+  .evaluation-screen-brand { padding-left: 0; font-size: 23px; }
+  .evaluation-screen-brand::after { display: none; }
+  .evaluation-screen-header-right { grid-column: 2; grid-row: 1; }
+  .evaluation-screen-header-center { grid-column: 1 / -1; grid-row: 2; gap: 18px; }
+  .evaluation-screen-header h1 { font-size: clamp(22px, 3.6vw, 34px); white-space: normal; }
+  .evaluation-screen-tabs { width: min(620px, 100%); }
+  .evaluation-screen-metrics { min-height: 110px; }
+  .evaluation-screen-metric { gap: 12px; }
+  .evaluation-screen-metric > svg { width: 24px; }
+  .evaluation-screen-metric-value strong { font-size: 34px; }
+  .evaluation-screen-grid { grid-template-columns: 1fr 1fr; }
+  .evaluation-screen-column { grid-template-rows: minmax(260px, auto) minmax(280px, auto); }
+  .evaluation-screen-main-panel { grid-column: 1 / -1; grid-row: 1; min-height: 640px; }
+  .evaluation-screen-coverage-ring svg { max-height: 175px; }
+  .evaluation-screen-five-education { min-height: 310px; }
+  .evaluation-screen-main-bottom { height: 230px; min-height: 230px; }
+  .evaluation-screen-class-coverage { grid-column: 1 / -1; grid-row: 1; }
+  .evaluation-screen-activity { grid-template-columns: 1fr; padding: 20px; gap: 18px; }
+  .evaluation-screen-activity > section + section { border-left: 0; border-top: 1px solid #294f73; padding: 18px 0 0; }
+  .evaluation-screen-feed-window li { font-size: 14px; }
+  .evaluation-screen-grid.section-classes { grid-template-columns: 1fr; }
+  .section-classes .evaluation-screen-column { grid-template-columns: 1fr 1fr; grid-template-rows: 300px; }
+}
+@media (max-width: 600px) {
+  .student-evaluation-data-screen { --es-pad: 14px; --es-panel-pad: 18px; }
+  .evaluation-screen-brand { font-size: 20px; gap: 10px; }
+  .evaluation-screen-brand svg { width: 28px; }
+  .evaluation-screen-term { max-width: 170px; font-size: 12px; }
+  .evaluation-screen-header h1 { font-size: 23px; }
+  .evaluation-screen-tabs button { padding-inline: 10px; }
+  .evaluation-screen-metrics { grid-template-columns: 1fr 1fr; padding: 15px 0; gap: 20px 0; }
+  .evaluation-screen-metric:nth-child(3)::before { display: none; }
+  .evaluation-screen-metric > svg { display: none; }
+  .evaluation-screen-metric-label { font-size: 14px; }
+  .evaluation-screen-metric-value strong { font-size: 32px; }
+  .evaluation-screen-grid { display: flex; flex-direction: column; }
+  .evaluation-screen-column { display: contents; }
+  .evaluation-screen-panel { min-height: 280px; }
+  .evaluation-screen-main-panel { min-height: 640px; }
+  .evaluation-screen-main-bottom { height: auto; min-height: 0; grid-template-columns: 1fr; gap: 22px; }
+  .evaluation-screen-compact-panel { min-height: 210px; }
+  .evaluation-screen-compact-panel + .evaluation-screen-compact-panel { border-left: 0; padding-left: 0; border-top: 1px solid #2d5278; padding-top: 18px; }
+  .evaluation-screen-five-education { min-height: 230px; }
+  .evaluation-screen-event-summary { font-size: 12px; gap: 8px; }
+  .evaluation-screen-event-summary::before, .evaluation-screen-event-summary::after { width: 7%; }
+  .evaluation-screen-coverage-ring svg { max-height: 176px; }
+  .evaluation-screen-activity > section { grid-template-columns: 1fr; gap: 12px; }
+  .evaluation-screen-activity-heading { border-right: 0; }
+  .evaluation-screen-activity-heading > div { display: flex; gap: 12px; align-items: center; }
+  .evaluation-screen-activity-heading h2 { font-size: 16px; }
+  .evaluation-screen-feed-window li { font-size: 12px; gap: 7px; }
+  .evaluation-screen-feed-window li > span:nth-of-type(1) { overflow: hidden; text-overflow: ellipsis; max-width: 5.4em; }
+  .evaluation-screen-detail-table { font-size: 12px; }
+  .evaluation-screen-detail-table td, .evaluation-screen-detail-table th { padding: 12px 3px; }
+  .evaluation-screen-inline-meter { display: none; }
+  .evaluation-screen-detail-summary { gap: 15px; font-size: 13px; }
+  .evaluation-screen-class-problems .evaluation-screen-bars { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { animation: none !important; transition: none !important; }
+}

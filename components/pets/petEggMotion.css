@@ -1,0 +1,18 @@
+/* 由整张宠物卡片触发，只有蛋围绕底部轻晃，鸟巢保持静止。 */
+.pet-egg-artwork {
+  transform-origin: 50% 82%;
+}
+
+@keyframes pet-egg-life-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  18% { transform: rotate(-2.4deg); }
+  38% { transform: rotate(2deg); }
+  58% { transform: rotate(-1.4deg); }
+  78% { transform: rotate(0.7deg); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) .pet-egg-artwork {
+    animation: pet-egg-life-wiggle 560ms ease-in-out 1;
+  }
+}

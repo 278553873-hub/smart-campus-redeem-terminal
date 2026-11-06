@@ -1,0 +1,13 @@
+.pet-growth-progress__track {
+  --pet-progress-start: #ff5c66;
+  --pet-progress-end: #ff9b3d;
+  --pet-progress-stripe: rgb(255 255 255 / 22%);
+  background: #fff2d6;
+}
+
+/* 列表与评价弹窗共用渐变和静态斜纹；仅填充宽度随成长进度变化。 */
+.pet-growth-progress__fill {
+  background:
+    repeating-linear-gradient(135deg, transparent 0 10px, var(--pet-progress-stripe) 10px 20px),
+    linear-gradient(90deg, var(--pet-progress-start), var(--pet-progress-end));
+}

@@ -1,7 +1,7 @@
-import { GROWTH_COIN_FLOW_LABELS, GROWTH_COIN_INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES, type GrowthCoinFlowCategory } from '../../shared/growthCoinFlow';
+import { GROWTH_COIN_FLOW_LABELS, GROWTH_COIN_INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES, getGrowthCoinFlowDetail, getGrowthCoinFlowStatus, toGrowthCoinIncomeFlow, toGrowthCoinExpenseFlow, type GrowthCoinFlowCategory } from '../../shared/growthCoinFlow';
 import { GrowthCoinIcon, useGrowthCoinTerms } from '../../components/GrowthCoinBranding';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, Clock, Eraser, Landmark, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Clock, Eraser, Landmark, RotateCcw, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
@@ -9,7 +9,7 @@ import TextSelectionControl from '../components/ui/TextSelectionControl';
 import { CampusCoinDetail, Student } from '../types';
 import { phoneText } from '../styles/teacherMobileTokens';
 import { formatCoinAmount } from '../utils/coinFormat';
-import { formatCampusCoinFlowTime, getCampusCoinIssueDetail } from '../domain/campusCoinFlow';
+import { formatCampusCoinFlowTime } from '../domain/campusCoinFlow';
 
 interface StudentCoinDetailViewProps {
   student: Student;
@@ -28,6 +28,7 @@ interface CoinFlowItem {
   time: string;
   type: 'income' | 'expense';
   category: FlowCategory;
+  status?: string;
 }
 
 const categoryLabels: Record<FlowCategory, string> = { all: '全部', ...GROWTH_COIN_FLOW_LABELS };
@@ -50,6 +51,9 @@ const getFlowIcon = (category: FlowCategory, type: FlowFilter) => {
       return <ShoppingBag className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'manual_clear':
       return <Eraser className={`h-[18px] w-[18px] ${toneClass}`} />;
+    case 'award_recovery':
+    case 'exchange_refund':
+      return <RotateCcw className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'growth_award':
       return <TrendingUp className={`h-[18px] w-[18px] ${toneClass}`} />;
     case 'class_reward':
@@ -80,25 +84,17 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
   const [activeCategory, setActiveCategory] = useState<FlowCategory>('all');
 
   const flowItems = useMemo<CoinFlowItem[]>(() => {
-    const incomeItems = issueRecords.map(record => ({
+    const records = [...issueRecords.map(toGrowthCoinIncomeFlow), ...consumeRecords.map(toGrowthCoinExpenseFlow)];
+    return records.map(record => ({
       id: record.id,
       categoryLabel: categoryLabels[record.category],
-      detail: getCampusCoinIssueDetail(record),
+      detail: getGrowthCoinFlowDetail(record, { coinName: GROWTH_COIN_TERMS.name }),
       amount: record.amount,
-      time: record.time,
-      type: 'income' as const,
+      time: record.date,
+      type: record.type,
       category: record.category,
-    }));
-    const expenseItems = consumeRecords.map(record => ({
-      id: record.id,
-      categoryLabel: categoryLabels[record.category],
-      detail: record.category === 'manual_clear' ? record.productName.replaceAll('成长币', GROWTH_COIN_TERMS.name) : `${record.productName} ×${record.quantity}`,
-      amount: record.amount,
-      time: record.time,
-      type: 'expense' as const,
-      category: record.category,
-    }));
-    return [...incomeItems, ...expenseItems].sort((a, b) => b.time.localeCompare(a.time));
+      status: getGrowthCoinFlowStatus(record, records),
+    })).sort((a, b) => b.time.localeCompare(a.time));
   }, [consumeRecords, issueRecords, GROWTH_COIN_TERMS.name]);
 
   const yearOptions = useMemo(() => {
@@ -270,8 +266,11 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
                               {getFlowIcon(item.category, item.type)}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]">{item.categoryLabel}</h3>
-                              <p className="mt-[var(--tm-space-1)] line-clamp-2 text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{item.detail}</p>
+                              <div className="flex flex-wrap items-center gap-[var(--tm-space-1)]">
+                                <h3 className="text-[length:var(--tm-font-size-card-title)] font-semibold leading-5 text-[var(--tm-text-primary)]">{item.categoryLabel}</h3>
+                                {item.status && <span className="rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-1)] text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-text-secondary)]">{item.status}</span>}
+                              </div>
+                              <p className="mt-[var(--tm-space-1)] break-words text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-secondary)]">{item.detail}</p>
                               <time dateTime={item.time} className="mt-[var(--tm-space-1)] block text-[length:var(--tm-font-size-meta)] font-medium leading-4 tabular-nums text-[var(--tm-text-tertiary)]">
                                 {formatCampusCoinFlowTime(item.time)}
                               </time>

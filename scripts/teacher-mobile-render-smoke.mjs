@@ -45,7 +45,8 @@ define('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
 define('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
 define('getComputedStyle', () => ({ getPropertyValue: () => '' }));
 define('Image', class {});
-define('HTMLElement', class {});
+define('Element', class {});
+define('HTMLElement', class extends Element {});
 define('customElements', { get: () => undefined, define: noop });
 define('location', { href: 'http://localhost/', search: '', hash: '', pathname: '/' });
 define('history', { replaceState: noop, pushState: noop });
@@ -73,13 +74,13 @@ const writeResults = () => {
 // 服务端渲染会在动态文本之间插入 <!-- --> 占位注释，比对可见文案前先去掉。
 const plainText = html => html.split('<!-- -->').join('');
 
-const renderPage = async (name, load, props, verify) => {
+const renderPage = async (name, load, props, verify, { minimumLength = 400 } = {}) => {
   try {
     const module = await load();
     const Component = module.default;
     if (!Component) throw new Error('页面模块没有默认导出组件');
     const html = renderToString(React.createElement(Component, props));
-    if (!html || html.length < 400) throw new Error('页面渲染结果为空');
+    if (!html || html.length < minimumLength) throw new Error('页面渲染结果为空');
     verify?.(html);
     results.push({ name, ok: true, htmlLength: html.length });
   } catch (error) {
@@ -97,14 +98,18 @@ for (const recordMode of [
   { activeTab: 'student', canRecordClass: false },
   { activeTab: 'student', canRecordClass: true },
   { activeTab: 'class', canRecordClass: true },
+  { activeTab: 'class', canRecordClass: true, availableRecordScopes: ['class'] },
+  { activeTab: 'student', canRecordClass: true, availableRecordScopes: ['student'] },
 ]) {
   for (const showFirstRecordGuide of [false, true]) {
-    await renderPage('记录首页（' + recordMode.activeTab + '，班级权限' + recordMode.canRecordClass + '，引导' + showFirstRecordGuide + '）', () => import('../mobile-app/views/ClassRecordLogView'), {
+    await renderPage('记录首页（' + recordMode.activeTab + '，班级权限' + recordMode.canRecordClass + '，范围' + (recordMode.availableRecordScopes ?? '默认') + '，引导' + showFirstRecordGuide + '）', () => import('../mobile-app/views/ClassRecordLogView'), {
       ...recordMode, showFirstRecordGuide, isMainView: true,
       onBack: noop, onTabChange: noop, onViewIndicators: noop,
     }, html => {
       const text = plainText(html);
-      if (html.includes('aria-label="记录对象"') !== recordMode.canRecordClass) throw new Error('对象切换入口应遵循班级记录权限');
+      const hasMultipleScopes = recordMode.canRecordClass && (recordMode.availableRecordScopes?.length ?? 2) > 1;
+      if (html.includes('aria-label="记录对象"') !== hasMultipleScopes) throw new Error('仅双对象展示切换入口');
+      if (!hasMultipleScopes && />记录(?:学生|班级)</.test(html)) throw new Error('单对象不应展示替代标题');
       if (showFirstRecordGuide) {
         if (!text.includes('试试通过语音描述一下内容：')) throw new Error('初次记录应展示语音示例');
         if (text.includes('AI 智能解读')) throw new Error('引导态不应同时展示历史识别结果');
@@ -155,6 +160,14 @@ for (const scenario of [
     if (scenario.mode === 'camera' && scenario.ids.length === 0 && text.includes('未选择学生')) throw new Error('拍照无预选学生时不应显示占位姓名');
   });
 }
+for (const mode of ['voice', 'text']) {
+  await renderPage('班级全屏录入（' + mode + '）', () => import('../mobile-app/views/RecordInputView'), {
+    scope: 'class', initialMode: mode, initialStudentIds: [], studentNameList: '',
+    onClose: noop, onAnalysisComplete: noop,
+  }, html => {
+    if (!plainText(html).includes('记录班级') || plainText(html).includes('未选择学生')) throw new Error('班级录入不得出现学生选择提示');
+  });
+}
 
 const demoStudents = Array.from({ length: 6 }, (_, index) => ({
   id: 'render-smoke-student-' + (index + 1),
@@ -179,6 +192,175 @@ const ledgerEntries = createDemoCoinLedger({
 });
 
 await renderPage('教师端首页（默认页面）', () => import('../mobile-app/App'), {});
+
+const { teacherAppFeatures, resolveTeacherAppRecordScopes } = await import('../mobile-app/config/teacherAppFeatures');
+const { TEACHER_SPACE_OPTIONS } = await import('../mobile-app/data/teacherSpaces');
+const { filterAirecDevices, getAirecProgress } = await import('../mobile-app/domain/airecSync');
+const { airecDemoAdapter } = await import('../mobile-app/services/airecDemoAdapter');
+const { default: AirecDeviceConnectionCard } = await import('../mobile-app/components/airec/AirecDeviceConnectionCard');
+const { default: AirecDeviceStatus } = await import('../mobile-app/components/AirecDeviceStatus');
+
+const airecDevice = { id: 'airec-sn-001', name: 'AIREC_001' };
+const airecManifest = airecDemoAdapter.manifest(airecDevice.id);
+const airecBaseState = {
+  connection: 'connected', device: airecDevice, devices: [], discovery: 'idle',
+  knownDevices: [{ ...airecDevice, lastConnectedAt: '2026-11-05T00:00:00Z' }],
+  manifest: airecManifest, local: [], cloud: [], stage: 'idle',
+  networkOnline: true, message: '', error: '', newlySaved: 0,
+};
+const airecController = state => ({
+  state, progress: getAirecProgress(state.manifest, state.local, state.cloud),
+  scan: noop, connect: noop, sync: noop, disconnect: noop, pause: noop, stopDiscovery: noop,
+});
+for (const scenario of [
+  { name: '从未添加', state: { knownDevices: [], device: null, connection: 'disconnected', manifest: [] }, label: '未添加' },
+  { name: '连接且无任务', state: { manifest: [] }, label: '已连接' },
+  { name: '连接且已同步', state: { cloud: airecManifest, stage: 'complete' }, label: '已连接' },
+  { name: '接收阶段', state: { stage: 'receiving', local: airecManifest.slice(0, 4) }, label: '同步 0%', progress: 0 },
+  { name: '上云阶段', state: { stage: 'uploading', local: airecManifest, cloud: airecManifest.slice(0, 6) }, label: '同步 60%', progress: 60 },
+  { name: '历史设备未连接', state: { connection: 'disconnected', device: null, manifest: [] }, label: '未连接' },
+  { name: '配对完成前保持未连接', state: { connection: 'connecting' }, label: '未连接' },
+]) {
+  await renderPage('顶部设备状态（' + scenario.name + '）', async () => ({ default: AirecDeviceStatus }), {
+    controller: airecController({ ...airecBaseState, ...scenario.state }),
+  }, html => {
+    if (!plainText(html).includes(scenario.label)) throw new Error('缺少对应设备状态');
+    if (html.includes('<button') || html.includes('打开我的设备')) throw new Error('顶部状态仅作展示，不能作为入口');
+    if (scenario.progress !== undefined && (!html.includes('role="progressbar"') || !html.includes('aria-valuenow="' + scenario.progress + '"') || !html.includes('stroke-dashoffset="' + (100 - scenario.progress) + '"'))) throw new Error('环形进度需与真实完成量一致');
+    if (scenario.progress === undefined && html.includes('role="progressbar"')) throw new Error('空闲和未连接不能显示虚假同步进度');
+  });
+}
+const airecHistory = [
+  { id: 'airec-sn-002', name: 'AIREC_002', lastConnectedAt: '2026-11-06T00:00:00Z' },
+  { ...airecDevice, lastConnectedAt: '2026-11-05T00:00:00Z' },
+];
+for (const scenario of [
+  { name: '空设备列表', state: { knownDevices: [], device: null, manifest: [], connection: 'disconnected' }, expected: ['还没有添加设备', '添加设备'] },
+  { name: '已连接置顶并保留全部历史', state: { knownDevices: airecHistory }, expected: ['AIREC_001', 'AIREC_002', '已连接'] },
+  { name: '离开设备页后仍展示同步', state: { knownDevices: airecHistory, stage: 'uploading', local: airecManifest, cloud: airecManifest.slice(0, 9) }, expected: ['同步中(9/10)'] },
+]) {
+  await renderPage('蓝牙设备子页面（' + scenario.name + '）', () => import('../mobile-app/views/AirecDevicesView'), {
+    controller: airecController({ ...airecBaseState, ...scenario.state }), onAddDevice: noop,
+  }, html => {
+    for (const expected of scenario.expected) if (!plainText(html).includes(expected)) throw new Error('设备页缺少：' + expected);
+    if (!html.includes('<footer') || !html.includes('添加设备')) throw new Error('设备列表须有底部添加按钮');
+    const footer = html.split('<footer')[1]?.split('</footer>')[0] ?? '';
+    if (/<p(?:\s|>)/.test(footer) || footer.includes('disabled=')) throw new Error('添加设备按钮始终可用，按钮上方不显示等待或限制提示');
+    if (!html.includes('<img') || html.includes('录音与同步') || html.includes('role="dialog"')) throw new Error('设备列表保留插图及状态，不提供同步详情弹窗');
+    if (html.includes('role="progressbar"') !== (scenario.state.stage === 'uploading')) throw new Error('同步状态应在设备卡内显示真实进度条');
+    if (scenario.state.knownDevices.length > 0 && html.indexOf('data-device-id="airec-sn-001"') > html.indexOf('data-device-id="airec-sn-002"')) throw new Error('当前连接设备未置顶');
+  });
+}
+for (const scenario of [
+  { name: '涟漪扫描', state: { discovery: 'scanning', device: null, connection: 'disconnected', devices: [] }, expected: ['附近的设备', 'is-scanning', 'airec-scan-ring-three'] },
+  { name: '扫描结果仅AIREC', state: { discovery: 'ready', devices: filterAirecDevices(airecDemoAdapter.discover()) }, expected: ['AIREC_001', 'AIREC_002', '重新扫描'] },
+  { name: '无结果可恢复', state: { discovery: 'ready', device: null, connection: 'disconnected', devices: [] }, expected: ['暂未找到设备', '重新扫描'] },
+  { name: '连接中防止重复点击', state: { discovery: 'idle', connection: 'connecting', devices: filterAirecDevices(airecDemoAdapter.discover()) }, expected: ['正在连接麦克风', 'disabled=""'] },
+]) {
+  await renderPage('添加设备子页面（' + scenario.name + '）', () => import('../mobile-app/views/AirecAddDeviceView'), {
+    controller: airecController({ ...airecBaseState, ...scenario.state }), onConnected: noop,
+  }, html => {
+    for (const expected of scenario.expected) if (!plainText(html).includes(expected)) throw new Error('添加页缺少：' + expected);
+    if (!html.includes('<img')) throw new Error('未接入生成的麦克风插图');
+    if (html.includes('附近的 AIREC') || html.includes('>扫描中<')) throw new Error('扫描页应精简标题及重复扫描文字');
+    if (html.includes('蓝牙耳机') || html.includes('办公室音箱')) throw new Error('不能展示非 AIREC 设备');
+    if (scenario.state.discovery !== 'scanning' && html.includes('is-scanning')) throw new Error('扫描结束后必须停止扫描动效');
+    if (scenario.state.discovery === 'scanning' && (html.match(/vector-effect="non-scaling-stroke"/g) ?? []).length !== 3) throw new Error('三层涟漪须保持固定细描边');
+  });
+}
+for (const scenario of [
+  { name: '无任务绿点已连接', state: { manifest: [] }, expected: '已连接', readonly: true, dot: '--tm-status-positive' },
+  { name: '同步完成绿点已连接', state: { stage: 'complete', cloud: airecManifest }, expected: '已连接', readonly: true, dot: '--tm-status-positive' },
+  { name: '连接后不展示手动开始', state: {}, expected: '已连接', readonly: true, dot: '--tm-status-positive' },
+  { name: '接收中0条对应零进度', state: { stage: 'receiving', local: airecManifest.slice(0, 4) }, expected: '同步中(0/10)', percent: 0, readonly: true, dot: '--tm-brand-secondary' },
+  { name: '已接收完但尚未保存对应零进度', state: { stage: 'uploading', local: airecManifest }, expected: '同步中(0/10)', percent: 0, readonly: true, dot: '--tm-brand-secondary' },
+  { name: '保存6条对应百分之六十', state: { stage: 'uploading', local: airecManifest, cloud: airecManifest.slice(0, 6) }, expected: '同步中(6/10)', percent: 60, readonly: true, dot: '--tm-brand-secondary' },
+  { name: '百分之百保留收尾进度', state: { stage: 'uploading', local: airecManifest, cloud: airecManifest }, expected: '同步中(10/10)', percent: 100, readonly: true, dot: '--tm-brand-secondary' },
+  { name: '等待联网自动恢复', state: { stage: 'waiting-network', networkOnline: false, local: airecManifest }, expected: '等待联网', readonly: true },
+  { name: '同步失败提供重试', state: { stage: 'error' }, expected: '重试' },
+  { name: '连接中箭头替换为加载', state: { connection: 'connecting' }, expected: '连接中', disabled: true, connecting: true },
+  { name: '断线只提供连接', state: { connection: 'disconnected', stage: 'paused' }, expected: '未连接', arrow: true },
+]) {
+  await renderPage('极速版设备状态卡（' + scenario.name + '）', async () => ({ default: AirecDeviceConnectionCard }), {
+    device: airecBaseState.knownDevices[0], controller: airecController({ ...airecBaseState, ...scenario.state }),
+  }, html => {
+    if (!plainText(html).includes(scenario.expected)) throw new Error('设备卡缺少状态或原位操作：' + scenario.expected);
+    if (['已同步', '无同步任务', '查看同步', '段待同步', '开始同步', '暂停'].some(text => plainText(html).includes(text))) throw new Error('设备卡不展示多余的提示、手动开始或暂停操作');
+    if (html.includes('lucide-chevron-right') !== Boolean(scenario.arrow)) throw new Error('只有未连接设备提供连接箭头');
+    if (html.includes('animate-spin') !== Boolean(scenario.connecting)) throw new Error('连接中须在原箭头位置显示旋转加载');
+    if (scenario.readonly && html.includes('<button')) throw new Error('已连接或自动同步状态卡只作展示');
+    if (scenario.dot && (!html.includes('airec-status-dot') || !html.includes(scenario.dot) || !html.includes('is-breathing'))) throw new Error('连接与同步须展示相应颜色的呼吸小点');
+    if (html.includes('disabled=""') !== Boolean(scenario.disabled)) throw new Error('原位操作可用状态与恢复条件不一致');
+    if (scenario.percent !== undefined && (!html.includes('role="progressbar"') || !html.includes('aria-valuenow="' + scenario.percent + '"') || !html.includes('scaleX(' + scenario.percent / 100 + ')'))) throw new Error('进度条和读屏数值必须反映真实总体进度');
+    if (scenario.percent === 0 && !html.includes('data-empty="true"')) throw new Error('零进度应立即清空，不残留前一任务进度');
+    if (scenario.percent === undefined && html.includes('role="progressbar"')) throw new Error('非同步状态不展示虚假进度');
+  }, { minimumLength: 100 });
+}
+for (const state of [
+  { ...airecBaseState, connection: 'disconnected', device: null, manifest: [] },
+  airecBaseState,
+  { ...airecBaseState, stage: 'receiving', local: airecManifest.slice(0, 4) },
+]) {
+  const starSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === 'school-star');
+  const qingheSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === 'school-qinghe');
+  const liteScopes = resolveTeacherAppRecordScopes('lite', starSpace);
+  await renderPage('极速版班级记录（首版隐藏设备状态，' + state.stage + '，' + state.connection + '）', () => import('../mobile-app/views/ClassRecordLogView'), {
+    activeTab: 'class', availableRecordScopes: liteScopes, canRecordClass: true,
+    isMainView: true, onBack: noop, onTabChange: noop, onViewIndicators: noop,
+  }, html => {
+    if (liteScopes.join(',') !== 'class' || resolveTeacherAppRecordScopes('lite', qingheSpace).length !== 0) throw new Error('极速版须仅开放已有班级权限');
+    if (resolveTeacherAppRecordScopes('full', starSpace).join(',') !== 'student,class') throw new Error('完整版评价范围不应受到影响');
+    if (html.includes('aria-label="记录对象"')) throw new Error('极速版不应提供学生评价切换');
+    if (html.includes('aria-label="蓝牙麦克风：') || html.includes('录音同步总体进度')) throw new Error('第一版记录页不展示设备状态及同步进度环');
+    const tools = html.split('aria-label="记录工具"')[1]?.split('</div>')[0] ?? '';
+    if (!tools.includes('查看班级指标')) throw new Error('记录页保留指标入口');
+  });
+}
+for (const edition of ['full', 'lite']) {
+  await renderPage('教师端登录（' + edition + '）', () => import('../mobile-app/App'), { edition }, html => {
+    if (html.includes('>一键登录<') !== teacherAppFeatures[edition].wechatLogin) throw new Error('微信登录入口不符合版本范围');
+    if (!html.includes('手机号登录/注册')) throw new Error('须保留手机号登录');
+    const capsuleInset = teacherAppFeatures[edition].miniProgramCapsule ? 112 : 0;
+    if (!html.includes('--mini-program-capsule-right-inset:' + capsuleInset + 'px')) throw new Error('小程序胶囊空间不符合版本范围');
+  });
+}
+for (const deviceType of ['phone', 'tablet']) {
+  for (const showDeviceFrame of [true, false]) {
+    await renderPage('极速版模拟设备（' + deviceType + '，机身' + showDeviceFrame + '）', () => import('../components/PhoneMockup'), {
+      deviceType, showDeviceFrame, hideCapsule: true, contentTopInsetMode: 'status-bar',
+      screenOverlayRootId: 'teacher-mobile-overlay-root',
+      children: React.createElement('main', null, '极速版原页面内容'),
+    }, html => {
+      const tablet = deviceType === 'tablet';
+      if (!html.includes('width:' + (tablet ? 834 : 393) + 'px;height:' + (tablet ? 1194 : 852) + 'px')) throw new Error('模拟设备视口尺寸不正确');
+      if (!html.includes('--mini-program-status-bar-height:' + (showDeviceFrame ? (tablet ? 28 : 54) : 0) + 'px')) throw new Error('模拟系统状态栏高度不正确');
+      if (!html.includes('--mini-program-title-bar-height:44px')) throw new Error('业务标题栏高度应保持44像素');
+      if (!html.includes('极速版原页面内容') || !html.includes('id="teacher-mobile-overlay-root"')) throw new Error('切换模拟设备应保留页面及公共弹窗挂载层');
+    });
+  }
+}
+await renderPage('极速版平板登录预览', () => import('../mobile-app/App'), { edition: 'lite', previewDevice: 'tablet' }, html => {
+  if (!html.includes('data-preview-device="tablet"') || !html.includes('width:834px;height:1194px')) throw new Error('极速版未接入竖屏平板模拟视口');
+  if (!html.includes('>一键登录<') || !html.includes('手机号登录/注册')) throw new Error('平板预览应继续使用极速版登录页');
+  if (html.includes('教师端主要导航')) throw new Error('平板预览不得切换到教师Pad业务版本');
+});
+const previousAppSearch = window.location.search;
+window.location.search = '?app=teacher-mobile-lite';
+try {
+  await renderPage('极速版演示入口', () => import('../App'), {}, html => {
+    if (!html.includes('aria-label="教师-手机端(极速版)"')) throw new Error('缺少极速版环境入口');
+    if (html.includes('>教师-pad端<')) throw new Error('教师 Pad 入口仍在环境面板中展示');
+    if (!html.includes('>一键登录<') || !html.includes('手机号登录/注册')) throw new Error('极速版须同时支持微信一键登录和手机号登录');
+    if (!html.includes('role="switch" aria-checked="true" aria-label="模拟真机"')) throw new Error('应提供统一的模拟真机开关');
+    if (!html.includes('aria-label="模拟设备"')) throw new Error('开启真机模拟后应提供设备选择');
+    if (!html.includes('aria-label="真机模拟设备配置"') || !html.includes('>设备类型</h2>')) throw new Error('设备选择应沿用已有预览配置卡片');
+    const deviceOptions = html.split('aria-label="模拟设备"')[1]?.split('</section>')[0] ?? '';
+    if (!/aria-pressed="true"[^>]*>手机<\/button>/.test(deviceOptions) || !/aria-pressed="false"[^>]*>平板<\/button>/.test(deviceOptions)) throw new Error('真机模拟应默认选择手机');
+    if (html.includes('aria-label="模拟真实手机"') || html.includes('aria-label="模拟真实平板"')) throw new Error('极速版不应再使用两个互斥开关');
+  });
+} finally {
+  window.location.search = previousAppSearch;
+}
 
 for (const scenario of [
   { name: '关闭发放', enabled: false, budgetMode: 'per_student' },
@@ -224,6 +406,10 @@ await renderPage('学生成长币明细（加分就发）', () => import('../mob
   const text = plainText(html);
   if (!text.includes('每人每周最多获得 20 币')) throw new Error('学生明细未展示加分规则');
   if (text.includes('预计可得') || text.includes('阳光保底')) throw new Error('即时发币不应继续显示周期结算预估');
+  for (const label of ['兑换退还', '评价修改补发', '已撤回', '存款利息', '德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分']) {
+    if (!text.includes(label)) throw new Error('学生流水缺少展示规则：' + label);
+  }
+  if (html.includes('line-clamp-2')) throw new Error('学生流水不应截断完整指标');
 });
 
 // 学校货币外观：用独立存储验证各端读到名称/图标，结束后还原，不污染后续页面。
@@ -254,24 +440,90 @@ await renderPage('学生明细（学校隔离）', () => loadCoinScoped(() => im
 }, html => {
   if (html.includes('向阳币') || !html.includes('校园币明细</h1>')) throw new Error('其他学校读到了本校货币名称或页面标题不固定');
 });
-await renderPage('学校后台（名称与图标配置）', () => import('../components/CoinIssuanceSettings'), {
+await renderPage('学校后台（自动发放配置）', () => import('../components/CoinIssuanceSettings'), {
   value: DEFAULT_COIN_ISSUANCE_CONFIG, onChange: noop,
 }, html => {
-  if (!plainText(html).includes('开启成长币发放') || !html.includes('aria-label="修改货币名称，当前向阳币"')) throw new Error('学校后台未同步名称');
+  if (!plainText(html).includes('开启自动发放')) throw new Error('学校后台缺少自动发放配置');
 });
+await renderPage('学校后台（独立名称与图标配置）', async () => {
+  const { default: BrandFields } = await import('../components/PcGrowthCoinBrandFields');
+  const { useCoinBrandingEditor } = await import('../components/GrowthCoinBrandFields');
+  return { default: () => React.createElement(BrandFields, { editor: useCoinBrandingEditor() }) };
+}, {}, html => {
+  if (!html.includes('id="pc-growth-coin-name"') || !html.includes('value="向阳币"')) throw new Error('后台名称编辑未读取学校配置');
+});
+// 家长日常行为录入：真实渲染表单及记录列表，避免仅构建通过却在点击后白屏。
+for (const hasContent of [false, true]) {
+  await renderPage(`家长记录录入页（内容${hasContent}）`, () => import('../components/parent-app/ParentBehaviorRecordPage'), {
+    child: { name: '郑小磊', className: '2025级1班' }, header: React.createElement('h1', null, '记录表现'),
+    draft: { content: hasContent ? '主动帮助奶奶整理餐桌' : '', occurredOn: '2026-11-03', images: [] }, onChange: noop, onSave: noop,
+  }, html => {
+    if (!html.includes('按住说话') || html.includes('parent-record-transcript') !== hasContent || html.includes('type="date"')) throw new Error('空状态应引导下方录入，有内容才展示预览区');
+    if (!hasContent && (!html.includes('按住下方按钮') || html.includes('编辑预览记录'))) throw new Error('空状态不得展示编辑入口');
+  });
+  await renderPage(`家长记录列表（内容${hasContent}）`, () => import('../components/parent-app/ParentBehaviorRecordList'), {
+    childName: '郑小磊', onCreate: noop, records: hasContent ? [{ id: 'parent-record-test', source: 'parent', guardianId: 'parent-a', author: '妈妈', subject: { schoolCode: 'school-a', studentNo: '001', name: '郑小磊' }, content: '主动帮助奶奶整理餐桌', occurredOn: '2026-11-03', createdAt: 1, images: ['/assets/c4d_growth.png'] }] : [],
+  }, html => {
+    if (hasContent && (!html.includes('妈妈') || !html.includes('记录更多操作') || !html.includes('查看记录图片第 1 张'))) throw new Error('家长记录卡缺少评价人或更多操作');
+    if (!html.includes(hasContent ? '主动帮助奶奶整理餐桌' : '还没有家长记录')) throw new Error('记录列表或空状态未正确展示');
+  });
+}
+await renderPage('家长记录入口不依赖学校明细与成长币权限', () => import('../components/ParentApp'), {
+  parentGrowthCoinEnabled: false, parentBehaviorRecordingEnabled: true,
+  parentEvaluationVisibility: { positive: 'hidden', negative: 'hidden' },
+}, html => {
+  if (!html.includes('记录表现') || !html.includes('查看记录')) throw new Error('家长录入和历史查看不能被其他功能开关隐藏');
+});
+await renderPage('家长记录关闭后保留历史查看', () => import('../components/ParentApp'), {
+  parentBehaviorRecordingEnabled: false,
+}, html => {
+  if (html.includes('记录表现') || !html.includes('查看记录')) throw new Error('录入权限关闭后应隐藏新建但保留历史查看');
+});
+// 成长币总开关和银行子开关独立验证，包含旧白屏问题所在的学生信息区域。
+for (const enabled of [false, true]) {
+  for (const bankEnabled of [false, true]) {
+    for (const showPhoneShell of [false, true]) {
+      await renderPage(`家长成长页（成长币${enabled}，银行${bankEnabled}，手机壳${showPhoneShell}）`, () => import('../components/ParentApp'), {
+        parentGrowthCoinEnabled: enabled, parentBankFeatureEnabled: bankEnabled, showPhoneShell,
+      }, html => {
+        const text = plainText(html);
+        if (!html.includes('pg-child-picker') || !html.includes('pg-messages')) throw new Error('身份与消息入口渲染失败');
+        for (const label of ['本期预计可得', '收支明细', '兑换密码']) {
+          if (text.includes(label) !== enabled) throw new Error(`成长币开放边界错误：${label}`);
+        }
+        if (text.includes('进入银行') !== (enabled && bankEnabled)) throw new Error('银行入口未遵循两级开关');
+        if (text.includes('已存') !== (enabled && bankEnabled)) throw new Error('已存余额未遵循银行开关');
+        if (enabled && !bankEnabled && !html.includes('pg-balances-single')) throw new Error('关闭银行后可用余额未铺满');
+      });
+    }
+    await renderPage(`成长币预览配置（成长币${enabled}，银行${bankEnabled}）`, () => import('../components/ParentGrowthCoinFeaturePreviewControls'), {
+      settings: { enabled, bankEnabled }, onChange: noop,
+    }, html => {
+      if (!html.includes('成长币功能开放')) throw new Error('主开关名称错误');
+      if (html.includes('银行功能开放状态') !== enabled) throw new Error('银行子配置应仅在成长币开放后出现');
+      const selectedCount = (html.match(/aria-pressed="true"/g) ?? []).length;
+      if (selectedCount !== (enabled ? 2 : 1)) throw new Error('每组开关应只选中一个选项');
+    });
+  }
+}
 await renderPage('家长端（学校名称与图标）', () => import('../components/ParentApp'), {}, html => {
   if (!html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('家长端未同步当前孩子学校的名称与图标');
 });
 const { createDemoGrowthCoinFlows } = await import('../shared/demoGrowthCoinFlow');
+const { ParentPageHeader } = await import('../components/parent-app/ParentUI');
 const demoCoinFlows = createDemoGrowthCoinFlows(demoStudents[0].id);
 for (const canViewEvaluationDetails of [true, false]) {
   await renderPage('家长收支列表（评价明细权限' + canViewEvaluationDetails + '）', () => import('../components/parent-app/ParentCoinFlowView'), {
-    records: demoCoinFlows, header: null, canViewEvaluationDetails,
+    records: demoCoinFlows, header: React.createElement(ParentPageHeader, { title: '成长币明细', onBack: noop, backLabel: '返回成长页' }), canViewEvaluationDetails,
   }, html => {
     const text = plainText(html);
     if (!text.includes('成长嘉奖') || !text.includes('加分奖励') || !text.includes('每周奖励') || !text.includes('每月奖励')) throw new Error('家长流水缺少成长嘉奖奖励类型');
-    if (canViewEvaluationDetails && !text.includes('加分奖励（尊师孝亲，+2分）')) throw new Error('家长流水未展示短指标及加分值');
-    if (!canViewEvaluationDetails && (text.includes('尊师孝亲') || text.includes('团结互助'))) throw new Error('家长无明细权限时透出了评价指标');
+    if (canViewEvaluationDetails && !text.includes('加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）')) throw new Error('家长流水未展示完整指标及各项分值');
+    if (!canViewEvaluationDetails && (text.includes('尊师孝亲') || text.includes('专注听讲') || text.includes('文明用餐'))) throw new Error('家长无明细权限时透出了评价指标');
+    for (const label of ['兑换退还', '评价修改补发', '已撤回', '存款利息']) {
+      if (!text.includes(label)) throw new Error('家长流水缺少展示规则：' + label);
+    }
+    if (html.includes('line-clamp-2')) throw new Error('家长流水不应截断完整指标');
     if (html.includes('aria-haspopup="dialog"')) throw new Error('本次不应新增单笔流水详情弹窗');
   });
 }
@@ -279,7 +531,10 @@ await renderPage('货柜流水（周期与加分奖励）', () => import('../com
   student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, onBack: noop,
 }, html => {
   const text = plainText(html);
-  if (!text.includes('成长嘉奖') || !text.includes('加分奖励（尊师孝亲，+2分）') || !text.includes('每月奖励')) throw new Error('货柜流水未使用三端统一奖励说明');
+  for (const label of ['成长嘉奖', '加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）', '每月奖励', '兑换退还', '发币撤回', '评价修改补发', '已撤回', '已退还', '未出货退还 · 笔记本×1', '评价对象修改', '评价分数修改']) {
+    if (!text.includes(label)) throw new Error('货柜流水缺少展示规则：' + label);
+  }
+  if (html.includes('line-clamp-2')) throw new Error('货柜流水不应截断完整指标');
 });
 await renderPage('货柜首页（学校名称与图标）', () => import('../components/Dashboard'), {
   student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, bankBalance: 100, onNavigate: noop,
@@ -349,6 +604,15 @@ const { MOCK_CLASSES, GET_MOCK_STUDENTS_FOR_CLASS } = await import('../mobile-ap
 const rosterClass = MOCK_CLASSES[0];
 const rosterStudents = GET_MOCK_STUDENTS_FOR_CLASS(rosterClass.id).slice(0, 6);
 const rosterTeacher = { id: 'roster-teacher', name: '演示老师', teachingAssignments: [{ classId: rosterClass.id, subject: '语文' }], homeroomClassIds: [rosterClass.id], gradeLeaderGrades: [] };
+for (const classes of [[rosterClass], []]) {
+  await renderPage('极速版班级目录（' + classes.length + '个班级）', () => import('../mobile-app/views/TeacherClassDirectoryView'), {
+    classes, teacherProfile: rosterTeacher,
+    currentSpace: { id: 'roster-school', title: '示范学校', type: 'school', role: 'teacher', schoolType: 'primary' },
+  }, html => {
+    if (classes.length === 0 && !html.includes('没有符合条件的班级')) throw new Error('空目录缺少反馈');
+    if (['排行榜', '班级报告', '社团与团队', '更多操作'].some(label => html.includes(label))) throw new Error('只读目录泄露管理入口');
+  });
+}
 const classListRenderProps = {
   classes: [rosterClass], teacherProfile: rosterTeacher,
   currentSpace: { id: 'roster-school', title: '示范学校', type: 'school', role: 'teacher', schoolType: 'primary' },
@@ -359,7 +623,7 @@ const classListRenderProps = {
 };
 await renderPage('班级列表', () => import('../mobile-app/views/ClassListView'), classListRenderProps);
 const { defaultClassListLoadingPreview, classListLoadingPreviewSession, createClassListLoadingPreviewSession } = await import('../shared/classListLoadingPreview');
-if (defaultClassListLoadingPreview.durationMs !== 1800 || defaultClassListLoadingPreview.mode !== 'timed') throw new Error('演示默认应模拟首次加载1.8秒');
+if (defaultClassListLoadingPreview.durationMs !== 500 || defaultClassListLoadingPreview.mode !== 'timed') throw new Error('演示默认应模拟首次加载0.5秒');
 for (const preview of [
   { name: '默认首次加载', props: {
     demoLoadDuration: defaultClassListLoadingPreview.mode === 'timed' ? defaultClassListLoadingPreview.durationMs : 0,
@@ -457,6 +721,42 @@ for (const scenario of [
     onUpdateStudentCardDisplaySettings: noop, onUpdateGroupCardDisplaySettings: noop,
   });
 }
+// 领取后的学生卡片必须实际渲染默认蛋，不能误用美术对比素材或历史经验。
+const originalPetRosterGet = localStorage.getItem;
+for (const claimed of [false, true]) {
+  localStorage.getItem = key => {
+    if (key === 'campus-school-class-pet:v1:claim-audit') return JSON.stringify({ enabled: true, claimMethod: 'teacher' });
+    if (key === `campus-class-pet-roster:v1:claim-audit:${encodeURIComponent(rosterClass.id)}` && claimed) return JSON.stringify({ claimedAt: '2026-11-03T00:00:00.000Z', view: 'pet', students: Object.fromEntries(rosterStudents.map(student => [student.id, { evaluations: [], highestStage: 0 }])) });
+    return originalPetRosterGet.call(localStorage, key);
+  };
+  await renderPage('学生列表（AI宠物' + (claimed ? '已领取' : '未领取') + '）', () => import('../mobile-app/views/ClassDetailView'), {
+    schoolId: 'claim-audit', classInfo: rosterClass, students: rosterStudents, currentTeacherName: rosterTeacher.name,
+    isSelectionMode: false, selectedIds: new Set(), canConfigureCardDisplay: true, canResetStudentEvaluationCounts: true, canAddStudent: true,
+    onSelectStudent: noop, onToggleSelectionMode: noop, onSelectionChange: noop, onBack: noop, onAddStudent: noop,
+    onUpdateStudentCardDisplaySettings: noop, onUpdateGroupCardDisplaySettings: noop,
+  }, html => {
+    const text = html.replace(/<!--.*?-->/g, '');
+    if (claimed && (!text.includes('lv1') || !text.includes('初生蛋') || !text.includes('0/5'))) throw new Error('领取后应从1级0经验初生蛋开始');
+    if (!claimed && html.includes('aria-label="孵化进度"')) throw new Error('未领取时不应直接切到宠物');
+  });
+}
+localStorage.getItem = originalPetRosterGet;
+const { getClassroomDemoStudents: getScreenStudents, CLASSROOM_DEMO_CLASSES: screenClasses, getClassroomDemoClassId: getScreenClassId } = await import('../components/classroom/classroomDemoRoster');
+const screenClassId = getScreenClassId(screenClasses[0]);
+const screenStudents = getScreenStudents(screenClasses[0]);
+const screenOriginalGetItem = localStorage.getItem;
+for (const state of ['disabled', 'unclaimed', 'claimed']) {
+  localStorage.getItem = key => {
+    if (key === 'campus-school-class-pet:v1:screen-audit') return JSON.stringify({ enabled: state !== 'disabled', claimMethod: 'teacher' });
+    if (key === `campus-class-pet-roster:v1:screen-audit:${encodeURIComponent(screenClassId)}` && state === 'claimed') return JSON.stringify({ claimedAt: '2026-11-03T00:00:00.000Z', view: 'pet', students: Object.fromEntries(screenStudents.map(student => [student.id, { evaluations: [], highestStage: 0 }])) });
+    return screenOriginalGetItem.call(localStorage, key);
+  };
+  await renderPage('课堂大屏（AI宠物' + state + '）', () => import('../components/SmartBigScreen'), { onBack: noop, embedded: true, schoolId: 'screen-audit' }, html => {
+    const hasPets = html.includes('classroom-pet-card pet-interaction-target');
+    if (hasPets !== (state === 'claimed')) throw new Error('大屏应按共享领取状态展示学生或宠物');
+  });
+}
+localStorage.getItem = screenOriginalGetItem;
 await renderPage('班级报告', () => import('../mobile-app/views/ClassReportView'), {
   classInfo: rosterClass, students: rosterStudents, currentTeacherName: rosterTeacher.name, onSelectStudent: noop,
 }, html => {
@@ -643,7 +943,7 @@ await renderPage('学生成长币明细页', () => import('../mobile-app/views/S
 }, html => {
   const text = plainText(html);
   if (!text.includes('成长嘉奖')) throw new Error('成长嘉奖应作为收入分类展示');
-  if (!text.includes('每周奖励（2月16日-2月22日）')) throw new Error('按周发放时成长嘉奖应展示每周奖励与所属周期');
+  if (!text.includes('每周奖励（10月26日—11月1日）')) throw new Error('按周发放时成长嘉奖应展示每周奖励与所属周期');
 });
 
 await renderPage('学生成长币明细页（按月发放）', () => import('../mobile-app/views/StudentCoinDetailView'), {
@@ -657,7 +957,7 @@ await renderPage('学生成长币明细页（按月发放）', () => import('../
   onBack: noop,
 }, html => {
   const text = plainText(html);
-  if (!text.includes('每月奖励（1月）') || !text.includes('每周奖励（2月16日-2月22日）') || !text.includes('加分奖励（尊师孝亲，+2分）')) throw new Error('切换当前周期后，历史月/周/加分奖励应继续按各自快照展示');
+  if (!text.includes('每月奖励（2026年10月）') || !text.includes('每周奖励（10月26日—11月1日）') || !text.includes('加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）')) throw new Error('切换当前周期后，历史月/周/加分奖励应继续按各自快照展示');
 });
 
 await renderPage('兑换奖励（空班）', () => import('../mobile-app/views/reward-verification/RewardVerificationView'), {
@@ -788,15 +1088,18 @@ const dutyStyleDomain = await import('../mobile-app/domain/weeklyDutySchedule');
 const dutyStyleOriginalWeeks = [...dutyStyleData.DUTY_TERM_WEEKS];
 const dutyStyleOriginalSchedules = { ...dutyStyleData.INITIAL_DUTY_SCHEDULES };
 try {
-  dutyStyleData.DUTY_TERM_WEEKS.splice(0, dutyStyleData.DUTY_TERM_WEEKS.length, ...dutyStyleDomain.createDutyWeeks('2026-07-27', 6));
+  const today = new Date();
+  const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+  const fixtureWeeks = dutyStyleDomain.createDutyWeeks(monthStart, 4);
+  dutyStyleData.DUTY_TERM_WEEKS.splice(0, dutyStyleData.DUTY_TERM_WEEKS.length, ...fixtureWeeks);
   Object.assign(dutyStyleData.INITIAL_DUTY_SCHEDULES, {
-    '2026-08-03': ['teacher-li-lian', 'teacher-liu-chang'],
-    '2026-08-10': ['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin'],
+    [fixtureWeeks[1].id]: ['teacher-li-lian', 'teacher-liu-chang'],
+    [fixtureWeeks[2].id]: ['teacher-zhang-quanyou', 'teacher-liu-fei', 'teacher-chen-simin'],
   });
   await renderPage('值周安排周卡与多人摘要', () => import('../mobile-app/views/WeeklyDutyScheduleView'), {
     onBack: noop,
   }, html => {
-    for (const label of ['07.27-08.02', '08.31-09.06', '李连、刘畅', '张全有等3人', '未安排']) {
+    for (const label of [dutyStyleDomain.formatDutyWeekRange(fixtureWeeks[0]), dutyStyleDomain.formatDutyWeekRange(fixtureWeeks[3]), '李连、刘畅', '张全有等3人', '未安排']) {
       if (!plainText(html).includes(label)) throw new Error('值周安排未完整展示周次或教师摘要：' + label);
     }
   });
@@ -919,7 +1222,9 @@ const evaluationStyleNegative = {
 };
 for (const scenario of [
   { label: '独立列表跨月记录', expected: '2026年9月' },
-  { label: '学生详情嵌入列表', embedded: true, expected: 'AI 智能解读' },
+  { label: '学生详情嵌入列表', embedded: true, expected: evaluationStyleRecord.aiComment },
+  { label: '家长评价只读详情', records: [{ ...evaluationStyleRecord, source: 'parent', indicatorPath: [], scoreChange: 0 }], initialRecordId: evaluationStyleRecord.id, expected: evaluationStyleRecord.aiComment, editable: false, parentRecord: true },
+  { label: '可删除评价菜单', embedded: true, onDeleteRecord: noop, expected: '评价记录', deletable: true },
   { label: '空列表', records: [], expected: '没有符合条件的评价记录' },
   { label: '本人评价详情', initialRecordId: evaluationStyleRecord.id, expected: '原始记录', editable: true },
   { label: '他人评价只读及修改留痕', initialRecordId: evaluationStyleNegative.id, expected: '修改记录', editable: false },
@@ -933,6 +1238,9 @@ for (const scenario of [
     onSelectedTermChange: noop, onUpdateRecord: noop, onBack: noop, ...scenario,
   }, html => {
     if (!plainText(html).includes(scenario.expected)) throw new Error('评价记录缺少预期内容：' + scenario.expected);
+    if (scenario.deletable && !html.includes('aria-label="更多评价操作"')) throw new Error('可删除评价缺少更多菜单');
+    if (scenario.parentRecord && (plainText(html).includes('原始记录') || plainText(html).includes('AI 智能解读') || plainText(html).includes('诚实守信'))) throw new Error('家长评价详情不应展示学校指标或固定标题');
+    if (scenario.embedded && (plainText(html).includes('AI 智能解读') || plainText(html).includes(evaluationStyleRecord.indicatorPath.join(' / ')))) throw new Error('列表不应显示固定标题或指标路径');
     if (scenario.editable !== undefined && html.includes('aria-label="修改评价"') !== scenario.editable) {
       throw new Error('评价详情修改入口与当前教师权限不符');
     }
@@ -1103,8 +1411,17 @@ const meStyleActions = Object.fromEntries([
   'onOpenHomeworkBatchImport', 'onOpenSettings', 'onOpenSubjectManagement', 'onOpenDepartmentManagement',
   'onOpenCoinIssuance', 'onOpenSuggestionFeedback', 'onOpenQuestionnaire', 'onOpenAssignedCollections',
   'onOpenArchiveDesign', 'onOpenReportManagement', 'onOpenAiHeadteacherAssistant', 'onOpenAiPrincipalAssistant',
-  'onToggleSpaceSheet',
+  'onToggleSpaceSheet', 'onOpenBluetoothDevices',
 ].map(name => [name, noop]));
+await renderPage('极速版我的（管理员同样遵守产品范围）', () => import('../mobile-app/views/MeView'), {
+  ...meStyleActions, teacherProfile: rosterTeacher, isSpaceSheetOpen: false, pendingCollectionCount: 0,
+  currentSpace: { ...profileSpace, role: 'administrator', type: 'school' },
+  availableTools: teacherAppFeatures.lite.meTools, showUnreleasedTools: true,
+}, html => {
+  if (!html.includes('蓝牙设备') || !html.includes('aria-label="设置"')) throw new Error('极速版缺少蓝牙设备或设置入口');
+  if (html.includes('建议反馈')) throw new Error('极速版不再展示建议反馈');
+  if (['管理工具', '班主任助理', '校长助理', '报表', '期末报告', '值周安排', '档案设计', '科目管理', '部门管理', '成长币发放'].some(label => html.includes(label))) throw new Error('极速版泄露非核心工具');
+});
 for (const scenario of [
   { role: 'administrator', type: 'school', pending: 3 },
   { role: 'teacher', type: 'school', pending: 0 },
@@ -1116,6 +1433,7 @@ for (const scenario of [
   }, html => {
     const text = plainText(html);
     if (!text.includes('演示老师') || !html.includes('aria-label="设置"')) throw new Error('我的页面应保留个人资料及设置入口');
+    if (html.includes('蓝牙设备')) throw new Error('完整版不新增极速版蓝牙工具');
     if (text.includes('待填写采集') !== (scenario.pending > 0)) throw new Error('采集待办应按待办数量显示');
     if (scenario.role === 'administrator' && !html.includes('aria-label="成长币发放"')) throw new Error('管理员应保留成长币发放入口');
     if (scenario.role === 'teacher' && html.includes('aria-label="成长币发放"')) throw new Error('普通老师不应出现管理配置入口');
@@ -1637,11 +1955,149 @@ await renderPage('学校封面默认预览（无上传图片）', () => import('
   if ((html.match(/星河实验学校/g) ?? []).length !== 1) throw new Error('校名仅在封面成品中展示');
 });
 
-await renderPage('公共组件库：语音与文字输入', () => import('../components/PublicInputComposerDemo'), {}, html => {
-  for (const label of ['语音与文字输入', '预览配置', '使用场景', '阴影档位', '语音状态', '核心入参', '使用示例', '拍照记录', '按住说话']) {
+await renderPage('公共组件库：录入控件', () => import('../components/PublicInputComposerDemo'), {}, html => {
+  for (const label of ['录入控件', '预览配置', '阴影加强', '核心入参', '使用示例', '拍照记录', '按住说话']) {
     if (!plainText(html).includes(label)) throw new Error('公共输入预览缺少：' + label);
   }
-  if (!html.includes('mobile-input-composer') || !html.includes('data-shadow="floating"')) throw new Error('组件库必须复用正式输入控件与场景参数');
+  if (!html.includes('mobile-input-composer') || !html.includes('data-shadow="subtle"')) throw new Error('组件库必须复用正式输入控件与场景参数');
+});
+
+const petSettingsOriginalGetItem = localStorage.getItem;
+for (const enabled of [false, true]) {
+  localStorage.getItem = key => key === 'campus-school-class-pet:v1:pet-audit' ? JSON.stringify({ enabled, levelPoints: [5, 10, 10, 10, 10, 20, 20, 40, 40] }) : petSettingsOriginalGetItem.call(localStorage, key);
+  await renderPage('AI宠物配置（' + (enabled ? '开启' : '默认关闭') + '）', () => import('../mobile-app/views/ClassPetSettingsView'), { schoolId: 'pet-audit' }, html => {
+    const text = plainText(html);
+    if (text.includes('个性化宠物') || text.includes('允许学生自定义初始蛋') || text.includes('允许学生控制进化方向')) throw new Error('已取消的个性化宠物仍显示');
+    if (!text.includes('开启AI宠物')) throw new Error('缺少宠物主开关');
+    for (const label of ['基础设置', '领取方式', '班主任领取', '学生领取', '扣分处理', '高级设置', '升级经验']) {
+      if (text.includes(label) !== enabled) throw new Error('宠物设置未按主开关渐进展示：' + label);
+    }
+  });
+}
+localStorage.getItem = petSettingsOriginalGetItem;
+
+await renderPage('教师Pad班级评价工作台', () => import('../components/teacher-pad/TeacherPad'), {}, html => {
+  const text = plainText(html);
+  for (const label of ['查看班级指标', '教师端主要导航', '班级', '我的', '按住说话', '切换到文字输入']) {
+    if (!text.includes(label)) throw new Error('Pad缺少班级评价入口：' + label);
+  }
+  if (text.includes('记录学生') || text.includes('记录班级') || text.includes('提交评价')) throw new Error('Pad不应出现记录类型标题、学生入口或独立评分草稿');
+});
+
+for (const initialPage of ['class', 'me', 'ranking', 'report', 'assistant', 'indicators', 'duty', 'details', 'profile', 'settings', 'feedback']) {
+  await renderPage('教师Pad页面（' + initialPage + '）', () => import('../components/teacher-pad/TeacherPad'), { initialPage }, html => {
+    if (!html.includes('pad-page-' + initialPage)) throw new Error('Pad页面路由未挂载');
+    const text = plainText(html);
+    if (initialPage === 'class') {
+      if (html.includes('aria-label="班级内容分类"')) throw new Error('Pad单一班级板块不应展示顶部分类');
+      for (const label of ['任教班级', '按年级筛选班级', '班主任', '60人']) {
+        if (!text.includes(label)) throw new Error('Pad班级缺少共用内容：' + label);
+      }
+      if (text.includes('学生列表') || text.includes('评价明细') || text.includes('查看班级排行榜')) throw new Error('首期班级页不展示学生操作或排行榜');
+    }
+    if (initialPage === 'feedback') {
+      for (const label of ['建议反馈', '反馈内容', '上传反馈图片', '提交']) {
+        if (!text.includes(label)) throw new Error('Pad建议反馈缺少共用内容：' + label);
+      }
+      if (!/disabled=""[^>]*>提交|disabled=""[^>]*>\s*提交/.test(html)) throw new Error('空反馈应禁止提交');
+    }
+    if (initialPage === 'me') {
+      for (const label of ['编辑教师信息', '设置', '切换班级来源', '建议反馈']) {
+        if (!text.includes(label)) throw new Error('Pad我的缺少共用入口：' + label);
+      }
+      if (['管理工具', '班主任助理', '班级评价报表', '值周安排', '班级评价指标', '管理者'].some(label => text.includes(label))) throw new Error('Pad我的展示了首期不需要的工具或角色文字');
+    }
+  });
+}
+
+for (const initialPage of ['class', 'me']) {
+  await renderPage('教师Pad后续功能开启（' + initialPage + '）', () => import('../components/teacher-pad/TeacherPad'), {
+    initialPage, features: { managementTools: true, weeklyDutySchedule: true, classLeaderboard: true, wechatQuickLogin: true },
+  }, html => {
+    const text = plainText(html);
+    const labels = initialPage === 'class'
+      ? ['查看班级排行榜']
+      : ['管理工具', '班主任助理', '班级评价报表', '值周安排', '建议反馈'];
+    for (const label of labels) if (!text.includes(label)) throw new Error('开启后应恢复符合学校权限的入口：' + label);
+  });
+}
+
+await renderPage('班级记录演示分析不混入学生指标', async () => {
+  const { buildClassRecordDemoAnalysis } = await import('../mobile-app/domain/classRecordDemoAnalysis');
+  const { MOCK_CLASSES } = await import('../mobile-app/constants');
+  const result = buildClassRecordDemoAnalysis('三年级二班，晨检发现教室桌椅摆放不整齐。', MOCK_CLASSES);
+  if (result.students[0]?.id !== 'c_2024_2' || !result.score.label.includes('内务整理') || result.score.value !== -1) throw new Error('班级记录的对象、指标或扣分不正确');
+  return import('../mobile-app/views/ClassRecordLogView');
+}, { activeTab: 'class', onTabChange: noop, onBack: noop, onViewIndicators: noop });
+
+await renderPage('教师Pad设备壳与预览控件', () => import('../components/teacher-pad/TeacherPadPreview'), {}, html => {
+  for (const label of ['模拟真实Pad', '切换Pad横竖屏', 'Pad尺寸', 'pad-device-shell', '教师端主要导航', 'Pad功能预览设置', '第一期', '第二期']) {
+    if (!html.includes(label)) throw new Error('Pad设备预览缺少：' + label);
+  }
+  if (!html.includes('aria-pressed="true">第一期') || !html.includes('aria-pressed="false">第二期')) throw new Error('Pad预览应默认选择第一期');
+});
+
+for (const showWechatLogin of [false, true]) {
+  await renderPage('教师Pad登录入口（' + (showWechatLogin ? '第二期' : '第一期') + '）', () => import('../mobile-app/views/TeacherLoginView'), {
+    onLogin: noop, showWechatLogin,
+  }, html => {
+    const text = plainText(html);
+    for (const label of ['最近登录', '手机号登录/注册']) {
+      if (!text.includes(label)) throw new Error('Pad登录页缺少入口：' + label);
+    }
+    if (text.includes('一键登录') !== showWechatLogin) throw new Error('一键登录应仅在第二期展示');
+    if (text.includes('微信授权登录')) throw new Error('登录按钮名称应为一键登录');
+  });
+}
+
+// 货柜兑换：覆盖真实列表渲染、空结果和演示适配，权限校验必须先于展示。
+const vendingSample = {
+  id: 'vending-smoke', orderNo: 'HG20261105001', schoolId: 'school-vending',
+  studentId: 'student-vending', studentName: '张雨桐', studentNo: '20260101',
+  classId: 'vending-class', className: '2026级1班', gradeName: '一年级',
+  productId: 'vending-product', productName: '卡通笔袋', categoryId: 'stationery', categoryName: '文具',
+  quantity: 1, unitPrice: 20, chargedAmount: 20,
+  terminalDeviceId: 'terminal-1', terminalDeviceName: '人北华侨城一楼', channelName: '0101',
+  time: '2026-11-05 10:32:00', status: 'failed', refundStatus: 'refunded', refundedAmount: 20,
+};
+for (const authorized of [true, false]) {
+  await renderPage('货柜兑换明细（' + (authorized ? '含退币记录' : '无授权班级') + '）', () => import('../mobile-app/views/VendingExchangeView'), {
+    schoolId: 'school-vending', today: '2026-11-05', onBack: noop,
+    authorizedClasses: authorized ? [{ id: 'vending-class', name: '2026级1班', gradeLevel: '一年级' }] : [],
+    records: [vendingSample, { ...vendingSample, id: 'other-vending', schoolId: 'other-school', studentName: '未授权学生' }],
+  }, html => {
+    const text = plainText(html);
+    for (const label of ['货柜兑换明细', '搜索学生姓名', '全部分类']) if (!text.includes(label)) throw new Error('货柜兑换缺少：' + label);
+    if (text.includes('未授权学生')) throw new Error('兑换明细泄露其他学校数据');
+    if (text.includes('张雨桐') !== authorized) throw new Error('兑换明细没有按授权班级过滤');
+    if (authorized && !['人北华侨城一楼', '未出货', '已退币', '共 1 条'].every(label => text.includes(label))) throw new Error('兑换明细缺少设备、异常状态或准确条数');
+    if (!authorized && !text.includes('暂无兑换记录')) throw new Error('无权限数据时应展示空状态');
+  });
+}
+await renderPage('货柜兑换演示适配', () => import('../mobile-app/views/vending-exchange/VendingExchangeDemoView'), {
+  space: { id: 'school-vending', type: 'school', role: 'teacher' },
+  teacher: { homeroomClassIds: ['vending-class'], teachingAssignments: [], gradeLeaderGrades: [] },
+  classes: [{ id: 'vending-class', name: '2026级1班', gradeLevel: '一年级' }],
+  getStudents: () => [{ id: 'student-vending', name: '张雨桐', studentNo: '20260101' }], onBack: noop,
+}, html => {
+  if (!plainText(html).includes('张雨桐')) throw new Error('演示兑换没有接入花名册');
+});
+for (const role of ['administrator', 'homeroomTeacher', 'teacher', 'owner']) {
+  await renderPage('更多工具货柜入口（' + role + '）', () => import('../mobile-app/views/MeView'), {
+    ...meStyleActions, onOpenVendingExchange: noop, teacherProfile: rosterTeacher,
+    isSpaceSheetOpen: false, pendingCollectionCount: 0,
+    currentSpace: { ...profileSpace, type: role === 'owner' ? 'personal' : 'school', role },
+  }, html => {
+    if (html.includes('aria-label="货柜兑换"') !== (role !== 'owner')) throw new Error('货柜入口学校权限不正确');
+  });
+}
+await renderPage('极速版不开放货柜兑换', () => import('../mobile-app/views/MeView'), {
+  ...meStyleActions, onOpenVendingExchange: noop, teacherProfile: rosterTeacher,
+  isSpaceSheetOpen: false, pendingCollectionCount: 0,
+  currentSpace: { ...profileSpace, type: 'school', role: 'administrator' },
+  availableTools: teacherAppFeatures.lite.meTools,
+}, html => {
+  if (html.includes('aria-label="货柜兑换"')) throw new Error('极速版泄露货柜入口');
 });
 
 // 渲染结束后主动退出：个别模块会留下常驻定时器。

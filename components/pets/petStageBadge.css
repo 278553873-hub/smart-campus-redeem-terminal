@@ -1,0 +1,43 @@
+.pet-stage-badge {
+  position: relative;
+  isolation: isolate;
+  border-radius: 3px 0 0 3px;
+  overflow: visible;
+  color: #fff;
+  background-color: var(--pet-stage-color, #64748B);
+  /* 纯色色面配极轻的顶部反光，避免高光渐变和底部压暗造成塑料感。 */
+  background-image: none;
+  border: 0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 18%);
+}
+
+/* 右侧窄折面与下方回折三角表现缎带绕过边缘，不给正面增加边框或厚重阴影。 */
+.pet-stage-badge::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 4px;
+  background: var(--pet-stage-fold, #64748B);
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.pet-stage-badge::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -4px;
+  width: 4px;
+  height: 4px;
+  background: var(--pet-stage-fold, #64748B);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  pointer-events: none;
+}
+
+/* 初生蛋使用可辨识的银灰底与深灰字；其余阶段保留确认的配色。 */
+.pet-stage-badge[data-pet-stage="egg"] { --pet-stage-color: #DCE3EC; --pet-stage-fold: #97A5B8; color: #4B5563; }
+.pet-stage-badge[data-pet-stage="juvenile"] { --pet-stage-color: #6FD16F; --pet-stage-fold: #409C4D; color: #FFFFFF; }
+.pet-stage-badge[data-pet-stage="growth"] { --pet-stage-color: #5FA8FF; --pet-stage-fold: #357ABD; color: #FFFFFF; }
+.pet-stage-badge[data-pet-stage="mature"] { --pet-stage-color: #B07BFF; --pet-stage-fold: #7E55B7; color: #FFFFFF; }
+.pet-stage-badge[data-pet-stage="complete"] { --pet-stage-color: #F4C14B; --pet-stage-fold: #C39832; color: #FFFFFF; }
+.pet-stage-badge[data-pet-stage="ultimate"] { --pet-stage-color: #FF6F6F; --pet-stage-fold: #C84B4B; color: #FFFFFF; }

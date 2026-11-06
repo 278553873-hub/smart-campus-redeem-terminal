@@ -15,13 +15,13 @@ const forbidText = (source, text, message) => {
 // 家长端页面：入口、数据归属与回调
 requireText(parentSource, 'exchangePassword: string;', '兑换密码必须归属于具体孩子，不能使用家长级全局密码。');
 requireText(parentSource, '>兑换密码</span>', '成长页孩子卡片应提供简洁的兑换密码入口。');
-requireText(parentSource, '>••••••</span>', '成长页必须用固定六位掩码表示系统初始密码。');
+requireText(sheetSource, 'maskExchangePassword(shownPassword)', '密码明文仅在原有密码抽屉中按显隐状态展示。');
 requireText(parentSource, 'openExchangePasswordSheet(activeChild)', '兑换密码入口必须绑定当前孩子。');
 requireText(parentSource, 'isValidExchangePassword(nextPassword)', '保存前必须校验6位数字密码。');
 requireText(parentSource, "setSubmitSuccessMessage('兑换密码已更新')", '保存成功后应提供清晰反馈。');
 requireText(parentSource, 'Boolean(exchangePasswordChildId)', '兑换密码抽屉打开时应隐藏底部导航。');
 requireText(parentSource, '<ExchangePasswordSheet />', '家长端页面必须挂载兑换密码抽屉。');
-requireText(parentSource, 'parentBankFeatureEnabled &&', '未开放积分银行时必须隐藏兑换凭证入口和预计可得模块。');
+requireText(parentSource, 'if (!activeChild || !parentGrowthCoinEnabled) return null;', '未开放成长币时必须隐藏兑换凭证入口和预计可得模块。');
 requireText(parentSource, "import { ParentExchangePasswordSheet } from './parent-app/ParentExchangePasswordSheet';", '兑换密码抽屉必须抽成独立组件。');
 requireText(parentSource, 'onSave={saveExchangePassword}', '抽屉保存必须通过回调交回家长端更新数据。');
 forbidText(parentSource, 'exchangePasswordDraft', '密码草稿不得留在家长端根组件：每输入一位都会重渲染整页，手机会卡。');

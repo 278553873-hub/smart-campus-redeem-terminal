@@ -1,8 +1,8 @@
 import { createDemoGrowthCoinFlows } from '../shared/demoGrowthCoinFlow';
-import { GROWTH_COIN_FLOW_LABELS as CATEGORY_LABELS, GROWTH_COIN_INCOME_CATEGORIES as INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES as EXPENSE_CATEGORIES, formatCampusCoinFlowTime as formatFlowTime, getGrowthCoinFlowDetail } from '../shared/growthCoinFlow';
-import { GrowthCoinIcon } from './GrowthCoinBranding';
-import React, { useState } from 'react';
-import { Clock, ShoppingBag, TrendingUp, Landmark, Sparkles } from 'lucide-react';
+import { GROWTH_COIN_FLOW_LABELS as CATEGORY_LABELS, GROWTH_COIN_INCOME_CATEGORIES as INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES as EXPENSE_CATEGORIES, formatCampusCoinFlowTime as formatFlowTime, getGrowthCoinFlowDetail, getGrowthCoinFlowStatus } from '../shared/growthCoinFlow';
+import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
+import React, { useMemo, useState } from 'react';
+import { Clock, RotateCcw, ShoppingBag, TrendingUp, Landmark, Sparkles } from 'lucide-react';
 import type { Student, TransactionRecord } from '../types';
 
 interface TransactionViewProps {
@@ -11,11 +11,14 @@ interface TransactionViewProps {
 }
 
 const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) => {
+  const coinTerms = useGrowthCoinTerms();
+  const transactions = useMemo(() => createDemoGrowthCoinFlows(student.id), [student.id]);
+  const years = [...new Set(transactions.map(record => record.date.slice(0, 4)))].sort().reverse();
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [activeYear, setActiveYear] = useState<string>('2026'); // defaulted to current display year
+  const [activeYear, setActiveYear] = useState<string>(years[0] ?? String(new Date().getFullYear()));
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  const filteredTransactions = createDemoGrowthCoinFlows(student.id)
+  const filteredTransactions = transactions
     .filter(t =>
       (activeFilter === 'all' ? true : t.type === activeFilter) &&
       (activeCategory === 'all' ? true : t.category === activeCategory) &&
@@ -33,6 +36,8 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
 
   const getIcon = (category: string) => {
     switch(category) {
+      case 'exchange_refund': return <RotateCcw size={20} className="text-orange-500" />;
+      case 'award_recovery': return <RotateCcw size={20} className="text-pink-500" />;
       case 'vending_exchange':
       case 'class_exchange':
       case 'manual_clear': return <ShoppingBag size={20} className="text-pink-500" />;
@@ -47,8 +52,10 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
     switch(category) {
       case 'vending_exchange':
       case 'class_exchange':
+      case 'award_recovery':
       case 'manual_clear': return 'bg-pink-50 ring-pink-100';
       case 'growth_award': return 'bg-orange-50 ring-orange-100';
+      case 'exchange_refund': return 'bg-orange-50 ring-orange-100';
       case 'class_reward': return 'bg-yellow-50 ring-yellow-100';
       case 'bank_interest': return 'bg-blue-50 ring-blue-100';
       default: return 'bg-slate-50 ring-slate-100';
@@ -65,12 +72,11 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
           <div className="relative shrink-0">
              <select 
                value={activeYear}
+               aria-label="筛选流水年份"
                onChange={(e) => setActiveYear(e.target.value)}
                className="bg-white text-slate-800 font-bold rounded-2xl pl-5 pr-8 py-2 text-base outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer border-2 border-slate-50 shadow-sm"
              >
-               <option value="2026">2026 年</option>
-               <option value="2025">2025 年</option>
-               <option value="2024">2024 年</option>
+               {(years.length ? years : [activeYear]).map(year => <option key={year} value={year}>{year} 年</option>)}
              </select>
              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none mt-[1px] border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-slate-400"></div>
           </div>
@@ -145,14 +151,17 @@ const TransactionView: React.FC<TransactionViewProps> = ({ student, onBack }) =>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
-                        <h4 className="min-w-0 truncate text-base font-bold text-slate-800">{CATEGORY_LABELS[tx.category]}</h4>
+                        <div className="flex min-w-0 flex-wrap items-center gap-1">
+                          <h4 className="text-base font-bold text-slate-800">{CATEGORY_LABELS[tx.category]}</h4>
+                          {getGrowthCoinFlowStatus(tx, transactions) && <span className="rounded bg-slate-100 px-1 text-xs leading-5 text-slate-500">{getGrowthCoinFlowStatus(tx, transactions)}</span>}
+                        </div>
                         <div className={`shrink-0 font-black text-lg font-[NumberFont] flex items-center gap-1 leading-none ${tx.type === 'income' ? 'text-green-500' : 'text-slate-700'}`}>
                           {tx.type === 'income' ? '+' : '-'}
                           <span>{formatCoin(tx.amount)}</span>
                           <GrowthCoinIcon className="h-[0.9em] w-[0.9em]" alt="成长币" />
                         </div>
                       </div>
-                      <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-slate-500">{getGrowthCoinFlowDetail(tx)}</p>
+                      <p className="mt-1 break-words text-sm font-bold leading-5 text-slate-500">{getGrowthCoinFlowDetail(tx, { coinName: coinTerms.name })}</p>
                       <time dateTime={tx.date} className="mt-1 block text-xs font-bold leading-4 text-slate-400">{formatFlowTime(tx.date)}</time>
                     </div>
                   </div>

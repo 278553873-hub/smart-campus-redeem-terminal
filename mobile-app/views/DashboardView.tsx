@@ -37,6 +37,7 @@ interface DashboardViewProps {
     currentTeacherId: string;
     currentTeacherName: string;
     canEditOtherTeachersEvaluationRecords: boolean;
+    onDeleteEvaluationRecord?: (recordId: string) => void;
     onUpdateEvaluationRecord: (record: StudentEvaluationRecord) => void;
     onViewCollectionRecord: (item: StudentCollectionHistoryItem) => void;
     onOpenStudentArchive: () => void;
@@ -304,6 +305,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     currentTeacherName,
     canEditOtherTeachersEvaluationRecords,
     onUpdateEvaluationRecord,
+    onDeleteEvaluationRecord,
     onViewCollectionRecord,
     onOpenStudentArchive,
     initialSection = 'evaluation',
@@ -332,7 +334,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     const currentTermOption = STUDENT_TERM_OPTIONS.find(option => option.isCurrent) ?? STUDENT_TERM_OPTIONS[0];
     const selectedTermOption = STUDENT_TERM_OPTIONS.find(option => option.value === selectedTerm) ?? currentTermOption;
     const activeEvaluationRecord = evaluationRecords.find(record => record.id === activeEvaluationRecordId) ?? null;
-    const canEditActiveEvaluationRecord = Boolean(activeEvaluationRecord && (
+    const canEditActiveEvaluationRecord = Boolean(activeEvaluationRecord && activeEvaluationRecord.source !== 'parent' && (
         activeEvaluationRecord.teacherId === currentTeacherId || canEditOtherTeachersEvaluationRecords
     ));
     const evaluationScoreDeltas = useMemo(() => {
@@ -435,6 +437,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 currentTeacherName={currentTeacherName}
                 canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
                 onSelectedTermChange={setSelectedTerm}
+                onDeleteRecord={onDeleteEvaluationRecord}
                 onUpdateRecord={onUpdateEvaluationRecord}
                 onBack={() => undefined}
                 onSelectRecord={(record) => {
@@ -506,6 +509,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 currentTeacherName={currentTeacherName}
                 canEditOtherTeachersRecords={canEditOtherTeachersEvaluationRecords}
                 onSelectedTermChange={() => undefined}
+                onDeleteRecord={onDeleteEvaluationRecord}
                 onUpdateRecord={onUpdateEvaluationRecord}
                 onBack={() => setShowEvaluationRecordEditor(false)}
                 initialRecordId={activeEvaluationRecordId}

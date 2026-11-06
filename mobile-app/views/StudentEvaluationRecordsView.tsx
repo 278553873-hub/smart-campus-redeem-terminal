@@ -1,5 +1,8 @@
+import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
+import { ImageGallery, ImagePreview } from '../../components/media/ImageGallery';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Bot, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
+import { Ellipsis, Bot, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
 import { phoneText } from '../styles/teacherMobileTokens';
 import EvaluationRecordDetailView from './student-evaluation/EvaluationRecordDetailView';
@@ -24,6 +27,7 @@ interface StudentEvaluationRecordsViewProps {
   canEditOtherTeachersRecords: boolean;
   onSelectedTermChange: (value: string) => void;
   onUpdateRecord: (record: StudentEvaluationRecord) => void;
+  onDeleteRecord?: (recordId: string) => void;
   onBack: () => void;
   embedded?: boolean;
   initialRecordId?: string | null;
@@ -97,8 +101,13 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   embedded = false,
   initialRecordId = null,
   initialRecordPage = 'detail',
+  onDeleteRecord,
   onSelectRecord,
 }) => {
+  const [menuRecord, setMenuRecord] = useState<StudentEvaluationRecord | null>(null);
+  const [deleteRecord, setDeleteRecord] = useState<StudentEvaluationRecord | null>(null);
+  const canDelete = (record: StudentEvaluationRecord) => Boolean(onDeleteRecord && record.source !== 'parent' && (record.teacherId === currentTeacherId || canEditOtherTeachersRecords));
+  const [imagePreview, setImagePreview] = useState<{images: string[]; index: number} | null>(null);
   const [timeFilter, setTimeFilter] = useState<EvaluationTimeFilterValue>(DEFAULT_TIME_FILTER);
   const [teacherFilterId, setTeacherFilterId] = useState('all');
   const [indicatorFilterPath, setIndicatorFilterPath] = useState<string[]>([]);
@@ -133,14 +142,16 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   const termTeacherOptions = useMemo(() => {
     const teachers = new Map<string, EvaluationTeacherOption>();
     termRecords.forEach(record => {
-      const current = teachers.get(record.teacherId);
-      teachers.set(record.teacherId, {
-        id: record.teacherId,
-        name: record.teacherName,
+      const optionId = record.source === 'parent' ? `relation:${record.guardianRelation || record.teacherName || '监护人'}` : record.teacherId;
+      const current = teachers.get(optionId);
+      teachers.set(optionId, {
+        id: optionId,
+        source: record.source ?? 'school',
+        name: record.source === 'parent' ? record.guardianRelation || record.teacherName || '监护人' : record.teacherName,
         count: (current?.count ?? 0) + 1,
       });
     });
-    return Array.from(teachers.values()).sort((left, right) => left.name.localeCompare(right.name, 'zh-CN'));
+    return [{ id: 'source:school', name: '学校评价', count: termRecords.filter(r => r.source !== 'parent').length }, { id: 'source:parent', name: '家长评价', count: termRecords.filter(r => r.source === 'parent').length }, ...Array.from(teachers.values())].sort((left, right) => left.name.localeCompare(right.name, 'zh-CN'));
   }, [termRecords]);
   const timeRange = useMemo(() => getEvaluationDateRange(
     timeFilter,
@@ -156,12 +167,12 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   )), [indicatorFilterPath, timeFilteredRecords]);
   const teacherOptions = useMemo(() => {
     const counts = new Map<string, number>();
-    indicatorFilteredRecords.forEach(record => counts.set(record.teacherId, (counts.get(record.teacherId) ?? 0) + 1));
-    return termTeacherOptions.map(teacher => ({ ...teacher, count: counts.get(teacher.id) ?? 0 }));
+    indicatorFilteredRecords.forEach(record => { const id = record.source === 'parent' ? `relation:${record.guardianRelation || record.teacherName || '监护人'}` : record.teacherId; counts.set(id, (counts.get(id) ?? 0) + 1); });
+    return termTeacherOptions.map(teacher => ({ ...teacher, count: teacher.id.startsWith('source:') ? indicatorFilteredRecords.filter(r => (r.source ?? 'school') === teacher.id.slice(7)).length : counts.get(teacher.id) ?? 0 }));
   }, [indicatorFilteredRecords, termTeacherOptions]);
 
   const teacherFilteredRecords = useMemo(() => timeFilteredRecords.filter(record => (
-    teacherFilterId === 'all' || record.teacherId === teacherFilterId
+    teacherFilterId === 'all' || (teacherFilterId.startsWith('source:') ? (record.source ?? 'school') === teacherFilterId.slice(7) : teacherFilterId.startsWith('relation:') ? record.source === 'parent' && `relation:${record.guardianRelation || record.teacherName || '监护人'}` === teacherFilterId : record.teacherId === teacherFilterId)
   )), [teacherFilterId, timeFilteredRecords]);
   const indicatorOptions = useMemo(() => buildIndicatorOptions(termRecords, teacherFilteredRecords), [teacherFilteredRecords, termRecords]);
 
@@ -179,7 +190,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   }, [filteredRecords]);
 
   const activeRecord = records.find(record => record.id === activeRecordId) ?? null;
-  const canEditActiveRecord = Boolean(activeRecord && (
+  const canEditActiveRecord = Boolean(activeRecord && activeRecord.source !== 'parent' && (
     activeRecord.teacherId === currentTeacherId || canEditOtherTeachersRecords
   ));
   const timeFilterLabel = getEvaluationTimeFilterLabel(
@@ -223,7 +234,7 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
     setRecordPage('detail');
   };
 
-  if (activeRecord && recordPage === 'edit') {
+  if (activeRecord && canEditActiveRecord && recordPage === 'edit') {
     return (
       <EvaluationRecordEditView
         record={activeRecord}
@@ -254,47 +265,34 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
   };
 
   const renderRecord = (record: StudentEvaluationRecord) => {
-    const resultSurfaceClass = record.isBad
-      ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)]'
-      : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)]';
-    const resultTextClass = record.isBad
-      ? 'text-[var(--tm-record-negative-text)]'
-      : 'text-[var(--tm-record-positive-text)]';
-
     return (
-      <button
-        key={record.id}
-        type="button"
-        onClick={() => {
-          if (onSelectRecord) {
-            onSelectRecord(record);
-            return;
-          }
-          setActiveRecordId(record.id);
-          setRecordPage('detail');
-        }}
-        aria-label={`查看${record.teacherName}的评价详情`}
-        className={`w-full rounded-[var(--tm-radius-card-compact)] border p-4 text-left [box-shadow:var(--tm-shadow-card)] transition-transform active:scale-[0.99] ${resultSurfaceClass}`}
-      >
-        <span className="flex items-start justify-between gap-3">
-          <span className="text-[12px] font-medium text-[var(--tm-text-secondary)]">{record.evaluation_date} · {record.teacherName}</span>
-          <span className={`shrink-0 text-lg font-bold tabular-nums ${resultTextClass}`}>{record.scoreChange > 0 ? `+${record.scoreChange}` : record.scoreChange}</span>
-        </span>
-        <span className="mt-3 flex items-center gap-2">
-          <Bot className="h-4 w-4 text-[var(--tm-brand-primary)]" />
-          <span className="text-[13px] font-semibold text-[var(--tm-text-primary)]">AI 智能解读</span>
-        </span>
-        <span className="mt-2 line-clamp-3 block text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.aiComment}</span>
-        <span className="mt-3 flex items-center justify-between gap-3 border-t border-[var(--tm-border-subtle)] pt-3">
-          <span className="min-w-0 truncate text-[12px] text-[var(--tm-text-secondary)]">{record.indicatorPath.join(' / ')}</span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-        </span>
-      </button>
+      <article key={record.id} className="relative rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+        {canDelete(record) && <button type="button" aria-label="更多评价操作" onClick={() => setMenuRecord(record)} className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)]"><Ellipsis className="h-5 w-5" /></button>}
+        <button type="button" className={`block w-full text-left ${canDelete(record) ? 'pr-8' : ''}`} aria-label={`查看${record.teacherName}的评价详情`} onClick={() => {
+          if (onSelectRecord) { onSelectRecord(record); return; }
+          setActiveRecordId(record.id); setRecordPage('detail');
+        }}>
+          <p className="whitespace-pre-wrap break-words text-[length:var(--tm-font-size-card-title)] font-medium leading-relaxed text-[var(--tm-text-primary)]">{record.aiComment || record.description}</p>
+        </button>
+        {!!record.images?.length && <ImageGallery images={record.images} label="评价图片" className="mt-3" onSelect={index => setImagePreview({images: record.images!, index})} />}
+        <div className="mt-3 flex items-baseline justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap gap-x-2 gap-y-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]"><span className="break-words">{record.teacherName}</span><span>{record.timestamp?.slice(0, 16) || record.evaluation_date}</span></div>
+          {record.source !== 'parent' && <span className={`shrink-0 text-lg font-bold tabular-nums ${record.isBad ? 'text-[var(--tm-record-negative-text)]' : 'text-[var(--tm-record-positive-text)]'}`}>{record.scoreChange > 0 ? `+${record.scoreChange}` : record.scoreChange}</span>}
+        </div>
+      </article>
     );
   };
 
   return (
     <div className={`relative bg-transparent font-sans ${embedded ? '' : 'flex h-full min-h-0 flex-col overflow-hidden'}`}>
+      <MobileBottomSheet open={Boolean(menuRecord)} title="更多操作" onClose={() => setMenuRecord(null)}>
+        <button type="button" className="min-h-11 w-full text-left text-[var(--tm-status-negative-strong)]" onClick={() => { setDeleteRecord(menuRecord); setMenuRecord(null); }}>删除评价</button>
+      </MobileBottomSheet>
+      <MobileConfirmSheet open={Boolean(deleteRecord)} title="删除评价" description="删除后，该评价将从学生记录中移除，相关积分也会重新计算。确定删除吗？" confirmLabel="删除评价" tone="danger" onClose={() => setDeleteRecord(null)} onConfirm={() => {
+        if (deleteRecord && canDelete(deleteRecord)) onDeleteRecord?.(deleteRecord.id);
+        setDeleteRecord(null);
+      }} />
+      {imagePreview && <ImagePreview portalRootId="teacher-mobile-overlay-root" images={imagePreview.images} initialIndex={imagePreview.index} onClose={() => setImagePreview(null)} />}
       {!embedded && (
         <header className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-4 backdrop-blur-md">
           <button type="button" onClick={onBack} aria-label="返回学生详情" className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">
@@ -331,9 +329,9 @@ const StudentEvaluationRecordsView: React.FC<StudentEvaluationRecordsViewProps> 
             onClick={() => setShowTeacherFilterSheet(true)}
             aria-label={`选择评价人，当前${teacherFilterLabel}`}
             title={teacherFilterLabel}
-            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] px-2.5 text-[13px] font-semibold [box-shadow:var(--tm-shadow-control)] ${teacherFilterId !== 'all'
-              ? 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]'
-              : 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-secondary)]'}`}
+            className={`flex min-h-[var(--tm-size-touch)] min-w-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] border bg-[var(--tm-bg-surface)] px-2.5 text-[13px] font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text-primary)] ${teacherFilterId !== 'all'
+              ? 'border-[var(--tm-brand-primary)] text-[var(--tm-brand-primary-strong)]'
+              : 'border-transparent text-[var(--tm-text-secondary)]'}`}
           >
             <span className="min-w-0 truncate text-center">{teacherFilterLabel}</span>
           </button>

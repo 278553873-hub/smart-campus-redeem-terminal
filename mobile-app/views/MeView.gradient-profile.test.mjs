@@ -5,7 +5,7 @@ const source = [
   fs.readFileSync(new URL('../components/me/TeacherMeTools.tsx', import.meta.url), 'utf8'),
 ].join('\n');
 const assetsSource = fs.readFileSync(new URL('../assets/images.ts', import.meta.url), 'utf8');
-const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8') + '\n' + fs.readFileSync(new URL('../data/teacherProfile.ts', import.meta.url), 'utf8');
 
 const requireText = (haystack, needle, message) => {
   if (!haystack.includes(needle)) throw new Error(message);

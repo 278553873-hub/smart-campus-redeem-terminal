@@ -1,0 +1,20 @@
+/* 课堂大屏控制形态：沿用教师手机端的8 / 4 / 12像素层级，不影响内容卡片。
+ * 显式类名也用于挂载到页面外的组件库弹窗，禁止全局覆盖 Arco 按钮。
+ * 属性选择器提高局部优先级，避免组件库或工具类加载顺序改变形态。 */
+.classroom-control[class],
+.classroom-segment-track[class] {
+  border-radius: 8px;
+}
+
+.classroom-segment-option[class],
+.classroom-segment-track > span[aria-hidden='true'] {
+  border-radius: 4px;
+}
+
+.classroom-control-panel[class] {
+  border-radius: 12px;
+}
+
+.classroom-control-tab[class] {
+  border-radius: 8px 0 0 8px;
+}

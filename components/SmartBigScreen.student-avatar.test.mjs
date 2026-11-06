@@ -6,7 +6,7 @@ const performanceSource = readFileSync(new URL('./student-performance/ClassroomS
 const studentCardSource = readFileSync(new URL('./classroom/ClassroomStudentCard.tsx', import.meta.url), 'utf8');
 
 assert.match(source, /avatar: string;/, '课堂大屏学生数据应包含头像字段');
-assert.match(source, /getSystemStudentAvatar\(gender, studentIndex \* 17\)/, '演示学生应按性别稳定分配系统头像');
+assert.match(source, /getClassroomDemoStudents\(className\)/, '大屏与手机端使用同一份学生名册及系统头像');
 assert.match(studentCardSource, /avatar=\{student\.avatar\}/, '学生卡应向等级头像传入学生头像');
 assert.match(performanceSource, /src=\{avatar\}/, '等级头像应展示学生头像');
 assert.match(source, /src=\{evalStudent\.avatar\}/, '点评弹窗应展示学生头像');

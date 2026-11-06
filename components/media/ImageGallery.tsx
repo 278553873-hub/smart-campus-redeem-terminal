@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
 
@@ -36,18 +37,21 @@ export const ImageGallery: React.FC<GalleryProps> = ({ images, label = '图片',
 };
 
 interface ImagePreviewProps {
+  portalRootId?: string;
   images: string[];
   initialIndex: number;
   onClose: () => void;
   label?: string;
+  topInset?: React.CSSProperties['paddingTop'];
 }
 
 /** 挂在手机容器根部，避免随记录列表滚动或被卡片裁切。 */
-export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex, onClose, label = '图片预览' }) => {
+export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex, onClose, label = '图片预览', topInset, portalRootId }) => {
   const [index, setIndex] = useState(() => Math.max(0, Math.min(initialIndex, images.length - 1)));
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   const currentIndex = Math.min(index, images.length - 1);
   const move = (delta: number) => setIndex(value => Math.max(0, Math.min(value + delta, images.length - 1)));
 
@@ -55,12 +59,12 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeRef.current?.focus({ preventScroll: true });
     return () => { if (previous?.isConnected) previous.focus({ preventScroll: true }); };
-  }, []);
-
+  }, [portalRoot]);
+  useEffect(() => { if (portalRootId) setPortalRoot(document.getElementById(portalRootId) ?? document.body); }, [portalRootId]);
   if (!images.length) return null;
   const controlClass = 'flex h-11 min-w-11 items-center justify-center rounded-full bg-white/10 px-3 text-white active:bg-white/20 disabled:opacity-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
-  return (
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={label} className="absolute inset-0 z-[150] flex flex-col overscroll-contain bg-neutral-950 text-white" onKeyDown={event => {
+  const content = (
+    <div ref={dialogRef} style={{ paddingTop: topInset }} role="dialog" aria-modal="true" aria-label={label} className="absolute inset-0 z-[150] pointer-events-auto flex flex-col overscroll-contain bg-neutral-950 text-white" onKeyDown={event => {
       if (event.key === 'Escape') { event.preventDefault(); onClose(); }
       if (event.key === 'ArrowLeft') { event.preventDefault(); move(-1); }
       if (event.key === 'ArrowRight') { event.preventDefault(); move(1); }
@@ -94,4 +98,5 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex
       </footer>}
     </div>
   );
+  return portalRootId ? (portalRoot ? createPortal(content, portalRoot) : null) : content;
 };

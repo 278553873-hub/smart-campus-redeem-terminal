@@ -117,16 +117,8 @@ export type { GrowthCoinIncomeCategory as CampusCoinIncomeCategory, GrowthCoinAw
 import type { GrowthCoinIssueRecord as CampusCoinIssueRecord } from '../shared/growthCoinFlow';
 
 // manual_clear = 老师手动清空成长币（一次清空计一条，可用与已存的金额合并展示），计入支出流水，便于学生和家长追溯。
-export type CampusCoinExpenseCategory = 'vending_exchange' | 'class_exchange' | 'manual_clear';
-
-export interface CampusCoinConsumeRecord {
-  id: string;
-  category: CampusCoinExpenseCategory;
-  productName: string;
-  quantity: number;
-  amount: number;
-  time: string;
-}
+export type { GrowthCoinExpenseCategory as CampusCoinExpenseCategory, GrowthCoinConsumeRecord as CampusCoinConsumeRecord } from '../shared/growthCoinFlow';
+import type { GrowthCoinConsumeRecord as CampusCoinConsumeRecord } from '../shared/growthCoinFlow';
 
 export type CampusCoinSettlementPeriod = 'weekly' | 'monthly';
 export type CampusCoinBudgetMode = 'per_class' | 'per_student';

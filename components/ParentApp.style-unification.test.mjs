@@ -34,7 +34,7 @@ for (const required of [
   'MessageBellEntry',
   'TodoPage',
   'getPendingQuestionnaireMessages',
-  'aria-label={`待办，${messageCount}项待处理`}',
+  'aria-label={`消息，${messageCount}项待处理`}',
   "setScreen('todo')",
   'Bell',
   '待办',
@@ -221,14 +221,8 @@ for (const forbiddenStyle of [
   forbidText(parentSource, forbiddenStyle, `家长端不应继续使用旧冲突按钮：${forbiddenStyle}`);
 }
 
-for (const required of [
-  "import { teacherBrandCssVariables } from '../../mobile-app/styles/teacherMobileTokens';",
-  "'--pm-brand-primary': 'var(--tm-brand-primary)'",
-  "'--pm-radius-card': 'var(--tm-radius-card)'",
-  "'--pm-shadow-card': 'var(--tm-shadow-card)'",
-]) {
-  requireText(tokenSource, required, `家长端应复制并映射教师端 Token：${required}`);
-}
+requireText(tokenSource, "export { parentMobileCssVariables } from './parentMobileTokens';", '家长组件应从统一令牌源读取变量');
+// 完整继承、颜色边界及引用有效性由 audit-parent-mobile-tokens.mjs 检查。
 for (const required of ['--tm-brand-primary', '--tm-radius-card', '--tm-shadow-navigation']) {
   requireText(teacherTokenSource, required, `教师端 Token 源缺少家长端复用所需变量：${required}`);
 }

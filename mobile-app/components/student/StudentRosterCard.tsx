@@ -1,4 +1,5 @@
 import React from 'react';
+import StudentPetRosterCard, { type StudentRosterPet } from './StudentPetRosterCard';
 import { DEMO_STUDENT_BASE_SCORE, getStudentCardTotalScore } from '../../domain/studentCardDisplay';
 import { ASSETS } from '../../assets/images';
 import type { Student, StudentCardDisplaySettings } from '../../types';
@@ -16,6 +17,7 @@ import {
 } from '../../domain/studentPerformance';
 
 interface StudentRosterCardProps {
+  pet?: StudentRosterPet;
   student: Student;
   index: number;
   performance: StudentPerformanceSummary;
@@ -52,6 +54,7 @@ const getStudentRosterCardHeightClass = (displaySettings: StudentCardDisplaySett
 
 const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
   student,
+  pet,
   index,
   performance,
   levelNetScore,
@@ -93,6 +96,8 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       : '',
     selectionStatus ?? '',
   ].filter(Boolean).join('，');
+
+  if (pet) return <StudentPetRosterCard student={student} pet={pet} showSelection={showSelection} selected={selected} onClick={onClick} />;
 
   return (
     <button
@@ -149,17 +154,18 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
 };
 
 interface StudentRosterAddCardProps {
+  petView?: boolean;
   displaySettings: StudentCardDisplaySettings;
   onClick: () => void;
   shape?: 'default' | 'subtle';
 }
 
-export const StudentRosterAddCard: React.FC<StudentRosterAddCardProps> = ({ displaySettings, onClick, shape = 'default' }) => (
+export const StudentRosterAddCard: React.FC<StudentRosterAddCardProps> = ({ displaySettings, onClick, shape = 'default', petView = false }) => (
   <button
     type="button"
     onClick={onClick}
     aria-label="添加学生"
-    className={`flex w-full min-w-0 select-none items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)] ${getStudentRosterCardHeightClass(displaySettings)}`}
+    className={`flex w-full min-w-0 select-none items-center justify-center ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface)] text-center [box-shadow:var(--tm-shadow-card)] ${petView ? 'min-h-[var(--tm-size-touch)] self-stretch' : getStudentRosterCardHeightClass(displaySettings)}`}
   >
     <span className="flex flex-col items-center justify-center gap-[var(--tm-space-2)]">
       <PlusIcon className="h-6 w-6 text-[var(--tm-action-icon-brand)]" />

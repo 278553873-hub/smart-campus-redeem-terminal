@@ -4,6 +4,7 @@ import { Signal, Wifi } from 'lucide-react';
 interface SimulatedIosStatusBarProps {
   visible?: boolean;
   appearance?: 'light' | 'dark';
+  compact?: boolean;
 }
 
 /**
@@ -12,7 +13,7 @@ interface SimulatedIosStatusBarProps {
  * 手机壳与「跳转微信」这类整屏仿真界面共用同一份实现，
  * 保证系统状态栏在两套界面里的高度、字号和图标完全一致。
  */
-const SimulatedIosStatusBar: React.FC<SimulatedIosStatusBarProps> = ({ visible = true, appearance = 'light' }) => {
+const SimulatedIosStatusBar: React.FC<SimulatedIosStatusBarProps> = ({ visible = true, appearance = 'light', compact = false }) => {
   const [currentTime, setCurrentTime] = useState('09:41');
 
   useEffect(() => {
@@ -25,7 +26,7 @@ const SimulatedIosStatusBar: React.FC<SimulatedIosStatusBarProps> = ({ visible =
 
   return (
     <div
-      className={`pointer-events-none absolute left-0 top-0 z-[90] flex h-[54px] w-full items-end justify-between px-8 pb-3 text-[12px] font-bold ${appearance === 'dark' ? 'text-white' : 'text-black'} ${visible ? 'opacity-100' : 'opacity-0'}`}
+      className={`pointer-events-none absolute left-0 top-0 z-[90] flex w-full justify-between text-[12px] font-bold ${compact ? 'h-7 items-center px-5' : 'h-[54px] items-end px-8 pb-3'} ${appearance === 'dark' ? 'text-white' : 'text-black'} ${visible ? 'opacity-100' : 'opacity-0'}`}
       aria-hidden={!visible}
     >
       <div className="flex-1 text-left"><span>{currentTime}</span></div>

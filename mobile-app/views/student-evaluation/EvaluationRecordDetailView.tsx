@@ -1,3 +1,4 @@
+import { ImageGallery, ImagePreview } from '../../../components/media/ImageGallery';
 import React from 'react';
 import { Bot, ChevronLeft, History, LockKeyhole, Pencil } from 'lucide-react';
 import { phoneText } from '../../styles/teacherMobileTokens';
@@ -28,6 +29,8 @@ const formatRevisionTime = (value: string) => {
 };
 
 export const EvaluationRecordDetailContent: React.FC<EvaluationRecordDetailContentProps> = ({ record }) => {
+  const [preview, setPreview] = React.useState<number | null>(null);
+  const isParent = record.source === 'parent';
   const resultSurfaceClass = record.isBad
     ? 'border-[var(--tm-record-negative-border)] bg-[var(--tm-record-negative-bg)]'
     : 'border-[var(--tm-record-positive-border)] bg-[var(--tm-record-positive-bg)]';
@@ -38,36 +41,34 @@ export const EvaluationRecordDetailContent: React.FC<EvaluationRecordDetailConte
 
   return (
     <div className="space-y-[var(--tm-layout-card-gap)]">
+      {preview !== null && <ImagePreview portalRootId="teacher-mobile-overlay-root" images={record.images ?? []} initialIndex={preview} onClose={() => setPreview(null)} />}
       <article className={`rounded-[var(--tm-radius-card-compact)] border p-4 [box-shadow:var(--tm-shadow-card)] ${resultSurfaceClass}`}>
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[12px] font-medium text-[var(--tm-text-secondary)]">{record.evaluation_date}</p>
             <p className="mt-1 text-[13px] font-semibold text-[var(--tm-text-primary)]">{record.teacherName}</p>
           </div>
-          <span className={`text-[24px] font-bold leading-none tabular-nums ${resultTextClass}`}>
+          {!isParent && <span className={`text-[24px] font-bold leading-none tabular-nums ${resultTextClass}`}>
             {record.scoreChange > 0 ? `+${record.scoreChange}` : record.scoreChange}
-          </span>
+          </span>}
         </div>
-        <div className="mt-4 flex items-center gap-2">
-          <Bot className="h-5 w-5 text-[var(--tm-brand-primary)]" />
-          <h2 className="text-[14px] font-semibold text-[var(--tm-text-primary)]">AI 智能解读</h2>
-        </div>
-        <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.aiComment}</p>
-        <div className="mt-4 border-t border-[var(--tm-border-subtle)] pt-3">
+        <p className="mt-2 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.aiComment || record.description}</p>
+        {!!record.images?.length && <ImageGallery images={record.images} label="评价图片" className="mt-3" onSelect={setPreview} />}
+        {!isParent && <div className="mt-4 border-t border-[var(--tm-border-subtle)] pt-3">
           <p className="text-[12px] leading-5 text-[var(--tm-text-secondary)]">{record.indicatorPath.join(' / ')}</p>
-        </div>
+        </div>}
       </article>
 
-      <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
+      {!isParent && <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
         <div className="flex items-center gap-2">
           <LockKeyhole className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
           <h2 className="text-[14px] font-semibold text-[var(--tm-text-primary)]">原始记录</h2>
         </div>
         <p className="mt-3 text-[14px] leading-6 text-[var(--tm-text-secondary)]">{record.description}</p>
         {record.auditReason && <p className="mt-3 border-t border-[var(--tm-border-subtle)] pt-3 text-[12px] leading-5 text-[var(--tm-text-secondary)]">{record.auditReason}</p>}
-      </section>
+      </section>}
 
-      {revisions.length > 0 && (
+      {!isParent && revisions.length > 0 && (
         <section className="rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] p-4 [box-shadow:var(--tm-shadow-card)]">
           <div className="flex items-center gap-2">
             <History className="h-4 w-4 text-[var(--tm-text-tertiary)]" />

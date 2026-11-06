@@ -1,4 +1,4 @@
-import { createDemoGrowthCoinIssueRecords } from '../shared/demoGrowthCoinFlow';
+import { createDemoGrowthCoinIssueRecords, createDemoGrowthCoinConsumeRecords } from '../shared/demoGrowthCoinFlow';
 import { getEffectiveGrowthCoinConfig } from '../shared/growthCoinRuleSchedule';
 import { getGrowthCoinMode, getScoreCoinRuleSummary } from '../shared/growthCoinRules';
 import { Student, ScoreItem, SubjectGrade, GrowthReportItem, DetailedReportSection, ClassInfo, CampusCoinDetail, GroupPlan, type CoinIssuanceConfig } from './types';
@@ -137,32 +137,7 @@ export const GET_MOCK_CAMPUS_COIN_DETAIL = (
     balance,
     bankDeposit: 1200 + (seed % 5) * 100,
     issueRecords: createDemoGrowthCoinIssueRecords(student.id),
-    consumeRecords: [
-      {
-        id: `${student.id}-consume-1`,
-        category: 'vending_exchange',
-        productName: '晨光软头水彩笔',
-        quantity: 1,
-        amount: 100,
-        time: '2026-02-06 12:30',
-      },
-      {
-        id: `${student.id}-consume-2`,
-        category: 'class_exchange',
-        productName: '免除一次大扫除',
-        quantity: 1,
-        amount: 120,
-        time: '2026-02-04 15:40',
-      },
-      {
-        id: `${student.id}-consume-3`,
-        category: 'class_exchange',
-        productName: '指定优选座位一周',
-        quantity: 1,
-        amount: 200,
-        time: '2026-01-28 10:15',
-      },
-    ],
+    consumeRecords: createDemoGrowthCoinConsumeRecords(student.id),
     settlementEstimate: {
       scoreRuleSummary: getGrowthCoinMode(issuanceConfig) === 'score' ? getScoreCoinRuleSummary(issuanceConfig) : undefined,
       enabled: issuanceConfig.enabled,
@@ -575,6 +550,50 @@ Object.keys(MOCK_GRADE_SUBJECT_REPORT_TEMPLATES).forEach(grade => {
 
 // 行为评价记录 Mock 数据 (严格基于 AI Step4 生成结果)
 export const MOCK_BEHAVIOR_RECORDS = [
+  {
+    id: 'rec_2026_fall_reading', timestamp: '2026-11-04 16:10:00', evaluation_date: '2026-11-04',
+    type: 'behavior', indicatorPath: ['智育', '学习态度', '自主学习'], scoreChange: 2, isBad: false,
+    description: '主动阅读课外书，并和同学合作分享阅读收获。',
+    aiComment: '你主动探索书中的知识，还能与同学分享、合作，让阅读有了更多收获。',
+    images: ['/assets/parent-record-demo/reading.png', '/assets/parent-record-demo/cooperation.png'],
+    teacherId: 'teacher-wang-homeroom', teacherName: '班主任王老师',
+  },
+  {
+    id: 'rec_2026_fall_labor', timestamp: '2026-11-03 17:00:00', evaluation_date: '2026-11-03',
+    type: 'behavior', indicatorPath: ['劳育', '劳动习惯', '主动劳动'], scoreChange: 1, isBad: false,
+    description: '主动收拾餐桌，认真完成清洁任务。',
+    aiComment: '你主动承担力所能及的劳动，认真收拾餐桌，表现出了责任心。',
+    images: ['/assets/parent-record-demo/housework.png'],
+    teacherId: 'teacher-wang-homeroom', teacherName: '班主任王老师',
+  },
+  {
+    id: "rec_2026_fall_001",
+    timestamp: "2026-11-03 16:10:00",
+    evaluation_date: "2026-11-03",
+    type: "behavior",
+    indicatorPath: ["德育", "品格修养", "诚实守信"],
+    scoreChange: 2,
+    isBad: false,
+    description: "在操场捡到同学的校园卡，主动交给老师并帮助寻找失主。",
+    aiComment: "你用实际行动做到了诚实守信，主动帮助同学，值得表扬。",
+    teacherId: "teacher-wang-homeroom",
+    teacherName: "班主任王老师",
+    auditReason: "拾到校园卡后主动交还，诚实守信。"
+  },
+  {
+    id: "rec_2026_fall_002",
+    timestamp: "2026-11-02 09:30:00",
+    evaluation_date: "2026-11-02",
+    type: "behavior",
+    indicatorPath: ["智育", "学习态度", "课前准备"],
+    scoreChange: -1,
+    isBad: true,
+    description: "上课后才开始寻找课本和练习本，影响了课堂学习。",
+    aiComment: "下次试着在课前把学习用品放好，从容开始每一节课。",
+    teacherId: "teacher-li-math",
+    teacherName: "数学李老师",
+    auditReason: "课前学习用品准备不充分。"
+  },
   {
     id: "rec_001",
     timestamp: "2026-07-15 16:10:00",

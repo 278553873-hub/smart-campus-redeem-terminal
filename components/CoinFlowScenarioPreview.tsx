@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { Radio } from '@arco-design/web-react';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 import { COIN_FLOW_SCENARIOS } from '../shared/coinFlowScenarioExamples';
+import { GROWTH_COIN_FLOW_LABELS, GROWTH_COIN_INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES } from '../shared/growthCoinFlow';
 
 const categories = {
- income: ['全部', '成长嘉奖', '班级奖励', '银行利息', '兑换退还'],
- expense: ['全部', '货柜兑换', '班级兑换', '发币撤回'],
+ income: ['全部', ...GROWTH_COIN_INCOME_CATEGORIES.map(category => GROWTH_COIN_FLOW_LABELS[category])],
+ expense: ['全部', ...GROWTH_COIN_EXPENSE_CATEGORIES.map(category => GROWTH_COIN_FLOW_LABELS[category])],
 };
 const entries = COIN_FLOW_SCENARIOS.flatMap(scenario => scenario.records.map((record, index) => ({
  key: `${scenario.id}-${index}`, scenario, record,

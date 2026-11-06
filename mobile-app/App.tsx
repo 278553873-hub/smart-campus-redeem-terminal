@@ -1,9 +1,23 @@
+import { readParentBehaviorRecords } from '../shared/parentBehaviorRecords';
+import { parentRecordingSchoolId } from '../shared/parentRecordingSettings';
+import ParentRecordingSettingsView from './views/ParentRecordingSettingsView';
+import { DEFAULT_TEACHER_PROFILE, INITIAL_TEACHER_PROFILES_BY_SPACE, TEACHER_PROFILE_SUBJECTS, TEACHER_PROFILE_DEPARTMENTS } from './data/teacherProfile';
+import { TEACHER_SPACE_OPTIONS } from './data/teacherSpaces';
+import { updateClassPetEvaluation } from '../shared/classPetRoster';
+import { getTeacherSpaceMenuPolicy } from './domain/teacherSpaceAccess';
+import ClassPetSettingsView from './views/ClassPetSettingsView';
 import type { ClassReportOutlineItem } from '../shared/classReportOutline';
 import { GrowthCoinScope } from '../components/GrowthCoinBranding';
 import React, { lazy, Suspense, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import DashboardView from './views/DashboardView';
 import ClassListView from './views/ClassListView';
+import TeacherClassDirectoryView from './views/TeacherClassDirectoryView';
+import { teacherAppFeatures, resolveTeacherAppRecordScopes, type TeacherAppEdition } from './config/teacherAppFeatures';
+import { useAirecDemoDevice } from './hooks/useAirecDemoDevice';
+import MobileToast from './components/ui/MobileToast';
+import AirecDevicesView from './views/AirecDevicesView';
+import AirecAddDeviceView from './views/AirecAddDeviceView';
 import StudentTeamDetailView from './views/student-team/StudentTeamDetailView';
 import StudentTeamInfoView from './views/student-team/StudentTeamInfoView';
 import type { StudentTeamEditorValue, StudentTeamSearchResult } from './views/student-team/StudentTeamEditorView';
@@ -20,6 +34,7 @@ import EvaluationRecordsLogView from './views/EvaluationRecordsLogView';
 import MoralEducationCockpitView from './views/MoralEducationCockpitView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
 import ClassExchangeRecordView from './views/ClassExchangeRecordView';
+import VendingExchangeDemoView from './views/vending-exchange/VendingExchangeDemoView';
 import MedalIssuanceView from './views/MedalIssuanceView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
 import { applyFaceAvatars, seedClassFaceLibrary, useStudentFaceLibrary } from './domain/studentFaceLibrary';
@@ -63,7 +78,7 @@ import MobileConfirmSheet from './components/ui/MobileConfirmSheet';
 import { teacherBrandCssVariables } from './styles/teacherMobileTokens';
 import type { TeacherGradientPreviewConfig } from './styles/teacherGradientPreview';
 import { DeviceWrapper } from '../components/DeviceWrapper';
-import PhoneMockup from '../components/PhoneMockup';
+import PhoneMockup, { type DevicePreviewBounds } from '../components/PhoneMockup';
 import { ASSETS } from './assets/images';
 import {
     PlusIcon, FileIcon, CloseIcon, ChevronDownIcon, AlertCircleIcon,
@@ -221,26 +236,6 @@ const SUBJECT_SCOPES = [
 const DEFAULT_TERM = TERMS[0];
 const DEFAULT_GRADE_SCOPE = GRADE_SCOPES[0];
 const DEFAULT_SUBJECT_SCOPE = SUBJECT_SCOPES[0];
-const TEACHER_PROFILE_SUBJECTS = Array.from(new Set(MOCK_SUBJECTS.map(subject => subject.subject)));
-const TEACHER_PROFILE_DEPARTMENTS: TeacherDepartment[] = [
-    { id: 'student-development', name: '学发中心' },
-    { id: 'moral-education', name: '德育处' },
-    { id: 'academic-affairs', name: '教务处' },
-    { id: 'physical-education', name: '艺体组' },
-    { id: 'grade-office', name: '年级办公室' },
-];
-
-const CLASS_RECORD_ENABLED_SPACE_IDS = new Set(['school-qizhong', 'school-star']);
-const TEACHER_SPACE_OPTIONS: TeacherSpaceOption[] = ([
-    { id: 'personal', title: '我创建的班级', type: 'personal', role: 'owner' },
-    { id: 'collab-li', title: '李明老师的班级', type: 'collaboration', role: 'collaborator' },
-    { id: 'school-qizhong', title: '成都七中初中附属小学', type: 'school', schoolType: 'primary', role: 'homeroomTeacher', classLeaderboardSettlementCycle: 'week', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['class'] },
-    { id: 'school-star', title: '星河实验学校', type: 'school', schoolType: 'twelveYear', role: 'leader', classLeaderboardSettlementCycle: 'week', enabledManagementTools: ['schoolReport', 'moralEducationCockpit', 'termReport', 'principalAssistant'], headteacherAssistantEnabled: true, evaluationScopes: ['student', 'class'], homeworkAiEnabled: true, homeworkOperator: true },
-    { id: 'school-qinghe', title: '青禾实验小学', type: 'school', schoolType: 'primary', role: 'homeroomTeacher', enabledManagementTools: [], headteacherAssistantEnabled: true, evaluationScopes: ['student'] },
-] satisfies TeacherSpaceOption[]).map(space => ({
-    ...space,
-    classRecordEnabled: CLASS_RECORD_ENABLED_SPACE_IDS.has(space.id),
-}));
 const DEFAULT_TEACHER_SPACE_ID = 'school-star';
 const DEFAULT_WEEKLY_ADVICE_CLASS_ID = 'c_2025_4';
 const CLASS_MEMBERSHIP_BY_SPACE: Record<string, Record<string, 'created' | 'joined'>> = {
@@ -355,73 +350,11 @@ const createInitialStudentEvaluationRecords = (): StudentEvaluationRecord[] => (
     }))
 );
 
-const createTeachingAssignments = (classIds: string[], subject: string) => (
-    classIds.map(classId => ({ classId, subject }))
-);
-
-const DEFAULT_TEACHER_PROFILE: TeacherProfile = {
-    id: 'teacher-liufei',
-    name: '刘飞',
-    avatar: ASSETS.AVATAR.TEACHER_DEFAULT,
-    schoolName: '星河实验学校',
-    departmentId: 'student-development',
-    departmentName: '学发中心',
-    teachingAssignments: [
-        ...createTeachingAssignments(['c_2025_2', 'c_2025_3', 'c_2025_4', 'c_2025_5', 'c_2025_6', 'c_2025_7'], '体育'),
-        ...createTeachingAssignments(['c_2024_1', 'c_2024_2', 'c_2024_3', 'c_2024_4', 'c_2024_5', 'c_2024_6', 'c_2024_7', 'c_2024_8', 'c_2024_9', 'c_2024_10'], '体育'),
-        ...createTeachingAssignments(['c_2025_1'], '语文'),
-        ...createTeachingAssignments(['c_2025_1'], '书法'),
-    ],
-    homeroomClassIds: ['c_2025_4', 'c_2025_1', 'c_2024_2', 'c_2025_7'],
-    gradeLeaderGrades: ['一年级'],
-};
-
-const INITIAL_TEACHER_PROFILES_BY_SPACE: Record<string, TeacherProfile> = {
-    personal: {
-        ...DEFAULT_TEACHER_PROFILE,
-        name: '大飞',
-        schoolName: '个人空间',
-        departmentId: '',
-        departmentName: '',
-        teachingAssignments: createTeachingAssignments(['c_2025_1'], '语文'),
-        homeroomClassIds: ['c_2025_1'],
-        gradeLeaderGrades: [],
-    },
-    'collab-li': {
-        ...DEFAULT_TEACHER_PROFILE,
-        schoolName: '星河实验学校',
-        departmentId: '',
-        departmentName: '',
-        teachingAssignments: createTeachingAssignments(['c_2025_2'], '体育'),
-        homeroomClassIds: [],
-        gradeLeaderGrades: [],
-    },
-    'school-qizhong': {
-        ...DEFAULT_TEACHER_PROFILE,
-        schoolName: '成都七中初中附属小学',
-        departmentId: 'physical-education',
-        departmentName: '艺体组',
-        teachingAssignments: createTeachingAssignments(['c_2025_4'], '体育'),
-        homeroomClassIds: ['c_2025_4'],
-        gradeLeaderGrades: [],
-    },
-    'school-star': DEFAULT_TEACHER_PROFILE,
-    'school-qinghe': {
-        ...DEFAULT_TEACHER_PROFILE,
-        schoolName: '青禾实验小学',
-        departmentId: 'physical-education',
-        departmentName: '艺体组',
-        teachingAssignments: createTeachingAssignments(['c_2025_3', 'c_2025_6'], '体育'),
-        homeroomClassIds: ['c_2025_3'],
-        gradeLeaderGrades: [],
-    },
-};
-
 const describeGradeScope = (grade: string) => grade === DEFAULT_GRADE_SCOPE ? '全校学生' : `${grade}学生`;
 const describeSubjectScope = (subject: string) => subject === DEFAULT_SUBJECT_SCOPE ? '全部学科' : `${subject}学科`;
 
 // App View States (Removed 'record_result')
-type ViewState = 'home_log' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_team_info' | 'student_team_report' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'report_management' | 'weekly_duty_schedule' | 'parent_evaluation_visibility' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'class_exchange_records' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
+type ViewState = 'home_log' | 'airec_devices' | 'airec_add_device' | 'indicator_catalog' | 'class_list' | 'class_info' | 'class_detail' | 'student_add' | 'class_report' | 'student_team_detail' | 'student_team_info' | 'student_team_report' | 'student_batch_edit' | 'student_detail' | 'student_archive' | 'student_collection_detail' | 'student_body_measurements' | 'student_basic_edit' | 'student_coin_detail' | 'term_report' | 'record_input' | 'me' | 'my_files' | 'teacher_profile_edit' | 'mine_settings' | 'subject_management' | 'department_management' | 'coin_issuance' | 'vending_exchange' | 'suggestion_feedback' | 'questionnaire' | 'archive_design' | 'report_management' | 'weekly_duty_schedule' | 'parent_recording_settings' | 'parent_evaluation_visibility' | 'class_pet_settings' | 'homework_batch_import' | 'ai_headteacher_assistant' | 'ai_headteacher_assistant_v2' | 'weekly_action_advice' | 'weekly_action_history' | 'teacher_evaluation_review' | 'teacher_evaluation_review_history' | 'ai_principal_assistant' | 'principal_weekly_report' | 'principal_weekly_history' | 'principal_monthly_report' | 'principal_monthly_history' | 'principal_term_report' | 'principal_term_history' | 'class_leaderboard' | 'class_evaluation_records' | 'leader_report' | 'moral_education_cockpit' | 'reward_verification' | 'class_exchange_records' | 'medal_issuance' | 'face_update' | 'bank_password' | 'homework_entry';
 
 const PRINCIPAL_REPORT_VIEWS: ViewState[] = [
     'principal_weekly_report',
@@ -440,6 +373,8 @@ const HEADTEACHER_REPORT_VIEWS: ViewState[] = [
 ];
 
 const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
+    'airec_devices',
+    'airec_add_device',
     'indicator_catalog',
     'class_info',
     'class_detail',
@@ -464,20 +399,29 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
     'subject_management',
     'department_management',
     'coin_issuance',
+    'vending_exchange',
     'suggestion_feedback',
     'questionnaire',
     'archive_design', 'report_management',
     'weekly_duty_schedule',
+    'parent_recording_settings',
     'parent_evaluation_visibility',
+    'class_pet_settings',
     'moral_education_cockpit',
 ];
 
 interface MobileAppProps {
+    edition?: TeacherAppEdition;
     onGradientPreviewVisibilityChange?: (visible: boolean) => void;
+    onMePreviewVisibilityChange?: (visible: boolean) => void;
+    onAirecPreviewVisibilityChange?: (visible: boolean) => void;
     classListLoadingPreview?: import('../shared/classListLoadingPreview').ClassListLoadingPreview;
     classReportOutline?: ClassReportOutlineItem[];
     onClassReportViewChange?: (active: boolean) => void;
     showPhoneShell?: boolean;
+    /** 演示设备视口；页面继续沿用手机端布局。 */
+    previewDevice?: 'phone' | 'tablet';
+    onPreviewDeviceBoundsChange?: (bounds: DevicePreviewBounds) => void;
     /** 预览档位：只覆盖班主任助理的板块组合，不改变学校真实权限；未点选时为空 */
     headteacherAssistantScopePreview?: HeadteacherAssistantScopePreviewMode | null;
     /** 把学校配置对应的默认档位回传给预览浮层，作为滑块的选中项 */
@@ -486,6 +430,9 @@ interface MobileAppProps {
     onHeadteacherAssistantScopePreviewChange?: (mode: HeadteacherAssistantScopePreviewMode | null) => void;
     /** 当前页面是否为班主任助理相关页面，预览浮层据此决定是否展示能力切换卡片 */
     onHeadteacherAssistantViewChange?: (active: boolean) => void;
+    showUnreleasedTools?: boolean;
+    showUnreleasedClassTools?: boolean;
+    onClassActionsPreviewVisibilityChange?: (visible: boolean) => void;
     gradientPreview?: TeacherGradientPreviewConfig;
     onGradientPreviewChange?: (config: TeacherGradientPreviewConfig) => void;
     campaignPreviewEveryEntry?: boolean;
@@ -498,15 +445,23 @@ interface MobileAppProps {
 }
 
 const App: React.FC<MobileAppProps> = ({
+    edition = 'full',
     classListLoadingPreview,
     classReportOutline,
     onClassReportViewChange,
     onGradientPreviewVisibilityChange,
+    onMePreviewVisibilityChange,
+    onAirecPreviewVisibilityChange,
     showPhoneShell = true,
+    previewDevice = 'phone',
+    onPreviewDeviceBoundsChange,
     headteacherAssistantScopePreview = null,
     onHeadteacherAssistantScopePreviewDefaultChange,
     onHeadteacherAssistantScopePreviewChange,
     onHeadteacherAssistantViewChange,
+    showUnreleasedTools = false,
+    showUnreleasedClassTools = false,
+    onClassActionsPreviewVisibilityChange,
     gradientPreview,
     onGradientPreviewChange,
     campaignPreviewEveryEntry = false,
@@ -515,6 +470,7 @@ const App: React.FC<MobileAppProps> = ({
     onStudentTeamListViewChange,
     screenRef,
 }) => {
+    const features = teacherAppFeatures[edition];
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
@@ -526,9 +482,9 @@ const App: React.FC<MobileAppProps> = ({
     const pendingScrollTopRef = useRef<number | null>(0);
 
     const getActiveTabIndex = (view: ViewState): number => {
-        if (view === 'home_log' || view === 'indicator_catalog' || view === 'record_input') return 0;
+        if (view === 'home_log' || view === 'airec_devices' || view === 'airec_add_device' || view === 'indicator_catalog' || view === 'record_input') return 0;
         if (view === 'class_list' || view === 'class_info' || view === 'class_detail' || view === 'student_add' || view === 'class_report' || view === 'student_team_detail' || view === 'student_team_info' || view === 'student_team_report' || view === 'student_batch_edit' || view === 'student_detail' || view === 'student_archive' || view === 'student_collection_detail' || view === 'student_body_measurements' || view === 'student_basic_edit' || view === 'student_coin_detail' || view === 'class_leaderboard' || view === 'class_evaluation_records' || view === 'leader_report' || view === 'reward_verification' || view === 'class_exchange_records' || view === 'medal_issuance' || view === 'face_update' || view === 'bank_password' || view === 'homework_entry') return 1;
-        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'report_management' || view === 'weekly_duty_schedule' || view === 'parent_evaluation_visibility' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
+        if (view === 'me' || view === 'my_files' || view === 'teacher_profile_edit' || view === 'mine_settings' || view === 'subject_management' || view === 'department_management' || view === 'coin_issuance' || view === 'vending_exchange' || view === 'suggestion_feedback' || view === 'questionnaire' || view === 'archive_design' || view === 'report_management' || view === 'weekly_duty_schedule' || view === 'parent_recording_settings' || view === 'parent_evaluation_visibility' || view === 'class_pet_settings' || view === 'homework_batch_import' || view === 'moral_education_cockpit' || view === 'ai_headteacher_assistant' || view === 'ai_headteacher_assistant_v2' || view === 'weekly_action_advice' || view === 'weekly_action_history' || view === 'teacher_evaluation_review' || view === 'teacher_evaluation_review_history' || view === 'ai_principal_assistant' || view === 'principal_weekly_report' || view === 'principal_weekly_history' || view === 'principal_monthly_report' || view === 'principal_monthly_history' || view === 'principal_term_report' || view === 'principal_term_history') return 2;
         return 0;
     };
     const activeIndex = getActiveTabIndex(currentView);
@@ -599,7 +555,7 @@ const App: React.FC<MobileAppProps> = ({
     // 成长币记录（兑换 / 清空）按班级存放运行期间的变更，历史流水由演示数据生成。
     const [coinLedgerPatchByClassId, setCoinLedgerPatchByClassId] = useState<Record<string, CampusCoinLedgerPatch>>({});
     const [growthProfile, setGrowthProfile] = useState(() => ensureStudentGrowthProfile(activeStudent.id));
-    const activeStudentEvaluationRecords = evaluationRecordsByStudentId[activeStudent.id] ?? createInitialStudentEvaluationRecords();
+    const schoolStudentEvaluationRecords = evaluationRecordsByStudentId[activeStudent.id] ?? createInitialStudentEvaluationRecords();
     const [selectedSubject, setSelectedSubject] = useState<string>('');
     const [batchStudentIds, setBatchStudentIds] = useState<string[]>([]);
     const [isClassGroupingEditorOpen, setIsClassGroupingEditorOpen] = useState(false);
@@ -610,12 +566,39 @@ const App: React.FC<MobileAppProps> = ({
         return () => onGradientPreviewVisibilityChange?.(false);
     }, [currentView, isAuthenticated, isStudentTeamFullPageOpen, onGradientPreviewVisibilityChange]);
 
+    useEffect(() => {
+        onMePreviewVisibilityChange?.(isAuthenticated && currentView === 'me');
+        return () => onMePreviewVisibilityChange?.(false);
+    }, [currentView, isAuthenticated, onMePreviewVisibilityChange]);
+
+    useEffect(() => {
+        onAirecPreviewVisibilityChange?.(isAuthenticated && features.bluetoothDevices && currentView === 'airec_devices');
+        return () => onAirecPreviewVisibilityChange?.(false);
+    }, [currentView, isAuthenticated, features.bluetoothDevices, onAirecPreviewVisibilityChange]);
+
     const [headteacherAssistantClassId, setHeadteacherAssistantClassId] = useState(DEFAULT_WEEKLY_ADVICE_CLASS_ID);
     const principalWeeklyReportTask = useReportGenerationTask({ stepCount: 4 });
     const principalMonthlyReportTask = useReportGenerationTask({ stepCount: 4 });
     const principalTermReportTask = useReportGenerationTask({ stepCount: 4, initialStatus: 'generated' });
     const [currentTeacherSpaceId, setCurrentTeacherSpaceId] = useState(DEFAULT_TEACHER_SPACE_ID);
-    const activeTeacherSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === currentTeacherSpaceId) ?? TEACHER_SPACE_OPTIONS[0];
+    const teacherSpaceOptions = edition === 'lite'
+        ? TEACHER_SPACE_OPTIONS.filter(space => resolveTeacherAppRecordScopes(edition, space).length > 0)
+        : TEACHER_SPACE_OPTIONS;
+    const activeTeacherSpace = teacherSpaceOptions.find(space => space.id === currentTeacherSpaceId) ?? teacherSpaceOptions[0] ?? TEACHER_SPACE_OPTIONS[0];
+    const activeStudentEvaluationRecords: StudentEvaluationRecord[] = [
+        ...schoolStudentEvaluationRecords,
+        ...readParentBehaviorRecords().filter(record =>
+            parentRecordingSchoolId(record.subject.schoolCode) === activeTeacherSpace.id
+            && record.subject.studentNo === (activeStudent.studentNo || activeStudent.id)
+        ).map(record => ({
+            id: `parent:${record.id}`, source: 'parent' as const,
+            evaluation_date: record.occurredOn, images: record.images,
+            description: record.content, aiComment: '', indicatorPath: [],
+            scoreChange: 0, isBad: false,
+            teacherId: `parent:${record.guardianId}`, teacherName: record.author,
+            guardianRelation: activeStudent.guardianContacts?.find(contact => contact.phone === record.guardianId)?.relation || record.author || '监护人',
+        })),
+    ];
     const activeSchoolTermReportProfile = getSchoolTermReportProfile(activeTeacherSpace.id);
     const activeStudentReportContent = getSchoolStudentReportContent(activeTeacherSpace.id, activeStudent.name);
     const gradeScopeOptions = ['全年级', ...(getTeacherSchoolGradeOptions(activeTeacherSpace) ?? GRADE_SCOPES.slice(1))];
@@ -639,7 +622,7 @@ const App: React.FC<MobileAppProps> = ({
         onClassReportViewChange?.(isClassReportView);
         return () => onClassReportViewChange?.(false);
     }, [isClassReportView, onClassReportViewChange]);
-    const isStudentTeamListView = currentView === 'class_list';
+    const isStudentTeamListView = features.classManagement && currentView === 'class_list';
     useEffect(() => {
         onStudentTeamListViewChange?.(isStudentTeamListView);
         return () => onStudentTeamListViewChange?.(false);
@@ -650,6 +633,15 @@ const App: React.FC<MobileAppProps> = ({
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const teacherProfile = teacherProfilesBySpace[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
     const activeTeacherId = teacherProfile.id;
+    const [airecSyncToastVersion, setAirecSyncToastVersion] = useState(0);
+    const handleAirecSyncComplete = useCallback(() => setAirecSyncToastVersion(version => version + 1), []);
+    const airecDevice = useAirecDemoDevice(activeTeacherSpace.id, activeTeacherId, features.bluetoothDevices && isAuthenticated, handleAirecSyncComplete);
+    useEffect(() => {
+        if (!airecSyncToastVersion) return;
+        const timer = window.setTimeout(() => setAirecSyncToastVersion(0), 1800);
+        return () => window.clearTimeout(timer);
+    }, [airecSyncToastVersion]);
+    useEffect(() => setAirecSyncToastVersion(0), [activeTeacherSpace.id, activeTeacherId, isAuthenticated]);
     const activeTeacherEdition: TeacherCampaignEdition = activeTeacherSpace.type === 'school' ? 'school' : 'personal';
     const isSchoolManager = activeTeacherSpace.type === 'school' && Boolean(teacherProfile.departmentId);
     const activeClassMembershipById = CLASS_MEMBERSHIP_BY_SPACE[activeTeacherSpace.id] ?? {};
@@ -765,20 +757,20 @@ const App: React.FC<MobileAppProps> = ({
     }, [recordContextToast]);
 
     const handleSelectTeacherSpace = (spaceId: string) => {
-        const nextSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === spaceId);
+        const nextSpace = teacherSpaceOptions.find(space => space.id === spaceId);
         if (!nextSpace) return;
 
         // 学校换了，预览滑块回到新学校配置对应的默认档位。
         onHeadteacherAssistantScopePreviewChange?.(null);
 
-        const shouldReturnToStudent = activeLogTab === 'class' && !canTeacherSpaceRecordClass(nextSpace);
+        const nextRecordScopes = resolveTeacherAppRecordScopes(edition, nextSpace);
+        const nextRecordScope = nextRecordScopes.includes(activeLogTab) ? activeLogTab : nextRecordScopes[0] ?? 'student';
         setCurrentTeacherSpaceId(spaceId);
         setClassListTab('class');
-        setIsStudentTeamCreateOpen(false);
-        if (shouldReturnToStudent) {
-            setActiveLogTab('student');
+        if (nextRecordScope !== activeLogTab) {
+            setActiveLogTab(nextRecordScope);
             if (currentView === 'home_log') {
-                setRecordContextToast(`已切换至${nextSpace.title}，当前为记录学生`);
+                setRecordContextToast(`已切换至${nextSpace.title}，当前为记录${nextRecordScope === 'class' ? '班级' : '学生'}`);
             }
         }
         setShowTeacherSpaceSheet(false);
@@ -829,7 +821,7 @@ const App: React.FC<MobileAppProps> = ({
     const [inputText, setInputText] = useState('');
 
     useEffect(() => {
-        if (!isAuthenticated || activeCampaignModal || campaignOpportunityConsumed) return undefined;
+        if (!features.campaigns || !isAuthenticated || activeCampaignModal || campaignOpportunityConsumed) return undefined;
         const eligibleSurface = ['home_log', 'class_list', 'me'].includes(currentView);
         const safeToShow = eligibleSurface && !showKeyboard && !isOverlayActive && !showPlusMenu;
         if (!safeToShow) return undefined;
@@ -861,7 +853,7 @@ const App: React.FC<MobileAppProps> = ({
         return () => {
             cancelled = true;
         };
-    }, [activeCampaignModal, activeTeacherEdition, activeTeacherId, campaignOpportunityConsumed, campaignPreviewEveryEntry, currentView, isAuthenticated, isOverlayActive, showKeyboard, showPlusMenu, teacherCampaigns]);
+    }, [features.campaigns, activeCampaignModal, activeTeacherEdition, activeTeacherId, campaignOpportunityConsumed, campaignPreviewEveryEntry, currentView, isAuthenticated, isOverlayActive, showKeyboard, showPlusMenu, teacherCampaigns]);
 
     // Close plus menu when clicking outside
     useEffect(() => {
@@ -1608,7 +1600,7 @@ const App: React.FC<MobileAppProps> = ({
                     const targetNames = targetIds.map(id => activeSpaceStudentById.get(id)?.name).filter(Boolean).join('、');
                     handleAnalysisComplete({
                         type: 'voice',
-                        text: `今天数学课，${targetNames || '大家'}表现都很积极，主动回答问题。`,
+                        text: activeLogTab === 'class' ? '三年级2班早操队伍整齐，做操规范。' : `今天数学课，${targetNames || '大家'}表现都很积极，主动回答问题。`,
                         mockStudents: targetIds,
                         candidateStudentIds: currentView === 'student_team_detail' ? selectedStudentTeamCandidateIds : [],
                     });
@@ -1730,6 +1722,8 @@ const App: React.FC<MobileAppProps> = ({
     const getHeaderTitle = () => {
         switch (currentView) {
             case 'home_log': return '老师记录';
+            case 'airec_devices': return '蓝牙设备';
+            case 'airec_add_device': return '添加设备';
             case 'class_list': return '我的班级';
             case 'class_report': return '班级报告';
             case 'student_team_detail': return selectedStudentTeam?.name ?? '社团与团队';
@@ -1749,11 +1743,14 @@ const App: React.FC<MobileAppProps> = ({
             case 'subject_management': return '科目管理';
             case 'department_management': return '部门管理';
             case 'coin_issuance': return '成长币发放';
+            case 'vending_exchange': return '货柜兑换明细';
             case 'suggestion_feedback': return '建议反馈';
             case 'questionnaire': return '问卷采集';
             case 'archive_design': return '档案设计';
             case 'report_management': return '报告配置';
             case 'weekly_duty_schedule': return '值周安排';
+            case 'class_pet_settings': return 'AI宠物';
+            case 'parent_recording_settings': return '家长记录设置';
             case 'parent_evaluation_visibility': return '家长端展示';
             case 'homework_batch_import': return '作业录入';
             case 'ai_headteacher_assistant':
@@ -1815,7 +1812,7 @@ const App: React.FC<MobileAppProps> = ({
         const isGroupSelectionTarget = isMultiSelectMode && classGroupSelectionState.active;
         const selectedTargetCount = isGroupSelectionTarget ? classGroupSelectionState.count : targetIds.length;
         const selectedTargetUnit = isGroupSelectionTarget ? '个小组' : '人';
-        const emptySelectionPrompt = isGroupSelectionTarget ? '请选择小组' : '请选择学生';
+        const emptySelectionPrompt = activeLogTab === 'class' ? '请选择班级' : isGroupSelectionTarget ? '请选择小组' : '请选择学生';
         const hasSelectionTarget = !isMultiSelectMode || selectedTargetCount > 0;
         return (
             <TeacherRecordInputBar
@@ -1845,20 +1842,21 @@ const App: React.FC<MobileAppProps> = ({
     const showInputBar = ['home_log', 'class_detail', 'student_team_detail'].includes(currentView)
         && !(currentView === 'class_detail' && isClassGroupingEditorOpen);
     const isStudentTeamFullPage = currentView === 'class_list' && isStudentTeamFullPageOpen;
+    const isAirecView = currentView === 'airec_devices' || currentView === 'airec_add_device';
     const showTabBar = ['home_log', 'class_list', 'me'].includes(currentView) && !isStudentTeamFullPage;
     // 新建社团与团队仍由班级列表承载，切换外层导航时不能卸载列表组件，否则会丢失新建表单状态。
-    const primaryTabViewKey = currentView === 'class_list' ? 'teacher-primary-tabs' : showTabBar ? 'teacher-primary-tabs' : currentView;
+    const primaryTabViewKey = isAirecView || currentView === 'class_list' || showTabBar ? 'teacher-primary-tabs' : currentView;
     const pageTransitionClass = showTabBar || isStudentTeamFullPage ? '' : 'animate-page-enter';
     const isPrincipalAssistantView = currentView === 'ai_principal_assistant';
     const hasPrincipalReportBackground = PRINCIPAL_REPORT_VIEWS.includes(currentView);
     const hasHeadteacherReportBackground = HEADTEACHER_REPORT_VIEWS.includes(currentView);
     // 助理各页面（含入口页与报告页）的标题栏必须承接屏幕级角色背景，所以由子页面自己持有滚动容器，
     // 避免透明标题栏与滚动正文互相压盖；滚动记忆与恢复通过 [data-view-scroll-root] 识别该容器。
-    const viewHandlesScroll = ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'student_team_info', 'student_team_report', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'class_exchange_records', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'report_management', 'weekly_duty_schedule', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground;
+    const viewHandlesScroll = isAirecView || ['home_log', 'indicator_catalog', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_detail', 'student_team_info', 'student_team_report', 'class_evaluation_records', 'leader_report', 'moral_education_cockpit', 'student_batch_edit', 'student_detail', 'student_archive', 'student_collection_detail', 'student_body_measurements', 'student_basic_edit', 'student_coin_detail', 'report_detail', 'reward_verification', 'class_exchange_records', 'vending_exchange', 'medal_issuance', 'face_update', 'bank_password', 'homework_entry', 'homework_batch_import', 'questionnaire', 'archive_design', 'report_management', 'weekly_duty_schedule', 'parent_recording_settings', 'parent_evaluation_visibility', 'class_pet_settings'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground;
     const hasPlainBackground = PLAIN_BACKGROUND_VIEWS.includes(currentView) || isStudentTeamFullPage;
-    const hasPlainPageOwnHeader = currentView === 'class_exchange_records' || currentView === 'report_management';
+    const hasPlainPageOwnHeader = currentView === 'class_exchange_records' || currentView === 'vending_exchange' || currentView === 'report_management';
     const hasStudentDetailBackground = currentView === 'student_detail';
-    const hasScreenLevelBackground = ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'report_management', 'parent_evaluation_visibility'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
+    const hasScreenLevelBackground = isAirecView || ['home_log', 'class_list', 'class_info', 'class_detail', 'student_add', 'class_report', 'student_team_report', 'student_detail', 'student_archive', 'student_body_measurements', 'me', 'mine_settings', 'subject_management', 'department_management', 'coin_issuance', 'suggestion_feedback', 'questionnaire', 'archive_design', 'report_management', 'parent_recording_settings', 'parent_evaluation_visibility', 'class_pet_settings'].includes(currentView) || isHeadteacherAssistantView || isPrincipalAssistantView || hasPrincipalReportBackground || hasHeadteacherReportBackground;
     const activeBottomTab: TeacherBottomTab = activeIndex === 1 ? 'class' : activeIndex === 2 ? 'me' : 'record';
 
     const getPhoneScreenBackground = () => {
@@ -1906,7 +1904,7 @@ const App: React.FC<MobileAppProps> = ({
 
     // Local Header component to replace the imported one's styling for specific views
     const LocalHeader = ({ title, onBack }: { title: string; onBack?: () => void }) => (
-        <div className={`h-11 shrink-0 flex items-center justify-between px-4 sticky top-0 z-[45] backdrop-blur-md ${currentView === 'class_report' || currentView === 'student_team_report' || currentView === 'class_leaderboard' || currentView === 'class_evaluation_records' ? 'bg-[var(--tm-page-plain-header-bg)]' : hasScreenLevelBackground ? 'bg-white/38' : 'bg-[var(--tm-bg-page-glass)]'}`}>
+        <div className={`h-11 shrink-0 flex items-center justify-between px-4 sticky top-0 z-[45] backdrop-blur-md ${isAirecView || currentView === 'class_report' || currentView === 'student_team_report' || currentView === 'class_leaderboard' || currentView === 'class_evaluation_records' ? 'bg-[var(--tm-page-plain-header-bg)]' : hasScreenLevelBackground ? 'bg-white/38' : 'bg-[var(--tm-bg-page-glass)]'}`}>
             {onBack && (
                 <button onClick={onBack} className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)]" aria-label="返回">
                     <ChevronLeftLucide className="w-5 h-5" />
@@ -1920,12 +1918,15 @@ const App: React.FC<MobileAppProps> = ({
     if (!isAuthenticated) {
         return (
             <div
-                className="teacher-mobile-app flex h-[100dvh] w-screen items-center justify-center bg-[var(--tm-bg-page)] p-4"
+                className={`teacher-mobile-app flex h-[100dvh] w-screen items-center justify-center bg-[var(--tm-bg-page)] p-4 ${previewDevice === 'tablet' ? 'min-[901px]:pr-[320px]' : ''}`}
                 style={teacherBrandCssVariables as React.CSSProperties}
             >
                 <PhoneMockup
                     screenRef={screenRef}
                     showDeviceFrame={showPhoneShell}
+                    deviceType={previewDevice}
+                    onDeviceBoundsChange={onPreviewDeviceBoundsChange}
+                    hideCapsule={!features.miniProgramCapsule}
                     contentTopInsetMode="none"
                     screenOverlayRootId="teacher-mobile-overlay-root"
                     screenBackground={gradientPreview
@@ -1933,7 +1934,7 @@ const App: React.FC<MobileAppProps> = ({
                         : undefined}
                 >
                     <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${gradientPreview ? 'bg-transparent' : 'bg-[var(--tm-bg-surface)]'}`}>
-                        <TeacherLoginView onLogin={handleTeacherLogin} />
+                        <TeacherLoginView onLogin={handleTeacherLogin} showWechatLogin={features.wechatLogin} />
                     </div>
                 </PhoneMockup>
             </div>
@@ -1943,12 +1944,15 @@ const App: React.FC<MobileAppProps> = ({
     return (
         <GrowthCoinScope schoolId={activeTeacherSpace.id}>
         <div
-            className="teacher-mobile-app flex h-[100dvh] w-screen items-center justify-center bg-[var(--tm-bg-page)] p-4"
+            className={`teacher-mobile-app flex h-[100dvh] w-screen items-center justify-center bg-[var(--tm-bg-page)] p-4 ${previewDevice === 'tablet' ? 'min-[901px]:pr-[320px]' : ''}`}
             style={teacherBrandCssVariables as React.CSSProperties}
         >
             <PhoneMockup
                 screenRef={screenRef}
                 showDeviceFrame={showPhoneShell}
+                deviceType={previewDevice}
+                onDeviceBoundsChange={onPreviewDeviceBoundsChange}
+                hideCapsule={!features.miniProgramCapsule}
                 contentTopInsetMode={currentView === 'student_detail' ? 'none' : 'status-bar'}
                 screenOverlayRootId="teacher-mobile-overlay-root"
                 screenBackground={getPhoneScreenBackground()}
@@ -1972,7 +1976,7 @@ const App: React.FC<MobileAppProps> = ({
                         {currentView !== 'record_input' && currentView !== 'home_log' && currentView !== 'indicator_catalog' && currentView !== 'class_list' && currentView !== 'class_info' && currentView !== 'class_detail' && currentView !== 'student_add' && currentView !== 'student_team_detail' && currentView !== 'student_team_info' && currentView !== 'student_batch_edit' && currentView !== 'student_detail' && currentView !== 'student_archive' && currentView !== 'student_collection_detail' && currentView !== 'student_body_measurements' && currentView !== 'student_basic_edit' && currentView !== 'student_coin_detail' && currentView !== 'report_detail' && currentView !== 'term_report' && currentView !== 'me' && currentView !== 'my_files' && currentView !== 'teacher_profile_edit' && currentView !== 'leader_report' && currentView !== 'moral_education_cockpit' && currentView !== 'reward_verification' && currentView !== 'medal_issuance' && currentView !== 'face_update' && currentView !== 'bank_password' && currentView !== 'homework_entry' && currentView !== 'homework_batch_import' && currentView !== 'questionnaire' && currentView !== 'archive_design' && currentView !== 'weekly_duty_schedule' && currentView !== 'ai_headteacher_assistant' && currentView !== 'ai_headteacher_assistant_v2' && currentView !== 'weekly_action_advice' && currentView !== 'weekly_action_history' && currentView !== 'teacher_evaluation_review' && currentView !== 'teacher_evaluation_review_history' && currentView !== 'ai_principal_assistant' && currentView !== 'principal_weekly_report' && currentView !== 'principal_weekly_history' && currentView !== 'principal_monthly_report' && currentView !== 'principal_monthly_history' && currentView !== 'principal_term_report' && currentView !== 'principal_term_history' && !hasPlainPageOwnHeader && (
                             <LocalHeader
                                 title={(currentView === 'class_report' || currentView === 'student_team_report') && reportDetailNavigation ? reportDetailNavigation.title : getHeaderTitle()}
-                                onBack={(currentView === 'class_report' || currentView === 'student_team_report') && reportDetailNavigation ? reportDetailNavigation.onBack : history.length > 0 ? goBack : undefined}
+                                onBack={currentView === 'airec_add_device' ? () => { airecDevice.stopDiscovery(); goBack(); } : (currentView === 'class_report' || currentView === 'student_team_report') && reportDetailNavigation ? reportDetailNavigation.onBack : history.length > 0 ? goBack : undefined}
                             />
                         )}
 
@@ -1996,7 +2000,8 @@ const App: React.FC<MobileAppProps> = ({
                             className={`min-h-0 flex-1 relative ${pageTransitionClass} ${showTabBar && !viewHandlesScroll ? 'has-floating-tabbar' : ''} ${isOverlayActive ? 'z-[100]' : hasPlainBackground ? 'z-[2]' : 'z-auto'} ${viewHandlesScroll ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
                         >
                             <Suspense fallback={<TeacherRouteSkeleton />}>
-                            {currentView === 'home_log' && (
+                            {(currentView === 'home_log' || isAirecView) && (
+                                <div className={isAirecView ? 'hidden' : 'flex min-h-0 flex-1 flex-col'} aria-hidden={isAirecView || undefined}>
                                 <ClassRecordLogView
                                     activeTab={activeLogTab}
                                     onTabChange={setActiveLogTab}
@@ -2004,15 +2009,30 @@ const App: React.FC<MobileAppProps> = ({
                                     onBack={goBack}
                                     isMainView={true}
                                     onStartRecord={() => handleStartRecord([], 'voice')}
+                                    onStudentEvaluationChange={(record, remove) => {
+                                        for (const classInfo of activeSpaceClasses) {
+                                            const members = new Set(getMergedStudentsForClass(classInfo.id).map(student => student.id));
+                                            updateClassPetEvaluation(activeTeacherSpace.id, classInfo.id, record.studentIds.filter(id => members.has(id)), { id: record.id, score: record.score, recordedAt: record.recordedAt }, remove);
+                                        }
+                                    }}
                                     newRecordData={pendingRecordData}
                                     onClearNewRecord={() => setPendingRecordData(null)}
                                     onToggleModal={setIsOverlayActive}
                                     addDemoTopBreathingSpace={!showPhoneShell}
                                     canRecordClass={canRecordClassForActiveSpace}
+                                    availableRecordScopes={resolveTeacherAppRecordScopes(edition, activeTeacherSpace)}
                                     onViewIndicators={() => navigateTo('indicator_catalog')}
                                     classes={activeSpaceClasses}
                                     currentSpace={activeTeacherSpace}
                                 />
+                                </div>
+                            )}
+
+                            {features.bluetoothDevices && currentView === 'airec_devices' && (
+                                <AirecDevicesView controller={airecDevice} onAddDevice={() => { navigateTo('airec_add_device'); void airecDevice.scan(); }} />
+                            )}
+                            {features.bluetoothDevices && currentView === 'airec_add_device' && (
+                                <AirecAddDeviceView controller={airecDevice} onConnected={goBack} />
                             )}
 
                             {currentView === 'indicator_catalog' && (
@@ -2022,8 +2042,20 @@ const App: React.FC<MobileAppProps> = ({
                                 />
                             )}
 
-                            {currentView === 'class_list' && (
+                            {currentView === 'class_list' && !features.classManagement && (
+                                <TeacherClassDirectoryView
+                                    key={activeTeacherSpace.id}
+                                    classes={activeSpaceClasses}
+                                    currentSpace={activeTeacherSpace}
+                                    teacherProfile={teacherProfile}
+                                    addDemoTopBreathingSpace={!showPhoneShell}
+                                />
+                            )}
+
+                            {currentView === 'class_list' && features.classManagement && (
                                 <ClassListView
+                                    showUnreleasedClassTools={showUnreleasedClassTools}
+                                    onClassActionsPreviewVisibilityChange={onClassActionsPreviewVisibilityChange}
                                     classes={activeSpaceClasses}
                                     hasLoaded={true /* 当前演示数据同步就绪；线上改接当前列表的成功结果标记。 */}
                                     demoLoadDuration={classListLoadingPreview?.mode === 'timed' ? classListLoadingPreview.durationMs : 0}
@@ -2082,6 +2114,8 @@ const App: React.FC<MobileAppProps> = ({
 
                             {currentView === 'class_detail' && (
                                 <ClassDetailView
+                                    key={`${activeTeacherSpace.id}:${selectedClassId}`}
+                                    schoolId={activeTeacherSpace.id}
                                     classInfo={classes.find(c => c.id === selectedClassId)!}
                                     students={getMergedStudentsForClass(selectedClassId)}
                                     currentTeacherName={teacherProfile.name}
@@ -2321,6 +2355,11 @@ const App: React.FC<MobileAppProps> = ({
                                     currentTeacherId={activeTeacherId}
                                     currentTeacherName={teacherProfile.name}
                                     canEditOtherTeachersEvaluationRecords={canEditOtherTeachersEvaluationRecords}
+                                    onDeleteEvaluationRecord={recordId => {
+                                        const target = activeStudentEvaluationRecords.find(record => record.id === recordId);
+                                        if (!target || target.source === 'parent' || !(target.teacherId === activeTeacherId || canEditOtherTeachersEvaluationRecords)) return;
+                                        setEvaluationRecordsByStudentId(current => ({ ...current, [activeStudent.id]: (current[activeStudent.id] ?? createInitialStudentEvaluationRecords()).filter(record => record.id !== recordId) }));
+                                    }}
                                     onUpdateEvaluationRecord={handleUpdateEvaluationRecord}
                                     initialSection={studentDetailInitialSection}
                                     collectionHistory={getCompletedStudentCollectionHistory(
@@ -2408,6 +2447,8 @@ const App: React.FC<MobileAppProps> = ({
 
                             {currentView === 'me' && (
                                 <MeView
+                                    availableTools={features.meTools}
+                                    showUnreleasedTools={showUnreleasedTools}
                                     teacherProfile={teacherProfile}
                                     currentSpace={activeTeacherSpace}
                                     isSpaceSheetOpen={showTeacherSpaceSheet}
@@ -2417,15 +2458,19 @@ const App: React.FC<MobileAppProps> = ({
                                     onViewLeaderReport={handleViewLeaderReport}
                                     onOpenMoralEducationCockpit={() => navigateTo('moral_education_cockpit')}
                                     onOpenWeeklyDutySchedule={() => navigateTo('weekly_duty_schedule')}
+                                    onOpenClassPetSettings={() => navigateTo('class_pet_settings')}
+                                    onOpenParentRecordingSettings={() => navigateTo('parent_recording_settings')}
                                     onOpenParentEvaluationVisibility={() => navigateTo('parent_evaluation_visibility')}
                                     onOpenHomeworkBatchImport={() => navigateTo('homework_batch_import')}
                                     onOpenSettings={() => navigateTo('mine_settings')}
                                     onOpenSubjectManagement={() => navigateTo('subject_management')}
                                     onOpenDepartmentManagement={() => navigateTo('department_management')}
                                     onOpenCoinIssuance={() => navigateTo('coin_issuance')}
+                                    onOpenVendingExchange={() => navigateTo('vending_exchange')}
                                     onOpenSuggestionFeedback={() => navigateTo('suggestion_feedback')}
+                                    onOpenBluetoothDevices={features.bluetoothDevices ? () => navigateTo('airec_devices') : undefined}
                                     onOpenQuestionnaire={() => { setQuestionnaireEntryMode('owned'); setQuestionnaireInitialArchiveTemplateId(''); setQuestionnaireInitialRecordId(''); navigateTo('questionnaire'); }}
-                                    pendingCollectionCount={pendingCollectionCount}
+                                    pendingCollectionCount={features.assignedCollections ? pendingCollectionCount : 0}
                                     onOpenAssignedCollections={() => { setQuestionnaireEntryMode('assigned'); setQuestionnaireInitialArchiveTemplateId(''); setQuestionnaireInitialRecordId(''); navigateTo('questionnaire'); }}
                                     onOpenArchiveDesign={() => navigateTo('archive_design')}
                                     onOpenReportManagement={() => navigateTo('report_management')}
@@ -2435,8 +2480,29 @@ const App: React.FC<MobileAppProps> = ({
                                 />
                             )}
 
+                            {currentView === 'vending_exchange'
+                                && getTeacherSpaceMenuPolicy(activeTeacherSpace).moreTools.includes('vendingExchange')
+                                && (!features.meTools || features.meTools.moreTools.includes('vendingExchange')) && (
+                                <VendingExchangeDemoView
+                                    key={activeTeacherSpace.id}
+                                    space={activeTeacherSpace}
+                                    teacher={teacherProfile}
+                                    classes={activeSpaceClasses}
+                                    getStudents={getMergedStudentsForClass}
+                                    onBack={goBack}
+                                />
+                            )}
+
                             {currentView === 'weekly_duty_schedule' && (
                                 <WeeklyDutyScheduleView onBack={goBack} />
+                            )}
+
+                            {currentView === 'class_pet_settings' && getTeacherSpaceMenuPolicy(activeTeacherSpace).moreTools.includes('classPetSettings') && (
+                                <ClassPetSettingsView key={activeTeacherSpace.id} schoolId={activeTeacherSpace.id} />
+                            )}
+
+                            {currentView === 'parent_recording_settings' && getTeacherSpaceMenuPolicy(activeTeacherSpace).moreTools.includes('parentRecordingSettings') && (
+                                <ParentRecordingSettingsView key={activeTeacherSpace.id} schoolId={activeTeacherSpace.id} />
                             )}
 
                             {currentView === 'parent_evaluation_visibility' && (
@@ -2769,6 +2835,7 @@ const App: React.FC<MobileAppProps> = ({
                         {currentView === 'record_input' && (
                             <div className="absolute inset-0 z-50 overflow-hidden">
                                 <RecordInputView
+                                    scope={history[history.length - 1] === 'home_log' ? activeLogTab : 'student'}
                                     initialStudentIds={batchStudentIds}
                                     candidateStudentIds={recordCandidateStudentIds}
                                     studentNameList={getActiveStudentNames()}
@@ -2783,7 +2850,7 @@ const App: React.FC<MobileAppProps> = ({
                         {showTabBar && (
                             <TeacherBottomNavigation
                                 activeTab={activeBottomTab}
-                                pendingCollectionCount={pendingCollectionCount}
+                                pendingCollectionCount={features.assignedCollections ? pendingCollectionCount : 0}
                                 onTabChange={(tab) => switchTab(tab === 'record' ? 'home_log' : tab === 'class' ? 'class_list' : 'me')}
                             />
                         )}
@@ -2791,7 +2858,7 @@ const App: React.FC<MobileAppProps> = ({
                         {currentView === 'me' && showTeacherSpaceSheet && (
                             <ClassSourceSheet
                                 currentSpace={activeTeacherSpace}
-                                spaceOptions={TEACHER_SPACE_OPTIONS}
+                                spaceOptions={teacherSpaceOptions}
                                 onClose={() => setShowTeacherSpaceSheet(false)}
                                 onSelectSpace={handleSelectTeacherSpace}
                             />
@@ -2955,6 +3022,8 @@ const App: React.FC<MobileAppProps> = ({
                             title="选择生成年级范围"
                             ariaLabel="报告生成年级范围"
                         />
+
+                        {airecSyncToastVersion > 0 && <MobileToast key={airecSyncToastVersion} message="同步完成" />}
 
                         {/* Success Toast Overlay */}
                         {showSuccessToast && (

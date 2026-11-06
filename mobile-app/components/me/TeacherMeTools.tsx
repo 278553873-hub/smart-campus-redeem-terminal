@@ -6,6 +6,7 @@ export interface MenuEntry<TId extends string = string> {
     title: string;
     labelLines?: readonly string[];
     icon?: LucideIcon;
+    iconColorClassName?: string;
     imageSrc?: string;
     imageAlt?: string;
     imageClassName?: string;
@@ -35,7 +36,7 @@ export const ToolSection: React.FC<ToolSectionProps> = ({ title, children }) => 
 );
 
 export const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; variant?: 'primary' | 'secondary' }> = ({ items, columns = 4, variant = 'primary' }) => (
-    <div className={`mt-4 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-3 ${variant === 'secondary' ? 'gap-y-3' : 'gap-y-4'} mb-[var(--tm-space-1)]`}>
+    <div className={`teacher-me-tool-grid mt-4 grid ${columns === 4 ? 'grid-cols-4' : columns === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-x-3 ${variant === 'secondary' ? 'gap-y-3' : 'gap-y-4'} mb-[var(--tm-space-1)]`}>
         {items.map(item => {
             const Icon = item.icon;
             const isSecondary = variant === 'secondary';
@@ -69,17 +70,17 @@ export const ToolGrid: React.FC<{ items: MenuEntry[]; columns?: 2 | 3 | 4; varia
                             )}
                         </span>
                     ) : isSecondary && Icon ? (
-                        <span className={`flex h-[38px] w-[38px] items-center justify-center rounded-full ${secondaryIconClass}`}>
-                            <Icon className="h-[19px] w-[19px]" strokeWidth={2.35} />
+                        <span className={`flex h-[38px] w-[38px] items-center justify-center rounded-full ${item.iconColorClassName ?? secondaryIconClass}`}>
+                            <Icon className="h-[19px] w-[19px]" strokeWidth={2.35} aria-hidden="true" />
                         </span>
                     ) : Icon ? (
-                        <span className={`relative flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${secondaryIconClass}`}>
+                        <span className={`relative flex h-12 w-12 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${item.iconColorClassName ?? secondaryIconClass}`}>
                             <Icon className="relative h-[23px] w-[23px]" strokeWidth={2.15} />
                         </span>
                     ) : (
                         null
                     )}
-                    <span className={`max-w-[72px] whitespace-nowrap text-[12px] [font-weight:var(--tm-font-weight-minimum)] leading-[18px] text-[var(--tm-text-primary)]`}>
+                    <span className={`max-w-[72px] whitespace-nowrap text-[12px] font-medium leading-[18px] text-[#595451]`}>
                         {item.labelLines?.map(line => <span key={line} className="block">{line}</span>) ?? item.title}
                     </span>
                 </button>

@@ -18,6 +18,7 @@ const ClassListLoadingPreviewControls: React.FC<ClassListLoadingPreviewControlsP
         onChange={event => onChange({ durationMs: Number(event.target.value), replayKey: value.replayKey + 1, mode: 'timed' })}
         className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-2 text-[12px] font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
       >
+        <option value={500}>0.5 秒</option>
         <option value={1800}>1.8 秒</option>
         <option value={4500}>4.5 秒</option>
         <option value={8000}>8 秒</option>

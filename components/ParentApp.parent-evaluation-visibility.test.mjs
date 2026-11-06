@@ -19,7 +19,7 @@ assert.ok(parentSource.includes('showNegativeSummary && dayRecords.some'), '日�
 assert.ok(parentSource.includes("showAnyEvaluationDetails ? '查看明细' : '查看统计'"), '成长页入口应按配置指向统计或明细。');
 assert.ok(!parentSource.includes("{showAnyEvaluationSummary && (\n          <ParentCard as=\"article\" className=\"p-4\">"), '成长首页总分卡不应随表扬和待改进配置一起隐藏。');
 assert.ok(parentSource.includes('text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]'), '成长首页应固定展示本月总分。');
-assert.ok(parentSource.includes('{showAnyEvaluationSummary && (\n            <div className={`mt-4 grid ${summaryGridClass} gap-2`}>'), '成长首页仅应按配置控制表扬和待改进次数区。');
+assert.ok(parentSource.includes('{showAnyEvaluationSummary && (\n            <div className="pg-counts">'), '成长首页仅应按配置控制表扬和待改进次数区。');
 assert.ok(!parentSource.includes("screen === 'growthRecords' && !showAnyEvaluationSummary"), '评价全部隐藏时不应退出仍需展示总分的成长数据页。');
 assert.ok(parentSource.includes('const selectedTotalScore = selectedGrowthRangeRecords.reduce'), '成长数据页总分应始终按该时段全部评价记录计算。');
 assert.ok(parentSource.includes('const statisticColumnCount = 1 + Number(showPositiveSummary) + Number(showNegativeSummary)'), '成长数据页统计卡应为固定总分加当前可见次数项。');
@@ -29,7 +29,7 @@ assert.ok(parentSource.includes('>总分</div>'), '家长端分时段统计应�
 assert.ok(!parentSource.includes('净得分'), '家长端不应继续展示“净得分”文案。');
 assert.ok(evaluationScoreTokens.includes("negative: '#D10F3C'"), '家长端与教师端应共享鲜莓红扣分业务色。');
 assert.ok(parentSource.includes("'--evaluation-score-negative': evaluationScoreSemantic.negative"), '家长端应从共享色源注入扣分业务变量。');
-assert.equal((parentSource.match(/text-\[var\(--evaluation-score-negative\)\]/g) ?? []).length, 5, '家长端待改进统计与负分明细应统一使用扣分业务色。');
+assert.equal((parentSource.match(/text-\[var\(--evaluation-score-negative\)\]/g) ?? []).length, 3, '家长端待改进统计与负分明细应统一使用扣分业务色。');
 assert.equal((parentSource.match(/bg-\[var\(--evaluation-score-negative\)\]/g) ?? []).length, 4, '家长端日、周、月、学期标记应统一使用扣分业务色。');
 
 const growthSummaryStart = parentSource.indexOf('const GrowthSummaryCards = ()');

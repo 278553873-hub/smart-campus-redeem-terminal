@@ -1,6 +1,11 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useLayoutEffect, useRef } from 'react';
 import SimulatedMiniProgramChrome from './SimulatedMiniProgramChrome';
+
+export interface DevicePreviewBounds {
+  right: number;
+  top: number;
+}
 
 interface PhoneMockupProps {
   children: React.ReactNode;
@@ -11,6 +16,8 @@ interface PhoneMockupProps {
   screenOverlayRootId?: string;
   screenRef?: React.Ref<HTMLDivElement>;
   showDeviceFrame?: boolean;
+  deviceType?: 'phone' | 'tablet';
+  onDeviceBoundsChange?: (bounds: DevicePreviewBounds) => void;
   hideCapsule?: boolean;
   chromeAppearance?: 'light' | 'dark';
   contentTopInsetMode?: 'full-chrome' | 'status-bar' | 'none';
@@ -25,51 +32,64 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   screenOverlayRootId,
   screenRef,
   showDeviceFrame = true,
+  deviceType = 'phone',
+  onDeviceBoundsChange,
   contentTopInsetMode = 'full-chrome',
   chromeAppearance = 'light',
   hideCapsule = false,
 }) => {
-  const screenWidth = 393;
-  const screenHeight = 852;
-  const simulatedStatusBarHeightValue = 54;
-  const simulatedCapsuleTop = 60;
+  const isTablet = deviceType === 'tablet';
+  const screenWidth = isTablet ? 834 : 393;
+  const screenHeight = isTablet ? 1194 : 852;
+  const simulatedStatusBarHeightValue = isTablet ? 28 : 54;
+  const simulatedCapsuleTop = simulatedStatusBarHeightValue + 6;
   const simulatedCapsuleHeight = 32;
   const simulatedTitleBarHeight = (simulatedCapsuleTop - simulatedStatusBarHeightValue) * 2 + simulatedCapsuleHeight;
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const { width: wrapperWidth, height: wrapperHeight } = entry.contentRect;
-        const scaleX = (wrapperWidth - 40) / screenWidth;
-        const scaleY = (wrapperHeight - 40) / screenHeight;
-        setScale(Math.min(scaleX, scaleY, 1));
-      }
-    });
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const updateLayout = () => {
+      const { clientWidth: width, clientHeight: height } = container;
+      if (width <= 0 || height <= 0) return;
+      const nextScale = Math.min((width - 40) / screenWidth, (height - 40) / screenHeight, 1);
+      setScale(nextScale);
 
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
+      if (onDeviceBoundsChange) {
+        const bounds = container.getBoundingClientRect();
+        const bezel = showDeviceFrame ? (isTablet ? 20 : 8) : 0;
+        onDeviceBoundsChange({
+          right: bounds.left + (width / 2 + (screenWidth / 2 + bezel) * nextScale) * bounds.width / width,
+          top: bounds.top + (height / 2 - (screenHeight / 2 + bezel) * nextScale) * bounds.height / height,
+        });
+      }
+    };
+    // 设备切换的首帧就使用新尺寸对应的比例与机身边界，不等待绘制后的观察回调。
+    updateLayout();
+    const observer = new ResizeObserver(updateLayout);
+    observer.observe(container);
 
     return () => observer.disconnect();
-  }, [screenWidth, screenHeight]);
+  }, [screenWidth, screenHeight, showDeviceFrame, onDeviceBoundsChange]);
 
   const shouldShowNativeChrome = showDeviceFrame && safeAreaTop;
   const nativeChromeTopInset = contentTopInsetMode === 'none'
     ? 0
     : contentTopInsetMode === 'status-bar'
-      ? 54
-      : 106;
+      ? simulatedStatusBarHeightValue
+      : simulatedStatusBarHeightValue + simulatedTitleBarHeight + 8;
   const simulatedChromeTopInset = shouldShowNativeChrome ? nativeChromeTopInset : 0;
   const simulatedStatusBarHeight = shouldShowNativeChrome ? simulatedStatusBarHeightValue : 0;
-  const simulatedCapsuleRightInset = shouldShowNativeChrome ? 112 : 0;
+  const simulatedCapsuleRightInset = shouldShowNativeChrome && !hideCapsule ? 112 : 0;
   const deviceFrameVisibility = showDeviceFrame ? 'opacity-100' : 'opacity-0';
-  const screenCornerClass = showDeviceFrame ? 'rounded-[50px]' : 'rounded-none';
+  const screenCornerRadius = isTablet ? 14 : 50;
+  const screenCornerClass = showDeviceFrame ? (isTablet ? 'rounded-[14px]' : 'rounded-[50px]') : 'rounded-none';
   const screenClipStyle: React.CSSProperties = showDeviceFrame
     ? {
-        clipPath: 'inset(0 round 50px)',
-        WebkitClipPath: 'inset(0 round 50px)',
+        clipPath: `inset(0 round ${screenCornerRadius}px)`,
+        WebkitClipPath: `inset(0 round ${screenCornerRadius}px)`,
         contain: 'paint',
         isolation: 'isolate',
       }
@@ -78,6 +98,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
   const screenContent = (
     <div
       ref={screenRef}
+      data-preview-device={deviceType}
       className={`relative overflow-hidden bg-white shadow-[0_24px_80px_-40px_rgba(15,23,42,0.45)] ${screenCornerClass}`}
       style={{
         width: `${screenWidth}px`,
@@ -86,7 +107,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         '--mini-program-status-bar-height': `${simulatedStatusBarHeight}px`,
         '--mini-program-title-bar-height': `${simulatedTitleBarHeight}px`,
         '--mini-program-capsule-right-inset': `${simulatedCapsuleRightInset}px`,
-        '--mini-program-bottom-safe-area': shouldShowNativeChrome ? '28px' : '0px',
+        '--mini-program-bottom-safe-area': shouldShowNativeChrome ? (isTablet ? '20px' : '28px') : '0px',
       } as React.CSSProperties}
     >
         {screenBackground && (
@@ -110,7 +131,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
           />
         )}
 
-        <SimulatedMiniProgramChrome appearance={chromeAppearance} hideCapsule={hideCapsule} />
+        <SimulatedMiniProgramChrome appearance={chromeAppearance} hideCapsule={hideCapsule} compactStatusBar={isTablet} />
 
         {screenOverlay && (
           <div
@@ -138,6 +159,12 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         }}
       >
         <div className="relative w-full h-full">
+          {isTablet ? (
+            <div data-preview-anchor="teacher-tablet-device" className={`pointer-events-none absolute inset-[-20px] z-0 rounded-[32px] border border-slate-500 bg-[#202124] shadow-2xl ${deviceFrameVisibility}`} aria-hidden="true">
+              <span className="absolute left-1/2 top-[6px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-black ring-1 ring-white/10" />
+            </div>
+          ) : (
+            <>
           <div className={`pointer-events-none absolute inset-[-8px] z-0 bg-gradient-to-b from-[#e2e2e2] via-[#d1d1d1] to-[#b8b8b8] rounded-[60px] border border-gray-200 shadow-2xl ${deviceFrameVisibility}`} aria-hidden={!showDeviceFrame}></div>
           <div className={`pointer-events-none absolute inset-[-6px] z-0 bg-[#121212] rounded-[58px] shadow-sm ${deviceFrameVisibility}`} aria-hidden={!showDeviceFrame}></div>
             {/* 侧边物理按钮 */}
@@ -160,8 +187,10 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
                   </div>
                 )}
             </div>
+            </>
+          )}
 
-          {/* 屏幕内容区固定为 H5 视口尺寸，手机壳不参与布局计算。 */}
+          {/* 仅切换演示视口与机身，业务页面沿用现有布局。 */}
           <div className="absolute inset-0 z-10">
             {screenContent}
           </div>

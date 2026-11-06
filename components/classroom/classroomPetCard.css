@@ -1,0 +1,24 @@
+.classroom-pet-card__badge {
+  position: absolute;
+  right: -4px;
+  z-index: 1;
+  display: inline-flex;
+  height: var(--classroom-pet-name-line-height, 20px);
+  align-items: center;
+  padding: 0 6px 0 8px;
+  border-radius: 3px 0 0 3px;
+  font-size: calc(var(--classroom-pet-meta-font-size, 10px) + 1px);
+  line-height: var(--classroom-pet-name-line-height, 20px);
+  font-weight: 500;
+  white-space: nowrap;
+  color: #fff;
+  border: 0;
+}
+
+.classroom-pet-card .classroom-pet-card__badge {
+  position: absolute;
+}
+
+.classroom-pet-card__badge--stage {
+  top: calc(10px + (var(--classroom-pet-identity-height, 22px) - var(--classroom-pet-name-line-height, 20px)) / 2);
+}

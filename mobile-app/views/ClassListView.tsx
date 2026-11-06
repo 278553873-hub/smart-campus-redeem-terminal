@@ -71,6 +71,8 @@ interface ClassListViewProps {
     hasLoaded?: boolean;
     /** 仅演示容器传入模拟等待时间，线上请求无需此项。 */
     demoLoadDuration?: number;
+    showUnreleasedClassTools?: boolean;
+    onClassActionsPreviewVisibilityChange?: (visible: boolean) => void;
     demoLoadKey?: number;
     demoHoldLoading?: boolean;
     /** 默认首轮演示使用无数据标准占位，手动重播仍可测量真实内容。 */
@@ -137,6 +139,144 @@ const actionGroupIconBackgroundClass: Record<ClassActionGroupTone, string> = {
     collaboration: 'bg-[var(--tm-class-action-collaboration-bg)]',
 };
 
+export const TeacherClassListCard: React.FC<{
+    classInfo: ClassInfo;
+    teacherProfile: TeacherProfile;
+    currentSpace: TeacherSpaceOption;
+    onSelectClass?: (classId: string) => void;
+    onViewClassReport?: (classId: string) => void;
+    onMore?: (classId: string) => void;
+}> = ({ classInfo, teacherProfile, currentSpace, onSelectClass, onViewClassReport, onMore }) => {
+        const displayClassName = getTeacherClassDisplayName(classInfo, currentSpace);
+        const isHeadTeacher = teacherProfile.homeroomClassIds.includes(classInfo.id);
+        const isDeputyHeadTeacher = (teacherProfile.deputyHomeroomClassIds ?? []).includes(classInfo.id);
+        const classRole = isHeadTeacher ? '班主任' : isDeputyHeadTeacher ? '副班主任' : null;
+        const subjectTags = Array.from(new Set(
+            teacherProfile.teachingAssignments
+                .filter(assignment => assignment.classId === classInfo.id)
+                .map(assignment => assignment.subject)
+        ));
+        const hasRelationshipTags = Boolean(classRole) || subjectTags.length > 0;
+
+        return (
+            <article key={classInfo.id} className="relative flex min-h-[var(--tm-class-list-card-compact-min-height)] flex-col rounded-[var(--tm-class-list-card-radius)] bg-white px-5 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]"
+                style={!onSelectClass && !onViewClassReport ? { minHeight: 'auto', paddingBottom: 'var(--tm-space-3)' } : undefined}>
+                {onSelectClass && <button
+                    type="button"
+                    onClick={() => onSelectClass(classInfo.id)}
+                    className="absolute inset-0 z-0 rounded-[var(--tm-class-list-card-radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                    aria-label={`查看${displayClassName}学生列表`}
+                />}
+                <div className="pointer-events-none relative z-[1] min-w-0 flex-1 pr-10">
+                    <h3 {...skeletonBlock(0, 'line', 1, 18)} data-skeleton-right-to={`class-action-end-${classInfo.id}`} className="min-w-0 truncate text-lg font-medium text-[var(--tm-text-primary)]">{displayClassName}</h3>
+                    {hasRelationshipTags && (
+                        <div {...skeletonBlock(1, 'line', 0.72, 13)} className="mt-1.5 flex flex-wrap gap-1">
+                            {classRole && (
+                                <MobileTag tone="brand">
+                                    {classRole}
+                                </MobileTag>
+                            )}
+                            {subjectTags.map(tag => (
+                                <MobileTag key={tag} tone="secondary">
+                                    {tag}
+                                </MobileTag>
+                            ))}
+                        </div>
+                    )}
+                    <div {...skeletonBlock(2, 'line', 0.72, 13)} className={`${hasRelationshipTags ? 'mt-2' : 'mt-1.5'} flex min-h-5 items-center text-[13px] font-[450] text-[var(--tm-text-secondary)]`}>
+                        <span>{classInfo.gradeLevel}</span>
+                        <span className="mx-1.5 text-[var(--tm-text-disabled)]" aria-hidden="true">·</span>
+                        <span>{classInfo.studentCount}人</span>
+                    </div>
+                    {onMore && <button
+                        type="button"
+                        aria-label={`${displayClassName}更多操作`}
+                        onClick={() => onMore(classInfo.id)}
+                        className="pointer-events-auto absolute -right-[14.5px] -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)]"
+                    >
+                        <span {...skeletonBlock(0, 'circle')} className="block h-5 w-5"><WechatMoreIcon className="h-5 w-5" /></span>
+                    </button>}
+                </div>
+
+                {(onSelectClass || onViewClassReport) && <div className={`pointer-events-none relative z-[1] mt-2 ${hasRelationshipTags ? '' : 'pt-1'}`}>
+                    <div className="h-[var(--tm-class-list-divider-thickness)] bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
+                    <div className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
+                        {onSelectClass && <button
+                            {...skeletonBlock(3, 'line', 0.78, 14)}
+                            type="button"
+                            onClick={() => onSelectClass(classInfo.id)}
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
+                        >
+                            <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
+                            学生列表
+                        </button>}
+                        {onViewClassReport && <button
+                            {...skeletonBlock(3, 'line', 0.78, 14)}
+                            type="button"
+                            onClick={() => onViewClassReport(classInfo.id)}
+                            data-skeleton-anchor={`class-action-end-${classInfo.id}`}
+                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
+                        >
+                            <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
+                            班级报告
+                        </button>}
+                        {onSelectClass && onViewClassReport && <span data-skeleton-decoration className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />}
+                    </div>
+                </div>}
+            </article>
+        );
+    };
+
+
+export const TeacherClassListToolbar: React.FC<{
+    gradeFilter: string; showGradeFilter: boolean; showTeachingOnly: boolean;
+    onOpenGradeFilter: () => void; onTeachingOnlyChange: (value: boolean) => void;
+    showLeaderboard: boolean; onViewLeaderboard: () => void;
+}> = ({ gradeFilter, showGradeFilter, showTeachingOnly, onOpenGradeFilter, onTeachingOnlyChange, showLeaderboard, onViewLeaderboard }) => (
+                            <div className="flex min-h-11 flex-wrap items-center justify-between gap-2">
+                                <div className="flex shrink-0 items-center gap-1">
+                                    <button
+                                        type="button"
+                                        aria-label="按年级筛选班级"
+                                        aria-haspopup="dialog"
+                                        aria-expanded={showGradeFilter}
+                                        onClick={() => onOpenGradeFilter()}
+                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] pl-[var(--tm-space-1)] pr-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] text-[var(--tm-text-primary)]`}
+                                    >
+                                        <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
+                                        <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-pressed={showTeachingOnly}
+                                        onClick={() => onTeachingOnlyChange(!showTeachingOnly)}
+                                        className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] text-[var(--tm-text-primary)]`}
+                                    >
+                                        <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
+                                            {showTeachingOnly && <Check className="h-3 w-3" strokeWidth={3} />}
+                                        </span>
+                                        任教班级
+                                    </button>
+                                </div>
+                                {showLeaderboard && (
+                                    <button
+                                        type="button"
+                                        aria-label="查看班级排行榜"
+                                        onClick={onViewLeaderboard}
+                                        className="ml-auto inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
+                                    >
+                                        <img
+                                            src={ASSETS.CLASS.LEADERBOARD_ENTRY}
+                                            alt=""
+                                            draggable={false}
+                                            aria-hidden="true"
+                                            className="h-[var(--tm-class-list-leaderboard-image-height)] w-[var(--tm-class-list-leaderboard-image-width)] select-none object-contain"
+                                        />
+                                    </button>
+                                )}
+                            </div>
+);
+
 const ClassListView: React.FC<ClassListViewProps> = ({
     classes,
     teacherProfile,
@@ -146,6 +286,8 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     loading = false,
     hasLoaded,
     demoLoadDuration = 0,
+    showUnreleasedClassTools = false,
+    onClassActionsPreviewVisibilityChange,
     demoLoadKey = 0,
     demoHoldLoading = false,
     demoInitialLoad = false,
@@ -315,6 +457,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         deputyHomeroomClassIds,
     });
 
+    useEffect(() => {
+        onClassActionsPreviewVisibilityChange?.(Boolean(activeActionClass));
+        return () => onClassActionsPreviewVisibilityChange?.(false);
+    }, [activeActionClass, onClassActionsPreviewVisibilityChange]);
+
     const closeActionSheet = () => setActiveActionClassId(null);
     const closeTeamActionSheet = () => setActiveActionTeamId(null);
 
@@ -430,7 +577,9 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 }] : []),
             ],
         } : null,
-    ] as Array<ClassActionGroup | null>).filter((group): group is ClassActionGroup => group !== null) : [];
+    ] as Array<ClassActionGroup | null>).filter((group): group is ClassActionGroup => group !== null)
+        .map(group => ({ ...group, items: group.items.filter(item => showUnreleasedClassTools || !['作业录入', '颁发奖章', '家长端展示'].includes(item.label)) }))
+        .filter(group => group.items.length > 0) : [];
 
     const copyClassCode = async (classInfo: ClassInfo) => {
         const success = await copyText(classInfo.classCode);
@@ -450,85 +599,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         });
     };
 
-    const renderClassCard = (classInfo: ClassInfo) => {
-        const displayClassName = getTeacherClassDisplayName(classInfo, currentSpace);
-        const isHeadTeacher = homeroomClassIds.has(classInfo.id);
-        const isDeputyHeadTeacher = deputyHomeroomClassIds.has(classInfo.id);
-        const classRole = isHeadTeacher ? '班主任' : isDeputyHeadTeacher ? '副班主任' : null;
-        const subjectTags = Array.from(new Set(
-            teacherProfile.teachingAssignments
-                .filter(assignment => assignment.classId === classInfo.id)
-                .map(assignment => assignment.subject)
-        ));
-        const hasRelationshipTags = Boolean(classRole) || subjectTags.length > 0;
-
-        return (
-            <article key={classInfo.id} className="relative flex min-h-[var(--tm-class-list-card-compact-min-height)] flex-col rounded-[var(--tm-class-list-card-radius)] bg-white px-5 pb-1 pt-3 [box-shadow:var(--tm-shadow-card)]">
-                <button
-                    type="button"
-                    onClick={() => onSelectClass(classInfo.id)}
-                    className="absolute inset-0 z-0 rounded-[var(--tm-class-list-card-radius)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
-                    aria-label={`查看${displayClassName}学生列表`}
-                />
-                <div className="pointer-events-none relative z-[1] min-w-0 flex-1 pr-10">
-                    <h3 {...skeletonBlock(0, 'line', 1, 18)} data-skeleton-right-to={`class-action-end-${classInfo.id}`} className="min-w-0 truncate text-lg font-medium text-[var(--tm-text-primary)]">{displayClassName}</h3>
-                    {hasRelationshipTags && (
-                        <div {...skeletonBlock(1, 'line', 0.72, 13)} className="mt-1.5 flex flex-wrap gap-1">
-                            {classRole && (
-                                <MobileTag tone="brand">
-                                    {classRole}
-                                </MobileTag>
-                            )}
-                            {subjectTags.map(tag => (
-                                <MobileTag key={tag} tone="secondary">
-                                    {tag}
-                                </MobileTag>
-                            ))}
-                        </div>
-                    )}
-                    <div {...skeletonBlock(2, 'line', 0.72, 13)} className={`${hasRelationshipTags ? 'mt-2' : 'mt-1.5'} flex min-h-5 items-center text-[13px] font-[450] text-[var(--tm-text-secondary)]`}>
-                        <span>{classInfo.gradeLevel}</span>
-                        <span className="mx-1.5 text-[var(--tm-text-disabled)]" aria-hidden="true">·</span>
-                        <span>{classInfo.studentCount}人</span>
-                    </div>
-                    <button
-                        type="button"
-                        aria-label={`${displayClassName}更多操作`}
-                        onClick={() => setActiveActionClassId(classInfo.id)}
-                        className="pointer-events-auto absolute -right-[14.5px] -top-2 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-disabled)]"
-                    >
-                        <span {...skeletonBlock(0, 'circle')} className="block h-5 w-5"><WechatMoreIcon className="h-5 w-5" /></span>
-                    </button>
-                </div>
-
-                <div className={`pointer-events-none relative z-[1] mt-2 ${hasRelationshipTags ? '' : 'pt-1'}`}>
-                    <div className="h-[var(--tm-class-list-divider-thickness)] bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
-                    <div className="relative grid h-[var(--tm-class-list-card-action-content-height)] grid-cols-2 items-center">
-                        <button
-                            {...skeletonBlock(3, 'line', 0.78, 14)}
-                            type="button"
-                            onClick={() => onSelectClass(classInfo.id)}
-                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
-                        >
-                            <UsersIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
-                            学生列表
-                        </button>
-                        <button
-                            {...skeletonBlock(3, 'line', 0.78, 14)}
-                            type="button"
-                            onClick={() => onViewClassReport(classInfo.id)}
-                            data-skeleton-anchor={`class-action-end-${classInfo.id}`}
-                            className="pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] px-1 text-sm font-medium text-[var(--tm-text-action)]"
-                        >
-                            <ChartIcon className="h-[var(--tm-class-list-action-icon-size)] w-[var(--tm-class-list-action-icon-size)] text-[var(--tm-brand-primary)] [stroke-width:2.2]" aria-hidden="true" />
-                            班级报告
-                        </button>
-                        <span data-skeleton-decoration className="pointer-events-none absolute left-1/2 top-1/2 h-[var(--tm-class-list-divider-vertical-height)] w-[var(--tm-class-list-divider-thickness)] -translate-x-1/2 -translate-y-1/2 bg-[var(--tm-class-list-divider)]" aria-hidden="true" />
-                    </div>
-                </div>
-            </article>
-        );
-    };
+    const renderClassCard = (classInfo: ClassInfo) => (
+        <TeacherClassListCard key={classInfo.id} classInfo={classInfo} teacherProfile={teacherProfile}
+            currentSpace={currentSpace} onSelectClass={onSelectClass} onViewClassReport={onViewClassReport}
+            onMore={setActiveActionClassId} />
+    );
 
     const renderStudentTeamCard = (team: SchoolStudentTeam) => {
         const isPublicTeam = team.visibility === 'management';
@@ -675,48 +750,10 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                 <section className="space-y-0 px-1">
                     {activeListTab === 'class' && isSchoolSpace && (
                         <div className="space-y-0">
-                            <div className="flex min-h-11 flex-wrap items-center justify-between gap-2">
-                                <div className="flex shrink-0 items-center gap-1">
-                                    <button
-                                        type="button"
-                                        aria-label="按年级筛选班级"
-                                        aria-haspopup="dialog"
-                                        aria-expanded={showGradeFilter}
-                                        onClick={() => setShowGradeFilter(true)}
-                                        className={`inline-flex h-[var(--tm-size-touch)] w-[96px] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] pl-[var(--tm-space-1)] pr-[var(--tm-space-5)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] text-[var(--tm-text-primary)]`}
-                                    >
-                                        <span>{gradeFilter === '全部' ? '全部年级' : gradeFilter}</span>
-                                        <ChevronDown className="h-4 w-4 text-[var(--tm-text-tertiary)]" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        aria-pressed={showTeachingOnly}
-                                        onClick={() => setShowTeachingOnly(current => !current)}
-                                        className={`flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] whitespace-nowrap rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] text-[var(--tm-text-primary)]`}
-                                    >
-                                        <span className={`flex h-4 w-4 items-center justify-center rounded-[5px] ${showTeachingOnly ? 'bg-[var(--tm-brand-primary)] text-white' : 'border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)]'}`} aria-hidden="true">
-                                            {showTeachingOnly && <Check className="h-3 w-3" strokeWidth={3} />}
-                                        </span>
-                                        任教班级
-                                    </button>
-                                </div>
-                                {showLeaderboard && (
-                                    <button
-                                        type="button"
-                                        aria-label="查看班级排行榜"
-                                        onClick={onViewLeaderboard}
-                                        className="ml-auto inline-flex h-[var(--tm-class-list-leaderboard-touch-height)] w-[var(--tm-class-list-leaderboard-touch-width)] shrink-0 items-center justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2"
-                                    >
-                                        <img
-                                            src={ASSETS.CLASS.LEADERBOARD_ENTRY}
-                                            alt=""
-                                            draggable={false}
-                                            aria-hidden="true"
-                                            className="h-[var(--tm-class-list-leaderboard-image-height)] w-[var(--tm-class-list-leaderboard-image-width)] select-none object-contain"
-                                        />
-                                    </button>
-                                )}
-                            </div>
+                            <TeacherClassListToolbar gradeFilter={gradeFilter} showGradeFilter={showGradeFilter}
+                                showTeachingOnly={showTeachingOnly} onOpenGradeFilter={() => setShowGradeFilter(true)}
+                                onTeachingOnlyChange={setShowTeachingOnly} showLeaderboard={showLeaderboard}
+                                onViewLeaderboard={onViewLeaderboard} />
                         </div>
                     )}
 

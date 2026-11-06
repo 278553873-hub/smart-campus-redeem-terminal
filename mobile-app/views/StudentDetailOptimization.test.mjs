@@ -1,4 +1,6 @@
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { formatGrowthAwardDetail, getGrowthCoinFlowDetail, toGrowthCoinExpenseFlow } from '../../shared/growthCoinFlow.ts';
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8');
 const appSource = read('../App.tsx');
@@ -52,12 +54,12 @@ requireText(constantsSource, 'rankingPool', '校园币预估应读取积分排�
 requireText(coinDemoSource, "category: 'growth_award'", '成长嘉奖流水应使用明确分类，不根据文案猜测。');
 requireText(coinDemoSource, "startDate: '2025-12-29', endDate: '2026-01-04'", 'Mock 数据应直接展示跨年成长嘉奖边界。');
 requireText(coinFlowSource, "start.year !== end.year", '成长嘉奖跨年时应展示完整年份。');
-requireText(coinFlowSource, "`每周奖励（${start.month}月${start.day}日-${end.month}月${end.day}日）`", '同年周奖励应标明每周发放、省略年份并保留完整月日。');
-requireText(coinFlowSource, "`每月奖励（${month}月）`", '月奖励应标明每月发放并展示所属月份。');
+assert.equal(formatGrowthAwardDetail({ type: 'weekly', startDate: '2026-10-26', endDate: '2026-11-01' }), '每周奖励（10月26日—11月1日）');
+assert.equal(formatGrowthAwardDetail({ type: 'monthly', month: '2026-10' }), '每月奖励（2026年10月）');
 requireText(coinDetailSource, 'item.categoryLabel', '校园币流水第一层应展示分类。');
 requireText(coinDetailSource, 'item.detail', '校园币流水第二层应展示明细。');
 requireText(coinDetailSource, 'formatCampusCoinFlowTime(item.time)', '校园币流水第三层应独立展示时间。');
-requireText(coinDetailSource, '`${record.productName} ×${record.quantity}`', '兑换商品数量应统一使用乘号。');
+assert.equal(getGrowthCoinFlowDetail(toGrowthCoinExpenseFlow({ id: 'exchange', category: 'vending_exchange', productName: '铅笔', quantity: 3, amount: 30, time: '2026-10-26 09:35' })), '铅笔×3');
 
 requireText(appSource, "'student_basic_edit'", 'App 路由应包含学生基础信息编辑子页面。');
 requireText(appSource, "'student_coin_detail'", 'App 路由应包含校园币详情子页面。');

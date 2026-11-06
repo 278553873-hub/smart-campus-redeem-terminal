@@ -1,0 +1,70 @@
+.student-pet-evaluation-modal .arco-modal-content {
+  padding: 0;
+}
+
+/* 由左栏显示学生身份；保留公共弹窗标题的无障碍命名。 */
+.student-pet-evaluation-modal .arco-modal-header {
+  height: 0;
+  padding: 0;
+  border: 0;
+}
+
+.student-pet-evaluation-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 30%) minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.student-pet-evaluation-profile {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding: 24px;
+  overflow-y: auto;
+  border-right: 1px solid #edf0f5;
+  background: #f5f7fb;
+}
+
+.student-pet-evaluation-artwork {
+  display: flex;
+  min-height: 0;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.student-pet-evaluation-content {
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+}
+
+@media (max-width: 700px) {
+  .student-pet-evaluation-layout {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .student-pet-evaluation-profile {
+    min-height: auto;
+    overflow: visible;
+    border-right: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .student-pet-evaluation-profile .pet-egg-hover-target {
+    max-width: 160px;
+    margin: 12px auto;
+  }
+  .student-pet-evaluation-content {
+    min-height: 360px;
+    flex: 1 0 auto;
+  }
+}
+.student-pet-evaluation-modal.arco-modal {
+  overflow: hidden;
+  border-radius: 28px;
+}
+

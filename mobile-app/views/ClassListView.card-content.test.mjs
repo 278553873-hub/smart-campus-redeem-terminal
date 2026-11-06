@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.meta.url), 'utf8');
-const classCardSource = classListSource.slice(classListSource.indexOf('const renderClassCard ='), classListSource.indexOf('const renderStudentTeamCard ='));
+const classCardSource = classListSource.slice(classListSource.indexOf('export const TeacherClassListCard'), classListSource.indexOf('export const TeacherClassListToolbar'));
 const typesSource = fs.readFileSync(new URL('../types.ts', import.meta.url), 'utf8');
 const guidelinesSource = fs.readFileSync(new URL('../../design-system/teacher-mobile/TEACHER_MOBILE_UI_GUIDELINES.md', import.meta.url), 'utf8');
 
@@ -18,7 +18,7 @@ assert.ok(classListSource.includes('text-[13px] font-[450] text-[var(--tm-text-s
 assert.ok(classListSource.includes('<MobileTag tone="brand">'), '班主任和副班主任应使用浅品牌红背景及品牌红文字标签。');
 assert.ok(classListSource.includes('<MobileTag key={tag} tone="secondary">'), '任教科目应使用浅橙背景及橙色文字标签。');
 assert.ok(classCardSource.includes('min-h-[var(--tm-class-list-card-compact-min-height)]') && !classCardSource.includes('min-h-[var(--tm-class-list-card-min-height)]'), '班级卡片应使用紧凑最小高度，按真实标签内容自然增高。');
-assert.equal((classCardSource.match(/pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-\[var\(--tm-radius-control-compact\)\] px-1 text-sm font-medium text-\[var\(--tm-text-secondary\)\]/g) ?? []).length, 2, '学生列表和班级报告应统一使用#6D6764次级文字颜色。');
+assert.equal((classCardSource.match(/pointer-events-auto flex min-h-11 items-center justify-center gap-2 rounded-\[var\(--tm-radius-control-compact\)\] px-1 text-sm font-medium text-\[var\(--tm-text-action\)\]/g) ?? []).length, 2, '学生列表和班级报告应统一使用手机端操作文字令牌。');
 assert.ok(!classListSource.includes('active:bg-'), '班级列表不应显示触摸按压底色。');
 assert.equal((classCardSource.match(/className="h-\[var\(--tm-class-list-action-icon-size\)\] w-\[var\(--tm-class-list-action-icon-size\)\] text-\[var\(--tm-brand-primary\)\] \[stroke-width:2\.2\]"/g) ?? []).length, 2, '两个按钮图标应统一使用明亮的品牌红和略粗线条。');
 assert.equal((classCardSource.match(/h-\[var\(--tm-class-list-action-icon-size\)\]/g) ?? []).length, 2, '两个按钮图标应使用统一的文案匹配尺寸。');

@@ -1,3 +1,4 @@
+import PreviewToggle from './PreviewToggle';
 import React, { useState } from 'react';
 import MobileClassPickerSheet, {
   type MobileClassPickerSingleValue,
@@ -217,21 +218,6 @@ const classroomDemoStudents: Student[] = [
   { id: 'student-12', name: '何芷晴', gender: 'female', grade: '三年级', class: '3班', studentNo: '20250312', avatar: ASSETS.AVATAR.SYSTEM_GIRLS[5] },
 ] as const;
 
-const PreviewToggle: React.FC<{
-  checked: boolean;
-  label: string;
-  onChange: (checked: boolean) => void;
-}> = ({ checked, label, onChange }) => (
-  <label className="flex min-h-9 cursor-pointer items-center gap-2 text-xs font-medium text-slate-600">
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={event => onChange(event.target.checked)}
-      className="h-4 w-4 accent-[var(--tm-brand-primary)]"
-    />
-    {label}
-  </label>
-);
 
 const studentCardPlatforms = [
   ['mobile', '手机端'],
@@ -608,7 +594,7 @@ const PublicComponentsDemo: React.FC = () => {
             ['class-picker', '班级选择弹窗'],
             ['student-card', '学生卡片'],
             ['login', '登录页'],
-            ['input-composer', '语音与文字输入'],
+            ['input-composer', '录入控件'],
           ] as const).map(([id, label]) => {
             const active = activeComponent === id;
             return (
@@ -840,7 +826,7 @@ const PublicComponentsDemo: React.FC = () => {
       </section>
       )}
 
-      {isStudentCard || isLogin || activeComponent === 'date-picker' ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
+      {isStudentCard || isLogin || activeComponent === 'date-picker' || activeComponent === 'input-composer' ? null : isClassPicker ? classPreviewMode === 'multiple' ? (
         <MobileClassPickerSheet
           open={classSheetVisible}
           groups={previewGroups}

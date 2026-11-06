@@ -1,0 +1,13 @@
+/* 仅作用于家长手机预览内部；不影响浏览器、后台及外部预览工具。 */
+.parent-mobile-app,
+.parent-mobile-app * {
+  -ms-overflow-style: none;
+  scrollbar-width: var(--pm-scrollbar-width, none);
+}
+
+.parent-mobile-app::-webkit-scrollbar,
+.parent-mobile-app *::-webkit-scrollbar {
+  display: none;
+  width: var(--pm-scrollbar-size, 0px);
+  height: var(--pm-scrollbar-size, 0px);
+}

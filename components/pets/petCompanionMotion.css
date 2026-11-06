@@ -1,0 +1,226 @@
+.pet-companion-scene {
+  --pet-glow: #acdced;
+  --pet-accent: #62afd0;
+  --pet-depth-strength: 0.55;
+  --pet-aura-opacity: 0.26;
+  position: relative;
+  isolation: isolate;
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  perspective: 650px;
+}
+
+.pet-companion-scene[data-pet-theme="forest"] {
+  --pet-glow: #d1e3ac;
+  --pet-accent: #a0bd72;
+}
+
+.pet-companion-artwork {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  object-fit: contain;
+  object-position: center bottom;
+  user-select: none;
+  transform-origin: 50% 85%;
+}
+
+.pet-companion-depth {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotateX(calc(var(--pet-tilt-x, 0deg) * var(--pet-depth-strength))) rotateY(calc(var(--pet-tilt-y, 0deg) * var(--pet-depth-strength))) translate(calc(var(--pet-layer-x, 0px) * var(--pet-depth-strength)), calc(var(--pet-layer-y, 0px) * var(--pet-depth-strength)));
+  transition: transform 180ms ease-out;
+}
+
+.pet-companion-habitat {
+  position: absolute;
+  z-index: 0;
+  /* 保留素材原始透明留白；可见台面约占画布高度15%，其上表面承托角色底部。 */
+  bottom: -4%;
+  left: 5%;
+  width: 90%;
+  height: auto;
+  user-select: none;
+}
+
+.pet-companion-contact-shadow {
+  position: absolute;
+  z-index: 1;
+  left: 28%;
+  bottom: 5%;
+  width: 44%;
+  height: 6%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgb(77 91 112 / 16%), transparent 70%);
+  transform-origin: center;
+}
+
+.pet-companion-foil-sweep {
+  position: absolute;
+  z-index: 3;
+  inset: 4px;
+  background: linear-gradient(110deg, transparent 38%, rgb(191 222 255 / 10%) 44%, rgb(255 255 255 / 65%) 49%, rgb(240 219 255 / 28%) 53%, transparent 60%);
+  background-size: 280% 100%;
+  background-position: 100% 50%;
+  mask-size: contain;
+  mask-position: center bottom;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  -webkit-mask-position: center bottom;
+  -webkit-mask-repeat: no-repeat;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.pet-companion-aura {
+  position: absolute;
+  z-index: 0;
+  inset: 12% 4% 9%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--pet-glow), transparent 68%);
+  opacity: 0;
+}
+
+.pet-companion-halo {
+  position: absolute;
+  z-index: 1;
+  inset: 5%;
+  border-radius: 50%;
+  background: conic-gradient(from var(--pet-foil-angle, 0deg), #83c9e2, #d0bef2 16%, #f2d6a1 30%, #a4dcc8 46%, #9cc8f0 63%, #e5c7e7 78%, #e9d798 91%, #83c9e2);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 93%, #000 95% 97%, transparent 99%);
+  mask-image: radial-gradient(closest-side, transparent 93%, #000 95% 97%, transparent 99%);
+  opacity: 0;
+  transform: translate(calc(var(--pet-layer-x, 0px) * -1), calc(var(--pet-layer-y, 0px) * -1)) scale(0.94);
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+}
+
+.pet-companion-holo-light {
+  position: absolute;
+  z-index: 0;
+  inset: 3%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at var(--pet-foil-x, 50%) var(--pet-foil-y, 50%), #fff5d9, transparent 58%),
+    conic-gradient(from var(--pet-foil-angle, 0deg), #b4dfee, #e3cfed, #f1dfb3, #c1e1c5, #b4dfee);
+  -webkit-mask-image: radial-gradient(ellipse, #000 25%, transparent 70%);
+  mask-image: radial-gradient(ellipse, #000 25%, transparent 70%);
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+
+.pet-companion-scene[data-pet-stage="ultimate"] {
+  --pet-depth-strength: 1;
+  --pet-aura-opacity: 0.44;
+}
+
+.pet-companion-scene[data-pet-stage="ultimate"] .pet-companion-halo {
+  inset: 0;
+  -webkit-mask-image: radial-gradient(closest-side, transparent 81%, #000 83% 85%, transparent 87% 95%, #000 97% 98%, transparent 100%);
+  mask-image: radial-gradient(closest-side, transparent 81%, #000 83% 85%, transparent 87% 95%, #000 97% 98%, transparent 100%);
+}
+
+.pet-companion-sparks {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+}
+
+.pet-companion-sparks i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  background: #d9bd76;
+  clip-path: polygon(50% 0, 63% 37%, 100% 50%, 63% 63%, 50% 100%, 37% 63%, 0 50%, 37% 37%);
+  opacity: 0;
+}
+
+.pet-companion-sparks i:nth-child(1) { left: 14%; top: 37%; }
+.pet-companion-sparks i:nth-child(2) { right: 12%; top: 24%; }
+.pet-companion-sparks i:nth-child(3) { right: 19%; top: 65%; }
+
+@keyframes pet-young-soft-bounce {
+  0%, 100% { transform: none; }
+  18% { transform: scale(1.035, 0.965); }
+  46% { transform: translateY(-4px) scale(0.985, 1.025); }
+  72% { transform: scale(1.015, 0.985); }
+}
+
+@keyframes pet-growth-hop {
+  0%, 100% { transform: none; }
+  20% { transform: translateY(0); }
+  45% { transform: translateY(-7px); }
+  74% { transform: translateY(0); }
+}
+
+@keyframes pet-mature-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -4px, 0); }
+}
+
+@keyframes pet-shadow-hop {
+  0%, 100% { opacity: 1; transform: none; }
+  45% { opacity: 0.5; transform: scale(0.8); }
+}
+
+@keyframes pet-shadow-float {
+  0%, 100% { opacity: 1; transform: none; }
+  50% { opacity: 0.7; transform: scale(0.9); }
+}
+
+@keyframes pet-ultimate-foil-sweep {
+  0% { background-position: 100% 50%; opacity: 0; }
+  18% { opacity: 0.65; }
+  72% { opacity: 0.65; }
+  100% { background-position: 0% 50%; opacity: 0; }
+}
+
+@keyframes pet-aura-bloom {
+  0%, 100% { opacity: 0; transform: scale(0.85); }
+  42% { opacity: var(--pet-aura-opacity); transform: scale(1.04); }
+}
+
+@keyframes pet-spark-rise {
+  0%, 100% { opacity: 0; }
+  15% { opacity: 0; transform: translateY(4px) scale(0.4); }
+  45% { opacity: 0.8; }
+  85% { opacity: 0; transform: translateY(-9px) scale(0.8); }
+}
+
+/* 只回应当前卡片，一次播放；减少动态效果时保留静态承托，不播放动作。 */
+@media (prefers-reduced-motion: no-preference) {
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="juvenile"] .pet-companion-artwork { animation: pet-young-soft-bounce 620ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="growth"] .pet-companion-artwork { animation: pet-growth-hop 700ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="mature"] .pet-companion-artwork { animation: pet-mature-float 1100ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="juvenile"] .pet-companion-contact-shadow { animation: pet-shadow-hop 620ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="growth"] .pet-companion-contact-shadow { animation: pet-shadow-hop 700ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="mature"] .pet-companion-contact-shadow { animation: pet-shadow-float 1100ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) .pet-companion-foil-sweep { animation: pet-ultimate-foil-sweep 1100ms ease-in-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="complete"] .pet-companion-aura,
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) [data-pet-stage="ultimate"] .pet-companion-aura { animation: pet-aura-bloom 960ms ease-out 1; }
+  .pet-companion-scene[data-holo-active="true"] .pet-companion-halo,
+  .pet-interaction-target[data-pet-playing="true"] .pet-companion-halo {
+    opacity: 0.5;
+    transform: translate(calc(var(--pet-layer-x, 0px) * -1), calc(var(--pet-layer-y, 0px) * -1)) scale(1);
+  }
+  .pet-companion-scene[data-holo-active="true"][data-pet-stage="ultimate"] .pet-companion-halo,
+  .pet-interaction-target[data-pet-playing="true"] .pet-companion-scene[data-pet-stage="ultimate"] .pet-companion-halo { opacity: 0.9; }
+  .pet-companion-scene[data-holo-active="true"] .pet-companion-holo-light,
+  .pet-interaction-target[data-pet-playing="true"] .pet-companion-holo-light { opacity: 0.3; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) .pet-companion-sparks i { animation: pet-spark-rise 820ms ease-out 1; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) .pet-companion-sparks i:nth-child(2) { animation-delay: 90ms; }
+  .pet-interaction-target:is(:hover, :focus-visible, [data-pet-playing="true"]) .pet-companion-sparks i:nth-child(3) { animation-delay: 180ms; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pet-companion-depth { transform: none; transition: none; }
+  .pet-companion-halo,
+  .pet-companion-holo-light { transition: none; }
+}

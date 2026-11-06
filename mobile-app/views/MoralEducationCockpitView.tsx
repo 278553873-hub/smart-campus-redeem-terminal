@@ -1,3 +1,4 @@
+import { localToday } from '../components/ui/mobileDatePickerModel';
 import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -315,7 +316,7 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
     const selectedPeriodIndex = periodOptions.findIndex(item => item.id === selectedPeriodId);
     const selectedPeriod = periodOptions[selectedPeriodIndex];
     const currentPeriod = periodOptions[periodOptions.length - 1];
-    const selectedPeriodLabel = selectedPeriod && currentPeriod && selectedPeriod.id === currentPeriod.id
+    const selectedPeriodLabel = selectedPeriod && selectedPeriod.startDate <= localToday() && selectedPeriod.endDate >= localToday()
         ? `本周 ${selectedPeriod.label}`
         : selectedPeriod?.label ?? '';
     const canGoPrevious = selectedPeriodIndex > 0;

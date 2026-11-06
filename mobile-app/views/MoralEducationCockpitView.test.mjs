@@ -8,7 +8,7 @@ import {
 
 const viewSource = fs.readFileSync(new URL('./MoralEducationCockpitView.tsx', import.meta.url), 'utf8');
 const meSource = fs.readFileSync(new URL('./MeView.tsx', import.meta.url), 'utf8');
-const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8') + '\n' + fs.readFileSync(new URL('../data/teacherSpaces.ts', import.meta.url), 'utf8');
 const accessSource = fs.readFileSync(new URL('../domain/teacherSpaceAccess.ts', import.meta.url), 'utf8');
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
 const periodCalendarSource = fs.readFileSync(new URL('../components/ui/MobilePeriodPicker.tsx', import.meta.url), 'utf8');
@@ -60,7 +60,7 @@ for (const required of [
   "const reportPeriodType: MoralEducationPeriodType = 'week'",
   'getMoralEducationCockpitSnapshot({ periodType: reportPeriodType, periodId: selectedPeriodId })',
   'const currentPeriod = periodOptions[periodOptions.length - 1]',
-  'selectedPeriod && currentPeriod && selectedPeriod.id === currentPeriod.id',
+  'selectedPeriod && selectedPeriod.startDate <= localToday() && selectedPeriod.endDate >= localToday()',
   '? `本周 ${selectedPeriod.label}`',
   "selectedPeriod?.label ?? ''",
   "var(--mini-program-capsule-right-inset, 0px)",

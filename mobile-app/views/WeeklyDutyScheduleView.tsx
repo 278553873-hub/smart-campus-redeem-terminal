@@ -1,3 +1,4 @@
+import { localToday } from '../components/ui/mobileDatePickerModel';
 import React, { useMemo, useState } from 'react';
 import {
   CalendarOff,
@@ -13,7 +14,6 @@ import MobilePageHeader from '../components/ui/MobilePageHeader';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import { ASSETS } from '../assets/images';
 import {
-  CURRENT_DUTY_WEEK_ID,
   DUTY_TEACHERS,
   DUTY_TERM_WEEKS,
   INITIAL_DUTY_SCHEDULES,
@@ -30,11 +30,13 @@ interface WeeklyDutyScheduleViewProps {
   onBack: () => void;
 }
 
-const selectedMonthDefault = { year: 2026, monthIndex: 7 };
+const today = localToday();
+const selectedMonthDefault = { year: Number(today.slice(0, 4)), monthIndex: Number(today.slice(5, 7)) - 1 };
+const currentDutyWeekId = DUTY_TERM_WEEKS.find(week => week.startDate <= today && week.endDate >= today)?.id ?? '';
 
 const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack }) => {
   const [selectedMonth, setSelectedMonth] = useState(selectedMonthDefault);
-  const [selectedWeekId, setSelectedWeekId] = useState(CURRENT_DUTY_WEEK_ID);
+  const [selectedWeekId, setSelectedWeekId] = useState(currentDutyWeekId);
   const [teacherSheetWeek, setTeacherSheetWeek] = useState<DutyWeek | null>(null);
   const [teacherSearch, setTeacherSearch] = useState('');
   const [draftTeacherIds, setDraftTeacherIds] = useState<string[]>([]);
@@ -109,7 +111,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
 
   const resetToCurrentWeek = () => {
     setSelectedMonth(selectedMonthDefault);
-    setSelectedWeekId(CURRENT_DUTY_WEEK_ID);
+    setSelectedWeekId(currentDutyWeekId);
   };
 
   const renderTeacherSummary = (week: DutyWeek) => {
@@ -172,6 +174,7 @@ const WeeklyDutyScheduleView: React.FC<WeeklyDutyScheduleViewProps> = ({ onBack 
               </button>
             </div>
 
+            {monthWeeks.length === 0 && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.CHAIR} title="当月暂无值周安排" className="py-6" />}
             <div className="mt-[var(--tm-space-3)] grid grid-cols-2 gap-[var(--tm-duty-week-grid-gap)]">
               {monthWeeks.map(week => {
                 const teacherIds = schedules[week.id] ?? [];

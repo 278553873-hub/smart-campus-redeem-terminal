@@ -1,3 +1,6 @@
+import ParentRecordCard from './parent-app/ParentRecordCard';
+import MobileBottomSheet from '../mobile-app/components/ui/MobileBottomSheet';
+import { readParentRecordingSettings, PARENT_RECORDING_UPDATED } from '../shared/parentRecordingSettings';
 import { DEMO_COIN_SCHOOL_ID, resolveCoinSchoolId } from '../shared/growthCoinBranding';
 import { GrowthCoinIcon, GrowthCoinScope, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -9,6 +12,8 @@ import {
   BookOpenCheck,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
   ChevronRight,
   ClipboardList,
   Clock,
@@ -31,6 +36,9 @@ import {
   DEMO_SUNSHINE_REWARD,
 } from '../shared/demoRewardScenario';
 import PhoneMockup from './PhoneMockup';
+import './parent-app/parentGrowthHome.css';
+import './parent-app/parentMobile.css';
+import { getParentGrowthTheme, type ParentGrowthScheme } from './parent-app/parentGrowthTheme';
 import { ImageGallery, ImagePreview } from './media/ImageGallery';
 import {
   ParentBottomSheet,
@@ -38,19 +46,26 @@ import {
   ParentChildAvatar,
   ParentGradientIcon,
   ParentPageShell,
+  ParentPageHeader,
   ParentPrimaryButton,
   ParentSecondaryButton,
+  ParentSegmentedControl,
+  ParentUnderlineTabs,
 } from './parent-app/ParentUI';
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
 import { ParentExchangePasswordSheet } from './parent-app/ParentExchangePasswordSheet';
 import HoloCardViewer from './parent-app/HoloCardViewer';
 import ParentCoinFlowView from './parent-app/ParentCoinFlowView';
+import ParentBehaviorRecordPage from './parent-app/ParentBehaviorRecordPage';
+import ParentBehaviorRecordList from './parent-app/ParentBehaviorRecordList';
+import {
+  createParentBehaviorDraft, parentBehaviorSubjectKey, readParentBehaviorRecords, readParentRecordsWithDemo, recordsForParentChild,
+  deleteParentBehaviorRecord, saveParentBehaviorRecord, type ParentBehaviorDraft, type ParentBehaviorRecord,
+} from '../shared/parentBehaviorRecords';
 import { createDemoGrowthCoinFlows } from '../shared/demoGrowthCoinFlow';
 import {
   parentMobileCssVariables,
-  parentSegmentTone,
-  parentSelectCardTone,
-  parentSurface,
+  parentDateControl,
   parentTypography,
 } from './parent-app/ParentStyleTokens';
 import { BANK_CONFIG } from '../constants';
@@ -80,14 +95,19 @@ import {
 } from '../shared/parentEvaluationVisibility';
 
 interface ParentAppProps {
+  colorScheme?: ParentGrowthScheme;
   showPhoneShell?: boolean;
   gradientPreview?: TeacherGradientPreviewConfig;
   defaultHasBoundChild?: boolean;
   defaultLoggedIn?: boolean;
   initialQuestionnaireInviteCode?: string;
+  initialScreen?: Screen;
   parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
+  parentBehaviorRecordingEnabled?: boolean;
+  parentGrowthCoinEnabled?: boolean;
   parentBankFeatureEnabled?: boolean;
   onActiveClassIdChange?: (classId: string) => void;
+  onActiveSchoolCodeChange?: (schoolCode: string) => void;
   onScreenChange?: (screen: Screen) => void;
 }
 
@@ -635,8 +655,8 @@ const createDemoChild = (name: string, schoolCode: string, studentNo: string, in
 
 const PARENT_SCREEN_CLASS = 'relative flex-1 overflow-y-auto no-scrollbar bg-transparent';
 const BINDING_INPUT_CLASS = 'w-full h-[52px] rounded-[var(--pm-radius-control)] border border-[var(--pm-border-control)] bg-[var(--pm-bg-surface)] px-4 text-[length:var(--pm-font-size-body)] font-[var(--pm-font-weight-regular)] text-[var(--pm-text-primary)] placeholder:text-[var(--pm-text-disabled)] outline-none transition-[border-color,box-shadow] [transition-duration:var(--pm-duration-fast)] focus:border-[var(--pm-brand-primary)] focus:ring-4 focus:ring-[var(--pm-focus-ring)]';
-const PARENT_ICON_BUTTON_CLASS = 'flex h-10 w-10 items-center justify-center rounded-full text-[var(--pm-text-tertiary)] transition-[transform,background-color,color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98] active:bg-[var(--pm-bg-surface-soft)]';
-const PARENT_RANGE_SHORTCUT_CLASS = 'ml-2 h-10 rounded-[var(--pm-radius-control)] border border-[var(--pm-brand-primary-soft-strong)] px-4 text-[length:var(--pm-font-size-body)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-[transform,background-color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98] active:bg-[var(--pm-brand-primary-soft)]';
+const PARENT_ICON_BUTTON_CLASS = parentDateControl.iconButton;
+const PARENT_RANGE_SHORTCUT_CLASS = parentDateControl.shortcut;
 const PARENT_PRESSABLE_CLASS = 'transition-[transform,background-color,box-shadow,border-color] [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98]';
 type ParentBankScheme = {
   type: 'current' | 'fixed';
@@ -665,6 +685,8 @@ const GROWTH_RANGE_TABS: Array<[GrowthRangeMode, string]> = [
   ['month', '月'],
   ['term', '学期'],
 ];
+const GROWTH_RANGE_OPTIONS = GROWTH_RANGE_TABS.map(([value, label]) => ({ value, label }));
+const RECORD_SOURCE_OPTIONS = [{ value: 'school', label: '学校评价' }, { value: 'family', label: '家长记录' }] as const;
 const PARENT_PROFILE = {
   name: '郑小磊家长',
   relation: '妈妈',
@@ -673,25 +695,27 @@ const PARENT_PROFILE = {
 const formatDailyRate = (rate: number) => `${Number((rate * 100).toFixed(2))}%`;
 
 const ParentDiffuseBackdrop: React.FC<{ preview?: TeacherGradientPreviewConfig }> = ({ preview }) => (
-  preview ? (
-    <TeacherMobileScreenBackground variant="preview" preview={preview} />
-  ) : (
-    <div aria-hidden="true" className={`${parentSurface.background} pointer-events-none absolute inset-0 overflow-hidden`} />
-  )
+  <TeacherMobileScreenBackground variant={preview ? 'preview' : 'ambient'} preview={preview} />
 );
 
 const ParentApp: React.FC<ParentAppProps> = ({
   showPhoneShell = true,
   gradientPreview = defaultParentGradientPreview,
+  colorScheme = 'teacher',
   defaultHasBoundChild = true,
   defaultLoggedIn = true,
   initialQuestionnaireInviteCode = '',
+  initialScreen,
   parentEvaluationVisibility: parentEvaluationVisibilityInput,
+  parentBehaviorRecordingEnabled: recordingEnabledOverride = true,
+  parentGrowthCoinEnabled = true,
   parentBankFeatureEnabled = true,
   onActiveClassIdChange,
+  onActiveSchoolCodeChange,
   onScreenChange,
 }) => {
-  const [screen, setScreen] = useState<Screen>(() => defaultHasBoundChild ? 'growth' : 'binding');
+  const [screen, setScreen] = useState<Screen>(() => initialScreen ?? (defaultHasBoundChild ? 'growth' : 'binding'));
+  const hasPlainPageBackground = screen === 'growthRecords' || screen === 'coinFlow';
   useEffect(() => {
     onScreenChange?.(screen);
   }, [onScreenChange, screen]);
@@ -715,6 +739,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [bindForm, setBindForm] = useState({ schoolCode: '', studentName: '', studentNo: '' });
   const [bindingReturnTarget, setBindingReturnTarget] = useState<'none' | 'switcher'>('none');
   const [bindingReturnScreen, setBindingReturnScreen] = useState<Screen>('growth');
+  const isBankEnabled = parentGrowthCoinEnabled && parentBankFeatureEnabled;
   const [depositAmount, setDepositAmount] = useState('60');
   const [activeBankTab, setActiveBankTab] = useState<BankTab>('deposit');
   const [selectedBankScheme, setSelectedBankScheme] = useState<ParentBankScheme | null>(PARENT_BANK_TERMS[0]);
@@ -736,11 +761,72 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [mineSheet, setMineSheet] = useState<MineSheet>(null);
   const [exchangePasswordChildId, setExchangePasswordChildId] = useState('');
   const [parentNavActiveIndex, setParentNavActiveIndex] = useState(0);
+  const [recordSource, setRecordSource] = useState<'school' | 'family'>('school');
+  const [parentBehaviorRecords, setParentBehaviorRecords] = useState(() => readParentRecordsWithDemo(PARENT_PROFILE.phone, childrenList, PARENT_PROFILE.relation));
+  const [behaviorDrafts, setBehaviorDrafts] = useState<Record<string, ParentBehaviorDraft>>({});
+  const [behaviorError, setBehaviorError] = useState('');
+  const [editingBehavior, setEditingBehavior] = useState<ParentBehaviorRecord | null>(null);
+  const [behaviorComposerOpen, setBehaviorComposerOpen] = useState(false);
+
 
   const activeChild = useMemo(
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
     [activeChildId, childrenList]
   );
+  const [, refreshRecordingSettings] = useState(0);
+  useEffect(() => {
+    const refresh = () => refreshRecordingSettings(value => value + 1);
+    window.addEventListener(PARENT_RECORDING_UPDATED, refresh);
+    window.addEventListener('storage', refresh);
+    return () => { window.removeEventListener(PARENT_RECORDING_UPDATED, refresh); window.removeEventListener('storage', refresh); };
+  }, []);
+  const recordingSettings = readParentRecordingSettings(activeChild?.schoolCode ?? '');
+  const parentBehaviorRecordingEnabled = recordingEnabledOverride && recordingSettings.enabled;
+  useEffect(() => {
+    if (!parentBehaviorRecordingEnabled) setBehaviorComposerOpen(false);
+  }, [parentBehaviorRecordingEnabled, screen]);
+  const behaviorSubjectKey = activeChild ? parentBehaviorSubjectKey(activeChild) : '';
+  const behaviorDraft = behaviorDrafts[behaviorSubjectKey] ?? createParentBehaviorDraft();
+  const activeParentRecords = activeChild ? recordsForParentChild(parentBehaviorRecords, PARENT_PROFILE.phone, activeChild) : [];
+  const autoRecordId = useRef<string | undefined>(undefined);
+  const openBehaviorRecord = () => {
+    if (!activeChild || !parentBehaviorRecordingEnabled) return;
+    if (autoRecordId.current) setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: createParentBehaviorDraft() }));
+    autoRecordId.current = undefined;
+    setBehaviorError('');
+    setRecordSource('family');
+    setScreen('growthRecords');
+    setBehaviorComposerOpen(true);
+  };
+  const saveBehaviorRecord = (draft: ParentBehaviorDraft, targetChildId?: string) => {
+    const recordChild = targetChildId ? childrenList.find(child => child.id === targetChildId && child.schoolCode === activeChild?.schoolCode) : activeChild;
+    if (!recordChild || !parentBehaviorRecordingEnabled) return false;
+    try {
+      const nextRecords = saveParentBehaviorRecord(recordingSettings.photoEnabled || editingBehavior ? draft : { ...draft, images: [] }, recordChild, PARENT_PROFILE.phone, PARENT_PROFILE.relation, editingBehavior?.id);
+      setParentBehaviorRecords(nextRecords);
+      setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: createParentBehaviorDraft() }));
+      setBehaviorError('');
+      setEditingBehavior(null);
+      setBehaviorComposerOpen(false);
+
+      setRecordSource('family');
+      setScreen('growthRecords');
+      if (recordChild) setActiveChildId(recordChild.id);
+      setSubmitSuccessMessage('记录已保存');
+      return true;
+    } catch (error) {
+      setBehaviorError(error instanceof Error ? error.message : '保存失败，请重试。');
+      return false;
+    }
+  };
+  const autoSaveBehaviorRecord = (draft: ParentBehaviorDraft) => {
+    if (!activeChild || !parentBehaviorRecordingEnabled) return;
+    try {
+      const next = saveParentBehaviorRecord(recordingSettings.photoEnabled ? draft : { ...draft, images: [] }, activeChild, PARENT_PROFILE.phone, PARENT_PROFILE.relation, autoRecordId.current);
+      if (!autoRecordId.current) autoRecordId.current = next[0].id;
+      setParentBehaviorRecords(next); setBehaviorError('');
+    } catch (error) { setBehaviorError(error instanceof Error ? error.message : '自动保存失败，请重试。'); }
+  };
   const coinSchoolId = activeChild ? resolveCoinSchoolId(activeChild.schoolCode) : DEMO_COIN_SCHOOL_ID;
   const GROWTH_COIN_TERMS = useGrowthCoinTerms(coinSchoolId);
   const exchangePasswordChild = useMemo(
@@ -761,6 +847,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
   useEffect(() => {
     if (activeChild) onActiveClassIdChange?.(activeChild.classId);
   }, [activeChild?.classId, onActiveClassIdChange]);
+
+  useEffect(() => {
+    if (activeChild) onActiveSchoolCodeChange?.(activeChild.schoolCode);
+  }, [activeChild?.schoolCode, onActiveSchoolCodeChange]);
 
   const activeInviteRecord = pendingInviteCode
     ? getQuestionnaireByInviteCode(pendingInviteCode, sharedQuestionnaires)
@@ -1154,7 +1244,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const submitDeposit = () => {
-    if (!activeChild || !selectedBankScheme) return;
+    if (!isBankEnabled || !activeChild || !selectedBankScheme) return;
     const amount = Math.max(1, Math.min(Number(depositAmount) || 1, activeChild.availableCoins));
     const nextDeposit: ParentDeposit = {
       id: `deposit-${Date.now()}`,
@@ -1177,7 +1267,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const withdrawDeposit = (deposit: ParentDeposit) => {
-    if (!activeChild) return;
+    if (!isBankEnabled || !activeChild) return;
     const details = getDepositInterest(deposit);
     const finalAmount = details.withdrawalTotal;
     setChildrenList(prev => prev.map(child => child.id === activeChild.id ? {
@@ -1199,7 +1289,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const openExchangePasswordSheet = (child: ChildProfile | null = activeChild) => {
-    if (!child) return;
+    if (!parentGrowthCoinEnabled || !child) return;
     setExchangePasswordChildId(child.id);
   };
 
@@ -1208,7 +1298,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const saveExchangePassword = (nextPassword: string) => {
-    if (!exchangePasswordChild || !isValidExchangePassword(nextPassword)) return;
+    if (!parentGrowthCoinEnabled || !exchangePasswordChild || !isValidExchangePassword(nextPassword)) return;
     setChildrenList(prev => prev.map(child => child.id === exchangePasswordChild.id
       ? { ...child, exchangePassword: nextPassword }
       : child));
@@ -1216,20 +1306,28 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   useEffect(() => {
-    if (parentBankFeatureEnabled) return;
-    if (screen === 'bank') setScreen('growth');
-    if (exchangePasswordChildId) closeExchangePasswordSheet();
-  }, [parentBankFeatureEnabled, screen, exchangePasswordChildId]);
+    if (!isBankEnabled) {
+      if (screen === 'bank') setScreen('growth');
+      setShowDepositConfirm(false);
+      setShowDepositReview(false);
+      setWithdrawTarget(null);
+    }
+    if (!parentGrowthCoinEnabled) {
+      if (screen === 'coinFlow') setScreen('growth');
+      if (exchangePasswordChildId) closeExchangePasswordSheet();
+    }
+  }, [isBankEnabled, parentGrowthCoinEnabled, screen, exchangePasswordChildId]);
 
-  const Header = ({ title, subtitle, showBack = false, backLabel = '返回成长页', onBack }: { title: string; subtitle?: string; showBack?: boolean; backLabel?: string; onBack?: () => void }) => (
-    <div className="sticky top-0 z-40 flex h-[44px] shrink-0 items-center justify-between border-b border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface)]/90 px-4 py-2 backdrop-blur-xl">
+  const Header = ({ title, subtitle, showBack = false, backLabel = '返回成长页', onBack, action }: { title: string; subtitle?: string; showBack?: boolean; backLabel?: string; onBack?: () => void; action?: React.ReactNode }) => (
+    <div className={`sticky top-0 z-40 flex h-[44px] shrink-0 items-center justify-between px-4 py-2 ${hasPlainPageBackground ? 'bg-[var(--pm-page-plain-header-bg)]' : 'border-b border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface)]/90 backdrop-blur-xl'}`}>
       <div className="relative flex h-full w-full items-center justify-center">
         {showBack && (
-          <button type="button" onClick={onBack ?? (() => setScreen('growth'))} className="absolute left-0 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--pm-bg-surface)] text-[var(--pm-text-primary)] [box-shadow:var(--pm-shadow-control)] transition-transform [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98]" aria-label={backLabel}>
-            <ArrowLeft size={18} />
+          <button type="button" onClick={onBack ?? (() => setScreen('growth'))} className={`absolute left-0 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full transition-transform [transition-duration:var(--pm-duration-fast)] ease-out active:scale-[0.98] ${hasPlainPageBackground ? '-ml-2 h-11 w-11 text-[var(--pm-text-secondary)]' : 'h-10 w-10 bg-[var(--pm-bg-surface)] text-[var(--pm-text-primary)] [box-shadow:var(--pm-shadow-control)]'}`} aria-label={backLabel}>
+            {hasPlainPageBackground ? <ChevronLeft size={20} /> : <ArrowLeft size={18} />}
           </button>
         )}
         {title && <h1 className={`${parentTypography.sectionTitle} max-w-[220px] truncate text-center text-balance text-[var(--pm-text-primary)]`}>{title}</h1>}
+        {action && <div className="absolute right-0 top-1/2 -translate-y-1/2">{action}</div>}
       </div>
     </div>
   );
@@ -1340,57 +1438,14 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const GrowthChildProfileCard = () => {
     if (!activeChild) return null;
     return (
-      <ParentCard as="section" className="mx-5 mt-4 p-4">
-        <div className="flex min-h-[64px] items-center gap-3.5">
-          <div className="flex min-w-0 flex-1 items-center gap-3.5">
-            <ParentChildAvatar
-              name={activeChild.name}
-              src={activeChild.avatar}
-              alt={`${activeChild.name}头像`}
-              className="h-[64px] w-[64px] rounded-[var(--pm-radius-card)] border-2 border-white bg-[var(--pm-bg-surface-soft)] [box-shadow:var(--pm-shadow-avatar)]"
-            />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="truncate text-[length:var(--pm-font-size-section-title)] font-bold leading-tight text-[var(--pm-text-primary)]">{activeChild.name}</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowChildSwitcher(true)}
-                  className={`inline-flex h-6 items-center gap-0.5 rounded-full border border-[var(--pm-border-subtle)] bg-[var(--pm-bg-surface-soft)] px-2 text-[11px] font-[var(--pm-font-weight-semibold)] leading-none text-[var(--pm-text-secondary)] ${PARENT_PRESSABLE_CLASS}`}
-                  aria-label="切换孩子"
-                  title="切换孩子"
-                >
-                  <span>切换</span>
-                  <ChevronRight size={11} strokeWidth={2.6} />
-                </button>
-              </div>
-              <p className="mt-1 truncate text-[length:var(--pm-font-size-compact)] font-bold leading-snug text-[var(--pm-text-tertiary)]">
-                {activeChild.className}
-              </p>
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <MessageBellEntry />
-          </div>
-        </div>
-
-        {parentBankFeatureEnabled && (
-          <div className="mt-3 border-t border-[var(--pm-border-subtle)] pt-2.5">
-            <button
-              type="button"
-              onClick={() => openExchangePasswordSheet(activeChild)}
-              className={`flex min-h-8 w-full items-center justify-between text-left text-[length:var(--pm-font-size-compact)] ${PARENT_PRESSABLE_CLASS}`}
-              aria-label={`${activeChild.name}的兑换密码`}
-            >
-              <div className="flex items-center gap-2">
-                <KeyRound size={15} strokeWidth={2.4} className="shrink-0 text-[var(--pm-brand-primary)]" aria-hidden="true" />
-                <span className="font-bold text-[var(--pm-text-primary)]">兑换密码</span>
-                <span className="tabular-nums font-bold tracking-widest text-[var(--pm-text-secondary)]">••••••</span>
-              </div>
-              <ChevronRight size={15} strokeWidth={2.4} className="shrink-0 text-[var(--pm-text-disabled)]" aria-hidden="true" />
-            </button>
-          </div>
-        )}
-      </ParentCard>
+      <header className="pg-profile">
+        <ParentChildAvatar name={activeChild.name} src={activeChild.avatar} className="pg-avatar" />
+        <button type="button" className="pg-identity pg-child-picker" onClick={() => setShowChildSwitcher(true)} aria-label={`当前孩子${activeChild.name}，${activeChild.className}，切换孩子`}>
+          <span className="pg-child-name">{activeChild.name}<ChevronDown size={16} aria-hidden="true" /></span>
+          <span className="pg-child-class">{activeChild.className}</span>
+        </button>
+        <MessageBellEntry />
+      </header>
     );
   };
 
@@ -1407,83 +1462,38 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const MessageBellEntry = () => {
     const pendingQuestionnaireRows = getPendingQuestionnaireMessages();
     const messageCount = (pendingQuestionnaireRows?.length ?? 0) + pendingAssignedQuestionnaires.length;
-    if (!activeChild || messageCount === 0) return null;
+    if (!activeChild) return null;
     return (
-      <button
-        type="button"
-        onClick={() => setScreen('todo')}
-        className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] border border-[var(--pm-status-attention)]/30 bg-[var(--pm-status-attention-soft)] text-[var(--pm-status-attention)] ${PARENT_PRESSABLE_CLASS}`}
-        aria-label={`待办，${messageCount}项待处理`}
-        title="待办"
-      >
-        <Bell size={18} strokeWidth={2.45} />
-        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--pm-status-attention)] px-1 text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-bold)] leading-none text-white [box-shadow:var(--pm-shadow-control)]">
-          {messageCount}
-        </span>
+      <button type="button" onClick={() => setScreen('todo')} className="pg-messages" aria-label={`消息，${messageCount}项待处理`}>
+        <Bell size={20} aria-hidden="true" />
+        {messageCount > 0 && <span className="pg-badge">{messageCount > 99 ? '99+' : messageCount}</span>}
       </button>
     );
   };
 
-  const GrowthBankEntry = () => {
-    if (!activeChild || !parentBankFeatureEnabled) return null;
+  const GrowthCoinEntry = () => {
+    if (!activeChild || !parentGrowthCoinEnabled) return null;
     const growthReward = DEMO_SUNSHINE_REWARD;
     const scoreReward = DEMO_SELF_SCORE_REWARD;
     const totalReward = growthReward + scoreReward;
-
     return (
-      <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
-        <div className="flex items-center justify-between px-4 pt-3 pb-1">
-          <h2 className="min-w-0 flex-1 truncate text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">
-            {GROWTH_COIN_TERMS.name}
-          </h2>
-          <button type="button" onClick={() => setScreen('coinFlow')} className={`ml-auto mr-3 inline-flex min-h-11 shrink-0 items-center gap-0.5 whitespace-nowrap text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] ${PARENT_PRESSABLE_CLASS}`} aria-label={`查看${GROWTH_COIN_TERMS.name}收支明细`}>
-            收支明细<ChevronRight size={14} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setScreen('bank')}
-            className={`inline-flex items-center gap-0.5 text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-brand-primary-strong)] ${PARENT_PRESSABLE_CLASS}`}
-            aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}
-          >
-            <span>进入银行</span>
-            <ChevronRight size={14} strokeWidth={2.6} aria-hidden="true" />
-          </button>
+      <ParentCard as="section" className="pg-bank">
+        <div className="pg-section-heading">
+          <h2 className="pg-currency-heading"><GrowthCoinIcon className="h-8 w-8" alt="" />{GROWTH_COIN_TERMS.name}</h2>
+          {isBankEnabled && <button type="button" className="pg-link" onClick={() => setScreen('bank')} aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}>进入银行<ChevronRight size={18} aria-hidden="true" /></button>}
         </div>
-
-        <section className="flex min-h-10 items-center gap-2.5 px-4 pb-3 pt-1" aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[var(--pm-brand-reward-soft)]">
-            <GrowthCoinIcon className="h-4 w-4" alt="" />
-          </span>
-          <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-2">
-            <div className="flex min-w-0 items-baseline gap-1.5">
-              <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">{GROWTH_COIN_TERMS.available}</span>
-              <span className="min-w-0 truncate text-[length:var(--pm-font-size-section-title)] font-bold tabular-nums text-[var(--pm-text-primary)]">
-                {formatCoin(activeChild.availableCoins)}
-              </span>
-            </div>
-            <span className="h-3 w-px bg-[var(--pm-border-subtle)]" aria-hidden="true" />
-            <div className="flex min-w-0 items-baseline gap-1.5 pl-1">
-              <span className="shrink-0 text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">{GROWTH_COIN_TERMS.saved}</span>
-              <span className="min-w-0 truncate text-[length:var(--pm-font-size-section-title)] font-bold tabular-nums text-[var(--pm-text-primary)]">
-                {formatCoin(activeChild.bankBalance)}
-              </span>
-            </div>
-          </div>
+        <section className={`pg-balances${isBankEnabled ? '' : ' pg-balances-single'}`} aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
+          <div><span>{GROWTH_COIN_TERMS.available}</span><strong>{formatCoin(activeChild.availableCoins)}</strong></div>
+          {isBankEnabled && <div><span>{GROWTH_COIN_TERMS.saved}</span><strong>{formatCoin(activeChild.bankBalance)}</strong></div>}
         </section>
-
-        <section className="flex min-h-9 items-center justify-between gap-1.5 bg-[var(--pm-brand-reward-soft)] px-4 py-2" aria-label="本期预计可得">
-          <div className="flex min-w-0 items-baseline gap-1.5">
-            <span className="min-w-0 truncate text-[length:var(--pm-font-size-compact)] font-medium text-[var(--pm-text-secondary)]">本期预计可得</span>
-            <span className="shrink-0 text-[length:var(--pm-font-size-body)] font-bold tabular-nums text-[var(--pm-text-primary)]">
-              {formatCoin(totalReward)}
-            </span>
-          </div>
-          <p className="shrink-0 text-right text-[length:var(--pm-font-size-meta)] font-medium text-[var(--pm-text-secondary)]">
-            成长 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{formatCoin(growthReward)}</strong>
-            <span className="px-0.5 font-bold text-[var(--pm-brand-reward-strong)]" aria-hidden="true">+</span>
-            得分 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{formatCoin(scoreReward)}</strong>
-          </p>
+        <section className="pg-reward" aria-label="本期预计可得">
+          <span>本期预计可得</span><strong>{formatCoin(totalReward)}</strong>
+          <span>成长 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{formatCoin(growthReward)}</strong> + 得分 <strong className="font-semibold tabular-nums text-[var(--pm-text-secondary)]">{formatCoin(scoreReward)}</strong></span>
         </section>
+        <div className="pg-bank-actions">
+          <button type="button" className="pg-link" onClick={() => setScreen('coinFlow')} aria-label={`查看${GROWTH_COIN_TERMS.name}收支明细`}><FileText size={16} aria-hidden="true" />收支明细<ChevronRight size={14} aria-hidden="true" /></button>
+          <button type="button" className="pg-link" onClick={() => openExchangePasswordSheet(activeChild)} aria-label={`${activeChild.name}的兑换密码`}><KeyRound size={16} aria-hidden="true" /><span>兑换密码</span><ChevronRight size={14} aria-hidden="true" /></button>
+        </div>
       </ParentCard>
     );
   };
@@ -1492,54 +1502,24 @@ const ParentApp: React.FC<ParentAppProps> = ({
     const positiveCount = 13;
     const improveCount = 1;
     const totalScore = DEMO_SELF_SCORE;
-    const summaryGridClass = showPositiveSummary && showNegativeSummary ? 'grid-cols-2' : 'grid-cols-1';
-
     return (
-      <section className="mx-5 mt-3 flex flex-col gap-3">
-        <ParentCard as="article" className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[length:var(--pm-font-size-compact)] font-bold text-[var(--pm-text-tertiary)]">本月总分</span>
-          </div>
-          <div className="mt-3.5 flex items-baseline justify-center">
-            <span className="tabular-nums text-[length:var(--pm-font-size-display)] font-[var(--pm-font-weight-bold)] leading-none text-[var(--pm-brand-primary)]">{totalScore}</span>
-            <span className="ml-2 text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-bold)] text-[var(--pm-text-secondary)]">分</span>
-          </div>
+      <section className="pg-evaluation" aria-labelledby="pg-evaluation-title">
+        <div className="pg-section-heading">
+          <h2 id="pg-evaluation-title">评价统计</h2>
+          <button type="button" className="pg-link" onClick={() => setScreen('growthRecords')}>查看记录<ChevronRight size={16} aria-hidden="true" /></button>
+        </div>
+        <div className={`pg-statistics ${showAnyEvaluationSummary ? '' : 'pg-statistics-total-only'}`}>
+          <div className="pg-total"><span>本月总分</span><div><strong>{totalScore}</strong><span>分</span></div></div>
           {showAnyEvaluationSummary && (
-            <div className={`mt-4 grid ${summaryGridClass} gap-2`}>
-              {showPositiveSummary && (
-                <div className="flex items-center justify-center gap-2 rounded-[var(--pm-radius-inner)] border border-[var(--pm-status-positive)]/20 bg-[var(--pm-status-positive-soft)] px-2 py-2">
-                  <ParentGradientIcon tone="green" size="sm">
-                    <CheckCircle2 size={16} />
-                  </ParentGradientIcon>
-                  <div className="text-left">
-                    <div className="text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-status-positive)]">表扬</div>
-                    <div className="mt-0.5 tabular-nums text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-bold)] text-[var(--pm-status-positive-strong)]">{positiveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
-                  </div>
-                </div>
-              )}
-              {showNegativeSummary && (
-                <div className="flex items-center justify-center gap-2 rounded-[var(--pm-radius-inner)] border border-[var(--pm-status-negative)]/20 bg-[var(--pm-status-negative-soft)] px-2 py-2">
-                  <ParentGradientIcon tone="negative" size="sm">
-                    <AlertCircle size={16} />
-                  </ParentGradientIcon>
-                  <div className="text-left">
-                    <div className="text-[length:var(--pm-font-size-meta)] font-[var(--pm-font-weight-semibold)] text-[var(--evaluation-score-negative)]">待改进</div>
-                    <div className="mt-0.5 tabular-nums text-[length:var(--pm-font-size-section-title)] font-[var(--pm-font-weight-bold)] text-[var(--evaluation-score-negative)]">{improveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
-                  </div>
-                </div>
-              )}
+            <div className="pg-counts">
+              {showPositiveSummary && <div className="pg-count pg-positive"><CheckCircle2 size={20} aria-hidden="true" /><span>表扬</span><strong>{positiveCount}</strong><span>次</span></div>}
+              {showNegativeSummary && <div className="pg-count pg-negative"><AlertCircle size={20} aria-hidden="true" /><span>待改进</span><strong>{improveCount}</strong><span>次</span></div>}
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={() => setScreen('growthRecords')}
-            className={`mx-auto mt-3.5 flex min-h-[44px] items-center justify-center gap-0.5 rounded-full px-4 text-[length:var(--pm-font-size-compact)] font-[var(--pm-font-weight-semibold)] text-[var(--pm-brand-primary-strong)] transition-colors active:bg-[var(--pm-brand-primary-soft)] ${PARENT_PRESSABLE_CLASS}`}
-          >
-            <span>{showAnyEvaluationDetails ? '查看明细' : '查看统计'}</span>
-            <ChevronRight size={15} strokeWidth={2.8} aria-hidden="true" />
-          </button>
-        </ParentCard>
+        </div>
+        {parentBehaviorRecordingEnabled && <ParentPrimaryButton fullWidth className="pg-records" onClick={openBehaviorRecord}>
+          <Plus size={20} aria-hidden="true" />记录表现
+        </ParentPrimaryButton>}
       </section>
     );
   };
@@ -1560,12 +1540,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
     };
 
     return (
-      <ParentCard as="section" className="mx-5 mt-3 p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <ParentCard shape="subtle" as="section" className="mx-5 mt-[var(--pm-layout-card-gap)]">
+        <div className="mb-2 flex min-w-0 items-center justify-between">
           <button type="button" onClick={() => changeMonth(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上个月">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{year}年 {month + 1}月</div>
+          <div className="min-w-0 text-center text-[length:var(--pm-font-size-card-title)] font-semibold text-[var(--pm-text-primary)]">{year}年 {month + 1}月</div>
           <button type="button" onClick={() => changeMonth(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下个月">
             <ArrowRight size={18} />
           </button>
@@ -1573,9 +1553,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
             今天
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-y-2 text-center text-[length:var(--pm-font-size-card-title)] font-bold">
+        <div className="grid grid-cols-7 gap-y-1 text-center text-[length:var(--pm-font-size-body)] font-medium">
           {['一', '二', '三', '四', '五', '六', '日'].map(week => (
-            <div key={week} className="pb-2 text-[var(--pm-text-tertiary)]">{week}</div>
+            <div key={week} className="pb-2 text-[length:var(--pm-font-size-meta)] text-[var(--pm-text-secondary)]">{week}</div>
           ))}
           {calendarCells.map(cell => {
             if (!cell.day) return <div key={cell.key} className="h-[48px]" aria-hidden="true" />;
@@ -1595,10 +1575,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={cell.key}
                 type="button"
                 onClick={() => setSelectedGrowthDate(date)}
-                className={`flex h-[48px] flex-col items-center justify-start rounded-[var(--pm-radius-inner)] pt-1 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums text-[var(--pm-text-primary)] ${PARENT_PRESSABLE_CLASS}`}
+                className={`flex h-[48px] flex-col items-center justify-start rounded-[var(--pm-radius-control-compact)] pt-1 text-[length:var(--pm-font-size-body)] font-medium tabular-nums text-[var(--pm-text-primary)]`}
                 aria-label={`${month + 1}月${cell.day}日`}
+                aria-pressed={selected}
+                aria-current={isToday ? 'date' : undefined}
               >
-                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${selected ? 'bg-[var(--pm-brand-primary)] text-white' : isToday ? 'bg-[var(--pm-status-positive-soft)] text-[var(--pm-brand-primary-strong)]' : ''}`}>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${selected ? 'bg-[var(--pm-brand-primary)] text-white' : isToday ? 'bg-[var(--pm-brand-primary-soft)] text-[var(--pm-brand-primary-strong)]' : ''}`}>
                   {cell.day}
                 </span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
@@ -1613,21 +1595,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
     );
   };
 
-  const GrowthRangeTabs = () => (
-    <div className={`mx-5 mt-4 grid grid-cols-4 ${parentSegmentTone.track}`}>
-      {GROWTH_RANGE_TABS.map(([mode, label]) => (
-        <button
-          key={mode}
-          type="button"
-          onClick={() => setGrowthRangeMode(mode)}
-          className={`h-9 rounded-[var(--pm-radius-control)] text-[length:var(--pm-font-size-compact)] transition-all ${PARENT_PRESSABLE_CLASS} ${growthRangeMode === mode ? parentSegmentTone.active : parentSegmentTone.inactive}`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
-  );
-
   const GrowthWeekStrip = () => {
     const year = selectedGrowthDate.getFullYear();
     const month = selectedGrowthDate.getMonth();
@@ -1637,12 +1604,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
     };
 
     return (
-      <ParentCard as="section" className="mx-5 mt-3 p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <ParentCard shape="subtle" as="section" className="mx-5 mt-[var(--pm-layout-card-gap)]">
+        <div className="mb-2 flex min-w-0 items-center justify-between">
           <button type="button" onClick={() => changeMonth(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上个月">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{year}年 {month + 1}月</div>
+          <div className="min-w-0 text-center text-[length:var(--pm-font-size-card-title)] font-semibold text-[var(--pm-text-primary)]">{year}年 {month + 1}月</div>
           <button type="button" onClick={() => changeMonth(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下个月">
             <ArrowRight size={18} />
           </button>
@@ -1665,8 +1632,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={start.getTime()}
                 type="button"
                 onClick={() => setSelectedGrowthDate(representativeDate)}
-                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums transition-all ${PARENT_PRESSABLE_CLASS} ${selected ? parentSelectCardTone.active : parentSelectCardTone.inactive}`}
+                className={`${parentDateControl.option} ${selected ? parentDateControl.selected : parentDateControl.unselected}`}
                 aria-label={formatWeekRange(start, end)}
+                aria-pressed={selected}
               >
                 <span>{formatWeekRange(start, end)}</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
@@ -1689,12 +1657,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
     };
 
     return (
-      <ParentCard as="section" className="mx-5 mt-3 p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <ParentCard shape="subtle" as="section" className="mx-5 mt-[var(--pm-layout-card-gap)]">
+        <div className="mb-2 flex min-w-0 items-center justify-between">
           <button type="button" onClick={() => changeYear(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上一年">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{year}年</div>
+          <div className="min-w-0 text-center text-[length:var(--pm-font-size-card-title)] font-semibold text-[var(--pm-text-primary)]">{year}年</div>
           <button type="button" onClick={() => changeYear(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下一年">
             <ArrowRight size={18} />
           </button>
@@ -1716,8 +1684,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={monthIndex}
                 type="button"
                 onClick={() => setSelectedGrowthDate(new Date(year, monthIndex, 1))}
-                className={`flex h-[58px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold tabular-nums transition-all ${PARENT_PRESSABLE_CLASS} ${selected ? parentSelectCardTone.active : parentSelectCardTone.inactive}`}
+                className={`${parentDateControl.option} ${selected ? parentDateControl.selected : parentDateControl.unselected}`}
                 aria-label={`${monthIndex + 1}月`}
+                aria-pressed={selected}
               >
                 <span>{monthIndex + 1}月</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
@@ -1742,12 +1711,12 @@ const ParentApp: React.FC<ParentAppProps> = ({
     };
 
     return (
-      <ParentCard as="section" className="mx-5 mt-3 p-4">
-        <div className="mb-3 flex items-center justify-between">
+      <ParentCard shape="subtle" as="section" className="mx-5 mt-[var(--pm-layout-card-gap)]">
+        <div className="mb-2 flex min-w-0 items-center justify-between">
           <button type="button" onClick={() => changeSchoolYear(-1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="上一学年">
             <ArrowLeft size={18} />
           </button>
-          <div className="text-[length:var(--pm-font-size-section-title)] font-semibold tracking-tight text-[var(--pm-text-primary)]">{termInfo.label}</div>
+          <div className="min-w-0 text-center text-[length:var(--pm-font-size-card-title)] font-semibold text-[var(--pm-text-primary)]">{termInfo.label}</div>
           <button type="button" onClick={() => changeSchoolYear(1)} className={PARENT_ICON_BUTTON_CLASS} aria-label="下一学年">
             <ArrowRight size={18} />
           </button>
@@ -1767,8 +1736,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
                 key={range.key}
                 type="button"
                 onClick={() => setSelectedGrowthDate(new Date(range.start))}
-                className={`flex h-[72px] flex-col items-center justify-center rounded-[var(--pm-radius-inner)] px-3 text-[length:var(--pm-font-size-card-title)] font-bold transition-all ${PARENT_PRESSABLE_CLASS} ${selected ? parentSelectCardTone.active : parentSelectCardTone.inactive}`}
+                className={`${parentDateControl.option} ${selected ? parentDateControl.selected : parentDateControl.unselected}`}
                 aria-label={range.label}
+                aria-pressed={selected}
               >
                 <span>{range.label}</span>
                 <span className="mt-1 flex h-2 items-center justify-center gap-1">
@@ -1795,75 +1765,79 @@ const ParentApp: React.FC<ParentAppProps> = ({
         : 'grid-cols-1';
     const statisticTitle = growthRangeMode === 'day' ? '当天统计' : growthRangeMode === 'week' ? '本周统计' : growthRangeMode === 'month' ? '本月统计' : '本学期统计';
     return (
-      <ParentPageShell className="pb-8">
-        <Header title="成长数据" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
-        <GrowthRangeTabs />
-        {growthRangeMode === 'day' && <GrowthCalendar />}
-        {growthRangeMode === 'week' && <GrowthWeekStrip />}
-        {growthRangeMode === 'month' && <GrowthMonthSummary />}
-        {growthRangeMode === 'term' && <GrowthTermSummary />}
-        <ParentCard as="section" className="mx-5 mt-3 p-4">
-          <div className="mb-3">
-            <h2 className="text-[length:var(--pm-font-size-section-title)] font-bold text-[var(--pm-text-primary)]">{statisticTitle}</h2>
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <Header title="成长记录" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
+        <ParentPageShell className="pb-[calc(var(--pm-space-8)+var(--mini-program-bottom-safe-area,0px))]">
+          <div className="px-5 pt-4">
+            <ParentSegmentedControl<'school' | 'family'> value={recordSource} items={RECORD_SOURCE_OPTIONS} onChange={setRecordSource} ariaLabel="记录来源" />
           </div>
-          <div className={`grid ${statisticGridClass} gap-2`}>
-            <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-brand-primary-soft)] px-3 py-3 text-center">
-              <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-brand-primary-strong)]">总分</div>
-              <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold text-[var(--pm-brand-primary)]">{selectedTotalScore}</div>
+          {recordSource === 'family' ? (
+            <ParentBehaviorRecordList onDelete={record => { if (!activeChild) return; try { setParentBehaviorRecords(deleteParentBehaviorRecord(record.id, activeChild, PARENT_PROFILE.phone)); setSubmitSuccessMessage('记录已删除'); } catch { setSubmitSuccessMessage('删除失败，请重试'); } }} onEdit={record => { setEditingBehavior(record); setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: { content: record.content, images: record.images, occurredOn: record.occurredOn } })); setBehaviorError(''); }} records={activeParentRecords} childName={activeChild.name} onCreate={parentBehaviorRecordingEnabled ? openBehaviorRecord : undefined} />
+          ) : <>
+            <div className="mx-5 mt-2">
+              <ParentUnderlineTabs<GrowthRangeMode> value={growthRangeMode} items={GROWTH_RANGE_OPTIONS} onChange={setGrowthRangeMode} ariaLabel="评价时间范围" />
             </div>
-            {showPositiveSummary && (
-              <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-positive-soft)] px-3 py-3 text-center">
-                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-status-positive)]">表扬</div>
-                <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold text-[var(--pm-status-positive-strong)]">{selectedPraiseCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+            {growthRangeMode === 'day' && <GrowthCalendar />}
+            {growthRangeMode === 'week' && <GrowthWeekStrip />}
+            {growthRangeMode === 'month' && <GrowthMonthSummary />}
+            {growthRangeMode === 'term' && <GrowthTermSummary />}
+            <ParentCard shape="subtle" as="section" className="mx-5 mt-[var(--pm-layout-card-gap)]">
+              <div className="mb-3">
+                <h2 className="text-[length:var(--pm-font-size-card-title)] font-semibold text-[var(--pm-text-primary)]">{statisticTitle}</h2>
               </div>
-            )}
-            {showNegativeSummary && (
-              <div className="rounded-[var(--pm-radius-inner)] bg-[var(--pm-status-negative-soft)] px-3 py-3 text-center">
-                <div className="text-[length:var(--pm-font-size-meta)] font-bold text-[var(--evaluation-score-negative)]">待改进</div>
-                <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold text-[var(--evaluation-score-negative)]">{selectedImproveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+              <div className={`grid ${statisticGridClass} gap-2`}>
+                <div className="rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-record-summary-total-bg)] px-3 py-3 text-center text-[var(--pm-record-summary-total-text)]">
+                  <div className="text-[length:var(--pm-font-size-meta)] font-medium">总分</div>
+                  <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold">{selectedTotalScore}</div>
+                </div>
+                {showPositiveSummary && (
+                  <div className="rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-record-summary-praise-bg)] px-3 py-3 text-center text-[var(--pm-record-summary-praise-text)]">
+                    <div className="text-[length:var(--pm-font-size-meta)] font-medium">表扬</div>
+                    <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold">{selectedPraiseCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+                  </div>
+                )}
+                {showNegativeSummary && (
+                  <div className="rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-record-summary-improve-bg)] px-3 py-3 text-center text-[var(--pm-record-summary-improve-text)]">
+                    <div className="text-[length:var(--pm-font-size-meta)] font-medium">待改进</div>
+                    <div className="mt-1 tabular-nums text-[length:var(--pm-font-size-metric)] font-bold">{selectedImproveCount}<span className="ml-0.5 text-[length:var(--pm-font-size-meta)]">次</span></div>
+                  </div>
+                )}
               </div>
+            </ParentCard>
+            {showAnyEvaluationDetails && (
+              <section className="mx-5 mt-[var(--pm-layout-card-gap)]" aria-labelledby="parent-evaluation-details-title">
+                <h2 id="parent-evaluation-details-title" className="px-1 text-[length:var(--pm-font-size-card-title)] font-semibold text-[var(--pm-text-primary)]">评价明细</h2>
+                {visibleDetailRecords.length > 0 ? (
+                  <div className="mt-[var(--pm-layout-card-gap)] space-y-[var(--pm-layout-card-gap)]">
+                    {visibleDetailRecords.map(record => {
+                      const positive = record.score > 0;
+                      return (
+                        <ParentRecordCard key={record.id} content={record.content}
+                          footer={<><span className="break-words">{formatEvaluationTeacherName(record.teacher)}</span><span>{record.time}</span></>}
+                          action={<span className={`shrink-0 tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold ${positive ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--evaluation-score-negative)]'}`}>{record.score > 0 ? `+${record.score}` : record.score}</span>}>
+                          {record.images && record.images.length > 0 && (
+                            <ImageGallery
+                              images={record.images}
+                              label="评价图片"
+              topInset="max(var(--mini-program-status-bar-height, 0px), env(safe-area-inset-top, 0px))"
+                              className="mt-3 [--media-radius:var(--pm-radius-control-compact)]"
+                              onSelect={index => setEvaluationImagePreview({ childId: activeChild.id, recordId: record.id, index })}
+                            />
+                          )}
+                        </ParentRecordCard>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <ParentCard shape="subtle" className="mt-2 px-4 py-8 text-center text-[length:var(--pm-font-size-body)] font-medium text-[var(--pm-text-tertiary)]">
+                    该时段暂无评价记录
+                  </ParentCard>
+                )}
+              </section>
             )}
-          </div>
-        </ParentCard>
-        {showAnyEvaluationDetails && (
-          <section className="mx-5 mt-4" aria-labelledby="parent-evaluation-details-title">
-            <h2 id="parent-evaluation-details-title" className="px-1 text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">评价明细</h2>
-            {visibleDetailRecords.length > 0 ? (
-              <div className="mt-2 space-y-2">
-                {visibleDetailRecords.map(record => {
-                  const positive = record.score > 0;
-                  return (
-                    <ParentCard key={record.id} as="article" className="p-4">
-                      <p className="break-words text-[length:var(--pm-font-size-card-title)] font-bold leading-relaxed text-[var(--pm-text-primary)]">{record.content}</p>
-                      {record.images && record.images.length > 0 && (
-                        <ImageGallery
-                          images={record.images}
-                          label="评价图片"
-                          className="mt-3 [--media-radius:var(--pm-radius-control)]"
-                          onSelect={index => setEvaluationImagePreview({ childId: activeChild.id, recordId: record.id, index })}
-                        />
-                      )}
-                      <div className="mt-3 flex items-baseline justify-between gap-3">
-                        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 text-[length:var(--pm-font-size-meta)] font-bold text-[var(--pm-text-tertiary)]">
-                          <span className="break-words">{formatEvaluationTeacherName(record.teacher)}</span>
-                          <span>{record.time}</span>
-                        </div>
-                        <span className={`shrink-0 tabular-nums text-[length:var(--pm-font-size-section-title)] font-bold ${positive ? 'text-[var(--pm-status-positive-strong)]' : 'text-[var(--evaluation-score-negative)]'}`}>
-                          {record.score > 0 ? `+${record.score}` : record.score}
-                        </span>
-                      </div>
-                    </ParentCard>
-                  );
-                })}
-              </div>
-            ) : (
-              <ParentCard className="mt-2 px-4 py-8 text-center text-[length:var(--pm-font-size-body)] font-bold text-[var(--pm-text-tertiary)]">
-                该时段暂无评价记录
-              </ParentCard>
-            )}
-          </section>
-        )}
-      </ParentPageShell>
+          </>}
+        </ParentPageShell>
+      </div>
     );
   };
 
@@ -1925,27 +1899,15 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const Growth = () => {
     if (!activeChild) return <Binding />;
     return (
-      <ParentPageShell className="pb-28">
+      <ParentPageShell className="parent-growth-home">
         <GrowthChildProfileCard />
-        <GrowthBankEntry />
+        <div className="pg-hero">
+          <h1>成长</h1>
+          <p>见证每一点进步</p>
+          <img src={colorScheme !== 'original' ? '/assets/parent-growth/giraffe-soft-vinyl-v2.png' : '/assets/parent-growth/reading-bird.png'} className={`pg-mascot${colorScheme !== 'original' ? ' pg-mascot--peeking' : ''}`} alt="" aria-hidden="true" width="144" height="144" />
+        </div>
         <GrowthSummaryCards />
-        <ParentCard as="section" className="mx-5 mt-3 overflow-hidden p-0">
-          <button
-            type="button"
-            onClick={() => setScreen('cardCollection')}
-            className={`flex min-h-[82px] w-full items-center gap-3 px-4 py-3 text-left ${PARENT_PRESSABLE_CLASS}`}
-            aria-label="打开我的卡册，已收藏1张卡片"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--pm-radius-control)] bg-[linear-gradient(145deg,#e5f2e7,#f4e5c5)] text-[#8b5d20]">
-              <Sparkles size={20} strokeWidth={2.1} aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[length:var(--pm-font-size-card-title)] font-bold text-[var(--pm-text-primary)]">我的卡册</span>
-              <span className="mt-1 block text-[length:var(--pm-font-size-meta)] text-[var(--pm-text-tertiary)]">已收藏 1 张成长卡片</span>
-            </span>
-            <ChevronRight size={18} className="shrink-0 text-[var(--pm-text-disabled)]" aria-hidden="true" />
-          </button>
-        </ParentCard>
+        <GrowthCoinEntry />
       </ParentPageShell>
     );
   };
@@ -2384,7 +2346,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
 
   const Bank = () => {
     if (!activeChild) return <Binding />;
-    if (!parentBankFeatureEnabled) return <Growth />;
+    if (!isBankEnabled) return <Growth />;
     const amount = Math.max(1, Math.min(Number(depositAmount) || 1, activeChild.availableCoins));
     const projectedInterest = calculateProjectedInterest(amount, selectedBankScheme);
     const bankTopSpacing = 'mt-3';
@@ -2798,7 +2760,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   };
 
   const ExchangePasswordSheet = () => {
-    if (!exchangePasswordChild) return null;
+    if (!parentGrowthCoinEnabled || !exchangePasswordChild) return null;
     return (
       <ParentExchangePasswordSheet
         password={exchangePasswordChild.exchangePassword}
@@ -2904,8 +2866,8 @@ const ParentApp: React.FC<ParentAppProps> = ({
     if (screen === 'questionnaireDetail') return QuestionnaireDetail();
     if (screen === 'reportDetail') return ReportDetail();
     if (screen === 'bank') return Bank();
-    if (screen === 'coinFlow' && activeChild) return <ParentCoinFlowView key={activeChild.id} records={createDemoGrowthCoinFlows(activeChild.id)} canViewEvaluationDetails={showPositiveDetails}
-      header={<Header title={GROWTH_COIN_TERMS.details} showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />} />;
+    if (screen === 'coinFlow' && activeChild && parentGrowthCoinEnabled) return <ParentCoinFlowView key={activeChild.id} records={createDemoGrowthCoinFlows(activeChild.id)} canViewEvaluationDetails={showPositiveDetails}
+      header={<ParentPageHeader title={GROWTH_COIN_TERMS.details} backLabel="返回成长页" onBack={() => setScreen('growth')} />} />;
     if (screen === 'mine') return MinePage();
     return Growth();
   };
@@ -2967,27 +2929,51 @@ const ParentApp: React.FC<ParentAppProps> = ({
   return (
     <GrowthCoinScope schoolId={coinSchoolId}>
     <div
-      className="flex h-[100dvh] w-screen items-center justify-center bg-[var(--pm-bg-page)] p-4 font-sans"
-      style={{ ...parentMobileCssVariables, '--evaluation-score-negative': evaluationScoreSemantic.negative } as React.CSSProperties}
+      className="parent-mobile-app flex h-[100dvh] w-screen items-center justify-center bg-slate-50 p-4 font-sans"
+      style={{ ...parentMobileCssVariables, ...getParentGrowthTheme(colorScheme), '--evaluation-score-negative': evaluationScoreSemantic.negative } as React.CSSProperties}
     >
-      <PhoneMockup showDeviceFrame={showPhoneShell} contentTopInsetMode="status-bar" screenBackground={<ParentDiffuseBackdrop preview={gradientPreview} />}>
-        <div className="relative flex flex-1 flex-col overflow-hidden bg-transparent text-[var(--pm-text-primary)]">
+      <PhoneMockup
+        showDeviceFrame={showPhoneShell}
+        screenOverlayRootId="teacher-mobile-overlay-root"
+        contentTopInsetMode="status-bar"
+        hideCapsule={Boolean(previewRecord && evaluationImagePreview)}
+        screenOverlay={
+          previewRecord?.images && evaluationImagePreview ? (
+            <ImagePreview
+              key={`${evaluationImagePreview.childId}-${previewRecord.id}`}
+              images={previewRecord.images}
+              initialIndex={evaluationImagePreview.index}
+              label="评价图片"
+              topInset="max(var(--mini-program-status-bar-height, 0px), env(safe-area-inset-top, 0px))"
+              onClose={() => setEvaluationImagePreview(null)}
+            />
+          ) : null
+        }
+        screenBackground={hasPlainPageBackground
+          ? <TeacherMobileScreenBackground variant="plain" />
+          : screen === 'growth' && activeChild
+            ? <div className="pg-screen-background" />
+            : <ParentDiffuseBackdrop preview={gradientPreview} />}
+      >
+        <div className={`relative flex flex-1 flex-col overflow-hidden text-[var(--pm-text-primary)] ${hasPlainPageBackground ? 'bg-[var(--pm-page-plain-content-bg)]' : 'bg-transparent'}`}>
           <div className="flex min-h-0 flex-1 flex-col" inert={previewRecord ? true : undefined}>
             {renderScreen()}
             {showTabs && renderParentBottomNav()}
             <SubmitSuccessToast />
             <ChildSwitcherSheet />
             <ExchangePasswordSheet />
+            <MobileBottomSheet open={behaviorComposerOpen && parentBehaviorRecordingEnabled && Boolean(activeChild)} title="记录表现" onClose={() => setBehaviorComposerOpen(false)} contentInset="none">
+              {behaviorComposerOpen && activeChild && <ParentBehaviorRecordPage key={behaviorSubjectKey} child={activeChild} header={null} draft={behaviorDraft} error={behaviorError} saved={Boolean(autoRecordId.current)} photoEnabled={recordingSettings.photoEnabled}
+                onChange={draft => { setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: draft })); setBehaviorError(''); }} onSave={autoSaveBehaviorRecord} />}
+            </MobileBottomSheet>
+            <MobileBottomSheet open={Boolean(editingBehavior)} title="修改记录" onClose={() => { saveBehaviorRecord(behaviorDraft); }}>
+              <label className="block text-[length:var(--pm-font-size-body)]">发生日期<input aria-label="发生日期" type="date" value={behaviorDraft.occurredOn} max={createParentBehaviorDraft().occurredOn} onChange={event => setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: { ...behaviorDraft, occurredOn: event.target.value } }))} className="ml-3 min-h-11 bg-transparent" /></label>
+              <textarea aria-label="孩子的表现" rows={5} maxLength={2000} value={behaviorDraft.content} onChange={event => setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: { ...behaviorDraft, content: event.target.value } }))} className="mt-3 w-full rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-bg-surface)] p-3 text-[length:var(--pm-font-size-body)] outline-none focus:ring-0" />
+              {behaviorError && <p role="alert">{behaviorError}</p>}
+            </MobileBottomSheet>
+
           </div>
-          {previewRecord?.images && evaluationImagePreview && (
-            <ImagePreview
-              key={`${evaluationImagePreview.childId}-${previewRecord.id}`}
-              images={previewRecord.images}
-              initialIndex={evaluationImagePreview.index}
-              label="评价图片"
-              onClose={() => setEvaluationImagePreview(null)}
-            />
-          )}
+
         </div>
       </PhoneMockup>
     </div>
