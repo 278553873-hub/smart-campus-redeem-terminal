@@ -521,8 +521,8 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                             </p>
                         )}
                     <fieldset className="m-0 min-w-0 border-0 p-0">
-                        <legend className="mb-[var(--tm-space-2)] block p-0">
-                            <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">发放方式（二选一）</span>
+                        <legend className="mb-[var(--tm-space-2)] block py-0 pl-[var(--tm-space-4)] pr-0">
+                            <span className="text-[13px] font-semibold text-[var(--tm-text-secondary)]">发放方式（二选一）</span>
                         </legend>
                         <div className="grid gap-[var(--tm-form-option-gap)]" role="radiogroup" aria-label="成长币发放方式">
                             {GROWTH_COIN_MODES.map(option => (
