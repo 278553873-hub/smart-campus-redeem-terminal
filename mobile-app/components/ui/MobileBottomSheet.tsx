@@ -2,6 +2,8 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
+export type MobileSheetTitleSpacing = 'standard' | 'inset';
+
 interface MobileBottomSheetProps {
   open: boolean;
   title: string;
@@ -16,6 +18,7 @@ interface MobileBottomSheetProps {
   footerSpacing?: 'standard' | 'section';
   header?: React.ReactNode;
   titleContent?: React.ReactNode;
+  titleSpacing?: MobileSheetTitleSpacing;
   headerAction?: {
     label: string;
     onClick: () => void;
@@ -48,6 +51,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   footerSpacing = 'standard',
   header,
   titleContent,
+  titleSpacing = 'standard',
   headerAction,
   showHandle = true,
   flushContentBottom = false,
@@ -185,7 +189,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
               {titleContent ? (
                 <div className="min-w-0 flex-1 self-stretch">{titleContent}</div>
               ) : (
-                <h2 className="min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] leading-6 font-semibold text-[var(--tm-text-primary)]">{title}</h2>
+                <h2 className={`min-w-0 flex-1 truncate text-[length:var(--tm-font-size-section-title)] leading-6 font-semibold text-[var(--tm-text-primary)] ${titleSpacing === 'inset' ? 'px-[var(--tm-space-2)]' : ''}`}>{title}</h2>
               )}
               <div className="-mr-2 flex shrink-0 items-center">
                 {headerAction && (

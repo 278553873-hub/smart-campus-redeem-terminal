@@ -6,6 +6,7 @@ import {
   askClassEvaluationQuestion,
   calculateClassEvaluationSnapshot,
   generateClassEvaluationWeeklyReport,
+  getClassEvaluationScoreChange,
 } from './classEvaluationAssistantV2.ts';
 import {
     CLASS_EVALUATION_PERIOD,
@@ -23,8 +24,8 @@ const snapshot = calculateClassEvaluationSnapshot(
 );
 
 assert.equal(snapshot.deduction, 4.5);
-assert.equal(snapshot.finalScore, 95.5);
-assert.equal(snapshot.recordCount, 8);
+assert.equal(snapshot.finalScore, 95.7);
+assert.equal(snapshot.recordCount, 9);
 assert.ok(!('classDeduction' in snapshot));
 assert.ok(!('teacherDeduction' in snapshot));
 assert.ok(
@@ -38,6 +39,12 @@ assert.equal(CLASS_EVALUATION_WEEKS[0].dataRangeLabel, '8月3日-8月9日');
 assert.equal(CLASS_EVALUATION_WEEKS[0].gradeRank, 2);
 assert.ok(!('overallRank' in CLASS_EVALUATION_WEEKS[0]));
 for (const week of CLASS_EVALUATION_WEEKS) {
+  const records = getClassEvaluationRecords('c_2025_4', week.id);
+  assert.ok(records.some(record => getClassEvaluationScoreChange(record) > 0), `${week.label} 明细应包含加分记录。`);
+  assert.ok(records.some(record => getClassEvaluationScoreChange(record) < 0), `${week.label} 明细应包含扣分记录。`);
+  assert.ok(records.every(record => record.classId === 'c_2025_4' && record.date >= week.start && record.date <= week.end), '评价明细不得混入其他班级或周期。');
+  assert.ok(records.every((record, index) => index === 0 || records[index - 1].date >= record.date), '评价明细按日期倒序展示。');
+  assert.ok(week.dimensionRankings.every(item => item.recordCount === records.filter(record => record.dimension === item.dimension).length), '分类记录数应同时包含加分与扣分。');
   assert.equal(week.dimensionRankings.length, 5, `${week.label} 应包含五个一级指标。`);
   assert.ok(
     week.dimensionRankings.every(item => item.maxScore === 20 && item.score <= item.maxScore),
@@ -93,14 +100,14 @@ const weeklyPerformance = askClassEvaluationQuestion({
   question: CLASS_EVALUATION_FIXED_QUESTIONS[0].label,
 });
 assert.equal(weeklyPerformance.answerType, 'weekly_performance');
-assert.match(weeklyPerformance.message, /本周当前得分95.5分，年级第2名/);
+assert.match(weeklyPerformance.message, /本周当前得分95.7分，年级第2名/);
 assert.equal(weeklyPerformance.breakdown.length, 5);
 assert.equal(weeklyPerformance.breakdown[2].label, '健体班级');
-assert.equal(weeklyPerformance.breakdown[2].value, '18.2\/20.0分');
+assert.equal(weeklyPerformance.breakdown[2].value, '18.4\/20.0分');
 assert.ok(weeklyPerformance.metrics.length > 0);
 assert.ok(weeklyPerformance.analysis.length > 0);
 assert.ok(weeklyPerformance.suggestions.length > 0);
-assert.equal(weeklyPerformance.evidenceRefs.length, 8);
+assert.equal(weeklyPerformance.evidenceRefs.length, 9);
 
 const deductionPatterns = askClassEvaluationQuestion({
   ...assistantInput,
@@ -113,6 +120,7 @@ assert.match(deductionPatterns.analysis[0].body, /76%/);
 assert.ok(deductionPatterns.metrics.length > 0);
 assert.ok(deductionPatterns.suggestions.length > 0);
 assert.equal(deductionPatterns.evidenceRefs.length, 8);
+assert.ok(deductionPatterns.evidenceRefs.every(id => getClassEvaluationScoreChange(CLASS_EVALUATION_RECORDS.find(record => record.id === id)) < 0), '待改进分析不得把加分记录计为扣分问题。');
 
 const nextWeekFocus = askClassEvaluationQuestion({
   ...assistantInput,
@@ -159,7 +167,7 @@ assert.deepEqual(weeklyReport.dimensionScores, weeklyPerformance.breakdown);
 assert.deepEqual(weeklyReport.performanceInsights, weeklyPerformance.analysis);
 assert.deepEqual(weeklyReport.deductionInsights, deductionPatterns.analysis);
 assert.deepEqual(weeklyReport.nextWeekSuggestions, nextWeekFocus.suggestions);
-assert.equal(weeklyReport.evidenceRefs.length, 8, '完整周报应合并三个分析阶段的逐笔依据并去重。');
+assert.equal(weeklyReport.evidenceRefs.length, 9, '完整周报应合并三个分析阶段的逐笔依据并去重。');
 assert.equal(weeklyReport.promptVersion, CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION);
 assert.equal(weeklyReport.dataSnapshotId, snapshot.id);
 
@@ -184,5 +192,23 @@ assert.match(unavailable.message, /没有对应待改进明细/);
 assert.deepEqual(unavailable.evidenceRefs, []);
 assert.deepEqual(unavailable.analysis, []);
 assert.deepEqual(unavailable.suggestions, []);
+
+assert.deepEqual(getClassEvaluationRecords('c_2025_1'), [], '其他班级不得看到示范班级的加减分明细。');
+const legacyRecord = CLASS_EVALUATION_RECORDS.find(record => record.deduction === 1);
+assert.equal(getClassEvaluationScoreChange(legacyRecord), -1, '历史扣分记录无需迁移即可正确显示负号。');
+const positiveRecord = CLASS_EVALUATION_RECORDS.find(record => record.scoreChange > 0);
+const signedNegativeRecord = { ...legacyRecord, id: 'signed-negative', scoreChange: -0.5, deduction: 0 };
+const mixedSnapshot = calculateClassEvaluationSnapshot('c_2025_4', currentWeek.start, currentWeek.end, [positiveRecord, signedNegativeRecord]);
+assert.equal(mixedSnapshot.finalScore, 99.7, '总分同时计入加分、扣分。');
+assert.equal(mixedSnapshot.deduction, 0.5, '加分不得抵消累计扣分。');
+const signedDeductionAnswer = askClassEvaluationQuestion({ ...assistantInput, snapshot: mixedSnapshot, records: [positiveRecord, signedNegativeRecord], question: CLASS_EVALUATION_FIXED_QUESTIONS[1].label });
+assert.deepEqual(signedDeductionAnswer.evidenceRefs, ['signed-negative'], '新分值字段的扣分也必须参与分析。');
+assert.equal(signedDeductionAnswer.breakdown[0].value, '-0.5分');
+const positiveSnapshot = calculateClassEvaluationSnapshot('c_2025_4', currentWeek.start, currentWeek.end, [positiveRecord]);
+for (const question of CLASS_EVALUATION_FIXED_QUESTIONS) {
+  const answer = askClassEvaluationQuestion({ ...assistantInput, snapshot: positiveSnapshot, records: [positiveRecord], question: question.label });
+  assert.match(answer.message, /暂无扣分记录/, '只有加分时不应生成待改进问题。');
+  assert.ok(!JSON.stringify(answer).match(/NaN|Infinity/), '只有加分时分析不得出现无效数值。');
+}
 
 console.log('Class evaluation assistant V2 domain assertions passed');

@@ -1,9 +1,10 @@
-import { BookOpen, ClipboardList, Heart, Star, Users, UserRound, Footprints, Palette, Sprout, Pause, Play, Maximize, Minimize, SlidersHorizontal, RefreshCw, type LucideProps } from 'lucide-react';
+import { BookOpen, ClipboardList, Heart, Star, Users, UserRound, Footprints, Palette, Sprout, Pause, Play, Maximize, Minimize, SlidersHorizontal, RefreshCw, GraduationCap, ChevronLeft, ChevronRight, NotebookPen, ListChecks, UserCheck, type LucideProps } from 'lucide-react';
 
 const screenIcons = {
   book: BookOpen, records: ClipboardList, evaluation: Star, students: Users, teacher: UserRound,
   virtue: Heart, wisdom: BookOpen, fitness: Footprints, aesthetic: Palette, labor: Sprout,
   pause: Pause, play: Play, maximize: Maximize, minimize: Minimize, settings: SlidersHorizontal, refresh: RefreshCw,
+  school: GraduationCap, previous: ChevronLeft, next: ChevronRight, notebook: NotebookPen, checklist: ListChecks, participation: UserCheck,
 } as const;
 export type ScreenIconName = keyof typeof screenIcons;
 

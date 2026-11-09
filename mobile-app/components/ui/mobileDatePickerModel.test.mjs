@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import ts from 'typescript';
 const source = fs.readFileSync(new URL('./mobileDatePickerModel.ts', import.meta.url), 'utf8');
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText;
-const { isCalendarDate, shiftDate, calendarCells, setRangeEndpoint, dateRangePresets, daysInCalendarMonth, replaceCalendarPart, rangeError, dateAllowed } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+const { isCalendarDate, shiftDate, calendarCells, setRangeEndpoint, dateRangePresets, daysInCalendarMonth, replaceCalendarPart, rangeError, dateAllowed, calendarMonthRange, calendarMonthOptions } = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
 assert.equal(isCalendarDate('2024-02-29'), true);
 for (const invalid of ['2025-02-29', '2026-02-31', '2026-13-01', '', '2026-1-1']) assert.equal(isCalendarDate(invalid), false);
 assert.equal(shiftDate('2026-12-31', 1), '2027-01-01');
@@ -47,3 +47,20 @@ assert.equal(replaceCalendarPart('2026-03-31', 'month', 4, ...limits), '2026-04-
 assert.equal(replaceCalendarPart('2026-10-14', 'month', 9, '2026-10-01', '2026-10-31'), '2026-10-01');
 assert.equal(replaceCalendarPart('2026-10-14', 'day', 25, '2026-10-01', '2026-10-20'), '2026-10-20');
 console.log('日期滚轮联动通过：大小月、闰年和日期上下限。');
+
+assert.deepEqual(calendarMonthRange('2024-02'), { start: '2024-02-01', end: '2024-02-29' });
+assert.deepEqual(calendarMonthRange('2026-02'), { start: '2026-02-01', end: '2026-02-28' });
+assert.deepEqual(calendarMonthRange('2026-12'), { start: '2026-12-01', end: '2026-12-31' });
+assert.deepEqual(calendarMonthRange('2026-11', '2026-11-05', '2026-11-09'), { start: '2026-11-05', end: '2026-11-09' });
+for (const month of ['2026-10', '2026-12', '2026-13', '2026-1', '']) {
+  assert.deepEqual(calendarMonthRange(month, '2026-11-01', '2026-11-09'), { start: '', end: '' });
+}
+assert.deepEqual(calendarMonthOptions('2026-12-15', '2027-02-10'), ['2026-12', '2027-01', '2027-02']);
+assert.deepEqual(calendarMonthOptions('2026-11-09', '2026-11-09'), ['2026-11']);
+assert.deepEqual(calendarMonthOptions('2026-11-10', '2026-11-09'), []);
+assert.equal(calendarMonthOptions()[0], '1900-01');
+assert.equal(calendarMonthOptions().at(-1), '2100-12');
+for (const month of calendarMonthOptions('2024-02-29', '2025-02-01')) {
+  assert.equal(rangeError(calendarMonthRange(month, '2024-02-29', '2025-02-01'), '2024-02-29', '2025-02-01'), '');
+}
+console.log('月份筛选验证通过：整月、闰年、跨年、边界月交集和无可选月份。');

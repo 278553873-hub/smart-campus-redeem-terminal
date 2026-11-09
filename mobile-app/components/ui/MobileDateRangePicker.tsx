@@ -36,11 +36,11 @@ export default function MobileDateRangePicker({ value, onChange, presets, min, m
   const announcement = !value.start ? '请选择开始日期' : !value.end ? '请选择结束日期' : `正在选择${activeField === 'start' ? '开始' : '结束'}日期`;
   return <>
     <div className="px-[var(--tm-sheet-inline)]">
-      {presets.length > 0 && <div className="mb-[var(--tm-space-6)] grid grid-cols-5 gap-1.5" role="group" aria-label="快捷日期范围">{presets.map(preset => {
+      {presets.length > 0 && <div className="mb-[var(--tm-space-4)] grid grid-cols-5 gap-1.5" role="group" aria-label="快捷日期范围">{presets.map(preset => {
         const selected = value.start === preset.value.start && value.end === preset.value.end;
         return <button key={preset.label} type="button" aria-pressed={selected} disabled={Boolean(rangeError(preset.value, min, max) || validate?.(preset.value))} onClick={() => { onChange({ ...preset.value }); setActiveField('start'); setPosition(p => p + 1); }} className={`group flex min-h-[var(--tm-size-touch)] min-w-0 items-center rounded-[var(--tm-selection-pill-radius)] bg-transparent text-[length:var(--tm-font-size-body)] leading-5 font-medium ${focus}`}><span className={`flex h-[var(--tm-date-shortcut-height)] w-full items-center justify-center whitespace-nowrap rounded-[var(--tm-selection-pill-radius)] border px-1 ${selected ? 'border-[var(--tm-brand-primary)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]' : 'border-[var(--tm-border-subtle)] bg-transparent text-[var(--tm-text-secondary)]'} group-disabled:border-[var(--tm-border-subtle)] group-disabled:bg-transparent group-disabled:text-[var(--tm-text-disabled)]`}>{preset.label}</span></button>;
       })}</div>}
-      <div className="mb-[var(--tm-space-6)] grid grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] items-end gap-1" role="group" aria-label="编辑日期范围">
+      <div className="mb-[var(--tm-space-4)] grid grid-cols-[minmax(0,1fr)_24px_minmax(0,1fr)] items-end gap-1" role="group" aria-label="编辑日期范围">
         {(['start', 'end'] as const).map((field, index) => <React.Fragment key={field}>
           {index === 1 && <span className="flex h-[var(--tm-date-row-height)] items-center justify-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">至</span>}
           <div className="min-w-0 space-y-2">

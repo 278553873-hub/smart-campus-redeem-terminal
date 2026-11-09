@@ -208,6 +208,7 @@ const MobileClassPickerSheet: React.FC<MobileClassPickerSheetProps> = props => {
     <MobileBottomSheet
       open={open}
       title={title}
+      titleSpacing="inset"
       onClose={onClose}
       size="content"
       contentLayout="fill"

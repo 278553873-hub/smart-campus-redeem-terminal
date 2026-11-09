@@ -22,6 +22,7 @@ import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileCardTabBar from '../components/ui/MobileCardTabBar';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import MobileRadioOptionCard from '../components/ui/MobileRadioOptionCard';
 import type { CoinIssuanceConfig } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileToast from '../components/ui/MobileToast';
@@ -424,6 +425,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
     const [showIssuanceHelp, setShowIssuanceHelp] = React.useState(false);
     const [budgetAmountDraft, setBudgetAmountDraft] = React.useState(String(config.budgetAmount));
     const issuanceHelpId = React.useId();
+    const issuanceModeId = React.useId();
     const rankingRatio = 100 - config.sunshineRatio;
     const isPerStudentBudget = config.budgetMode === 'per_student';
     const update = (patch: Partial<CoinIssuanceConfig>) => setConfig(current => ({ ...current, ...patch }));
@@ -518,21 +520,26 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
                                 以下包含此前未生效的修改，保存后将立即生效。
                             </p>
                         )}
-                    <FeaturePanel variant="form" className="space-y-3 p-4">
-                        <h2 className="text-[15px] font-bold text-[var(--tm-text-primary)]">发放方式</h2>
-                        <CompactSegmentedControl
-                            value={mode}
-                            items={GROWTH_COIN_MODES}
-                            onChange={mode => update({ mode })}
-                            ariaLabel="成长币发放方式"
-                            semantics="group"
-                            fullWidth
-                            shape="subtle"
-                        />
-                        <p className="text-[12px] font-medium leading-5 text-[var(--tm-text-tertiary)]">
-                            <GrowthCoinRuleDescription mode={mode} />
-                        </p>
-                    </FeaturePanel>
+                    <fieldset className="m-0 min-w-0 border-0 p-0">
+                        <legend className="mb-[var(--tm-space-2)] block p-0">
+                            <span className="text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">发放方式（二选一）</span>
+                        </legend>
+                        <div className="grid gap-[var(--tm-form-option-gap)]" role="radiogroup" aria-label="成长币发放方式">
+                            {GROWTH_COIN_MODES.map(option => (
+                                <MobileRadioOptionCard
+                                    key={option.value}
+                                    id={`${issuanceModeId}-${option.value}`}
+                                    shape="subtle"
+                                    title={option.label}
+                                    titleSize="large"
+                                    descriptionSize="readable"
+                                    description={<GrowthCoinRuleDescription mode={option.value} emphasis="highlight" />}
+                                    selected={mode === option.value}
+                                    onSelect={() => update({ mode: option.value })}
+                                />
+                            ))}
+                        </div>
+                    </fieldset>
                     {mode === 'score' ? (<>
                         <FeaturePanel variant="form" className="space-y-4 p-4">
                             <ScoreCoinAmountFields rule={scoreRule} onChange={scoreRule => update({ scoreRule })} />

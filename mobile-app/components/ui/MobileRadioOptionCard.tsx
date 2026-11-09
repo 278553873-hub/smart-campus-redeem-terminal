@@ -6,8 +6,10 @@ interface MobileRadioOptionCardProps {
   tag?: string;
   tagTone?: 'neutral' | 'red' | 'orange' | 'jade' | 'gold';
   title: string;
+  titleSize?: 'default' | 'large';
   /** 说明支持带图标的富文本，例如金额前挂金币或银行图标。 */
   description: React.ReactNode;
+  descriptionSize?: 'default' | 'readable';
   selected: boolean;
   shape?: 'default' | 'subtle';
   onSelect: () => void;
@@ -18,7 +20,9 @@ const MobileRadioOptionCard: React.FC<MobileRadioOptionCardProps> = ({
   tag,
   tagTone = 'neutral',
   title,
+  titleSize = 'default',
   description,
+  descriptionSize = 'default',
   selected,
   shape = 'default',
   onSelect,
@@ -45,7 +49,7 @@ const MobileRadioOptionCard: React.FC<MobileRadioOptionCardProps> = ({
       <Check className="h-3 w-3" strokeWidth={3} />
     </span>
     <span className="min-w-0 flex-1">
-      <span id={`${id}-title`} className="block text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-selection-card-title-text)]">
+      <span id={`${id}-title`} className={`block font-semibold text-[var(--tm-selection-card-title-text)] ${titleSize === 'large' ? 'text-[length:var(--tm-font-size-section-title)] leading-6' : 'text-[length:var(--tm-font-size-body)]'}`}>
         {title}
       </span>
       {tag && (
@@ -59,7 +63,9 @@ const MobileRadioOptionCard: React.FC<MobileRadioOptionCardProps> = ({
           {tag}
         </span>
       )}
-      <span id={`${id}-description`} className="mt-1 block text-[length:var(--tm-font-size-meta)] font-medium leading-5 text-[var(--tm-selection-card-description-text)]">
+      <span id={`${id}-description`} className={`block font-medium text-[var(--tm-selection-card-description-text)] ${descriptionSize === 'readable'
+        ? 'mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] leading-[var(--tm-selection-card-readable-line-height)]'
+        : 'mt-1 text-[length:var(--tm-font-size-meta)] leading-5'}`}>
         {description}
       </span>
     </span>

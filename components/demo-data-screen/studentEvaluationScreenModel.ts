@@ -1,4 +1,4 @@
-import type { LeaderReportSnapshot, LeaderReportFiveEducationStat } from '../../mobile-app/services/leaderReportService';
+import type { LeaderReportSnapshot, LeaderReportFiveEducationStat, LeaderReportIndicatorGroupUsage } from '../../mobile-app/services/leaderReportService';
 
 export const SCREEN_PERIODS = [
   { key: 'today', label: '今日' },
@@ -27,6 +27,8 @@ export interface ScreenEvaluation {
   dimension: EducationKey;
   dimensionName: string;
   indicator: string;
+  indicatorPath?: [string, string, string];
+  indicatorId?: string;
   occurredAt: number;
   students: StudentScoreChange[];
 }
@@ -51,7 +53,28 @@ const DEMO_BEHAVIORS: Record<EducationKey, { positive: string; negative: string 
   labor: { positive: '主动承担班级劳动', negative: '劳动工具需归位' },
 };
 // 只在演示事件源中使用脱敏展示名，不向页面传递学生完整姓名。
-const DEMO_DISPLAY_NAMES = ['陈同学', '林同学', '周同学', '王同学', '李同学', '张同学', '刘同学', '赵同学'];
+const DEMO_DISPLAY_NAMES = ['陈**', '林**', '周**', '王**', '李**航', '张**', '刘**', '赵**'];
+
+export const maskScreenStudentName = (name: string) => {
+  const characters = Array.from(name.trim());
+  if (!characters.length) return '**';
+  if (characters.includes('*')) return name;
+  return characters[0] + '**' + (characters.length >= 3 && !name.endsWith('同学') ? characters[characters.length - 1] : '');
+};
+
+// 与既有报表保持相同覆盖口径：某二级指标下任一三级指标使用过，即覆盖该二级指标。
+export const screenIndicatorCoverage = (groups: LeaderReportIndicatorGroupUsage[], period: ScreenPeriod) => {
+  const seconds = groups.flatMap(group => group.children);
+  const count = (third: LeaderReportIndicatorGroupUsage['children'][number]['children'][number]) => (
+    period === 'term' ? third.termCount : period === 'month' ? third.monthCount : period === 'today' ? Math.round(third.weekCount * .18) : third.weekCount
+  );
+  const thirds = seconds.flatMap(second => second.children);
+  const summarize = (covered: number, total: number) => ({ covered, total, percent: percentage(covered, total) });
+  return {
+    second: summarize(seconds.filter(second => second.children.some(third => count(third) > 0)).length, seconds.length),
+    third: summarize(thirds.filter(third => count(third) > 0).length, thirds.length),
+  };
+};
 
 export const percentage = (part: number, total: number) => total > 0
   ? Math.max(0, Math.min(100, Math.round(part / total * 100))) : 0;
@@ -73,6 +96,9 @@ export const createDemoScreenEvaluation = (
   if (!classroom) return null;
   const teacher = report.teachers[sequence % report.teachers.length];
   const dimension = report.fiveEducationStats[sequence % report.fiveEducationStats.length];
+  const group = report.indicatorUsage.find(item => item.id === dimension.key);
+  const indicators = group?.children.flatMap(second => second.children.map(third => ({ second, third }))) ?? [];
+  const matched = indicators[Math.floor(sequence / Math.max(1, report.fiveEducationStats.length)) % Math.max(1, indicators.length)];
   const negative = sequence % 4 === 2;
   const delta = negative ? -(sequence % 2 + 1) : sequence % 3 + 1;
   const count = sequence % 5 === 0 ? 3 : 1;
@@ -98,7 +124,9 @@ export const createDemoScreenEvaluation = (
     className: `${grade.name}${classNumber}班`,
     dimension: dimension.key,
     dimensionName: dimension.name,
-    indicator: DEMO_BEHAVIORS[dimension.key][negative ? 'negative' : 'positive'],
+    indicator: matched?.third.name ?? DEMO_BEHAVIORS[dimension.key][negative ? 'negative' : 'positive'],
+    indicatorPath: matched && group ? [group.name, matched.second.name, matched.third.name] : undefined,
+    indicatorId: matched?.third.id,
     occurredAt,
     students,
   };
@@ -154,6 +182,15 @@ export const applyScreenEvaluation = (
     ...report,
     teachers,
     activeRanking: [...teachers].sort((a, b) => b.records - a.records),
+    indicatorUsage: report.indicatorUsage.map(group => group.id === event.dimension ? {
+      ...group,
+      children: group.children.map(second => ({ ...second, children: second.children.map(third => third.id === event.indicatorId ? {
+        ...third,
+        weekCount: third.weekCount + recipients,
+        monthCount: third.monthCount + recipients,
+        termCount: third.termCount + recipients,
+      } : third) })),
+    } : group),
     summary: {
       ...report.summary,
       totalRecords: report.summary.totalRecords + 1,

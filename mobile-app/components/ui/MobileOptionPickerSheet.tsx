@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import MobileBottomSheet from './MobileBottomSheet';
+import MobileBottomSheet, { type MobileSheetTitleSpacing } from './MobileBottomSheet';
 import { mobileSheetActionClass } from './mobileSheetActionStyles';
 
 export interface MobilePickerOption {
@@ -16,6 +16,7 @@ export interface MobilePickerOptionGroup {
 interface MobileOptionPickerSheetBaseProps {
   open: boolean;
   title: string;
+  titleSpacing?: MobileSheetTitleSpacing;
   options: ReadonlyArray<MobilePickerOption>;
   groups?: ReadonlyArray<MobilePickerOptionGroup>;
   exclusiveValue?: string;
@@ -45,7 +46,7 @@ export type MobileOptionPickerSheetProps = MobileOptionPickerSheetSingleProps | 
 const optionButtonClass = 'flex h-[var(--tm-choice-pill-touch-height)] w-full items-center justify-center rounded-[var(--tm-choice-pill-radius)] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]';
 
 const MobileOptionPickerSheet: React.FC<MobileOptionPickerSheetProps> = props => {
-  const { open, title, options, groups, exclusiveValue, onClose, showClearButton = false, ariaLabel = title } = props;
+  const { open, title, titleSpacing, options, groups, exclusiveValue, onClose, showClearButton = false, ariaLabel = title } = props;
   const multipleProps = props.selectionMode === 'multiple' ? props : null;
   const singleProps = props.selectionMode === 'multiple' ? null : props;
   const [draftValues, setDraftValues] = useState<Set<string>>(() => new Set(multipleProps?.values));
@@ -99,6 +100,7 @@ const MobileOptionPickerSheet: React.FC<MobileOptionPickerSheetProps> = props =>
     <MobileBottomSheet
       open={open}
       title={title}
+      titleSpacing={titleSpacing}
       onClose={onClose}
       size="content"
       contentInset="none"

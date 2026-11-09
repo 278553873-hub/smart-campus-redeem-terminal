@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import MobileDatePickerSheet, { type MobileDateRange } from '../mobile-app/components/ui/MobileDatePickerSheet';
+import MobileDatePickerSheet, { type MobileDateRange, type MobileDateRangeSelectionMode } from '../mobile-app/components/ui/MobileDatePickerSheet';
 import { dateRangePresets, type MobileDateRangePreset } from '../mobile-app/components/ui/mobileDatePickerModel';
 import { teacherBrandCssVariables } from '../mobile-app/styles/teacherMobileTokens';
 import PhoneMockup from './PhoneMockup';
@@ -13,24 +13,29 @@ const quickRangeOptions: ReadonlyArray<MobileDateRangePreset & { id: string }> =
 ];
 
 const parameterRows = [
-  ['mode', "'range'", '日期范围选择模式。'],
+  ['mode', "'range'", '月份与时间段双模式筛选，确认后统一返回起止日期。'],
   ['value', 'MobileDateRange', '当前起止日期，格式为 YYYY-MM-DD。'],
+  ['defaultSelectionMode', "'month' | 'range'", '首次打开的模式，默认 month（月份）；重开恢复已确认模式。'],
   ['showPresets', 'boolean', '是否显示快捷选项，默认显示。'],
   ['presets', 'MobileDateRangePreset[]', '需要显示的快捷项列表；传空数组可隐藏全部快捷项。'],
   ['currentTerm', 'MobileDateRange', '当前学期起止日期，供本学期快捷项使用。'],
   ['min / max', 'string', '可选日期上下限。'],
-  ['onConfirm / onClose', 'function', '确认日期范围与关闭弹窗的回调。'],
+  ['onConfirm / onClose', 'function', '确认回传日期范围和选择模式；关闭丢弃未提交草稿。'],
   ['validate', '(range) => string', '可选业务校验；返回提示文字表示范围不可提交。'],
 ] as const;
 
 const usageExample = `<MobileDatePickerSheet
   mode="range"
+  defaultSelectionMode="month"
   open={open}
   value={dateRange}
   showPresets={showQuickRanges}
   presets={selectedQuickRanges}
   currentTerm={schoolTerm}
-  onConfirm={setDateRange}
+  onConfirm={(range, selectionMode) => {
+    setDateRange(range);
+    setSelectionMode(selectionMode);
+  }}
   onClose={() => setOpen(false)}
 />`;
 
@@ -43,11 +48,12 @@ const PreviewToggle: React.FC<{ checked: boolean; label: string; onChange: (chec
 
 export default function PublicDatePickerDemo() {
   const [open, setOpen] = useState(true);
-  const [range, setRange] = useState<MobileDateRange>({ start: '2026-10-01', end: demoToday });
+  const [range, setRange] = useState<MobileDateRange>({ start: '2026-10-01', end: '2026-10-31' });
+  const [selectionMode, setSelectionMode] = useState<MobileDateRangeSelectionMode>('month');
   const [showQuickRanges, setShowQuickRanges] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>(quickRangeOptions.map(option => option.id));
   const selectedQuickRanges = useMemo(() => quickRangeOptions.filter(option => selectedIds.includes(option.id)).map(({ label, value }) => ({ label, value })), [selectedIds]);
-  const valueLabel = `${range.start} 至 ${range.end}`;
+  const valueLabel = selectionMode === 'month' ? `${range.start.slice(0, 4)}年${Number(range.start.slice(5, 7))}月` : `${range.start} 至 ${range.end}`;
   const toggleQuickRange = (id: string, checked: boolean) => setSelectedIds(current => checked ? [...current, id] : current.filter(item => item !== id));
 
   return (
@@ -57,7 +63,7 @@ export default function PublicDatePickerDemo() {
           <PhoneMockup showDeviceFrame contentTopInsetMode="status-bar" screenOverlayRootId="teacher-mobile-overlay-root">
             <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-[var(--tm-bg-page)] p-6">
               <p className="text-[length:var(--tm-font-size-body)] text-[var(--tm-text-primary)]">{valueLabel}</p>
-              <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[var(--tm-text-inverse)]">选择时间段</button>
+              <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-[var(--tm-radius-control)] bg-[var(--tm-brand-primary)] px-5 text-[var(--tm-text-inverse)]">选择日期</button>
             </div>
           </PhoneMockup>
         </div>
@@ -66,7 +72,7 @@ export default function PublicDatePickerDemo() {
         <header className="pb-6">
           <p className="text-xs font-semibold text-[var(--tm-brand-primary-strong)]">通用组件层 · 教师手机端</p>
           <h2 className="mt-2 text-2xl font-semibold text-slate-950">MobileDatePickerSheet</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">用于手机端日期范围选择，支持滚轮编辑、快捷日期和确认后提交。</p>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">用于手机端月份或时间段筛选。月份使用年、月两列滚轮，时间段保留快捷日期与起止编辑，两种模式均在确认后提交。</p>
         </header>
 
         <section className="border-t border-slate-200 py-5" aria-labelledby="date-picker-preview-config">
@@ -84,7 +90,7 @@ export default function PublicDatePickerDemo() {
 
         <section className="border-t border-slate-200 py-5" aria-labelledby="date-picker-scenarios">
           <h3 id="date-picker-scenarios" className="text-sm font-semibold text-slate-950">使用场景</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-600">班级记录筛选、教师评价报表、学校报表和排行榜等需要限定起止日期的查询。可按业务显示本周、本月、上周、上月和本学期快捷范围。</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">适用于评价记录、班级报告、学校报表和终端兑换记录的时间筛选。月份按完整自然月查询，受日期上下限限制时取交集；时间段可按业务显示本周、本月、上周、上月和本学期快捷范围。</p>
         </section>
 
         <section className="border-t border-slate-200 py-5" aria-labelledby="date-picker-parameters">
@@ -104,7 +110,7 @@ export default function PublicDatePickerDemo() {
         </section>
         <p className="mb-5 rounded-lg bg-slate-50 p-3 text-sm text-slate-700" role="status">当前已提交：{valueLabel}</p>
       </article>
-      <MobileDatePickerSheet open={open} mode="range" value={range} showPresets={showQuickRanges} presets={selectedQuickRanges} onConfirm={setRange} onClose={() => setOpen(false)} />
+      <MobileDatePickerSheet open={open} mode="range" value={range} showPresets={showQuickRanges} presets={selectedQuickRanges} onConfirm={(range, mode) => { setRange(range); setSelectionMode(mode); }} onClose={() => setOpen(false)} />
     </section>
   );
 }

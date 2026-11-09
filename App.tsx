@@ -2212,7 +2212,7 @@ const AppSwitcher: React.FC = () => {
       )}
 
       {/* 对外展示的大屏不显示内部环境切换浮层。 */}
-      {currentApp !== 'region-pc-screen' && currentApp !== 'school-pc-screen' && (
+      {currentApp !== 'region-pc-screen' && currentApp !== 'school-pc-screen' && currentApp !== 'data-screen' && (
         <div
           ref={demoPanelRef}
           className={`fixed z-[9999] touch-none select-none transition-[left,right,top,bottom,transform] duration-300 ${demoPanelPosition ? '' : 'right-0 top-1/2 -translate-y-1/2'} ${isDemoOpen ? demoPanelOpenClass : demoPanelClosedClass}`}

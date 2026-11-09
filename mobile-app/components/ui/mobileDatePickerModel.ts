@@ -1,5 +1,6 @@
 /** 日期选择的纯逻辑；只处理日历日期，不依赖业务周期、权限或 UTC 时间戳输入。 */
 export interface MobileDateRange { start: string; end: string }
+export type MobileDateRangeSelectionMode = 'month' | 'range';
 export interface MobileDateRangePreset { label: string; value: MobileDateRange }
 export const localToday = () => {
   const now = new Date();
@@ -40,6 +41,27 @@ export const setRangeEndpoint = (current: MobileDateRange, field: keyof MobileDa
   return field === 'start' ? { start: value, end: current.end && value > current.end ? '' : current.end } : { ...current, end: value };
 };
 export const daysInCalendarMonth = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
+/** 自然月查询范围；边界月只取与调用方允许日期的交集。 */
+export const calendarMonthRange = (month: string, min?: string, max?: string): MobileDateRange => {
+  const first = `${month}-01`;
+  if (!isCalendarDate(first)) return { start: '', end: '' };
+  const last = `${month}-${daysInCalendarMonth(Number(month.slice(0, 4)), Number(month.slice(5, 7)))}`;
+  const start = min && first < min ? min : first;
+  const end = max && last > max ? max : last;
+  return start <= end ? { start, end } : { start: '', end: '' };
+};
+/** 与日期滚轮共用默认年份边界；这里只生成自然月，不生成学校结算周期。 */
+export const calendarMonthOptions = (min?: string, max?: string): string[] => {
+  const lower = isCalendarDate(min ?? '') ? min! : '1900-01-01';
+  const upper = isCalendarDate(max ?? '') ? max! : '2100-12-31';
+  if (lower > upper) return [];
+  const first = Number(lower.slice(0, 4)) * 12 + Number(lower.slice(5, 7)) - 1;
+  const last = Number(upper.slice(0, 4)) * 12 + Number(upper.slice(5, 7)) - 1;
+  return Array.from({ length: last - first + 1 }, (_, index) => {
+    const value = first + index;
+    return `${String(Math.floor(value / 12)).padStart(4, '0')}-${String(value % 12 + 1).padStart(2, '0')}`;
+  });
+};
 export const replaceCalendarPart = (date: string, part: 'year' | 'month' | 'day', next: number, min: string, max: string) => {
   const [y, m, d] = date.split('-').map(Number);
   const year = part === 'year' ? next : y;

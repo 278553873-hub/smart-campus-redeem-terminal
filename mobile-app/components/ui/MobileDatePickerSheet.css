@@ -4,3 +4,18 @@
   max-width: 100%;
   margin-inline: auto;
 }
+
+/* 按时间段编辑区的实际组成预留高度，切换月份时保持按钮位置稳定。 */
+.tm-date-filter-content {
+  min-height: calc(6 * var(--tm-date-row-height) + var(--tm-space-5) + var(--tm-space-2) + 2 * var(--tm-space-4));
+}
+
+.tm-date-filter-content[data-presets="true"] {
+  min-height: calc(6 * var(--tm-date-row-height) + var(--tm-space-5) + var(--tm-space-2) + 3 * var(--tm-space-4) + var(--tm-selection-touch-height));
+}
+
+.tm-date-filter-content[data-selection-mode="month"] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}

@@ -35,6 +35,7 @@ import {
     CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION,
     askClassEvaluationQuestion,
     generateClassEvaluationWeeklyReport,
+    getClassEvaluationScoreChange,
     type ClassEvaluationAssistantAnswer,
     type ClassEvaluationConversationContext,
     type ClassEvaluationRecord,
@@ -351,24 +352,27 @@ const RecordDetailList: React.FC<{
     records: ClassEvaluationRecord[];
 }> = ({ records }) => (
     <div className="divide-y divide-[var(--tm-border-subtle)]">
-        {records.map(record => (
-            <article key={record.id} className="py-4 first:pt-0">
-                <div className="flex items-center justify-between gap-3">
-                    <time className="text-[12px] tabular-nums text-[var(--tm-text-tertiary)]" dateTime={record.date}>{formatRecordDate(record.date)}</time>
-                    <div className="shrink-0 text-[16px] font-bold tabular-nums text-[var(--tm-score-negative)]">-{record.deduction.toFixed(1)}分</div>
-                </div>
+        {records.map(record => {
+            const scoreChange = getClassEvaluationScoreChange(record);
+            return (
+                <article key={record.id} className="py-4 first:pt-0">
+                    <div className="flex items-center justify-between gap-3">
+                        <time className="text-[12px] tabular-nums text-[var(--tm-text-tertiary)]" dateTime={record.date}>{formatRecordDate(record.date)}</time>
+                        <div className={`shrink-0 text-[16px] font-bold tabular-nums ${scoreChange > 0 ? 'text-[var(--tm-record-positive-text)]' : scoreChange < 0 ? 'text-[var(--tm-score-negative)]' : 'text-[var(--tm-text-secondary)]'}`}>{scoreChange > 0 ? '+' : ''}{scoreChange.toFixed(1)}分</div>
+                    </div>
 
-                <div className="mt-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
-                    <span className="mr-2 text-[var(--tm-text-tertiary)]">指标</span>
-                    <span>{record.indicatorPath?.join(' / ') ?? [record.dimension, record.indicator].join(' / ')}</span>
-                </div>
+                    <div className="mt-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
+                        <span className="mr-2 text-[var(--tm-text-tertiary)]">指标</span>
+                        <span>{record.indicatorPath?.join(' / ') ?? [record.dimension, record.indicator].join(' / ')}</span>
+                    </div>
 
-                <div className="mt-3">
-                    <div className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">原文</div>
-                    <p className="mt-1 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
-                </div>
-            </article>
-        ))}
+                    <div className="mt-3">
+                        <div className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">原文</div>
+                        <p className="mt-1 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
+                    </div>
+                </article>
+            );
+        })}
     </div>
 );
 
@@ -414,7 +418,7 @@ const DimensionRankingTable: React.FC<{
                     type="button"
                     onClick={() => onSelect(item.dimension)}
                     className={'grid min-h-12 w-full grid-cols-[minmax(0,1fr)_88px_60px_60px] items-center rounded-[var(--tm-radius-control-compact)] px-2 text-left focus-visible:bg-[var(--tm-role-headteacher-glass-surface-strong)] focus-visible:outline-none ' + (selectedDimension === item.dimension ? 'bg-[var(--tm-role-headteacher-glass-surface-strong)]' : '')}
-                    aria-label={`${item.dimension}，${formatCompactScore(item.score)}/${formatCompactScore(item.maxScore)}分，年级第${item.gradeRank}名，全校第${item.schoolRank}名，查看待改进情况`}
+                    aria-label={`${item.dimension}，${formatCompactScore(item.score)}/${formatCompactScore(item.maxScore)}分，年级第${item.gradeRank}名，全校第${item.schoolRank}名，查看评价明细`}
                     aria-pressed={selectedDimension === item.dimension || undefined}
                 >
                     <span className="min-w-0 truncate pr-2 text-[12px] font-semibold text-[var(--tm-text-primary)]">{item.dimension}</span>
@@ -616,7 +620,7 @@ const ClassContextPanel: React.FC<{
     </section>
 );
 
-const WeekDataDetailPage: React.FC<{
+export const WeekDataDetailPage: React.FC<{
     weekId: string;
     classId: string;
     initialDimension?: string;
@@ -632,7 +636,7 @@ const WeekDataDetailPage: React.FC<{
     const records = getClassEvaluationRecords(classId, weekId);
     const olderWeek = CLASS_EVALUATION_WEEKS[weekIndex + 1];
     const newerWeek = CLASS_EVALUATION_WEEKS[weekIndex - 1];
-    const defaultDimension = week.dimensionRankings.find(item => item.recordCount > 0)?.dimension
+    const defaultDimension = week.dimensionRankings.find(item => records.some(record => record.dimension === item.dimension))?.dimension
         ?? week.dimensionRankings[0]?.dimension
         ?? '';
     const [selectedDimension, setSelectedDimension] = useState(initialDimension ?? defaultDimension);
@@ -711,7 +715,7 @@ const WeekDataDetailPage: React.FC<{
 
                 <section className="mt-[var(--tm-layout-card-gap)]" aria-labelledby="week-records-title">
                     <div className="mb-2 px-1">
-                        <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">待改进明细</h2>
+                        <h2 id="week-records-title" className="text-[16px] font-bold text-[var(--tm-text-primary)]">评价明细</h2>
                     </div>
                     <div className="assistant-agent-glass overflow-hidden rounded-[var(--tm-radius-card-compact)]">
                         <DimensionTabs
@@ -724,7 +728,7 @@ const WeekDataDetailPage: React.FC<{
                             {selectedRecords.length > 0 ? (
                                 <RecordDetailList records={selectedRecords} />
                             ) : (
-                                <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周此指标暂无待改进</p>
+                                <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周此指标暂无评价记录</p>
                             )}
                         </div>
                     </div>
@@ -1108,7 +1112,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                             onOpenDetails={() => {
                                 setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
                                 setDetailInitialDimension(
-                                    currentWeek.dimensionRankings.find(item => item.recordCount > 0)?.dimension
+                                    currentWeek.dimensionRankings.find(item => records.some(record => record.dimension === item.dimension))?.dimension
                                     ?? currentWeek.dimensionRankings[0]?.dimension
                                     ?? null,
                                 );

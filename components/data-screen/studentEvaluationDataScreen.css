@@ -1,270 +1,153 @@
-/* 学校公共展示屏：仅在模块根节点内生效。 */
+/* 学校 PC 育人大屏：局部独立主题；深色玻璃卡片与五色立体主图。 */
+.evaluation-screen-viewport { position:relative; width:100%; height:100dvh; overflow:hidden; background:#080706; color-scheme:dark; }
+.evaluation-screen-viewport:fullscreen { width:100vw; height:100dvh; }
 .student-evaluation-data-screen {
-  --es-bg: #030f27; --es-surface: #071d3a; --es-text: #edf4ff; --es-muted: #a9bfde;
-  --es-cyan: #21deef; --es-violet: #b391f8; --es-border: #214f7b;
-  --es-positive: #60edf4; --es-negative: #f4c56f;
-  --es-gap: clamp(12px, 1vw, 24px); --es-pad: clamp(16px, 1.15vw, 28px);
-  --es-panel-pad: clamp(16px, 1.2vw, 28px);
-  position: relative; isolation: isolate; box-sizing: border-box; width: 100%; height: 100dvh;
-  padding: var(--es-pad); display: grid; grid-template-rows: clamp(88px, 10vh, 120px) clamp(102px, 11.2vh, 138px) minmax(0, 1fr) clamp(92px, 10.5vh, 126px);
-  gap: var(--es-gap); overflow: auto; color: var(--es-text);
-  background: radial-gradient(ellipse at 49% 46%, #092b58 0, #04152f 47%, var(--es-bg) 78%);
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
-  font-size: clamp(14px, 1.02vw, 23px); line-height: 1.45; color-scheme: dark;
-  font-variant-numeric: tabular-nums;
+  --es-text:#f3f0ea; --es-muted:#b8aea3; --es-quiet:#a99f92; --es-accent:#f5a623; --es-accent-light:#ffd08a;
+  --es-positive:#83c8ae; --es-negative:#e77b96; --es-border:#edddc846; --es-gap:16px;
+  --es-education-virtue:#f5a623; --es-education-wisdom:#78c9ad; --es-education-fitness:#76a9df; --es-education-aesthetic:#b080d3; --es-education-labor:#e7e5df;
+  --es-caption:16px; --es-detail:19px; --es-progress-track:#d8ccba25;
+  --es-progress-fill:linear-gradient(90deg,#b8b1a6,#f2eee7); --es-progress-accent-fill:linear-gradient(90deg,#e58a13,#ffca58);
+  --es-positive-fill:linear-gradient(90deg,#498e78,#b2eacf); --es-negative-fill:linear-gradient(270deg,#b74466,#efa0b5);
+  position:absolute; inset:0 auto auto 0; isolation:isolate; padding:0 20px 16px; display:grid;
+  grid-template-rows:86px minmax(0,1fr); gap:18px; overflow:hidden;
+  color:var(--es-text); background:radial-gradient(ellipse at 50% 65%,#20160c 0%,#090807 53%,#040303 100%);
+  font:20px/1.4 'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; color-scheme:dark;
 }
-.student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { box-sizing: border-box; }
-.student-evaluation-data-screen h1, .student-evaluation-data-screen h2, .student-evaluation-data-screen h3, .student-evaluation-data-screen p { margin: 0; }
-.student-evaluation-data-screen ul, .student-evaluation-data-screen ol { margin: 0; padding: 0; list-style: none; }
-.student-evaluation-data-screen strong, .student-evaluation-data-screen b { font-weight: 600; }
-.student-evaluation-data-screen small { font-size: .8em; font-weight: 400; }
-.student-evaluation-data-screen button, .student-evaluation-data-screen select { font: inherit; }
-.student-evaluation-data-screen button { cursor: pointer; }
-.student-evaluation-data-screen button:focus-visible, .student-evaluation-data-screen select:focus-visible { outline: 2px solid var(--es-cyan); outline-offset: 3px; }
-.student-evaluation-data-screen .is-positive { color: var(--es-positive); }
-.student-evaluation-data-screen .is-negative { color: var(--es-negative); }
-.evaluation-screen-ribbons { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.evaluation-screen-header { display: grid; grid-template-columns: 23% 54% 23%; min-width: 0; align-items: start; position: relative; }
-.evaluation-screen-brand { display: flex; align-items: center; gap: 17px; padding: 7px 0 0 22px; font-size: clamp(21px, 1.65vw, 36px); font-weight: 600; letter-spacing: .06em; white-space: nowrap; }
-.evaluation-screen-brand svg { flex-shrink: 0; color: #c2d0ff; }
-.evaluation-screen-brand::after { content: ''; height: 34px; width: 1px; background: #4f668f; margin-left: 18px; }
-.evaluation-screen-header-center { text-align: center; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%; padding-bottom: 1px; }
-.evaluation-screen-header h1 { font-size: clamp(25px, 1.95vw, 44px); line-height: 1.2; font-weight: 600; letter-spacing: .025em; white-space: nowrap; }
-.evaluation-screen-tabs { display: flex; width: 76%; min-height: 44px; border: 1px solid #25517f; border-radius: 28px; background: linear-gradient(180deg, #122b50c9, #0a203db3); }
-.evaluation-screen-tabs button { flex: 1; border: 0; border-radius: 28px; color: #dce9ff; background: transparent; font-size: clamp(15px, 1.08vw, 24px); font-weight: 500; padding: 5px 16px; transition: background-color 150ms; white-space: nowrap; }
-.evaluation-screen-tabs button:hover { background: #1b4166; }
-.evaluation-screen-tabs button[aria-selected=true] { background: linear-gradient(180deg, #05bedc, #008aae); box-shadow: inset 0 0 0 1px #4be9f78c; color: #fff; }
-.evaluation-screen-header-right { text-align: right; display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
-.evaluation-screen-term { font-size: clamp(13px, 1vw, 22px); padding-top: 5px; }
-.evaluation-screen-header-right > div { display: flex; gap: 12px; align-items: center; }
-.evaluation-screen-demo-label { color: var(--es-muted); font-size: .82em; }
-.student-evaluation-data-screen .arco-btn.evaluation-screen-settings-trigger { color: var(--es-muted); min-width: 44px; height: 44px; border-radius: 50%; background: transparent; display: grid; place-items: center; padding: 0; }
-.student-evaluation-data-screen .arco-btn.evaluation-screen-settings-trigger:hover { color: var(--es-text); background: #1b3c62; }
-.evaluation-screen-settings { display: grid; gap: 12px; min-width: 190px; color: #203449; font: 14px/1.5 'PingFang SC', sans-serif; }
-.evaluation-screen-settings label { font-weight: 600; }
-.evaluation-screen-settings select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; color: #203449; background: #fff; color-scheme: light; min-height: 44px; }
-.evaluation-screen-settings .arco-btn { min-height: 44px; text-align: left; display: flex; align-items: center; gap: 8px; color: #244a71; }
-.evaluation-screen-settings .arco-btn-icon { display: inline-flex; align-items: center; }
-.evaluation-screen-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; border: 1px solid #126095; border-radius: 16px; background: linear-gradient(105deg, #063059a8, #122c57ac 50%, #052746a3); }
-.evaluation-screen-metric { display: flex; justify-content: center; gap: 22px; align-items: flex-start; min-width: 0; position: relative; }
-.evaluation-screen-metric + .evaluation-screen-metric::before { content: ''; position: absolute; left: 0; top: 12%; bottom: 8%; width: 1px; background: #426d9b; }
-.evaluation-screen-metric > svg { margin-top: 2px; color: #adbdff; flex-shrink: 0; width: clamp(27px, 2.1vw, 46px); height: auto; }
-.evaluation-screen-metric-label { font-size: clamp(16px, 1.15vw, 25px); font-weight: 500; margin-bottom: 3px; }
-.evaluation-screen-metric-value { display: flex; gap: 10px; align-items: baseline; line-height: 1.05; }
-.evaluation-screen-metric-value strong { font-size: clamp(36px, 3vw, 68px); letter-spacing: .015em; }
-.evaluation-screen-metric-value > span { font-size: clamp(17px, 1.25vw, 28px); }
-.evaluation-screen-grid { display: grid; grid-template-columns: 27fr 44fr 27fr; gap: var(--es-gap); min-width: 0; min-height: 0; }
-.evaluation-screen-column { display: grid; grid-template-rows: 1fr 1.08fr; gap: var(--es-gap); min-height: 0; min-width: 0; }
-.evaluation-screen-panel { display: flex; flex-direction: column; padding: var(--es-panel-pad); min-width: 0; min-height: 0; border: 1px solid #2b5d8d; border-radius: 16px; background: linear-gradient(145deg, #0f2b50a8, #051a34b0 65%, #0b31509c); }
-.evaluation-screen-panel-heading { display: flex; align-items: center; gap: 14px; flex-shrink: 0; min-height: 32px; padding-bottom: 14px; border-bottom: 1px solid #28517b; margin-bottom: 14px; }
-.evaluation-screen-panel-heading h2 { font-size: clamp(18px, 1.38vw, 31px); line-height: 1.25; font-weight: 600; letter-spacing: .02em; white-space: nowrap; position: relative; padding-left: 15px; }
-.evaluation-screen-panel-heading h2::before { content: ''; width: 3px; height: .95em; background: #19d5ea; position: absolute; left: 0; top: .12em; border-radius: 2px; }
-.evaluation-screen-panel-detail { font-size: .72em; line-height: 1.4; color: var(--es-muted); margin-left: auto; text-align: right; }
-.evaluation-screen-coverage-rings { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: center; flex: 1; min-height: 0; }
-.evaluation-screen-coverage-ring { min-width: 0; min-height: 0; height: 100%; text-align: center; display: flex; flex-direction: column; }
-.evaluation-screen-coverage-ring svg { display: block; width: 100%; flex: 1; min-height: 0; margin: auto; }
-.evaluation-screen-coverage-ring p { margin-top: 7px; font-size: .9em; white-space: nowrap; flex-shrink: 0; }
-.coverage-value { font-size: 34px; fill: #f0f5ff; font-weight: 600; }
-.coverage-label { font-size: 12px; fill: #d8e9ff; }
-.evaluation-screen-grade-list { display: grid; grid-auto-flow: column; grid-template-columns: 1fr 1fr; column-gap: 22px; row-gap: 8px; flex: 1; min-height: 0; align-items: center; }
-.evaluation-screen-grade-row { display: grid; grid-template-columns: auto minmax(20px, 1fr) 3.2em; align-items: center; gap: 10px; min-width: 0; font-size: .88em; }
-button.evaluation-screen-grade-row { width: 100%; background: transparent; border: 0; border-radius: 6px; color: inherit; min-height: 44px; padding: 4px; text-align: left; }
-button.evaluation-screen-grade-row[aria-pressed=true] { background: #164468; }
-button.evaluation-screen-grade-row:hover { background: #193b60; }
-.evaluation-screen-grade-row > span:first-child { white-space: nowrap; }
-.evaluation-screen-grade-row > b { text-align: right; font-weight: 500; }
-.evaluation-screen-progress-track { display: block; height: clamp(7px, .64vw, 15px); border-radius: 10px; overflow: hidden; background: #294d77; min-width: 0; }
-.evaluation-screen-progress-track > i { display: block; height: 100%; background: linear-gradient(90deg, #00bce7, #60ecf0); border-radius: inherit; transition: width 300ms ease; }
-.evaluation-screen-text-button { color: var(--es-muted); background: transparent; border: 0; min-height: 44px; }
-.evaluation-screen-main-panel { overflow: hidden; position: relative; background: radial-gradient(ellipse at 105% 45%, #19437490, transparent 55%), linear-gradient(135deg, #082549e0, #05192fde 65%, #123669bd); }
-.evaluation-screen-main-panel > .evaluation-screen-panel-heading { margin-bottom: 0; border: 0; padding-bottom: 0; }
-.evaluation-screen-main-panel > .evaluation-screen-panel-heading h2 { font-size: clamp(22px, 1.6vw, 36px); }
-.evaluation-screen-five-education { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
-.evaluation-screen-donut { display: block; flex: 1; min-height: 0; width: 100%; overflow: visible; }
-.education-label { fill: #ecf4ff; font-size: 20px; font-weight: 500; }
-.education-value { fill: #f4f8ff; font-size: 28px; font-weight: 600; }
-.education-total { fill: #f6f9ff; font-size: 46px; font-weight: 600; }
-.education-total-label { fill: #e1edff; font-size: 19px; font-weight: 500; }
-.evaluation-screen-event-summary { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 14px; color: #dbe9fc; font-size: .86em; padding: 4px 0 16px; }
-.evaluation-screen-event-summary::before, .evaluation-screen-event-summary::after { content: ''; width: 13%; height: 1px; background: linear-gradient(90deg, transparent, #2e74a0); }
-.evaluation-screen-event-summary::after { transform: rotate(180deg); }
-.evaluation-screen-event-summary i { width: 3px; height: 3px; border-radius: 50%; background: #839fbd; }
-.evaluation-screen-main-bottom { display: grid; grid-template-columns: 1fr 1fr; min-height: 210px; height: 34%; flex-shrink: 0; border-top: 1px solid #2e5984; padding-top: 16px; gap: 20px; }
-.evaluation-screen-compact-panel { border: 0; background: none; border-radius: 0; padding: 0; }
-.evaluation-screen-compact-panel + .evaluation-screen-compact-panel { border-left: 1px solid #2d5278; padding-left: 20px; }
-.evaluation-screen-compact-panel .evaluation-screen-panel-heading { padding-bottom: 0; margin-bottom: 12px; border: 0; gap: 6px; min-height: 24px; }
-.evaluation-screen-compact-panel .evaluation-screen-panel-heading h2 { font-size: clamp(16px, 1.14vw, 25px); padding-left: 10px; }
-.evaluation-screen-compact-panel .evaluation-screen-panel-detail { font-size: .62em; white-space: nowrap; }
-.evaluation-screen-compact-panel .evaluation-screen-bars { gap: 4px; }
-.evaluation-screen-compact-panel .evaluation-screen-bars li { font-size: .86em; line-height: 1.25; }
-.evaluation-screen-bars { display: flex; flex-direction: column; justify-content: space-between; gap: 9px; flex: 1; min-height: 0; }
-.evaluation-screen-bars li { display: grid; grid-template-columns: auto minmax(20px, 1fr) 3em; gap: 12px; align-items: center; font-size: .91em; }
-.evaluation-screen-bars li > b { text-align: right; font-weight: 500; }
-.evaluation-screen-bar-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 9em; }
-.evaluation-screen-bars.tone-violet .evaluation-screen-progress-track > i { background: linear-gradient(90deg, #8d60ed, #c7a7fb); }
-.evaluation-screen-bars .evaluation-screen-empty { display: block; }
-.evaluation-screen-class-average { display: flex; align-items: baseline; gap: 10px; margin: 0 0 8px; flex-shrink: 0; }
-.evaluation-screen-class-average > span:first-child { margin-right: auto; font-size: .95em; }
-.evaluation-screen-class-average strong { color: var(--es-cyan); font-size: clamp(32px, 2.4vw, 56px); line-height: 1.15; }
-.evaluation-screen-class-dimensions { display: flex; flex-direction: column; justify-content: space-between; gap: 4px; flex: 1; min-height: 0; }
-.evaluation-screen-class-dimensions li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; font-size: .86em; line-height: 1.25; }
-.evaluation-screen-class-dimensions b { font-weight: 500; white-space: nowrap; }
-.evaluation-screen-class-dimensions small { color: var(--es-muted); }
-.evaluation-screen-class-dimensions .evaluation-screen-progress-track > i { background: linear-gradient(90deg, #06daec, #7997ff 78%, #c6a1f9); }
-.evaluation-screen-scores { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.evaluation-screen-scores table { width: 100%; border-collapse: collapse; font-size: .92em; line-height: 1.25; flex: 1; table-layout: fixed; }
-.evaluation-screen-scores th { font-weight: 400; }
-.evaluation-screen-scores thead { color: var(--es-muted); font-size: .86em; }
-.evaluation-screen-scores tr { border-bottom: 1px solid #244a71; }
-.evaluation-screen-scores th, .evaluation-screen-scores td { padding: 4px 0; text-align: right; }
-.evaluation-screen-scores th:first-child { text-align: left; }
-.evaluation-screen-score-summary { display: flex; justify-content: space-between; gap: 8px; padding-top: 13px; font-size: .82em; white-space: nowrap; }
-.evaluation-screen-activity { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 18px 24px; border: 1px solid #20628e; border-radius: 16px; background: linear-gradient(110deg, #092c50b0, #0e2747bd); min-height: 0; min-width: 0; }
-.evaluation-screen-activity > section { display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; min-width: 0; }
-.evaluation-screen-activity > section + section { border-left: 1px solid #2c527a; padding-left: 24px; }
-.evaluation-screen-activity-heading { display: flex; gap: 12px; align-items: flex-start; padding-right: 18px; border-right: 1px solid #355c83; }
-.evaluation-screen-activity-heading > svg { color: #bdc8f7; flex-shrink: 0; width: 28px; height: 28px; }
-.evaluation-screen-activity-heading h2 { white-space: nowrap; font-size: clamp(15px, 1.13vw, 25px); font-weight: 500; }
-.evaluation-screen-activity-heading span { font-size: .7em; color: var(--es-muted); }
-.evaluation-screen-feed-window { overflow: hidden; min-width: 0; }
-.evaluation-screen-feed-window ol { display: flex; flex-direction: column; gap: 10px; animation: evaluation-screen-feed-in 450ms ease-out; }
-.evaluation-screen-feed-window li { display: flex; gap: 12px; align-items: center; white-space: nowrap; min-width: 0; font-size: clamp(12px, .89vw, 20px); }
-.evaluation-screen-feed-window li > * { flex-shrink: 0; }
-.evaluation-screen-feed-window time { color: var(--es-muted); }
-.evaluation-screen-feed-window strong { font-weight: 500; }
-.evaluation-screen-feed-window .evaluation-screen-feed-indicator { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; min-width: 2em; }
-.evaluation-screen-feed-window b { font-weight: 500; margin-left: auto; }
-.evaluation-screen-loading { grid-row: 2 / -1; display: flex; gap: 18px; align-items: center; justify-content: center; color: var(--es-muted); }
-.evaluation-screen-loading-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--es-cyan); animation: evaluation-screen-loading 1.2s ease-in-out infinite alternate; }
-.evaluation-screen-empty { color: var(--es-muted); margin: auto !important; font-size: .9em; padding: 24px 0; }
-.evaluation-screen-notice { position: absolute; z-index: 10; bottom: 30px; left: 50%; transform: translateX(-50%); background: #102b4d; border-radius: 8px; max-width: 90%; box-shadow: 0 8px 24px #0005; font-size: 16px; }
-.evaluation-screen-notice:not(:empty) { padding: 12px 20px; border: 1px solid #3477a7; }
-.evaluation-screen-class-coverage, .evaluation-screen-class-detail { overflow: auto; }
-.evaluation-screen-detail-summary { display: flex; gap: 32px; color: var(--es-muted); margin: 6px 0 22px; }
-.evaluation-screen-detail-summary b { color: var(--es-cyan); font-size: 1.3em; }
-.evaluation-screen-detail-table { width: 100%; border-collapse: collapse; font-size: .95em; }
-.evaluation-screen-detail-table th { font-weight: 400; }
-.evaluation-screen-detail-table thead { color: var(--es-muted); font-size: .9em; }
-.evaluation-screen-detail-table td, .evaluation-screen-detail-table th { padding: 16px 8px; text-align: right; border-bottom: 1px solid #234a72; }
-.evaluation-screen-detail-table th:first-child { text-align: left; }
-.evaluation-screen-inline-meter { display: inline-block; vertical-align: middle; margin-right: 10px; width: 44px; height: 6px; border-radius: 4px; background: #27476b; overflow: hidden; }
-.evaluation-screen-inline-meter i { display: block; height: 100%; background: var(--es-cyan); }
-.evaluation-screen-grid.section-classes { grid-template-columns: 32fr 66fr; }
-.evaluation-screen-grade-filters { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 0 14px; }
-.evaluation-screen-grade-filters button { color: var(--es-muted); background: #0a2546; border: 1px solid #254e77; border-radius: 22px; padding: 8px 20px; min-height: 44px; }
-.evaluation-screen-grade-filters button[aria-pressed=true] { color: #fff; background: #087c9f; border-color: #21c3da; }
-.evaluation-screen-class-problems { margin-top: 24px; }
-.evaluation-screen-class-problems h3 { font-size: 1em; font-weight: 500; margin-bottom: 18px; }
-.evaluation-screen-class-problems h3 > span { float: right; color: var(--es-muted); font-size: .8em; }
-.evaluation-screen-class-problems .evaluation-screen-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
-@keyframes evaluation-screen-feed-in { from { opacity: .45; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes evaluation-screen-loading { to { opacity: .3; } }
-@media (min-width: 1101px) and (max-height: 820px) {
-  .student-evaluation-data-screen { --es-gap: 12px; --es-pad: 16px; --es-panel-pad: 14px; grid-template-rows: 76px 84px minmax(0, 1fr) 84px; }
-  .evaluation-screen-tabs { min-height: 36px; }
-  .evaluation-screen-metric-value strong { font-size: 38px; }
-  .evaluation-screen-panel-heading { padding-bottom: 9px; margin-bottom: 10px; }
-  .evaluation-screen-main-bottom { min-height: 160px; padding-top: 10px; gap: 14px; }
-  .evaluation-screen-compact-panel + .evaluation-screen-compact-panel { padding-left: 14px; }
-  .evaluation-screen-compact-panel .evaluation-screen-panel-heading { margin-bottom: 8px; }
-  .evaluation-screen-bars { gap: 5px; }
-  .evaluation-screen-event-summary { padding-bottom: 9px; }
-  .evaluation-screen-coverage-ring svg { max-height: none; }
-  .evaluation-screen-coverage-ring p { font-size: .8em; margin-top: 0; }
-  .evaluation-screen-class-average { margin-bottom: 6px; }
-  .evaluation-screen-class-average strong { font-size: 32px; }
-  .evaluation-screen-class-dimensions { gap: 3px; }
-  .evaluation-screen-class-dimensions li { font-size: .84em; line-height: 1.2; }
-  .evaluation-screen-scores th, .evaluation-screen-scores td { padding: 2px 0; }
-  .evaluation-screen-score-summary { padding-top: 8px; font-size: .75em; }
-  .evaluation-screen-grade-list { gap: 5px 14px; }
-  .evaluation-screen-grade-row { gap: 7px; }
-  .evaluation-screen-activity { padding: 14px; gap: 16px; }
-  .evaluation-screen-activity > section { gap: 12px; }
-  .evaluation-screen-activity > section + section { padding-left: 16px; }
-  .evaluation-screen-activity-heading { gap: 7px; padding-right: 12px; }
-  .evaluation-screen-activity-heading > svg { width: 23px; height: 23px; }
-  .evaluation-screen-feed-window li { gap: 7px; }
-}
-@media (max-width: 1350px) and (min-width: 1101px) {
-  .evaluation-screen-header h1 { font-size: 25px; }
-  .evaluation-screen-brand { padding-left: 5px; font-size: 21px; gap: 10px; }
-  .evaluation-screen-brand::after { margin-left: 7px; }
-  .evaluation-screen-brand svg { width: 31px; }
-  .evaluation-screen-panel-heading h2 { font-size: 18px; }
-  .evaluation-screen-compact-panel .evaluation-screen-panel-heading { flex-wrap: wrap; row-gap: 3px; }
-  .evaluation-screen-compact-panel .evaluation-screen-panel-heading h2 { font-size: 15px; }
-  .evaluation-screen-compact-panel .evaluation-screen-panel-detail { font-size: 10px; }
-  .evaluation-screen-grade-row { font-size: 12px; }
-  .evaluation-screen-class-dimensions { font-size: 13px; }
-  .evaluation-screen-score-summary { flex-wrap: wrap; }
-  .evaluation-screen-activity-heading > svg { display: none; }
-  .evaluation-screen-activity-heading h2 { font-size: 14px; }
-}
-@media (min-width: 1101px) and (max-height: 690px) {
-  .student-evaluation-data-screen { height: 720px; }
-}
-@media (max-width: 1100px) {
-  .student-evaluation-data-screen { height: auto; min-height: 100dvh; grid-template-rows: auto auto auto auto; gap: 18px; }
-  .evaluation-screen-header { grid-template-columns: 1fr auto; row-gap: 18px; }
-  .evaluation-screen-brand { padding-left: 0; font-size: 23px; }
-  .evaluation-screen-brand::after { display: none; }
-  .evaluation-screen-header-right { grid-column: 2; grid-row: 1; }
-  .evaluation-screen-header-center { grid-column: 1 / -1; grid-row: 2; gap: 18px; }
-  .evaluation-screen-header h1 { font-size: clamp(22px, 3.6vw, 34px); white-space: normal; }
-  .evaluation-screen-tabs { width: min(620px, 100%); }
-  .evaluation-screen-metrics { min-height: 110px; }
-  .evaluation-screen-metric { gap: 12px; }
-  .evaluation-screen-metric > svg { width: 24px; }
-  .evaluation-screen-metric-value strong { font-size: 34px; }
-  .evaluation-screen-grid { grid-template-columns: 1fr 1fr; }
-  .evaluation-screen-column { grid-template-rows: minmax(260px, auto) minmax(280px, auto); }
-  .evaluation-screen-main-panel { grid-column: 1 / -1; grid-row: 1; min-height: 640px; }
-  .evaluation-screen-coverage-ring svg { max-height: 175px; }
-  .evaluation-screen-five-education { min-height: 310px; }
-  .evaluation-screen-main-bottom { height: 230px; min-height: 230px; }
-  .evaluation-screen-class-coverage { grid-column: 1 / -1; grid-row: 1; }
-  .evaluation-screen-activity { grid-template-columns: 1fr; padding: 20px; gap: 18px; }
-  .evaluation-screen-activity > section + section { border-left: 0; border-top: 1px solid #294f73; padding: 18px 0 0; }
-  .evaluation-screen-feed-window li { font-size: 14px; }
-  .evaluation-screen-grid.section-classes { grid-template-columns: 1fr; }
-  .section-classes .evaluation-screen-column { grid-template-columns: 1fr 1fr; grid-template-rows: 300px; }
-}
-@media (max-width: 600px) {
-  .student-evaluation-data-screen { --es-pad: 14px; --es-panel-pad: 18px; }
-  .evaluation-screen-brand { font-size: 20px; gap: 10px; }
-  .evaluation-screen-brand svg { width: 28px; }
-  .evaluation-screen-term { max-width: 170px; font-size: 12px; }
-  .evaluation-screen-header h1 { font-size: 23px; }
-  .evaluation-screen-tabs button { padding-inline: 10px; }
-  .evaluation-screen-metrics { grid-template-columns: 1fr 1fr; padding: 15px 0; gap: 20px 0; }
-  .evaluation-screen-metric:nth-child(3)::before { display: none; }
-  .evaluation-screen-metric > svg { display: none; }
-  .evaluation-screen-metric-label { font-size: 14px; }
-  .evaluation-screen-metric-value strong { font-size: 32px; }
-  .evaluation-screen-grid { display: flex; flex-direction: column; }
-  .evaluation-screen-column { display: contents; }
-  .evaluation-screen-panel { min-height: 280px; }
-  .evaluation-screen-main-panel { min-height: 640px; }
-  .evaluation-screen-main-bottom { height: auto; min-height: 0; grid-template-columns: 1fr; gap: 22px; }
-  .evaluation-screen-compact-panel { min-height: 210px; }
-  .evaluation-screen-compact-panel + .evaluation-screen-compact-panel { border-left: 0; padding-left: 0; border-top: 1px solid #2d5278; padding-top: 18px; }
-  .evaluation-screen-five-education { min-height: 230px; }
-  .evaluation-screen-event-summary { font-size: 12px; gap: 8px; }
-  .evaluation-screen-event-summary::before, .evaluation-screen-event-summary::after { width: 7%; }
-  .evaluation-screen-coverage-ring svg { max-height: 176px; }
-  .evaluation-screen-activity > section { grid-template-columns: 1fr; gap: 12px; }
-  .evaluation-screen-activity-heading { border-right: 0; }
-  .evaluation-screen-activity-heading > div { display: flex; gap: 12px; align-items: center; }
-  .evaluation-screen-activity-heading h2 { font-size: 16px; }
-  .evaluation-screen-feed-window li { font-size: 12px; gap: 7px; }
-  .evaluation-screen-feed-window li > span:nth-of-type(1) { overflow: hidden; text-overflow: ellipsis; max-width: 5.4em; }
-  .evaluation-screen-detail-table { font-size: 12px; }
-  .evaluation-screen-detail-table td, .evaluation-screen-detail-table th { padding: 12px 3px; }
-  .evaluation-screen-inline-meter { display: none; }
-  .evaluation-screen-detail-summary { gap: 15px; font-size: 13px; }
-  .evaluation-screen-class-problems .evaluation-screen-bars { grid-template-columns: 1fr; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { animation: none !important; transition: none !important; }
-}
+.student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { box-sizing:border-box; }
+.student-evaluation-data-screen :is(h1,h2,p,ul,ol) { margin:0; }
+.student-evaluation-data-screen :is(ul,ol) { padding:0; list-style:none; }
+.student-evaluation-data-screen :is(strong,b) { font-weight:600; }
+.student-evaluation-data-screen small { font-size:var(--es-caption); font-weight:400; }
+.student-evaluation-data-screen button { font:inherit; color:inherit; cursor:pointer; }
+.student-evaluation-data-screen button:focus-visible { outline:2px solid var(--es-accent-light); outline-offset:3px; }
+.student-evaluation-data-screen .is-positive { color:var(--es-positive); }
+.student-evaluation-data-screen .is-negative { color:var(--es-negative); }
+.evaluation-screen-background { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.evaluation-screen-background::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 34% 15% at 50% 68%,#ffae3252,transparent 85%),linear-gradient(#05040333,transparent 25%,#0504030a); }
+/* 标题区：装饰轨道独立于文字，避免对正文卡片施加科技边框。 */
+.evaluation-screen-header { position:relative; display:grid; grid-template-columns:1fr 1.5fr 1fr; align-items:center; gap:20px; }
+.evaluation-screen-header-art { position:absolute; inset:0 -20px; width:calc(100% + 40px); height:100%; z-index:-1; overflow:visible; }
+.evaluation-screen-school { display:flex; gap:12px; align-items:center; font-size:24px; font-weight:500; padding-left:8px; }
+.evaluation-screen-header h1 { text-align:center; align-self:start; padding-top:4px; font-size:42px; font-weight:600; letter-spacing:.16em; white-space:nowrap; text-shadow:0 0 22px #ffd08a1a; }
+.evaluation-screen-header-right { display:flex; align-items:center; justify-content:flex-end; gap:16px; padding-bottom:16px; }
+.evaluation-screen-updated { text-align:right; }
+.evaluation-screen-updated > span { display:block; font-size:15px; color:var(--es-muted); }
+.evaluation-screen-updated time { font-size:20px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.evaluation-screen-viewport .evaluation-screen-fullscreen { display:grid; place-content:center; width:44px; height:44px; padding:0; border:0; background:transparent; color:var(--es-text); }
+.evaluation-screen-viewport .evaluation-screen-fullscreen:hover { background:#fff1d614; color:var(--es-accent-light); }
+/* 局部面板规范：通透黑玻璃、完整细线、柔和圆角，无切角及标题装饰。 */
+.evaluation-screen-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.42fr) minmax(0,1.04fr); grid-template-rows:minmax(0,1fr) 246px; gap:var(--es-gap); min-height:0; }
+.evaluation-screen-side { display:grid; min-width:0; min-height:0; gap:var(--es-gap); }
+.evaluation-screen-left { grid-template-rows:210px minmax(0,1fr); }
+.evaluation-screen-right { grid-template-rows:1fr 1fr; }
+.evaluation-screen-bottom { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,.82fr) minmax(0,1.43fr) minmax(0,1.1fr) minmax(0,1.18fr); gap:var(--es-gap); min-height:0; }
+.evaluation-screen-panel, .evaluation-screen-metric { min-width:0; min-height:0; border:1px solid var(--es-border); border-radius:17px; background:linear-gradient(135deg,#14121047,#0706051a); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:inset 0 1px 0 #fff2da10,0 8px 20px #0000000d; }
+.evaluation-screen-panel { display:flex; flex-direction:column; padding:16px 20px 14px; overflow:hidden; }
+.evaluation-screen-panel-heading { display:flex; align-items:center; gap:10px; min-height:30px; margin-bottom:12px; flex-shrink:0; }
+.evaluation-screen-panel-heading h2 { font-size:23px; line-height:1.3; font-weight:600; white-space:nowrap; }
+.evaluation-screen-panel-action { margin-left:auto; display:flex; align-items:center; }
+.evaluation-screen-panel-detail { color:var(--es-muted); font-size:14px; margin-left:auto; white-space:nowrap; }
+.evaluation-screen-metrics { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1.1fr; gap:12px; }
+.evaluation-screen-metric { padding:10px 16px; display:flex; flex-direction:column; justify-content:center; }
+.evaluation-screen-metric-label { display:flex; align-items:center; gap:10px; color:var(--es-text); font-size:19px; white-space:nowrap; }
+.evaluation-screen-metric-label svg { color:#d7c9b3; flex-shrink:0; }
+.evaluation-screen-metric-value { display:flex; align-items:baseline; gap:6px; padding-left:32px; font-variant-numeric:tabular-nums; line-height:1.15; margin-top:3px; }
+.evaluation-screen-metric-value strong { font-size:42px; font-weight:600; letter-spacing:-.03em; }
+.evaluation-screen-metric-value > span { color:var(--es-muted); font-size:17px; }
+.evaluation-screen-metric[data-emphasis=primary] strong { color:var(--es-accent); }
+.evaluation-screen-metric-detail { color:var(--es-muted); font-size:16px; padding-left:32px; margin-top:3px; white-space:nowrap; }
+/* 中央五色主图：颜色表示类别，焦点不覆盖类别颜色。 */
+.evaluation-screen-hero { padding:8px 14px 4px; align-items:stretch; }
+.evaluation-screen-hero > h2 { flex-shrink:0; text-align:center; font-size:28px; line-height:40px; letter-spacing:.08em; font-weight:600; }
+.evaluation-screen-hero-visual { display:flex; flex:1; align-items:center; justify-content:center; min-height:0; min-width:0; }
+.evaluation-screen-hero-visual svg { width:100%; height:100%; overflow:visible; }
+.evaluation-screen-hero-active-label { fill:var(--es-accent); font-size:29px; font-weight:500; }
+.evaluation-screen-hero-percentage { fill:var(--es-text); font-size:90px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-2px; }
+.evaluation-screen-hero-percentage tspan { font-size:30px; font-weight:400; letter-spacing:0; }
+.evaluation-screen-hero-event-count { fill:#d3c5af; font-size:22px; }
+.evaluation-screen-hero-sector { cursor:pointer; transition:transform 240ms ease; }
+.evaluation-screen-hero-sector.is-active { filter:drop-shadow(0 0 5px #ffdb8a55); }
+.evaluation-screen-hero-orbits { transform-origin:320px 286px; animation:evaluation-screen-orbit 64s linear infinite; }
+.evaluation-screen-hero-legend { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; flex-shrink:0; padding:0 20px 3px; }
+.evaluation-screen-hero-legend button { position:relative; display:flex; flex-direction:column; align-items:center; border:0; border-radius:6px; background:transparent; min-height:56px; padding:3px 0 8px; font-size:18px; }
+.evaluation-screen-hero-legend button > span { display:flex; align-items:center; gap:8px; }
+.evaluation-screen-hero-legend i { width:10px; height:10px; border-radius:50%; background:var(--education-color); box-shadow:inset 0 1px 1px #ffffff70; }
+.evaluation-screen-hero-legend button strong { font-size:21px; font-weight:500; }
+.evaluation-screen-hero-legend button[aria-pressed=true]::after { content:''; position:absolute; height:2px; bottom:2px; left:15%; right:15%; background:var(--es-accent); box-shadow:0 0 8px #f5a62355; }
+.evaluation-screen-hero-legend button:hover { background:#ffe1a60a; }
+.student-evaluation-data-screen .education-virtue { --education-color:var(--es-education-virtue); }
+.student-evaluation-data-screen .education-wisdom { --education-color:var(--es-education-wisdom); }
+.student-evaluation-data-screen .education-fitness { --education-color:var(--es-education-fitness); }
+.student-evaluation-data-screen .education-aesthetic { --education-color:var(--es-education-aesthetic); }
+.student-evaluation-data-screen .education-labor { --education-color:var(--es-education-labor); }
+/* 排行与年级：中性轨道、金色前三、右对齐数值。 */
+.evaluation-screen-teacher-list { display:flex; flex-direction:column; justify-content:space-evenly; gap:4px; flex:1; min-height:0; }
+.evaluation-screen-teacher-list li { display:flex; align-items:center; gap:9px; font-size:var(--es-detail); line-height:1.2; min-height:22px; }
+.evaluation-screen-rank { width:2ch; flex-shrink:0; color:var(--es-muted); font-variant-numeric:tabular-nums; }
+.evaluation-screen-teacher-list li:nth-child(-n+3) .evaluation-screen-rank { color:var(--es-accent); }
+.evaluation-screen-teacher-name { width:4em; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.evaluation-screen-teacher-track { flex:1; min-width:0; height:10px; background:var(--es-progress-track); border-radius:6px; overflow:hidden; }
+.evaluation-screen-teacher-track > span { display:block; height:100%; border-radius:inherit; background:var(--es-progress-fill); transition:width 300ms; }
+.evaluation-screen-teacher-list li:nth-child(-n+3) .evaluation-screen-teacher-track > span { background:var(--es-progress-accent-fill); }
+.evaluation-screen-teacher-list strong { min-width:3.6em; text-align:right; font-variant-numeric:tabular-nums; }
+.evaluation-screen-teacher-list small { color:var(--es-muted); margin-left:3px; }
+.evaluation-screen-grade-records, .evaluation-screen-grade-list { display:flex; flex:1; flex-direction:column; justify-content:space-evenly; min-height:0; gap:5px; }
+.evaluation-screen-grade-records li, .evaluation-screen-grade-list li { display:grid; grid-template-columns:3.5em minmax(16px,1fr) 6ch; gap:12px; align-items:center; font-size:var(--es-detail); }
+.evaluation-screen-grade-list li { grid-template-columns:3.5em minmax(16px,1fr) 4ch; }
+.evaluation-screen-coverage-track { height:11px; border-radius:6px; background:var(--es-progress-track); overflow:hidden; }
+.evaluation-screen-coverage-track > span { display:block; height:100%; border-radius:inherit; background:var(--es-progress-fill); transition:width 300ms; }
+.evaluation-screen-grade-records .is-top-grade .evaluation-screen-coverage-track > span, .evaluation-screen-grade-list .is-top-grade .evaluation-screen-coverage-track > span { background:var(--es-progress-accent-fill); }
+.evaluation-screen-grade-records strong, .evaluation-screen-grade-list strong { text-align:right; font-variant-numeric:tabular-nums; }
+.evaluation-screen-grade-records small { color:var(--es-muted); margin-left:3px; }
+.evaluation-screen-pagination { display:flex; align-items:center; gap:2px; font-size:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.evaluation-screen-pagination button { width:44px; height:36px; border:0; border-radius:5px; background:transparent; display:grid; place-items:center; color:var(--es-muted); }
+.evaluation-screen-pagination button:hover { background:#ffdfad12; color:var(--es-text); }
+.evaluation-screen-pagination small { color:var(--es-muted); font-size:14px; }
+/* 底部：小仪表、五条单行动向、共用零轴的加减分。 */
+.evaluation-screen-indicator-usage { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; min-height:0; }
+.evaluation-screen-indicator-gauge { --es-gauge-color:var(--es-text); display:flex; flex-direction:column; align-items:center; min-width:0; min-height:0; }
+.evaluation-screen-indicator-gauge.is-accent { --es-gauge-color:var(--es-accent); }
+.evaluation-screen-indicator-label { font-size:16px; white-space:nowrap; }
+.evaluation-screen-indicator-gauge svg { display:block; width:100%; flex:1; min-height:0; }
+.evaluation-screen-gauge-track, .evaluation-screen-gauge-value { fill:none; stroke-width:7px; stroke-linecap:butt; }
+.evaluation-screen-gauge-track { stroke:#f3f0ea1a; }
+.evaluation-screen-gauge-value { stroke:var(--es-gauge-color); transition:stroke-dasharray 300ms; }
+.evaluation-screen-gauge-tick { stroke:var(--es-text); fill:var(--es-text); stroke-width:.6px; }
+.evaluation-screen-gauge-percent { fill:var(--es-gauge-color); font-size:32px; font-weight:500; font-variant-numeric:tabular-nums; }
+.evaluation-screen-gauge-percent tspan { font-size:16px; }
+.evaluation-screen-feed-window { flex:1; min-height:0; }
+.evaluation-screen-feed-track { display:grid; height:100%; }
+.evaluation-screen-feed-track li, .evaluation-screen-student-changes article { display:grid; align-items:center; gap:8px; min-height:0; padding:4px 0; border-bottom:1px solid #d9c5ae12; font-size:16px; line-height:1.3; white-space:nowrap; }
+.evaluation-screen-feed-track li { grid-template-columns:72px 4em minmax(0,1fr) 48px; }
+.evaluation-screen-feed-track li:last-child, .evaluation-screen-student-changes article:last-child { border:0; }
+.evaluation-screen-feed-track time, .evaluation-screen-student-changes time { color:var(--es-quiet); font-size:15px; font-variant-numeric:tabular-nums; }
+.evaluation-screen-feed-teacher, .evaluation-screen-student-name { overflow:hidden; text-overflow:ellipsis; color:var(--es-text); font-size:17px; }
+.evaluation-screen-feed-indicator { color:var(--es-muted); overflow:hidden; text-overflow:ellipsis; }
+.evaluation-screen-feed-delta, .evaluation-screen-student-delta { font-size:20px; text-align:right; font-variant-numeric:tabular-nums; }
+.evaluation-screen-student-changes { display:grid; grid-template-rows:repeat(5,minmax(0,1fr)); flex:1; min-height:0; }
+.evaluation-screen-student-changes article { grid-template-columns:72px minmax(0,1fr) 3em 48px; }
+.evaluation-screen-education-tag { color:var(--education-color); overflow:hidden; text-overflow:ellipsis; }
+.evaluation-screen-score-totals { display:flex; gap:18px; font-size:22px; white-space:nowrap; line-height:1; font-variant-numeric:tabular-nums; }
+.evaluation-screen-score-totals small { font-size:15px; margin-left:3px; }
+.evaluation-screen-bottom .evaluation-screen-panel:last-child .evaluation-screen-panel-heading { gap:4px; }
+.evaluation-screen-bottom .evaluation-screen-panel:last-child .evaluation-screen-panel-heading h2 { font-size:22px; }
+.evaluation-screen-scores { display:flex; flex-direction:column; flex:1; min-height:0; }
+.evaluation-screen-score-legend { display:grid; grid-template-columns:1fr 1fr; padding-left:3em; font-size:15px; gap:16px; }
+.evaluation-screen-score-legend > span:first-child { text-align:right; }
+.evaluation-screen-score-bars { display:flex; flex:1; flex-direction:column; justify-content:space-evenly; min-height:0; }
+.evaluation-screen-score-row { display:grid; grid-template-columns:3em 1fr 1fr; align-items:center; font-size:17px; }
+.evaluation-screen-score-half { display:grid; grid-template-columns:minmax(0,1fr) 5ch; gap:5px; align-items:center; min-width:0; font-variant-numeric:tabular-nums; }
+.evaluation-screen-score-half.is-negative { grid-template-columns:5ch minmax(0,1fr); text-align:right; border-right:1px solid #f2e8d866; }
+.evaluation-screen-score-bar-track { display:flex; min-width:0; height:14px; align-items:center; }
+.evaluation-screen-score-half i { display:block; width:var(--bar-width); height:12px; transition:width 300ms; }
+.evaluation-screen-score-half.is-negative .evaluation-screen-score-bar-track { justify-content:flex-end; }
+.evaluation-screen-score-half.is-negative i { background:var(--es-negative-fill); border-radius:6px 0 0 6px; }
+.evaluation-screen-score-half.is-positive i { background:var(--es-positive-fill); border-radius:0 6px 6px 0; }
+.evaluation-screen-loading { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; min-height:300px; color:var(--es-muted); }
+.evaluation-screen-loading-dot { width:12px; height:12px; border:2px solid var(--es-accent); border-radius:50%; }
+.evaluation-screen-empty { display:flex; flex:1; align-items:center; justify-content:center; text-align:center; color:var(--es-muted); font-size:18px; padding:16px 0; }
+.evaluation-screen-notice:empty { display:none; }
+.evaluation-screen-notice:not(:empty) { position:absolute; z-index:10; top:80px; right:20px; padding:12px 20px; max-width:90%; border:1px solid #a9804d; border-radius:8px; background:#211911; color:#f3f0ea; font:16px/1.5 'PingFang SC',sans-serif; }
+@keyframes evaluation-screen-orbit { to { transform:rotate(360deg); } }
+.student-evaluation-data-screen.is-paused *, .student-evaluation-data-screen.has-reduced-motion * { animation-play-state:paused !important; }
+@media (prefers-reduced-motion:reduce) { .student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { animation:none !important; transition:none !important; } }

@@ -77,6 +77,7 @@ const MobileGradePickerSheet: React.FC<MobileGradePickerSheetProps> = props => {
     <MobileOptionPickerSheet
       {...props}
       title={title}
+      titleSpacing="inset"
       options={displayOptions}
       groups={optionGroups.map(group => ({ ...group, label: group.stage }))}
       exclusiveValue={showAllGradesOption ? allGradesValue : undefined}

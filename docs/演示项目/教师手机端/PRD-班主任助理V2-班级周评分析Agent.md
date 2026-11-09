@@ -207,7 +207,7 @@
 
 班级总分排名统一使用年级排名。一级指标同时展示年级排名和全校排名。
 
-点击一级指标或“展示明细”后，使用底部抽屉展示本周期扣分记录。抽屉顶部可切换一级指标。
+点击一级指标或“查看评价明细”后，进入周数据子页面，定位对应一级指标的评价记录。
 
 #### 7.1.4 周数据子页面
 
@@ -215,7 +215,9 @@
 - 明确区分完整评价周期和数据截止时间。
 - 展示周总分、年级排名、累计扣分和记录数。
 - 常驻展示五个一级指标的分数与排名。
-- 下方展示当前一级指标的全部扣分明细。
+- 下方统一使用“评价明细”标题，展示当前一级指标的全部加分、扣分记录，按日期倒序排列；加分显示绿色与“+”号，扣分显示红色与“−”号，沿用现有评价分值颜色。
+- 每笔记录保留日期、完整指标路径与评价原文。无记录时显示“该周此指标暂无评价记录”；默认定位本周期首个有评价记录的指标，加分记录也参与判断。
+- 周总分及分类分数同时计入加分、扣分，累计扣分及待改进分析只计算扣分，不使用加分抵消扣分。历史报告的旧扣分记录继续兼容展示。
 
 #### 7.1.5 班级周评分析任务
 
@@ -564,7 +566,7 @@ flowchart TD
 
 #### 7.7.1 自由对话系统提示词
 
-版本：`headteacher-class-evaluation-chat-v2`
+版本：`headteacher-class-evaluation-chat-v3`
 
 ```text
 你是学校班主任的班级评价分析助手。你只回答当前教师有权查看的指定班级、指定评价周问题。
@@ -628,7 +630,7 @@ flowchart TD
   "suggestions": [],
   "evidence_record_ids": ["CE-20260805-001"],
   "follow_up_questions": ["下周应该优先关注什么？"],
-  "prompt_version": "headteacher-class-evaluation-chat-v2",
+  "prompt_version": "headteacher-class-evaluation-chat-v3",
   "data_snapshot_id": "c_2025_4:2026-08-03:2026-08-07:v18"
 }
 ```
@@ -653,7 +655,7 @@ flowchart TD
 ```json
 {
   "question_id": "weekly_performance",
-  "prompt_version": "headteacher-class-evaluation-weekly-report-v1",
+  "prompt_version": "headteacher-class-evaluation-weekly-report-v2",
   "week_snapshot": {},
   "dimension_summary": [],
   "deduction_analysis": {},
@@ -740,7 +742,7 @@ analysis 输出2至3条，suggestions 输出1至2条。每条内容不超过70�
 ```json
 {
   "question_id": "deduction_patterns",
-  "prompt_version": "headteacher-class-evaluation-weekly-report-v1",
+  "prompt_version": "headteacher-class-evaluation-weekly-report-v2",
   "week_snapshot": {},
   "deduction_analysis": {},
   "evidence_records": []
@@ -829,7 +831,7 @@ analysis 输出2至3条，suggestions 输出1至2条。每条内容不超过70�
 ```json
 {
   "question_id": "next_week_focus",
-  "prompt_version": "headteacher-class-evaluation-weekly-report-v1",
+  "prompt_version": "headteacher-class-evaluation-weekly-report-v2",
   "week_snapshot": {},
   "dimension_summary": [],
   "week_comparison": {},
@@ -911,7 +913,7 @@ analysis 输出2至3条，suggestions 输出1至3条。每条内容不超过70�
 ```json
 {
   "question_id": "weekly_performance",
-  "prompt_version": "headteacher-class-evaluation-weekly-report-v1",
+  "prompt_version": "headteacher-class-evaluation-weekly-report-v2",
   "data_snapshot_id": "c_2025_4:2026-08-03:2026-08-07:v18",
   "message": "本周当前得分95.5分，年级第2名。",
   "metrics": [

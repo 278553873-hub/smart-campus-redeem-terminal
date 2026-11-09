@@ -1482,6 +1482,32 @@ for (const combination of [
   );
 }
 
+const { CLASS_EVALUATION_WEEKS: assistantEvaluationWeeks } = await import('../mobile-app/data/classEvaluationAssistantV2');
+for (const week of assistantEvaluationWeeks) {
+  await renderPage(`班主任助理评价明细（${week.label}，加分与扣分）`, async () => ({
+    default: (await import('../mobile-app/views/AiHeadteacherAssistantV2View')).WeekDataDetailPage,
+  }), {
+    weekId: week.id, classId: 'c_2025_4', initialDimension: '健体班级', activeClass: assistantClasses[0],
+    getClassLabel: classInfo => classInfo.name, onBack: noop, onClassPickerOpen: noop, onWeekChange: noop,
+  }, html => {
+    const recordsHtml = html.slice(html.indexOf('id="week-records-title"'));
+    const text = plainText(recordsHtml);
+    if (!text.includes('评价明细') || text.includes('待改进明细')) throw new Error('明细标题应统一为评价明细');
+    if (!text.includes('+0.2分') || !/-[0-9]+\.[0-9]分/.test(text)) throw new Error('同一指标下的加分、扣分应同时展示，保留正确符号');
+    if (!recordsHtml.includes('--tm-record-positive-text') || !recordsHtml.includes('--tm-score-negative')) throw new Error('加减分应复用已有正负分值颜色');
+    if (!text.includes('健体班级 /') || !text.includes('原文')) throw new Error('评价明细应保留完整指标路径与评价原文');
+  });
+}
+await renderPage('班主任助理评价明细（其他班级无记录）', async () => ({
+  default: (await import('../mobile-app/views/AiHeadteacherAssistantV2View')).WeekDataDetailPage,
+}), {
+  weekId: assistantEvaluationWeeks[0].id, classId: 'c_2025_1', activeClass: assistantClasses[1],
+  getClassLabel: classInfo => classInfo.name, onBack: noop, onClassPickerOpen: noop, onWeekChange: noop,
+}, html => {
+  if (!plainText(html).includes('该周此指标暂无评价记录')) throw new Error('无评价时应显示统一空态');
+  if (html.includes('<article')) throw new Error('其他班级不得看到示范班级的加减分记录');
+});
+
 for (const replying of [false, true]) {
   await renderPage('助理输入区（' + (replying ? '回复中' : '可提问') + '）', () => import('../mobile-app/components/assistant-chat/AssistantComposer'), {
     draft: '', replying, suggestedQuestions: ['本周哪些方面需要重点关注？'],

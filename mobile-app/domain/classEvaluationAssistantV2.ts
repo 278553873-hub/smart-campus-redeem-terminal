@@ -12,9 +12,16 @@ export interface ClassEvaluationRecord {
     indicator: string;
     indicatorPath: [string, string, string];
     finding: string;
+    /** 正数加分、负数扣分；未提供时兼容历史记录的 deduction。 */
+    scoreChange?: number;
+    /** 历史扣分值，非负；与 scoreChange 同时存在时以 scoreChange 为准。 */
     deduction: number;
     rule: string;
 }
+
+export const getClassEvaluationScoreChange = (record: ClassEvaluationRecord) => (
+    record.scoreChange ?? -record.deduction
+);
 
 export interface ClassEvaluationSnapshot {
     id: string;
@@ -72,8 +79,8 @@ export const CLASS_EVALUATION_FOLLOW_UP_QUESTIONS: Record<ClassEvaluationAnswerT
     unavailable: CLASS_EVALUATION_SUGGESTED_QUESTIONS,
 };
 
-export const CLASS_EVALUATION_CHAT_PROMPT_VERSION = 'headteacher-class-evaluation-chat-v2';
-export const CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION = 'headteacher-class-evaluation-weekly-report-v1';
+export const CLASS_EVALUATION_CHAT_PROMPT_VERSION = 'headteacher-class-evaluation-chat-v3';
+export const CLASS_EVALUATION_WEEKLY_REPORT_PROMPT_VERSION = 'headteacher-class-evaluation-weekly-report-v2';
 
 export interface ClassEvaluationDimensionMetric {
     dimension: string;
@@ -173,7 +180,12 @@ export const calculateClassEvaluationSnapshot = (
         && record.date >= periodStart
         && record.date <= periodEnd
     ));
-    const deduction = roundScore(periodRecords.reduce((sum, record) => sum + record.deduction, 0));
+    const deduction = roundScore(periodRecords.reduce((sum, record) => (
+        sum + Math.max(0, -getClassEvaluationScoreChange(record))
+    ), 0));
+    const scoreChange = roundScore(periodRecords.reduce((sum, record) => (
+        sum + getClassEvaluationScoreChange(record)
+    ), 0));
 
     return {
         id: `${classId}:${periodStart}:${periodEnd}`,
@@ -181,7 +193,7 @@ export const calculateClassEvaluationSnapshot = (
         periodStart,
         periodEnd,
         fullScore,
-        finalScore: roundScore(fullScore - deduction),
+        finalScore: roundScore(fullScore + scoreChange),
         deduction,
         recordCount: periodRecords.length,
         hasRecordDetails: periodRecords.length > 0,
@@ -378,8 +390,29 @@ export const askClassEvaluationQuestion = ({
         };
     }
 
-    const prioritizedRecords = prioritizeRecords(periodRecords);
-    const dimensionDeductions = getDimensionDeductions(periodRecords);
+    // 明细保留全部评价；待改进分析只使用扣分，避免加分抵消扣分或被当作问题。
+    const deductionRecords = periodRecords
+        .filter(record => getClassEvaluationScoreChange(record) < 0)
+        .map(record => ({ ...record, deduction: -getClassEvaluationScoreChange(record) }));
+    if (deductionRecords.length === 0) {
+        return {
+            answerType: questionIntent,
+            message: `本周当前得分${formatScore(snapshot.finalScore)}分，年级第${gradeRank}名，本周期暂无扣分记录。`,
+            metrics: [
+                { label: '本周得分', value: `${formatScore(snapshot.finalScore)}分` },
+                { label: '年级排名', value: `第${gradeRank}名` },
+            ],
+            breakdown: questionIntent === 'weekly_performance' ? summarizeDimensionScores(rankings) : [],
+            analysis: [],
+            suggestions: [],
+            context: createContext(snapshot, periodRecords),
+            evidenceRefs: periodRecords.map(record => record.id),
+            promptVersion: getPromptVersion(),
+            dataSnapshotId: snapshot.id,
+        };
+    }
+    const prioritizedRecords = prioritizeRecords(deductionRecords);
+    const dimensionDeductions = getDimensionDeductions(deductionRecords);
     const mostDeducted = dimensionDeductions[0];
     const weakestDimension = [...rankings].sort((left, right) => (
         (left.score / left.maxScore) - (right.score / right.maxScore)
@@ -432,11 +465,11 @@ export const askClassEvaluationQuestion = ({
     }
 
     if (questionIntent === 'deduction_patterns') {
-        const scopedRecords = scopeRecordsForQuestion(normalizedQuestion, periodRecords);
+        const scopedRecords = scopeRecordsForQuestion(normalizedQuestion, deductionRecords);
         const scopedPrioritizedRecords = prioritizeRecords(scopedRecords);
         const scopedDimensionDeductions = getDimensionDeductions(scopedRecords);
         const scopedDeduction = roundScore(scopedRecords.reduce((sum, record) => sum + record.deduction, 0));
-        const hasSpecificScope = scopedRecords.length < periodRecords.length;
+        const hasSpecificScope = scopedRecords.length < deductionRecords.length;
         const topTwo = scopedDimensionDeductions.slice(0, 2);
         const topTwoDeduction = roundScore(topTwo.reduce((sum, item) => sum + item.deduction, 0));
         const concentration = Math.round((topTwoDeduction / scopedDeduction) * 100);

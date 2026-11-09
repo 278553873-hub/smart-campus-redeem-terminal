@@ -15,8 +15,8 @@ try {
         import assert from 'node:assert/strict';
         import React from 'react';
         import { renderToStaticMarkup } from 'react-dom/server';
-        import { loadStudentEvaluationScreen } from './components/data-screen/studentEvaluationScreenService';
-        import { createEvaluationScreenSnapshot, createDemoScreenEvaluation, applyScreenEvaluation, applyEvaluationToPeriods, percentage, SCREEN_PERIODS } from './components/data-screen/studentEvaluationScreenModel';
+        import { loadStudentEvaluationScreen, withSchoolScreenTeacherNames, reconcileSchoolGradeRecords } from './components/data-screen/studentEvaluationScreenService';
+        import { createEvaluationScreenSnapshot, createDemoScreenEvaluation, applyScreenEvaluation, applyEvaluationToPeriods, percentage, screenIndicatorCoverage, SCREEN_PERIODS } from './components/data-screen/studentEvaluationScreenModel';
         import { EvaluationScreenContent } from './components/data-screen/StudentEvaluationDataScreen';
         import { getLeaderReportSnapshot } from './mobile-app/services/leaderReportService';
 
@@ -24,11 +24,11 @@ try {
         const periods = await loadStudentEvaluationScreen(now);
         const baseline = await getLeaderReportSnapshot({ period: 'week' });
         const week = periods.week;
-        assert.deepEqual(week.report, baseline, '历史动态节选不能重复增加存量统计');
+        assert.deepEqual(week.report, withSchoolScreenTeacherNames(reconcileSchoolGradeRecords(baseline)), '历史动态节选不能重复增加存量统计');
+        assert.deepEqual(week.report.summary, baseline.summary, '本地展示适配不得改变全校汇总');
+        assert.equal(week.report.gradeCoverages.reduce((sum, grade) => sum + grade.evaluationRecords, 0), week.report.summary.totalEvaluationCount, '年级记录合计应与全校成长记录条数一致');
         assert.equal(week.schoolName, '星河实验学校');
         assert.equal(week.recentEvaluations.length, 8);
-        assert.equal(periods.term.classReport.classRanking.length, 30, '班评使用真实适配层的参评班级');
-        assert.equal(periods.term.classReport.summary.averageScore, 96.5);
         assert.ok(week.recentEvaluations.every(event => event.students.every(student => student.displayName.endsWith('同学'))));
 
         const batch = createDemoScreenEvaluation(week, 15, now + 5200);
@@ -75,27 +75,27 @@ try {
         assert.equal(running.recentEvaluations.length, 12, '长期播报应限制动态列表大小');
         assert.equal(running.processedIds.length, 200, '长期播报应限制去重缓存大小');
         assert.ok(running.report.summary.activeTeachers <= running.report.summary.totalTeachers);
-        assert.deepEqual(baseline, week.report, '增量聚合不得修改原报表');
+        assert.deepEqual(week.report, withSchoolScreenTeacherNames(reconcileSchoolGradeRecords(baseline)), '增量聚合不得修改原快照');
+        assert.deepEqual(baseline, await getLeaderReportSnapshot({ period: 'week' }), '展示适配不得修改共享报表');
         assert.equal(percentage(1, 0), 0);
         const emptyReport = { ...baseline, teachers: [], gradeCoverages: [], fiveEducationStats: [], summary: Object.fromEntries(Object.keys(baseline.summary).map(key => [key, 0])) };
         const empty = createEvaluationScreenSnapshot(emptyReport, '空学校', now);
         assert.equal(empty.recentEvaluations.length, 0);
         assert.equal(createDemoScreenEvaluation(empty, 1, now), null);
 
-        for (const snapshot of [periods.term, afterNegative, empty]) {
-          for (const section of ['overview', 'students', 'classes']) {
-            const html = renderToStaticMarkup(React.createElement(EvaluationScreenContent, { snapshot, section, gradePage: 0, onGradePageChange: () => {}, playing: true }));
-            assert.ok(html.includes('教师评价动态') && html.includes('学生得分动态'), '两条动态应可渲染');
-            assert.ok(html.includes('动态示例'), '不得将演示源描述成真实接入');
-            assert.ok(!html.includes('NaN') && !html.includes('Infinity'));
-            if (section === 'overview') {
-              assert.ok(html.includes('成长记录') && html.includes('评价次数'));
-              assert.ok(html.includes('五育评价全景') && html.includes('班级常规表现'));
-              assert.ok(!html.includes('<img'), '图表与文字应使用可编辑代码渲染');
-            }
+        const single = { ...week, report: { ...week.report, fiveEducationStats: [week.report.fiveEducationStats[0]] } };
+        const emptyIndicators = screenIndicatorCoverage([], 'term');
+        assert.equal(emptyIndicators.third.percent, 0);
+        for (const snapshot of [periods.term, afterNegative, empty, single]) {
+          const html = renderToStaticMarkup(React.createElement(EvaluationScreenContent, { snapshot, gradePage: 0, onGradePageChange: () => {}, reducedMotion: true }));
+          for (const title of ['评价次数', '成长记录条数', '学生覆盖率', '教师参与率', '教师评价排行', '五育事件占比', '年级评价数', '年级评价覆盖率', '指标使用情况', '最新评价', '学生积分变化', '五育加减分']) {
+            assert.ok(html.includes(title), title + '应可渲染');
           }
+          assert.ok(!html.includes('NaN') && !html.includes('Infinity'), '空数据和单类别整环不能生成无效数值');
+          assert.ok(!html.includes('<img'), '图表与文字应使用可编辑代码渲染');
+          assert.ok(!html.includes('陈同学') && !html.includes('林同学'), '学生姓名在展示层继续脱敏');
         }
-        console.log('学生评价大屏检查通过：多人评价口径、加减分、去重、覆盖人数、周期同步、缓存边界及真实组件渲染。');
+        console.log('学校PC育人大屏检查通过：独立适配、多人评价口径、加减分、去重、周期同步、年级总量、全部板块与空数据/单类别整环渲染。');
       `,
       resolveDir: projectRoot,
       sourcefile: 'student-evaluation-screen-checks.tsx',

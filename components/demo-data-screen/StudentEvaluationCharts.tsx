@@ -1,10 +1,12 @@
 import React, { useId, type CSSProperties, type ReactNode } from 'react';
-import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { LeaderReportFiveEducationStat, LeaderReportGradeCoverage, LeaderReportTeacherUsage } from '../../mobile-app/services/leaderReportService';
-import { percentage, type ScreenEvaluation } from './studentEvaluationScreenModel';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { LeaderReportFiveEducationStat, LeaderReportGradeCoverage, LeaderReportTeacherUsage, LeaderReportIndicatorGroupUsage } from '../../mobile-app/services/leaderReportService';
+import { maskScreenStudentName, screenIndicatorCoverage, percentage, type ScreenPeriod, type ScreenEvaluation } from './studentEvaluationScreenModel';
 
 export const formatScreenNumber = (value: number) => value.toLocaleString('zh-CN');
 export const formatScreenTime = (timestamp: number) => new Date(timestamp).toLocaleTimeString('zh-CN', { hour12: false });
+
+const ScreenEmptyState = ({ children }: { children: ReactNode }) => <p className="demo-evaluation-screen-empty">{children}</p>;
 
 export const ScreenPanel = ({ title, detail, action, children, className = '' }: {
   title: string; detail?: ReactNode; action?: ReactNode; children: ReactNode; className?: string;
@@ -22,37 +24,8 @@ export const ScreenPanel = ({ title, detail, action, children, className = '' }:
   );
 };
 
-export const FiveEducationDistribution = ({ dimensions }: { dimensions: LeaderReportFiveEducationStat[] }) => {
-  const total = dimensions.reduce((sum, item) => sum + item.eventCount, 0);
-  const circumference = 2 * Math.PI * 77;
-  let cursor = 0;
-  return (
-    <div className="demo-evaluation-screen-distribution">
-      <svg viewBox="0 0 220 220" role="img" aria-label={`已归类五育行为共${total}条`}>
-        <circle className="demo-evaluation-screen-ring-track" cx="110" cy="110" r="77" />
-        {dimensions.map(dimension => {
-          const length = total ? dimension.eventCount / total * circumference : 0;
-          const offset = -cursor;
-          cursor += length;
-          return <circle key={dimension.key} className={`demo-evaluation-screen-ring education-${dimension.key}`} cx="110" cy="110" r="77"
-            strokeDasharray={`${Math.max(0, length - Math.min(4, length))} ${circumference}`} strokeDashoffset={offset} transform="rotate(-90 110 110)" />;
-        })}
-        <text x="110" y="110" className="demo-evaluation-screen-ring-value" textAnchor="middle">{formatScreenNumber(total)}</text>
-        <text x="110" y="137" className="demo-evaluation-screen-ring-label" textAnchor="middle">五育行为 / 条</text>
-      </svg>
-      <ul className="demo-evaluation-screen-dimension-legend">
-        {dimensions.map(dimension => <li key={dimension.key} className={`education-${dimension.key}`}>
-          <span className="demo-evaluation-screen-color-dot" aria-hidden="true" />
-          <span>{dimension.name}</span>
-          <strong>{formatScreenNumber(dimension.eventCount)}<small>条</small></strong>
-          <span className="demo-evaluation-screen-secondary">{percentage(dimension.eventCount, total)}%</span>
-        </li>)}
-      </ul>
-    </div>
-  );
-};
-
 export const FiveEducationScores = ({ dimensions }: { dimensions: LeaderReportFiveEducationStat[] }) => {
+  if (!dimensions.some(item => item.eventCount > 0)) return <ScreenEmptyState>本周期暂无五育加减分记录</ScreenEmptyState>;
   const maximum = Math.max(1, ...dimensions.flatMap(dimension => [dimension.plusScore, dimension.minusScore]));
   return (
     <div className="demo-evaluation-screen-scores">
@@ -70,7 +43,6 @@ export const FiveEducationScores = ({ dimensions }: { dimensions: LeaderReportFi
           </div>
         </div>)}
       </div>
-      <div className="demo-evaluation-screen-chart-footnote">累计分值<span>同一刻度 · 单位：分</span></div>
     </div>
   );
 };
@@ -80,36 +52,38 @@ export const GradeCoverage = ({ grades, page, onPageChange }: {
 }) => {
   const pages = Math.max(1, Math.ceil(grades.length / 6));
   const currentPage = page % pages;
+  const topGradeIds = new Set([...grades].filter(grade => grade.total > 0 && grade.covered > 0)
+    .sort((a, b) => b.covered / b.total - a.covered / a.total).slice(0, 3).map(grade => grade.id));
   return (
-    <ScreenPanel title="每个年级，都被关注" action={pages > 1 && <div className="demo-evaluation-screen-pagination">
+    <ScreenPanel title="年级评价覆盖率" action={pages > 1 && <div className="demo-evaluation-screen-pagination">
       <button type="button" aria-label="上一组年级" onClick={() => onPageChange((currentPage + pages - 1) % pages)}><ChevronLeft size={18} /></button>
       <span>{currentPage + 1}<small> / {pages}</small></span>
       <button type="button" aria-label="下一组年级" onClick={() => onPageChange((currentPage + 1) % pages)}><ChevronRight size={18} /></button>
     </div>}>
-      <div className="demo-evaluation-screen-coverage-label"><span>学生评价覆盖率</span><span>已覆盖 / 学生数</span></div>
+      {!grades.length ? <ScreenEmptyState>暂无年级学生数据，请在学校后台完善</ScreenEmptyState> : <>
       <ul className="demo-evaluation-screen-grade-list" key={currentPage}>
         {grades.slice(currentPage * 6, currentPage * 6 + 6).map(grade => {
           const percent = percentage(grade.covered, grade.total);
-          return <li key={grade.id}>
+          return <li key={grade.id} className={topGradeIds.has(grade.id) ? 'is-top-grade' : undefined}>
             <span className="demo-evaluation-screen-grade-name">{grade.name}</span>
             <div className="demo-evaluation-screen-coverage-track" role="meter" aria-label={`${grade.name}学生评价覆盖率`} aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
               <span style={{ width: `${percent}%` }} />
             </div>
-            <strong>{percent}<small>%</small></strong>
-            <span className="demo-evaluation-screen-grade-count">{grade.covered} / {grade.total}</span>
+            <strong>{grade.total ? <>{percent}<small>%</small></> : '—'}</strong>
           </li>;
         })}
       </ul>
+      </>}
     </ScreenPanel>
   );
 };
 
 export const TeacherEvaluationFootprints = ({ teachers }: { teachers: LeaderReportTeacherUsage[] }) => {
-  const top = [...teachers].sort((a, b) => b.records - a.records).slice(0, 4);
+  const top = teachers.filter(teacher => teacher.records > 0).sort((a, b) => b.records - a.records).slice(0, 10);
   const maximum = Math.max(1, ...top.map(teacher => teacher.records));
+  if (!top.length) return <ScreenEmptyState>本周期暂无教师评价记录</ScreenEmptyState>;
   return (
     <ol className="demo-evaluation-screen-teacher-list">
-      {!top.length && <li className="demo-evaluation-screen-empty">暂时没有教师评价记录</li>}
       {top.map((teacher, index) => <li key={teacher.id}>
         <span className="demo-evaluation-screen-rank">{String(index + 1).padStart(2, '0')}</span>
         <span className="demo-evaluation-screen-teacher-name">{teacher.name}</span>
@@ -120,26 +94,27 @@ export const TeacherEvaluationFootprints = ({ teachers }: { teachers: LeaderRepo
   );
 };
 
-export const LiveEvaluationFeed = ({ events }: { events: ScreenEvaluation[] }) => (
-  <div className="demo-evaluation-screen-feed-window" aria-label="滚动评价记录" aria-live="off">
-    {!events.length && <p className="demo-evaluation-screen-empty">暂时没有评价记录</p>}
-    <ol className="demo-evaluation-screen-feed-track" key={events[0]?.id}>
-      {events.slice(0, 7).map(event => {
+const formatDelta = (delta: number) => `${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)}分`;
+const indicatorPathLabel = (event: ScreenEvaluation) => event.indicatorPath?.join('-') ?? event.indicator;
+
+export const LiveEvaluationFeed = ({ events }: { events: ScreenEvaluation[] }) => {
+  const visibleEvents = events.slice(0, 5);
+  return <div className="demo-evaluation-screen-feed-window" aria-label="最新评价记录" aria-live="off">
+    {!events.length ? <ScreenEmptyState>新的评价发生后将在这里播报</ScreenEmptyState> :
+    <ol className="demo-evaluation-screen-feed-track" key={events[0]?.id} style={{ gridTemplateRows: `repeat(${visibleEvents.length}, minmax(0, 1fr))` }}>
+      {visibleEvents.map(event => {
         const delta = event.students[0]?.delta ?? 0;
-        const negative = delta < 0;
-        return <li key={event.id} className={negative ? 'is-negative' : 'is-positive'}>
-          <span className="demo-evaluation-screen-feed-mark" aria-hidden="true">{negative ? <ArrowDownRight size={19} /> : <ArrowUpRight size={19} />}</span>
-          <div className="demo-evaluation-screen-feed-content">
-            <div className="demo-evaluation-screen-feed-line"><strong>{event.teacherName}</strong><time dateTime={new Date(event.occurredAt).toISOString()}>{formatScreenTime(event.occurredAt)}</time></div>
-            <p>{event.className}<span> · </span>{event.students.length > 1 ? `${event.students.length}名同学` : event.students[0]?.displayName}</p>
-            <div className="demo-evaluation-screen-feed-description"><span className={`demo-evaluation-screen-education-tag education-${event.dimension}`}>{event.dimensionName}</span><span>{event.indicator}</span></div>
-          </div>
-          <div className="demo-evaluation-screen-feed-delta"><strong>{delta > 0 ? '+' : '−'}{Math.abs(delta)}</strong><small>{event.students.length > 1 ? `分 × ${event.students.length}人` : '分'}</small></div>
+        const path = indicatorPathLabel(event);
+        return <li key={event.id} className={delta < 0 ? 'is-negative' : 'is-positive'} aria-label={`${formatScreenTime(event.occurredAt)}，${event.teacherName}，${path}，每人${formatDelta(delta)}`}>
+          <time dateTime={new Date(event.occurredAt).toISOString()}>{formatScreenTime(event.occurredAt)}</time>
+          <strong className="demo-evaluation-screen-feed-teacher" title={event.teacherName}>{event.teacherName}</strong>
+          <span className="demo-evaluation-screen-feed-indicator" title={path}>{path}</span>
+          <strong className="demo-evaluation-screen-feed-delta">{formatDelta(delta)}</strong>
         </li>;
       })}
-    </ol>
-  </div>
-);
+    </ol>}
+  </div>;
+};
 
 export const StudentScoreChanges = ({ events }: { events: ScreenEvaluation[] }) => {
   const unique = new Set<string>();
@@ -147,14 +122,74 @@ export const StudentScoreChanges = ({ events }: { events: ScreenEvaluation[] }) 
     if (unique.has(student.studentId)) return false;
     unique.add(student.studentId);
     return true;
-  }).slice(0, 3);
-  return (
-    <div className="demo-evaluation-screen-student-changes" aria-live="off">
-      {!changes.length && <p className="demo-evaluation-screen-empty">新的评价发生后，积分变化将在这里呈现</p>}
-      {changes.map(student => <article key={`${student.event.id}-${student.studentId}`} className={student.delta < 0 ? 'is-negative' : 'is-positive'} aria-label={`${student.event.className}${student.displayName}，净得分从${student.beforeScore}分变为${student.afterScore}分`}>
-        <div className="demo-evaluation-screen-student-change-heading"><strong>{student.displayName}</strong><span>{student.event.className}</span><b>{student.delta > 0 ? '+' : '−'}{Math.abs(student.delta)}<small>分</small></b></div>
-        <div className="demo-evaluation-screen-student-score"><span>{student.beforeScore}<small>分</small></span><span className="demo-evaluation-screen-score-journey"><i /><ChevronRight size={16} aria-hidden="true" /></span><strong>{student.afterScore}<small>分</small></strong></div>
-      </article>)}
-    </div>
-  );
+  }).slice(0, 5);
+  return <div className="demo-evaluation-screen-student-changes" aria-live="off">
+    {!changes.length && <ScreenEmptyState>新的评价发生后，积分变化将在这里呈现</ScreenEmptyState>}
+    {changes.map(student => {
+      const name = maskScreenStudentName(student.displayName);
+      const indicator = student.event.indicatorPath?.[0] ?? student.event.dimensionName;
+      return <article key={`${student.event.id}-${student.studentId}`} className={student.delta < 0 ? 'is-negative' : 'is-positive'} aria-label={`${formatScreenTime(student.event.occurredAt)}，${name}，${indicator}，${formatDelta(student.delta)}`}>
+        <time dateTime={new Date(student.event.occurredAt).toISOString()}>{formatScreenTime(student.event.occurredAt)}</time>
+        <strong className="demo-evaluation-screen-student-name">{name}</strong>
+        <span className={`demo-evaluation-screen-education-tag education-${student.event.dimension}`}>{indicator}</span>
+        <b className="demo-evaluation-screen-student-delta">{formatDelta(student.delta)}</b>
+      </article>;
+    })}
+  </div>;
+};
+
+const IndicatorCoverageGauge = ({ label, covered, total, percent, accent }: {
+  label: string; covered: number; total: number; percent: number; accent: boolean;
+}) => {
+  const id = useId().replace(/:/g, '');
+  const arc = 'M41.816,116.184 A54,54 0 1,1 118.184,116.184';
+  return <div className={`demo-evaluation-screen-indicator-gauge ${accent ? 'is-accent' : ''}`}>
+    <div className="demo-evaluation-screen-indicator-label">{label}</div>
+    <svg viewBox="0 0 160 146" role="img" aria-label={`${label}，${total ? `${percent}%` : '暂无指标'}，已使用${covered}，总指标${total}`}>
+      <defs>
+        <radialGradient id={`${id}-disc`}><stop offset="0" stopColor="#171514" /><stop offset="1" stopColor="#050504" /></radialGradient>
+        <pattern id={`${id}-lines`} width="4" height="3" patternUnits="userSpaceOnUse"><path d="M0 1H4" stroke="#f3f0ea" strokeOpacity=".07" strokeWidth=".6" /></pattern>
+      </defs>
+      <circle cx="80" cy="78" r="52" fill={`url(#${id}-disc)`} />
+      <circle cx="80" cy="78" r="52" fill={`url(#${id}-lines)`} />
+      <path d={arc} className="demo-evaluation-screen-gauge-track" />
+      {percent > 0 && <path d={arc} className="demo-evaluation-screen-gauge-value" pathLength="100" strokeDasharray={`${percent} 100`} />}
+      <path d="M76 22H84L80 29Z M80 29V40" className="demo-evaluation-screen-gauge-tick" />
+      <text x="80" y="86" textAnchor="middle" className="demo-evaluation-screen-gauge-percent">{total ? percent : '—'}{total > 0 && <tspan>%</tspan>}</text>
+    </svg>
+  </div>;
+};
+
+export const IndicatorUsage = ({ groups, period }: { groups: LeaderReportIndicatorGroupUsage[]; period: ScreenPeriod }) => {
+  const coverage = screenIndicatorCoverage(groups, period);
+  return <ScreenPanel title="指标使用情况">
+    {!coverage.second.total && !coverage.third.total ? <ScreenEmptyState>暂无指标数据</ScreenEmptyState> :
+    <div className="demo-evaluation-screen-indicator-usage">
+      <IndicatorCoverageGauge label="二级指标" {...coverage.second} accent={false} />
+      <IndicatorCoverageGauge label="三级指标" {...coverage.third} accent />
+    </div>}
+  </ScreenPanel>;
+};
+
+export const GradeEvaluationRecords = ({ grades, page, onPageChange }: {
+  grades: LeaderReportGradeCoverage[]; page: number; onPageChange: (page: number) => void;
+}) => {
+  const pages = Math.max(1, Math.ceil(grades.length / 6));
+  const currentPage = page % pages;
+  const maximum = Math.max(1, ...grades.map(grade => grade.evaluationRecords));
+  const topGradeIds = new Set([...grades].sort((a, b) => b.evaluationRecords - a.evaluationRecords).filter(grade => grade.evaluationRecords > 0).slice(0, 3).map(grade => grade.id));
+  return <ScreenPanel title="年级评价数" detail="记录条数" action={pages > 1 && <div className="demo-evaluation-screen-pagination">
+    <button type="button" aria-label="上一组年级评价数" onClick={() => onPageChange((currentPage + pages - 1) % pages)}><ChevronLeft size={18} /></button>
+    <span>{currentPage + 1}<small> / {pages}</small></span>
+    <button type="button" aria-label="下一组年级评价数" onClick={() => onPageChange((currentPage + 1) % pages)}><ChevronRight size={18} /></button>
+  </div>}>
+    {!grades.length ? <ScreenEmptyState>暂无年级评价记录</ScreenEmptyState> :
+    <ul className="demo-evaluation-screen-grade-records" key={currentPage}>
+      {grades.slice(currentPage * 6, currentPage * 6 + 6).map(grade => <li key={grade.id} className={topGradeIds.has(grade.id) ? 'is-top-grade' : undefined} aria-label={`${grade.name}，${grade.evaluationRecords}条成长记录`}>
+        <span>{grade.name}</span>
+        <div className="demo-evaluation-screen-coverage-track"><span style={{ width: `${grade.evaluationRecords / maximum * 100}%` }} /></div>
+        <strong>{formatScreenNumber(grade.evaluationRecords)}<small>条</small></strong>
+      </li>)}
+    </ul>}
+  </ScreenPanel>;
 };

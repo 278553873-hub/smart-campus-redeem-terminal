@@ -16,6 +16,7 @@ interface TextSelectionControlProps<TValue extends string> {
   variant?: 'text' | 'underline';
   className?: string;
   semantics?: 'tabs' | 'group';
+  static?: boolean;
 }
 
 const TextSelectionControl = <TValue extends string,>({
@@ -29,6 +30,7 @@ const TextSelectionControl = <TValue extends string,>({
   variant = 'text',
   className = '',
   semantics = 'tabs',
+  static: isStatic = false,
 }: TextSelectionControlProps<TValue>) => (
   <div
     className={`${fullWidth ? 'grid w-full' : 'flex w-full overflow-x-auto no-scrollbar'} ${variant === 'underline' && !fullWidth ? 'gap-[var(--tm-space-8)]' : ''} min-h-[var(--tm-selection-touch-height)] ${className}`}
@@ -56,7 +58,7 @@ const TextSelectionControl = <TValue extends string,>({
             onChange(items[next].value);
             event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('button')[next]?.focus();
           }}
-          className={`min-h-[var(--tm-selection-touch-height)] ${variant === 'underline' ? `relative ${fullWidth ? 'min-w-0' : 'shrink-0'} px-0 pb-[var(--tm-space-2)] focus-visible:ring-inset` : fullWidth ? 'min-w-0 px-[var(--tm-space-1)]' : 'shrink-0 px-[var(--tm-space-3)]'} ${size === 'section' ? 'text-[length:var(--tm-font-size-section-title)]' : size === 'body' ? 'text-[length:var(--tm-font-size-body)]' : 'text-[length:var(--tm-font-size-meta)]'} transition-[color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100 ${variant === 'underline'
+          className={`min-h-[var(--tm-selection-touch-height)] ${variant === 'underline' ? `relative ${fullWidth ? 'min-w-0' : 'shrink-0'} px-0 pb-[var(--tm-space-2)] focus-visible:ring-inset` : fullWidth ? 'min-w-0 px-[var(--tm-space-1)]' : 'shrink-0 px-[var(--tm-space-3)]'} ${size === 'section' ? 'text-[length:var(--tm-font-size-section-title)]' : size === 'body' ? 'text-[length:var(--tm-font-size-body)]' : 'text-[length:var(--tm-font-size-meta)]'} ${isStatic ? 'transition-colors' : 'transition-[color,transform] active:scale-[0.96] motion-reduce:active:scale-100'} [transition-duration:var(--tm-duration-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none ${variant === 'underline'
             ? (selected ? 'font-bold text-[var(--tm-text-primary)]' : 'font-medium text-[var(--tm-text-secondary)]')
             : selected
             ? 'font-semibold text-[var(--tm-selection-text-active)]'

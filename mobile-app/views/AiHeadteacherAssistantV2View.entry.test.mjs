@@ -204,7 +204,7 @@ assert.ok(!viewSource.includes('<TeacherReportScoreProgressChart'), '分类数�
 assert.ok(!viewSource.includes('grid grid-cols-2 divide-x divide-[var(--tm-border-subtle)] border-y'), '本周核心数据不应继续依赖重复分隔线建立层级。');
 assert.ok(!viewSource.includes(' transition '), 'V2 页面交互不得使用会监听所有属性的笼统过渡。');
 requireText(viewSource, '查看评价明细', '评价分类下方应提供居中的查看评价明细入口。');
-requireText(viewSource, 'find(item => item.recordCount > 0)?.dimension', '查看评价明细应默认打开本周期第一项有扣分的指标。');
+requireText(viewSource, 'records.some(record => record.dimension === item.dimension)', '查看评价明细应默认打开本周期首个有评价记录的指标，包含只有加分的指标。');
 requireText(viewSource, 'initialDimension={detailInitialDimension ?? undefined}', '分类明细应在子页定位到当前一级指标。');
 requireText(viewSource, 'setWeekDetailOpen(true)', '点击分类行或查看评价明细应进入周数据子页。');
 assert.ok(!viewSource.includes('DimensionDetailSheetHeader'), '分类明细不应再使用底部弹窗。');
@@ -219,13 +219,14 @@ assert.ok(!viewSource.includes('>累计扣分</span>'), '周数据子页的基�
 requireText(viewSource, 'id="week-dimensions-title"', '周数据页应常驻展示分类数据。');
 assert.ok(!viewSource.includes('<span className="text-[11px] tabular-nums text-[var(--tm-text-tertiary)]">{week.dataRangeLabel}</span>'), '分类数据不应重复展示顶部已有的时间周期。');
 requireText(viewSource, 'selectedDimension={selectedRanking?.dimension}', '周数据页分类表应突出当前选择的一级指标。');
-requireText(viewSource, 'selectedRecords = records.filter', '周数据页扣分明细应跟随一级指标筛选。');
+requireText(viewSource, 'selectedRecords = records.filter', '周数据页评价明细应跟随一级指标筛选。');
 requireText(viewSource, "record.indicatorPath?.join(' / ')", '每笔扣分明细应展示一、二、三级完整指标路径。');
 requireText(viewSource, '>原文</div>', '每笔扣分明细应展示评价原文。');
 assert.ok(!viewSource.includes('selectedDeduction'), '多笔扣分明细不应汇总扣分合计。');
 assert.ok(!viewSource.includes('>扣分依据</dt>'), '扣分明细不应展示扣分依据。');
-requireText(viewSource, '该周此指标暂无待改进', '周数据页应处理一级指标无待改进记录的状态。');
-requireText(viewSource, '待改进明细', '周数据页应展示所选一级指标的完整待改进明细。');
+requireText(viewSource, '该周此指标暂无评价记录', '周数据页应处理一级指标无评价记录的状态。');
+requireText(viewSource, '>评价明细</h2>', '周数据页应展示所选一级指标的全部加分、扣分明细。');
+assert.ok(!viewSource.includes('>待改进明细</h2>'), '评价明细不得继续使用仅针对扣分的标题。');
 requireText(viewSource, 'ClassEvaluationHistoryPage', '历史报告应使用独立页面展示。');
 requireText(viewSource, 'groupReportsByMonth', '往期报告应按月份组织周报列表。');
 requireText(viewSource, 'findSavedClassEvaluationReport', '点击周报任务后应先查询同版本缓存。');
