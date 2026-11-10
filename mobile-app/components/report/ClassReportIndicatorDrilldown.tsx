@@ -130,6 +130,7 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
                   optionKey={`indicator-score-${path.join('-')}`}
                   className="h-64"
                   showLegend={false}
+                  showHoverEffects={false}
                   onCategorySelect={hasNextLevel ? selectCategory : undefined}
                 />
               </div>
@@ -141,6 +142,8 @@ const ClassReportIndicatorDrilldown: React.FC<ClassReportIndicatorDrilldownProps
             data={eventData}
             optionKey={`indicator-event-${path.join('-')}`}
             className="h-80"
+            showHoverEffects={false}
+            showValues
             onCategorySelect={hasNextLevel ? selectCategory : undefined}
           />
         )}

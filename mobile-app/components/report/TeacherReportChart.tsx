@@ -65,6 +65,7 @@ interface TeacherReportChartTheme {
     tooltip: string;
     surface: string;
     mutedOpacity: number;
+    spacing: { xs: number; sm: number; md: number; lg: number };
 }
 
 const readToken = (style: CSSStyleDeclaration, name: string) => style.getPropertyValue(name).trim();
@@ -131,6 +132,12 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
         tooltip: readToken(style, '--tm-chart-tooltip'),
         surface: readToken(style, '--tm-bg-surface'),
         mutedOpacity: Number.parseFloat(readToken(style, '--tm-chart-series-muted-opacity')) || 0.4,
+        spacing: {
+            xs: Number.parseFloat(readToken(style, '--tm-space-1')),
+            sm: Number.parseFloat(readToken(style, '--tm-space-2')),
+            md: Number.parseFloat(readToken(style, '--tm-space-3')),
+            lg: Number.parseFloat(readToken(style, '--tm-space-4')),
+        },
     };
 };
 
@@ -349,6 +356,7 @@ interface TeacherReportBarChartProps {
     // 柱顶已有精确值时，可关闭手机端冗余的纵轴标尺与网格。
     showValueAxis?: boolean;
     showLegend?: boolean;
+    showHoverEffects?: boolean;
     valueLabelSuffix?: string;
     chartTop?: number;
     barMaxWidth?: number;
@@ -366,6 +374,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
     categoryColors,
     showValueAxis = true,
     showLegend = true,
+    showHoverEffects = true,
     valueLabelSuffix = '',
     chartTop,
     barMaxWidth,
@@ -380,11 +389,13 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
         animationDurationUpdate: 250,
         color: series.map(item => theme.colors[item.color]),
         tooltip: {
+            show: showHoverEffects,
+            triggerOn: showHoverEffects ? 'mousemove|click' : 'none',
             trigger: 'axis',
             backgroundColor: theme.tooltip,
             borderWidth: 0,
             textStyle: { color: theme.surface, fontSize: 12 },
-            axisPointer: { type: 'shadow' },
+            axisPointer: { show: showHoverEffects, type: 'shadow' },
         },
         legend: {
             show: showLegend,
@@ -437,6 +448,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
         series: series.map(item => ({
             name: item.name,
             type: 'bar',
+            legendHoverLink: showHoverEffects,
             cursor: onCategorySelect ? 'pointer' : 'default',
             data: item.values.map((value, index) => ({
                 value,
@@ -458,7 +470,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 borderRadius: [4, 4, 0, 0],
                 opacity: item.muted ? theme.mutedOpacity : 1,
             },
-            emphasis: onCategorySelect ? {
+            emphasis: !showHoverEffects ? { disabled: true } : onCategorySelect ? {
                 itemStyle: { opacity: 0.72 },
             } : undefined,
             label: {
@@ -472,7 +484,7 @@ export const TeacherReportBarChart: React.FC<TeacherReportBarChartProps> = ({
                 fontWeight: 600,
             },
         })),
-    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, valueLabelSuffix, chartTop, barMaxWidth, barGap, barCategoryGap, onCategorySelect]);
+    }), [categories, series, useCategoryColors, categoryColors, hasNegativeValue, showValueAxis, showLegend, showHoverEffects, valueLabelSuffix, chartTop, barMaxWidth, barGap, barCategoryGap, onCategorySelect]);
 
     return (
         <TeacherReportChart
@@ -579,6 +591,8 @@ interface TeacherReportDonutChartProps {
     className?: string;
     seriesName?: string;
     valueSuffix?: string;
+    showHoverEffects?: boolean;
+    showValues?: boolean;
     selectedName?: string;
     onCategorySelect?: (name: string) => void;
 }
@@ -590,6 +604,8 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
     className = 'h-64',
     seriesName = '五育事件',
     valueSuffix = '条',
+    showHoverEffects = true,
+    showValues = false,
     selectedName,
     onCategorySelect,
 }) => {
@@ -597,6 +613,8 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
         animationDuration: 500,
         color: data.map(item => theme.colors[item.color]),
         tooltip: {
+            show: showHoverEffects,
+            triggerOn: showHoverEffects ? 'mousemove|click' : 'none',
             trigger: 'item',
             backgroundColor: theme.tooltip,
             borderWidth: 0,
@@ -615,26 +633,41 @@ export const TeacherReportDonutChart: React.FC<TeacherReportDonutChartProps> = (
         series: [{
             name: seriesName,
             type: 'pie',
+            legendHoverLink: showHoverEffects,
+            emphasis: { disabled: !showHoverEffects, scale: showHoverEffects },
             selectedMode: selectedName ? 'single' : false,
             selectedOffset: 4,
             cursor: onCategorySelect ? 'pointer' : 'default',
-            center: ['50%', '43%'],
-            radius: ['43%', '66%'],
+            // 数值标签单独预留图例区域，防重叠布局只在绘图区内排布标签。
+            ...(showValues ? { top: theme.spacing.sm, bottom: theme.spacing.lg * 3 } : {}),
+            center: showValues ? ['50%', '50%'] : ['50%', '43%'],
+            radius: showValues ? ['48%', '76%'] : ['43%', '66%'],
             avoidLabelOverlap: true,
             itemStyle: { borderColor: theme.surface, borderWidth: 2, borderRadius: 3 },
             label: {
                 color: theme.textSecondary,
                 fontSize: 10,
-                formatter: ({ percent }: { percent?: number }) => `${percent ?? 0}%`,
+                ...(showValues ? {
+                    lineHeight: theme.spacing.lg,
+                    alignTo: 'edge',
+                    edgeDistance: theme.spacing.xs,
+                    overflow: 'none',
+                    distanceToLabelLine: theme.spacing.xs,
+                } : {}),
+                formatter: ({ value, percent }: { value?: number; percent?: number }) => (
+                    showValues ? `${(percent ?? 0).toFixed(2)}%(${value ?? 0}${valueSuffix})` : `${percent ?? 0}%`
+                ),
             },
-            labelLine: { length: 8, length2: 6 },
+            labelLine: showValues
+                ? { length: theme.spacing.md, length2: theme.spacing.sm }
+                : { length: 8, length2: 6 },
             data: data.map(item => ({
                 name: item.name,
                 value: item.value,
                 selected: item.name === selectedName,
             })),
         }],
-    }), [data, onCategorySelect, selectedName, seriesName, valueSuffix]);
+    }), [data, onCategorySelect, selectedName, seriesName, valueSuffix, showHoverEffects, showValues]);
 
     return (
         <TeacherReportChart

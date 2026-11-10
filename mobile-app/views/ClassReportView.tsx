@@ -783,6 +783,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                                     optionKey={`scores-${reportKey}`}
                                     className="h-64"
                                     showLegend={false}
+                                    showHoverEffects={false}
                                     barMaxWidth={9}
                                     barGap="8%"
                                     barCategoryGap="40%"
@@ -810,7 +811,7 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     )}
                 >
                     <TeacherReportDonutChart
-                        ariaLabel={`${reportData.indicatorTree.map(item => item.label).join('、')}的评价事件占比`}
+                        ariaLabel={`五育评价事件分布：${reportData.educationEvents.map(item => `${item.label}${item.value}条`).join('；')}`}
                         data={reportData.educationEvents.map(item => ({
                             name: item.label,
                             value: item.value,
@@ -818,6 +819,8 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                         }))}
                         optionKey={`events-${reportKey}`}
                         className="h-64"
+                        showHoverEffects={false}
+                        showValues
                         onCategorySelect={label => openIndicatorDrilldown('event', label)}
                     />
                     <ChartAnalysis {...educationEventAnalysis} />
