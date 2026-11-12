@@ -834,10 +834,12 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                     <div>
                         <CompactSegmentedControl
                             shape="subtle"
+                            sizing="content"
+                            motion="sliding"
                             value={rankingMode}
                             items={[
                                 { value: 'net', label: '总分' },
-                                { value: 'progress', label: '进步幅度' },
+                                { value: 'progress', label: '进步幅度（分）' },
                             ]}
                             onChange={setRankingMode}
                             ariaLabel="得分排行类型"
@@ -961,8 +963,10 @@ const ClassReportView: React.FC<ClassReportViewProps> = ({
                 <div style={classReportColorPreviewStyle}>
                 <CompactSegmentedControl
                     shape="subtle"
+                    sizing="content"
+                    motion="sliding"
                     value={rankingMode}
-                    items={[{ value: 'net', label: '总分' }, { value: 'progress', label: '进步幅度' }]}
+                    items={[{ value: 'net', label: '总分' }, { value: 'progress', label: '进步幅度（分）' }]}
                     onChange={setRankingMode}
                     ariaLabel="完整得分排行类型"
                     className="mb-3"

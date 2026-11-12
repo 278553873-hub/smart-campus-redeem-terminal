@@ -9,7 +9,6 @@ export default function ReportSectionLayout({ outline, children }: {
   const sections = React.Children.toArray(children).filter(
     (child): child is React.ReactElement<{ id: string }> => React.isValidElement<{ id: string }>(child),
   );
-  if (!outline) return <>{sections}</>;
   const byId = new Map(sections.map(section => [section.props.id, section]));
-  return <>{normalizeClassReportOutline(outline).filter(item => item.visible).map(item => byId.get(item.id))}</>;
+  return <>{normalizeClassReportOutline(outline ?? []).filter(item => item.visible).map(item => byId.get(item.id))}</>;
 }

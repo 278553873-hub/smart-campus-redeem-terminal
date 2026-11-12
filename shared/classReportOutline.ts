@@ -1,12 +1,12 @@
-/** 演示外壳中的班级报告布局配置，不改变报告数据口径。 */
+/** 班级报告默认布局及演示外壳配置，不改变报告数据口径。 */
 export const CLASS_REPORT_SECTIONS = [
   { id: 'class-report-overview-title', label: '概况' },
+  { id: 'student-coverage-title', label: '学生覆盖情况' },
+  { id: 'ranking-title', label: '得分排行' },
+  { id: 'attention-students-title', label: '需要关注' },
   { id: 'record-distribution-title', label: '评价记录分布' },
   { id: 'education-score-title', label: '五育得分分布' },
   { id: 'education-event-title', label: '五育事件分布' },
-  { id: 'ranking-title', label: '得分排行' },
-  { id: 'attention-students-title', label: '需要关注' },
-  { id: 'student-coverage-title', label: '学生覆盖情况' },
   { id: 'evaluation-records-title', label: '评价明细' },
 ] as const;
 export type ClassReportSectionId = typeof CLASS_REPORT_SECTIONS[number]['id'];

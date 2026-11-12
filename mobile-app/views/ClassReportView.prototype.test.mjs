@@ -81,7 +81,7 @@ assert.ok(viewSource.includes('rankingRows.length > 10') && viewSource.includes(
 assert.ok(viewSource.includes('aria-expanded={showAllRanking}') && viewSource.includes('aria-controls="class-ranking-list"'), '积分排行展开入口应向辅助技术表达展开状态并关联排行列表。');
 assert.ok(viewSource.includes("import MobileRankingBadge from '../components/ui/MobileRankingBadge'") && viewSource.includes('<MobileRankingBadge rank={index + 1} />'), '积分排行应复用公共数字绶带徽章，后续名次由同一组件展示。');
 assert.ok(!viewSource.includes('<Crown'), '积分排行不应继续使用图标库内置皇冠。');
-assert.ok(viewSource.includes("{ value: 'net', label: '总分' }") && viewSource.includes("{ value: 'progress', label: '进步幅度' }"), '积分排行应使用老师易理解的总分与进步幅度文案。');
+assert.ok(viewSource.includes("{ value: 'net', label: '总分' }") && viewSource.includes("{ value: 'progress', label: '进步幅度（分）' }"), '积分排行应使用总分与带分值单位的进步幅度文案。');
 assert.ok(viewSource.includes('<CompactSegmentedControl') && viewSource.includes('ariaLabel="积分排行类型"') && !viewSource.includes('aria-label="积分排行类型"'), '积分排行应复用左对齐的紧凑分段控件，不再铺满整张卡片。');
 assert.ok(!viewSource.includes('净得分排行') && !viewSource.includes('进步排行'), '积分排行不应继续使用难理解或重复的旧文案。');
 assert.ok(viewSource.includes('reportData.previousRecords / reportData.totalRecords') && viewSource.includes('progress: net - (previousPlus - previousMinus)'), '进步幅度必须按本周期总分相对上周期总分的变化计算。');
