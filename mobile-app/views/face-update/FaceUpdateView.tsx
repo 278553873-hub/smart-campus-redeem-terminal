@@ -1,13 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { Camera, ChevronLeft, Image } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Camera, ChevronLeft, Image, Trash2 } from 'lucide-react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
+import MobileToast from '../../components/ui/MobileToast';
 import StudentHorizontalCard from '../../components/student/StudentHorizontalCard';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
-import CompactSegmentedControl, { type CompactSegmentedControlItem } from '../../components/ui/CompactSegmentedControl';
+import ReportDateRangeTabs, { type ReportDateRangeTab } from '../../components/report/ReportDateRangeTabs';
 import { ASSETS } from '../../assets/images';
 import type { ClassInfo, Student } from '../../types';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
-import { isStudentFaceRecorded, markStudentFaceRecorded, resolveStudentAvatar, seedClassFaceLibrary, useStudentFaceLibrary } from '../../domain/studentFaceLibrary';
+import { clearStudentFace, isStudentFaceRecorded, markStudentFaceRecorded, resolveStudentAvatar, seedClassFaceLibrary, useStudentFaceLibrary } from '../../domain/studentFaceLibrary';
 
 interface FaceUpdateViewProps {
   classInfo: ClassInfo;
@@ -22,70 +24,105 @@ interface FaceStudent extends Student {
 }
 
 type FaceTab = 'pending' | 'recorded';
+type FaceAction = { studentId: string; type: 'capture' | 'clear' | null };
 
 const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace, students: classStudents, onBack }) => {
-  const [students, setStudents] = useState<FaceStudent[]>(() => {
-    seedClassFaceLibrary(classInfo.id, classStudents);
-    return classStudents.map(student => ({
-      ...student,
-      hasFaceData: isStudentFaceRecorded(student.id),
-      isUploading: false,
-    }));
-  });
-  const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<FaceTab>(() => (students.some(student => !student.hasFaceData) ? 'pending' : 'recorded'));
+  seedClassFaceLibrary(classInfo.id, classStudents);
+  const [uploadingStudentIds, setUploadingStudentIds] = useState<Set<string>>(() => new Set());
+  const [activeAction, setActiveAction] = useState<FaceAction | null>(null);
+  const [activeTab, setActiveTab] = useState<FaceTab>(() => (classStudents.some(student => !isStudentFaceRecorded(student.id)) ? 'pending' : 'recorded'));
+  const [toastMessage, setToastMessage] = useState('');
 
-  // 订阅共享人脸库，录入后本页与其它页面的学生头像一起更新。
+  // 状态直接读取共享人脸库，避免清除后保留本页的旧副本。
   useStudentFaceLibrary();
+  const students: FaceStudent[] = classStudents.map(student => ({
+    ...student,
+    avatar: resolveStudentAvatar(student),
+    hasFaceData: isStudentFaceRecorded(student.id),
+    isUploading: uploadingStudentIds.has(student.id),
+  }));
 
-  const activeStudent = useMemo(() => students.find(student => student.id === activeStudentId) ?? null, [activeStudentId, students]);
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+    const timer = window.setTimeout(() => setToastMessage(''), 1800);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
+
+  const activeStudent = students.find(student => student.id === activeAction?.studentId) ?? null;
   const pendingStudents = students.filter(student => !student.hasFaceData);
   const recordedStudents = students.filter(student => student.hasFaceData);
   const totalCount = students.length;
   const pendingCount = pendingStudents.length;
   const completedCount = recordedStudents.length;
+  // 关闭时保留操作对象，公共弹窗退场动画中的姓名不会闪空。
+  const closeAction = () => setActiveAction(current => current ? { ...current, type: null } : null);
 
   const updateFace = (source: 'camera' | 'album') => {
-    if (!activeStudent) return;
+    if (!activeStudent || activeStudent.isUploading) return;
     const student = activeStudent;
-    setActiveStudentId(null);
-    setStudents(current => current.map(item => item.id === student.id ? { ...item, isUploading: true } : item));
+    closeAction();
+    setUploadingStudentIds(current => new Set(current).add(student.id));
     window.setTimeout(() => {
       markStudentFaceRecorded(student, classInfo.id);
-      setStudents(current => current.map(item => item.id === student.id ? { ...item, isUploading: false, hasFaceData: true } : item));
+      setUploadingStudentIds(current => {
+        const next = new Set(current);
+        next.delete(student.id);
+        return next;
+      });
     }, source === 'camera' ? 900 : 700);
   };
 
+  const clearFace = () => {
+    if (!activeStudent?.hasFaceData || activeStudent.isUploading || activeAction?.type !== 'clear') return;
+    clearStudentFace(activeStudent.id);
+    closeAction();
+    setToastMessage('已清空人脸数据');
+  };
+
   const renderStudentRow = (student: FaceStudent) => {
-    const faceImageSrc = resolveStudentAvatar(student);
     return (
       <StudentHorizontalCard
         shape="subtle"
         key={student.id}
         student={student}
-        avatarSrc={faceImageSrc}
+        avatarSrc={student.avatar}
         action={student.isUploading ? (
           <span role="status" className="shrink-0 px-[var(--tm-space-2)] text-[length:var(--tm-font-size-meta)] font-semibold text-[var(--tm-text-secondary)]">处理中</span>
         ) : (
-          <button
-            type="button"
-            onClick={() => setActiveStudentId(student.id)}
-            className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)]"
-            aria-label={`${student.hasFaceData ? '更新' : '录入'}${student.name}人脸`}
-          >
-            <Camera aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
-            {student.hasFaceData ? '更新' : '录入'}
-          </button>
+          <div className="flex shrink-0 items-center">
+            <button
+              type="button"
+              onClick={() => setActiveAction({ studentId: student.id, type: 'capture' })}
+              className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+              aria-label={`${student.hasFaceData ? '更新' : '录入'}${student.name}人脸`}
+              aria-haspopup="dialog"
+              aria-expanded={activeAction?.studentId === student.id && activeAction.type === 'capture'}
+            >
+              <Camera aria-hidden="true" className="h-[18px] w-[18px] shrink-0" />
+              {student.hasFaceData ? '更新' : '录入'}
+            </button>
+            {student.hasFaceData && (
+              <button
+                type="button"
+                onClick={() => setActiveAction({ studentId: student.id, type: 'clear' })}
+                aria-label={`清空${student.name}人脸数据`}
+                aria-haspopup="dialog"
+                aria-expanded={activeAction?.studentId === student.id && activeAction.type === 'clear'}
+                className="flex h-[var(--tm-size-touch)] shrink-0 items-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+              >
+                <Trash2 aria-hidden="true" className="h-[18px] w-[18px]" />
+                清空
+              </button>
+            )}
+          </div>
         )}
       />
     );
   };
 
-  const selectTab = (tab: FaceTab) => setActiveTab(tab);
-
-  const tabItems: ReadonlyArray<CompactSegmentedControlItem<FaceTab>> = [
-    { value: 'pending', label: <span className="tabular-nums">待录入（{pendingCount}）</span> },
-    { value: 'recorded', label: <span className="tabular-nums">已录入（{completedCount}）</span> },
+  const tabItems: ReadonlyArray<ReportDateRangeTab<FaceTab>> = [
+    { value: 'pending', label: <span className="font-semibold tabular-nums">待录入（{pendingCount}）</span> },
+    { value: 'recorded', label: <span className="font-semibold tabular-nums">已录入（{completedCount}）</span> },
   ];
 
   const visibleStudents = activeTab === 'pending' ? pendingStudents : recordedStudents;
@@ -102,40 +139,52 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
           <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.CHAIR} title="暂无学生" className="min-h-[360px] py-4" />
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar">
-          <div className="sticky top-0 z-20 bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pt-[var(--tm-space-2)] pb-[var(--tm-space-3)]">
-            <CompactSegmentedControl
-              shape="subtle"
-              value={activeTab}
-              items={tabItems}
-              onChange={selectTab}
-              ariaLabel="按人脸录入状态切换学生"
-              fullWidth
-              motion="sliding"
-            />
-          </div>
-
-          <div className="px-[var(--tm-space-4)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">
+        <>
+          <ReportDateRangeTabs
+            value={activeTab}
+            items={tabItems}
+            onChange={setActiveTab}
+            ariaLabel="按人脸录入状态切换学生"
+            semantics="tabs"
+            className="shrink-0"
+          />
+          <div
+            role="tabpanel"
+            aria-label={activeTab === 'pending' ? '待录入学生' : '已录入学生'}
+            className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pt-[var(--tm-space-3)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))] no-scrollbar"
+          >
             {visibleStudents.length > 0 ? (
               <div className="space-y-[var(--tm-layout-list-gap-compact)]">{visibleStudents.map(renderStudentRow)}</div>
             ) : (
               <p className="py-20 text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-tertiary)]">
                 {activeTab === 'pending'
                   ? `${getTeacherClassDisplayName(classInfo, currentSpace)} ${totalCount} 人已完成人脸采集`
-                  : '还没有学生录入人脸'}
+                  : '暂无已录入学生'}
               </p>
             )}
           </div>
-        </div>
+        </>
       )}
 
-      <MobileBottomSheet open={activeStudent !== null} title={`${activeStudent?.hasFaceData ? '更新' : '录入'}人脸`} onClose={() => setActiveStudentId(null)}>
+      <MobileBottomSheet open={activeStudent !== null && activeAction?.type === 'capture'} title={`${activeStudent?.hasFaceData ? '更新' : '录入'}人脸`} onClose={closeAction}>
         <div className="mb-[var(--tm-space-3)] truncate text-[length:var(--tm-font-size-compact)] text-[var(--tm-text-secondary)]">{activeStudent?.name}</div>
         <div className="space-y-[var(--tm-layout-list-gap-compact)]">
           <button type="button" onClick={() => updateFace('camera')} className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Camera className="h-[18px] w-[18px]" /></span>拍照录入</button>
           <button type="button" onClick={() => updateFace('album')} className="flex min-h-[56px] w-full items-center gap-[var(--tm-space-3)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-primary)]"><span className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]"><Image className="h-[18px] w-[18px]" /></span>从相册选择</button>
         </div>
       </MobileBottomSheet>
+
+      <MobileConfirmSheet
+        shape="subtle"
+        open={Boolean(activeStudent?.hasFaceData) && activeAction?.type === 'clear'}
+        title={`清空${activeStudent?.name ?? ''}的人脸数据？`}
+        description="清空后将无法使用人脸识别，且无法恢复。如需再次录入，请先征得家长同意。"
+        confirmLabel="确认清空"
+        tone="danger"
+        onClose={closeAction}
+        onConfirm={clearFace}
+      />
+      <MobileToast message={toastMessage} />
     </div>
   );
 };

@@ -1402,7 +1402,26 @@ await renderPage('更新人脸数据页（全班已录入）', () => import('../
   const text = html.replace(/<!--[\s\S]*?-->/g, '');
   if (!text.includes('待录入（0）')) throw new Error('全班录完后待录入标签应显示 0。');
   if (!text.includes('更新演示学生1人脸')) throw new Error('待录入为空时应直接展示已录入名单。');
+  if (!text.includes('清空演示学生1人脸数据') || !text.includes('清空</button>')) throw new Error('已录入学生应直接展示垃圾桶与清空文字入口。');
   if (!html.includes('data:image/jpeg')) throw new Error('已录入学生应展示采集照风格头像。');
+});
+
+const faceLibrary = await import('../mobile-app/domain/studentFaceLibrary');
+const clearFaceStudents = faceStudentsWithAvatar.slice(0, 2).map(student => ({ ...student, id: 'clear-face-' + student.id }));
+faceLibrary.seedClassFaceLibrary('render-smoke-clear-face', clearFaceStudents);
+const projectedClearFaceStudents = faceLibrary.applyFaceAvatars(clearFaceStudents);
+faceLibrary.clearStudentFace(clearFaceStudents[0].id);
+await renderPage('更新人脸数据页（清除后重新进入）', () => import('../mobile-app/views/face-update/FaceUpdateView'), {
+  classInfo: { id: 'render-smoke-clear-face', name: '三年级3班', gradeLevel: '三年级' },
+  currentSpace: { id: 'render-smoke-space', name: '示范学校' },
+  students: projectedClearFaceStudents,
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('待录入（1）') || !text.includes('已录入（1）')) throw new Error('清除后两个页签人数应同步更新。');
+  if (!text.includes('录入演示学生1人脸')) throw new Error('清除后的学生应回到待录入名单。');
+  if (text.includes('清空演示学生1人脸数据')) throw new Error('待录入学生不应展示清空入口。');
+  if (html.includes('data:image/jpeg')) throw new Error('清除后的学生不应继续显示旧采集照。');
 });
 
 const meStyleActions = Object.fromEntries([

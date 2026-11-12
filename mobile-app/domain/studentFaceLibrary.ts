@@ -13,6 +13,8 @@ import type { Student } from '../types';
  */
 
 const faceByStudentId = new Map<string, string>();
+// 列表展示会把采集照合并到 avatar，保留投影前的头像，清除后才能还原。
+const avatarBeforeFaceProjection = new WeakMap<Student, Student['avatar']>();
 const seededClassIds = new Set<string>();
 const cursorByClassGender = new Map<string, number>();
 const listeners = new Set<() => void>();
@@ -54,17 +56,31 @@ export const markStudentFaceRecorded = (student: Student, classId: string) => {
   listeners.forEach(listener => listener());
 };
 
+/** 清除采集数据并通知所有页面；不删除学生资料或独立头像。 */
+export const clearStudentFace = (studentId: string) => {
+  if (!faceByStudentId.delete(studentId)) return;
+  version += 1;
+  listeners.forEach(listener => listener());
+};
+
 export const isStudentFaceRecorded = (studentId: string) => faceByStudentId.has(studentId);
 
 export const getStudentFaceSrc = (studentId: string) => faceByStudentId.get(studentId);
 
 /** 学生头像的唯一取值入口：已录入人脸用采集照，否则用学生自己的头像。 */
-export const resolveStudentAvatar = (student: Student) => faceByStudentId.get(student.id) ?? student.avatar;
+export const resolveStudentAvatar = (student: Student) => faceByStudentId.get(student.id) ?? (
+  avatarBeforeFaceProjection.has(student) ? avatarBeforeFaceProjection.get(student) : student.avatar
+);
 
 /** 批量把采集照合并进学生列表，供页面直接沿用 student.avatar 的既有写法。 */
 export const applyFaceAvatars = (students: Student[]) => students.map(student => {
-  const faceSrc = faceByStudentId.get(student.id);
-  return faceSrc && faceSrc !== student.avatar ? { ...student, avatar: faceSrc } : student;
+  const avatar = resolveStudentAvatar(student);
+  if (avatar === student.avatar) return student;
+  const projectedStudent = { ...student, avatar };
+  avatarBeforeFaceProjection.set(projectedStudent, avatarBeforeFaceProjection.has(student)
+    ? avatarBeforeFaceProjection.get(student)
+    : student.avatar);
+  return projectedStudent;
 });
 
 export const subscribeStudentFaceLibrary = (listener: () => void) => {
