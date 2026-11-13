@@ -280,6 +280,7 @@ export const teacherFiveEducationSemantic = {
 
 // 花名册头像、分组标签等不承载业务语义的低饱和点缀色，全部派生自品牌色板。
 export const teacherTagTones = {
+  blue: { soft: teacherBrandPalette.blue[50], strong: teacherBrandPalette.blue[700], border: teacherBrandPalette.blue[100] },
   jade: { soft: teacherBrandPalette.jade[50], strong: teacherBrandPalette.jade[700], border: teacherBrandPalette.jade[100] },
   orange: { soft: teacherBrandPalette.orange[50], strong: teacherBrandPalette.orange[700], border: teacherBrandPalette.orange[100] },
   red: { soft: teacherBrandPalette.red[50], strong: teacherBrandPalette.red[700], border: teacherBrandPalette.red[100] },
@@ -575,6 +576,9 @@ export const teacherBrandCssVariables = {
   '--tm-edu-fitness': teacherFiveEducationSemantic.fitness,
   '--tm-edu-aesthetic': teacherFiveEducationSemantic.aesthetic,
   '--tm-edu-labor': teacherFiveEducationSemantic.labor,
+  '--tm-tag-blue-soft': teacherTagTones.blue.soft,
+  '--tm-tag-blue-strong': teacherTagTones.blue.strong,
+  '--tm-tag-blue-border': teacherTagTones.blue.border,
   '--tm-tag-jade-soft': teacherTagTones.jade.soft,
   '--tm-tag-jade-strong': teacherTagTones.jade.strong,
   '--tm-tag-jade-border': teacherTagTones.jade.border,
@@ -672,6 +676,7 @@ export const teacherBrandCssVariables = {
   // 无渐变分层页面：状态栏与标题栏纯白，内容区浅灰，用于承托白色卡片。
   '--tm-page-plain-header-bg': teacherBrandSemantic.surface,
   '--tm-page-plain-content-bg': teacherBrandSemantic.surfaceSoft,
+  '--tm-product-image-outline': 'rgba(0, 0, 0, 0.1)',
   '--tm-text-primary': teacherBrandSemantic.textPrimary,
   '--tm-text-secondary': teacherBrandSemantic.textSecondary,
   '--tm-text-action': teacherBrandSemantic.textAction,
@@ -711,6 +716,13 @@ export const teacherBrandCssVariables = {
   '--tm-filter-shadow': 'none',
   '--tm-filter-focus-bg': 'transparent',
   '--tm-filter-focus-outline': 'none',
+  '--tm-filter-primary-width': '120px',
+  '--tm-filter-secondary-width': '96px',
+  '--tm-filter-check-stroke-width': '3',
+  // 保留公共暖灰色相，将筛选项分隔线降至40%不透明度。
+  '--tm-filter-divider': `${teacherBrandSemantic.border}66`,
+  '--tm-filter-dropdown-bg': 'var(--tm-page-plain-content-bg)',
+  '--tm-filter-dropdown-max-height': 'min(440px, 65dvh)',
   // 紧凑行编辑器：通过独立白色条目和浅边界承载高密度横向输入，避免形成深色表格网格。
   '--tm-compact-editor-row-bg': teacherBrandSemantic.surface,
   '--tm-compact-editor-control-bg': teacherBrandSemantic.surface,
@@ -1039,6 +1051,14 @@ export const teacherBrandCssVariables = {
   '--tm-font-size-compact': '13px',
   '--tm-font-size-meta': '12px',
   '--tm-font-size-badge': '11px',
+  '--tm-tag-font-size': 'var(--tm-font-size-meta)',
+  '--tm-tag-radius': '4px',
+  '--tm-tag-padding-inline': 'var(--tm-space-2)',
+  '--tm-tag-padding-block': 'calc(var(--tm-space-1) / 2)',
+  '--tm-tag-min-height': 'var(--tm-space-5)',
+  '--tm-tag-line-height': 'var(--tm-space-4)',
+  '--tm-cascade-navigation-width': '110px',
+  '--tm-cascade-content-height': 'min(360px, 55dvh)',
   '--tm-font-size-metric': '24px',
   '--tm-font-weight-minimum': `${teacherTypographySemantic.minimum}`,
   '--tm-font-weight-regular': `${teacherTypographySemantic.regular}`,

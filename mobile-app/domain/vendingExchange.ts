@@ -2,7 +2,7 @@ import type { ClassInfo, TeacherProfile } from '../types';
 import type { TeacherSpaceOption } from './teacherSpaceAccess';
 import type { MobileDateRange } from '../components/ui/mobileDatePickerModel';
 
-export type VendingExchangeStatus = 'completed' | 'processing' | 'failed' | 'cancelled' | 'unknown';
+export type VendingExchangeStatus = 'completed' | 'failed';
 export type VendingRefundStatus = 'none' | 'pending' | 'refunded';
 
 /** 历史字段均为兑换发生时的快照，不随商品、学生或设备的当前配置改写。 */
@@ -18,6 +18,7 @@ export interface VendingExchangeRecord {
   gradeName: string;
   productId: string;
   productName: string;
+  productImage?: string;
   categoryId: string;
   categoryName: string;
   quantity: number;
@@ -36,10 +37,13 @@ export interface VendingExchangeFilter {
   studentName: string;
   dateRange: MobileDateRange;
   categoryId: string;
+  productId: string;
   gradeName: string;
   classId: string;
   terminalDeviceId: string;
   status: VendingExchangeStatus | '';
+  classIds: readonly string[];
+  productIds: readonly string[];
 }
 
 export interface VendingExchangeScope {
@@ -48,7 +52,7 @@ export interface VendingExchangeScope {
 }
 
 export const VENDING_EXCHANGE_STATUS_LABELS: Record<VendingExchangeStatus, string> = {
-  completed: '已完成', processing: '处理中', failed: '未出货', cancelled: '已取消', unknown: '状态未知',
+  completed: '兑换成功', failed: '兑换失败',
 };
 
 export const VENDING_REFUND_STATUS_LABELS: Record<VendingRefundStatus, string> = {
@@ -85,19 +89,39 @@ export const filterVendingExchangeRecords = (
   filter: VendingExchangeFilter,
 ): VendingExchangeRecord[] => {
   const name = filter.studentName.trim().replace(/\s+/g, '');
+  const classIds = new Set(filter.classIds);
+  const productIds = new Set(filter.productIds);
   return records.filter(record => {
     const date = record.time.slice(0, 10);
     return (!name || record.studentName.replace(/\s+/g, '').includes(name))
       && date >= filter.dateRange.start && date <= filter.dateRange.end
       && (!filter.categoryId || record.categoryId === filter.categoryId)
+      && (!filter.productId || record.productId === filter.productId)
+      && (!productIds.size || productIds.has(record.productId))
       && (!filter.gradeName || record.gradeName === filter.gradeName)
       && (!filter.classId || record.classId === filter.classId)
+      && (!classIds.size || classIds.has(record.classId))
       && (!filter.terminalDeviceId || record.terminalDeviceId === filter.terminalDeviceId)
       && (!filter.status || record.status === filter.status);
   }).sort((left, right) => right.time.localeCompare(left.time) || left.id.localeCompare(right.id));
 };
 
 export const createVendingExchangeFilter = (today: string): VendingExchangeFilter => ({
-  studentName: '', dateRange: { start: `${today.slice(0, 7)}-01`, end: today },
-  categoryId: '', gradeName: '', classId: '', terminalDeviceId: '', status: '',
+  // 初始从当前月份连续向前浏览，空开始日期表示不截断历史记录。
+  studentName: '', dateRange: { start: '', end: today },
+  categoryId: '', productId: '', productIds: [], gradeName: '', classId: '', classIds: [], terminalDeviceId: '', status: '',
 });
+
+/** 记录已按时间倒序查询；保留浏览起始月，即使该月暂时没有记录。 */
+export const groupVendingExchangeRecordsByMonth = (
+  records: readonly VendingExchangeRecord[],
+  leadingMonth: string,
+): { month: string; records: VendingExchangeRecord[] }[] => {
+  const groups = new Map<string, VendingExchangeRecord[]>([[leadingMonth, []]]);
+  for (const record of records) {
+    const month = record.time.slice(0, 7);
+    if (!groups.has(month)) groups.set(month, []);
+    groups.get(month)!.push(record);
+  }
+  return [...groups].sort(([left], [right]) => right.localeCompare(left)).map(([month, records]) => ({ month, records }));
+};

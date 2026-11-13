@@ -25,6 +25,7 @@ interface MobileClassCascadeMultipleProps extends MobileClassCascadePickerBasePr
   onToggleClass: (classId: string) => void;
   onToggleGrade?: (classIds: string[]) => void;
   showAllClassesOption?: boolean;
+  allClassesGroupValue?: string;
   allClassesLabel?: string;
   allClassesSelected?: boolean;
   allClassesMixed?: boolean;
@@ -69,6 +70,8 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
     [activeGrade, groups],
   );
   const activeClasses = activeGroup?.classes ?? [];
+  const isAllClassesGroup = multipleProps?.allClassesGroupValue !== undefined
+    && activeGroup?.gradeLabel === multipleProps.allClassesGroupValue;
   const activeSelectedCount = activeClasses.filter(classInfo => selectedClassIds.has(classInfo.id)).length;
   const allActiveClassesSelected = activeClasses.length > 0 && activeSelectedCount === activeClasses.length;
   const hasActiveClassSelected = activeSelectedCount > 0;
@@ -123,7 +126,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
       <div className="flex min-h-0 min-w-0 flex-col bg-[var(--tm-bg-surface)] px-4" aria-label="右侧再选该年级下的班级">
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="pb-1">
-          {activeClasses.length === 0 && (
+          {activeClasses.length === 0 && !isAllClassesGroup && (
             <div className="flex items-center justify-center py-16 text-center text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-text-tertiary)]">暂无可选班级</div>
           )}
           {!singleSelection && props.onToggleGrade && activeGroup && activeClasses.length > 0 && (
@@ -138,7 +141,7 @@ const MobileClassCascadePicker: React.FC<MobileClassCascadePickerProps> = props 
               {renderSelectionMark(allActiveClassesSelected, hasActiveClassSelected && !allActiveClassesSelected)}
             </button>
           )}
-          {multipleProps?.showAllClassesOption && !props.onToggleGrade && activeClasses.length > 0 && (
+          {multipleProps?.showAllClassesOption && (isAllClassesGroup || (!props.onToggleGrade && activeClasses.length > 0)) && (
             <button
               type="button"
               role="checkbox"

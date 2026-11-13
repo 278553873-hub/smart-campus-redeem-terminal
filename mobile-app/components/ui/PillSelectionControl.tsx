@@ -12,6 +12,7 @@ interface PillSelectionControlProps<TValue extends string> {
   ariaLabel: string;
   className?: string;
   semantics?: 'tabs' | 'group';
+  fullWidth?: boolean;
 }
 
 const PillSelectionControl = <TValue extends string,>({
@@ -21,9 +22,11 @@ const PillSelectionControl = <TValue extends string,>({
   ariaLabel,
   className = '',
   semantics = 'group',
+  fullWidth = false,
 }: PillSelectionControlProps<TValue>) => (
   <div
-    className={`flex gap-[var(--tm-space-2)] overflow-x-auto py-[var(--tm-space-1)] no-scrollbar ${className}`}
+    className={`${fullWidth ? 'grid w-full' : 'flex overflow-x-auto no-scrollbar'} gap-[var(--tm-space-2)] py-[var(--tm-space-1)] ${className}`}
+    style={fullWidth ? { gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` } : undefined}
     role={semantics === 'tabs' ? 'tablist' : 'group'}
     aria-label={ariaLabel}
   >
@@ -37,7 +40,7 @@ const PillSelectionControl = <TValue extends string,>({
           aria-selected={semantics === 'tabs' ? selected : undefined}
           aria-pressed={semantics === 'group' ? selected : undefined}
           onClick={() => onChange(item.value)}
-          className="flex min-h-[var(--tm-selection-touch-height)] min-w-[var(--tm-selection-pill-min-width)] shrink-0 items-center justify-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100"
+          className={`flex min-h-[var(--tm-selection-touch-height)] ${fullWidth ? 'min-w-0' : 'min-w-[var(--tm-selection-pill-min-width)] shrink-0'} items-center justify-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100`}
         >
           <span className={`flex h-[var(--tm-selection-pill-visible-height)] w-full items-center justify-center rounded-[var(--tm-selection-pill-radius)] border px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${selected
             ? 'border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)] active:bg-[var(--tm-selection-pill-pressed-bg)]'

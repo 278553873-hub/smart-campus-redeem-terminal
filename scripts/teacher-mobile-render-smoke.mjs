@@ -2096,6 +2096,25 @@ for (const showWechatLogin of [false, true]) {
 }
 
 // 货柜兑换：覆盖真实列表渲染、空结果和演示适配，权限校验必须先于展示。
+await renderPage('手机栏下筛选（单列展开与选中态）', async () => {
+  const { default: Dropdown, MobileDropdownOptionList } = await import('../mobile-app/components/ui/MobileFilterDropdown');
+  return { default: () => React.createElement(Dropdown, { open: true, id: 'dropdown-smoke', label: '选择货柜', triggerRef: { current: null }, onClose: noop },
+    React.createElement(MobileDropdownOptionList, { options: [{ value: 'first', label: '一楼货柜' }, { value: 'second', label: '二楼货柜' }], value: 'second', onChange: noop })) };
+}, {}, html => {
+  if (!html.includes('role="dialog"') || !html.includes('aria-label="收起筛选"')) throw new Error('栏下筛选缺少面板或遮罩关闭入口');
+  if (!html.includes('data-dropdown-selected="true"') || !html.includes('二楼货柜') || !html.includes('lucide-check')) throw new Error('单列选项缺少当前值或勾选标识');
+});
+for (const empty of [false, true]) {
+  await renderPage('手机商品级联（' + (empty ? '空分类' : '恢复具体商品') + '）', () => import('../mobile-app/components/ui/MobileCascadePicker'), {
+    groups: empty ? [] : [{ value: 'stationery', label: '文具', options: [{ value: 'notebook', label: '笔记本' }] }],
+    value: empty ? { groupValue: '', optionValue: '' } : { groupValue: 'stationery', optionValue: 'notebook' },
+    allOptionsLabel: '全部商品', optionLabel: '商品', onChange: noop,
+  }, html => {
+    if (!html.includes('全部分类') || !html.includes('全部商品')) throw new Error('空分类或全范围入口不可用');
+    if (!html.includes('data-dropdown-selected="true"')) throw new Error('级联重新展开应恢复已生效项');
+    if (!empty && !html.includes('文具下的商品')) throw new Error('未恢复具体商品所属分类');
+  });
+}
 const vendingSample = {
   id: 'vending-smoke', orderNo: 'HG20261105001', schoolId: 'school-vending',
   studentId: 'student-vending', studentName: '张雨桐', studentNo: '20260101',
@@ -2106,19 +2125,86 @@ const vendingSample = {
   time: '2026-11-05 10:32:00', status: 'failed', refundStatus: 'refunded', refundedAmount: 20,
 };
 for (const authorized of [true, false]) {
-  await renderPage('货柜兑换明细（' + (authorized ? '含退币记录' : '无授权班级') + '）', () => import('../mobile-app/views/VendingExchangeView'), {
+  await renderPage('货柜兑换明细（' + (authorized ? '默认全部状态' : '无授权班级') + '）', () => import('../mobile-app/views/VendingExchangeView'), {
     schoolId: 'school-vending', today: '2026-11-05', onBack: noop,
     authorizedClasses: authorized ? [{ id: 'vending-class', name: '2026级1班', gradeLevel: '一年级' }] : [],
-    records: [vendingSample, { ...vendingSample, id: 'other-vending', schoolId: 'other-school', studentName: '未授权学生' }],
+    records: [{ ...vendingSample, status: 'completed', refundStatus: 'none', refundedAmount: 0 }, { ...vendingSample, id: 'other-vending', schoolId: 'other-school', studentName: '未授权学生' }],
   }, html => {
     const text = plainText(html);
-    for (const label of ['货柜兑换明细', '搜索学生姓名', '全部分类']) if (!text.includes(label)) throw new Error('货柜兑换缺少：' + label);
+    for (const label of ['货柜兑换明细', '商品库存', '兑换记录', '全部分类']) if (!text.includes(label)) throw new Error('货柜兑换缺少：' + label);
+    if (text.includes('搜索学生姓名') || html.includes('type="search"')) throw new Error('兑换记录应移除搜索功能');
+    if (!html.includes('aria-selected="true"') || !html.includes('aria-label="商品库存"')) throw new Error('默认应进入商品库存');
     if (text.includes('未授权学生')) throw new Error('兑换明细泄露其他学校数据');
     if (text.includes('张雨桐') !== authorized) throw new Error('兑换明细没有按授权班级过滤');
-    if (authorized && !['人北华侨城一楼', '未出货', '已退币', '共 1 条'].every(label => text.includes(label))) throw new Error('兑换明细缺少设备、异常状态或准确条数');
+    if (authorized && !['兑换成功', '张雨桐', '2026年11月'].every(label => text.includes(label))) throw new Error('兑换明细缺少记录状态、学生或月份入口');
+    if (text.includes('清除筛选') || /共\s*\d+\s*条/.test(text)) throw new Error('兑换记录不应显示条数与清除筛选');
     if (!authorized && !text.includes('暂无兑换记录')) throw new Error('无权限数据时应展示空状态');
   });
 }
+const vendingCabinetSample = {
+  id: 'inventory-first', name: '默认一楼货柜', schoolId: 'school-vending', products: [
+    { productId: 'inventory-only', productName: '未兑换过的笔记本', categoryId: 'stationery', categoryName: '文具', stock: 8 },
+    { productId: 'sold-out', productName: '已售罄橡皮', categoryId: 'stationery', categoryName: '文具', stock: 0 },
+  ],
+};
+await renderPage('货柜库存（默认首柜、零库存及学校隔离）', () => import('../mobile-app/views/VendingExchangeView'), {
+  schoolId: 'school-vending', authorizedClasses: [], records: [], today: '2026-11-05', onBack: noop,
+  cabinets: [vendingCabinetSample, { ...vendingCabinetSample, id: 'inventory-second', name: '二楼货柜', products: [] }, { ...vendingCabinetSample, id: 'foreign', schoolId: 'other-school', name: '其他学校货柜' }],
+}, html => {
+  const text = plainText(html);
+  for (const label of ['默认一楼货柜', '未兑换过的笔记本', '已售罄橡皮', '全部库存', '库存数量']) if (!text.includes(label)) throw new Error('库存缺少：' + label);
+  const filterBar = html.match(/<div role="group" aria-label="货柜与分类筛选"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
+  if (!plainText(filterBar).includes('全部库存') || /共\s*\d+\s*[种件]/.test(text)) throw new Error('库存筛选应在同一行且不展示统计信息');
+  if (text.includes('其他学校货柜')) throw new Error('货柜库存泄露其他学校数据');
+  if ((html.match(/data-view-scroll-root/g) ?? []).length !== 1) throw new Error('只应标记当前页签的滚动容器');
+});
+await renderPage('货柜兑换记录（月份分组与集中筛选入口）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordsPanel'), {
+  schoolId: 'school-vending', today: '2026-11-05', authorizedClasses: [{ id: 'vending-class' }],
+  records: [
+    { ...vendingSample, id: 'completed', status: 'completed', refundStatus: 'none' },
+    { ...vendingSample, id: 'failed', studentName: '失败记录学生', time: '2026-11-04 10:32:00' },
+    { ...vendingSample, id: 'last-month', studentName: '上月记录学生', status: 'completed', time: '2026-10-31 10:32:00' },
+    { ...vendingSample, id: 'other-terminal', studentName: '其他货柜学生', terminalDeviceId: 'terminal-2', terminalDeviceName: '二楼货柜' },
+  ],
+}, html => {
+  const text = plainText(html);
+  for (const label of ['2026年11月', '2026年10月', '兑换成功', '兑换失败', '张雨桐', '失败记录学生', '上月记录学生']) if (!text.includes(label)) throw new Error('默认兑换记录缺少：' + label);
+  if (!(text.indexOf('张雨桐') < text.indexOf('失败记录学生') && text.indexOf('失败记录学生') < text.indexOf('2026年10月') && text.indexOf('2026年10月') < text.indexOf('上月记录学生'))) throw new Error('月份和记录都应按时间倒序');
+  if (text.includes('清除筛选') || /共\s*\d+\s*条/.test(text) || text.includes('本月')) throw new Error('不应显示条数、清除筛选或“本月”筛选值');
+  const filterBar = html.match(/<div role="group" aria-label="兑换记录筛选"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
+  if ((filterBar.match(/<button\b/g) ?? []).length !== 2 || !filterBar.includes('选择日期，2026年11月') || !filterBar.includes('筛选兑换记录')) throw new Error('兑换记录外层应展示日期与统一筛选入口');
+  if (['选择货柜机', '兑换状态'].some(label => filterBar.includes(label))) throw new Error('货柜机和状态应收纳到筛选弹窗');
+  if (text.includes('其他货柜学生')) throw new Error('默认应显示首台货柜的全部状态记录');
+  if (text.includes('全部分类') || text.includes('自定义') || text.includes('处理中')) throw new Error('外层不再展示分类或日期快捷菜单');
+  if (!html.includes('商品单价20') || !html.includes('<img')) throw new Error('商品价格应使用公共图标并保留读屏名称');
+});
+await renderPage('货柜兑换记录（默认货柜、货柜顺序与学校隔离）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordsPanel'), {
+  schoolId: 'school-vending', today: '2026-11-05', authorizedClasses: [{ id: 'vending-class' }],
+  cabinets: [{ ...vendingCabinetSample, id: 'terminal-2', name: '二楼货柜' }, { ...vendingCabinetSample, id: 'foreign', schoolId: 'other-school', name: '其他学校货柜' }],
+  records: [
+    { ...vendingSample, id: 'first', studentName: '一楼学生' },
+    { ...vendingSample, id: 'second', studentName: '二楼学生', terminalDeviceId: 'terminal-2', terminalDeviceName: '二楼货柜' },
+    { ...vendingSample, id: 'foreign', schoolId: 'other-school', studentName: '其他学校学生' },
+  ],
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('二楼学生') || text.includes('一楼学生')) throw new Error('默认货柜应按当前学校的货柜顺序选择，不按记录顺序选择');
+  if (text.includes('其他学校学生')) throw new Error('不得混入其他学校的数据');
+});
+await renderPage('货柜兑换卡片（分行布局、学生班级及商品单价）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
+  record: { ...vendingSample, studentName: '林天雅', className: '小2025级3班', productImage: '/assets/product-snapshot.png', quantity: 2, chargedAmount: 40, status: 'completed', refundStatus: 'none' }, today: '2026-11-05', onOpen: noop,
+}, html => {
+  const text = plainText(html);
+  for (const label of ['卡通笔袋', '林天雅（小2025级3班）', '今天 10:32', '兑换成功', '×2']) if (!text.includes(label)) throw new Error('兑换卡片缺少：' + label);
+  if (!html.includes('/assets/product-snapshot.png') || !html.includes('alt="卡通笔袋商品图"')) throw new Error('应展示记录中的商品图并保留替代文字');
+  if (!html.includes('商品单价20') || html.includes('实际扣币40') || text.includes('人北华侨城一楼')) throw new Error('列表展示商品单价和必要摘要，实际扣币与货柜在详情中查看');
+});
+await renderPage('货柜兑换失败卡片（保留退币状态）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
+  record: vendingSample, today: '2026-11-05', onOpen: noop,
+}, html => {
+  if (!['兑换失败', '已退币'].every(label => plainText(html).includes(label))) throw new Error('失败记录应分别展示兑换状态与退币状态');
+  if (!html.includes('/assets/c4d_shop.png')) throw new Error('历史记录未保存商品图时应使用公共默认商品图');
+});
 await renderPage('货柜兑换演示适配', () => import('../mobile-app/views/vending-exchange/VendingExchangeDemoView'), {
   space: { id: 'school-vending', type: 'school', role: 'teacher' },
   teacher: { homeroomClassIds: ['vending-class'], teachingAssignments: [], gradeLeaderGrades: [] },
