@@ -34,6 +34,7 @@ import ParentApp from './components/ParentApp';
 import ParentGrowthCoinFeaturePreviewControls from './components/ParentGrowthCoinFeaturePreviewControls';
 import ParentEvaluationVisibilityPreviewControls from './components/ParentEvaluationVisibilityPreviewControls';
 import ParentEvaluationFeaturePreviewControls from './components/ParentEvaluationFeaturePreviewControls';
+import ParentRecordDataPreviewControls from './components/ParentRecordDataPreviewControls';
 import TerminalLoginMethodPreviewControls, { type StudentLoginPreviewMode } from './components/TerminalLoginMethodPreviewControls';
 import TerminalShopLayoutPreviewControls from './components/TerminalShopLayoutPreviewControls';
 import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
@@ -1512,6 +1513,8 @@ const AppSwitcher: React.FC = () => {
     readParentGrowthCoinFeatures(DEFAULT_PARENT_PREVIEW_CLASS_ID)
   ));
   const [parentScreen, setParentScreen] = useState('growth');
+  const [parentRecordSource, setParentRecordSource] = useState<'school' | 'family'>('school');
+  const [parentRecordPreviewMode, setParentRecordPreviewMode] = useState<'records' | 'empty'>('records');
   const [showAdvancedApps, setShowAdvancedApps] = useState(false);
   const [teacherScreenshotStatus, setTeacherScreenshotStatus] = useState<'idle' | 'capturing' | 'success' | 'error'>('idle');
   const [showTeacherDeveloperNotes, setShowTeacherDeveloperNotes] = useState(false);
@@ -1922,8 +1925,8 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
         {currentApp === 'companion' && <CompanionApp />}
         {currentApp === 'parent' && (questionnaireInviteCode
-          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled} onActiveClassIdChange={setParentPreviewClassId} onActiveSchoolCodeChange={setParentPreviewSchoolCode} colorScheme={parentColorScheme} onScreenChange={setParentScreen} />
-          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled} onActiveClassIdChange={setParentPreviewClassId} onActiveSchoolCodeChange={setParentPreviewSchoolCode} colorScheme={parentColorScheme} onScreenChange={setParentScreen} />
+          ? <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} defaultLoggedIn={false} defaultHasBoundChild={false} initialQuestionnaireInviteCode={questionnaireInviteCode} parentEvaluationVisibility={parentEvaluationVisibility} parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled} onActiveClassIdChange={setParentPreviewClassId} onActiveSchoolCodeChange={setParentPreviewSchoolCode} colorScheme={parentColorScheme} onScreenChange={setParentScreen} onRecordSourceChange={setParentRecordSource} />
+          : <ParentApp showPhoneShell={showParentPhoneShell} gradientPreview={{ schemeId: parentGradientScheme, styleId: parentGradientStyle }} parentEvaluationVisibility={parentEvaluationVisibility} parentGrowthCoinEnabled={parentGrowthCoinFeatures.enabled} parentBankFeatureEnabled={parentGrowthCoinFeatures.bankEnabled} onActiveClassIdChange={setParentPreviewClassId} onActiveSchoolCodeChange={setParentPreviewSchoolCode} colorScheme={parentColorScheme} onScreenChange={setParentScreen} onRecordSourceChange={setParentRecordSource} parentRecordPreviewMode={parentRecordPreviewMode} onParentRecordPreviewModeChange={setParentRecordPreviewMode} />
         )}
       </div>
 
@@ -1998,6 +2001,9 @@ const AppSwitcher: React.FC = () => {
             )}
             {['growth', 'growthRecords'].includes(parentScreen) && (
               <ParentEvaluationFeaturePreviewControls schoolCode={parentPreviewSchoolCode} />
+            )}
+            {parentScreen === 'growthRecords' && parentRecordSource === 'family' && (
+              <ParentRecordDataPreviewControls value={parentRecordPreviewMode} onChange={setParentRecordPreviewMode} />
             )}
             {['growth', 'bank', 'coinFlow'].includes(parentScreen) && (
               <ParentGrowthCoinFeaturePreviewControls

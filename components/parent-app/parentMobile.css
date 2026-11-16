@@ -11,3 +11,18 @@
   width: var(--pm-scrollbar-size, 0px);
   height: var(--pm-scrollbar-size, 0px);
 }
+
+.parent-mobile-app .parent-record-source-tabs {
+  position: relative;
+  z-index: 30;
+}
+
+/* 缩放预览时覆盖滚动区顶边的像素接缝，底层不参与布局，也不遮挡标签选中短线。 */
+.parent-mobile-app .parent-record-source-tabs::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 -1px;
+  background: var(--pm-page-plain-header-bg);
+  pointer-events: none;
+}

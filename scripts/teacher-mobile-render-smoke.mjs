@@ -452,20 +452,30 @@ await renderPage('学校后台（独立名称与图标配置）', async () => {
 }, {}, html => {
   if (!html.includes('id="pc-growth-coin-name"') || !html.includes('value="向阳币"')) throw new Error('后台名称编辑未读取学校配置');
 });
-// 家长日常行为录入：真实渲染表单及记录列表，避免仅构建通过却在点击后白屏。
+// 家长日常行为录入：真实渲染底部公共输入栏及记录列表。
 for (const hasContent of [false, true]) {
-  await renderPage(`家长记录录入页（内容${hasContent}）`, () => import('../components/parent-app/ParentBehaviorRecordPage'), {
-    child: { name: '郑小磊', className: '2025级1班' }, header: React.createElement('h1', null, '记录表现'),
-    draft: { content: hasContent ? '主动帮助奶奶整理餐桌' : '', occurredOn: '2026-11-03', images: [] }, onChange: noop, onSave: noop,
+  await renderPage(`家长记录输入栏（内容${hasContent}）`, () => import('../components/parent-app/ParentBehaviorRecordComposer'), {
+    draft: { content: hasContent ? '主动帮助奶奶整理餐桌' : '', occurredOn: '2026-11-03', images: hasContent ? ['/assets/c4d_growth.png'] : [] }, onChange: noop, onSave: () => true, showFirstRecordGuide: !hasContent,
   }, html => {
-    if (!html.includes('按住说话') || html.includes('parent-record-transcript') !== hasContent || html.includes('type="date"')) throw new Error('空状态应引导下方录入，有内容才展示预览区');
-    if (!hasContent && (!html.includes('按住下方按钮') || html.includes('编辑预览记录'))) throw new Error('空状态不得展示编辑入口');
+    if (!html.includes('按住说话') || !html.includes('切换到文字输入') || html.includes('parent-record-transcript') || html.includes('type="date"')) throw new Error('家长应直接使用公共输入栏，不再展示录入表单');
+    if (hasContent && (!html.includes('发送记录') || !html.includes('最多 3 张'))) throw new Error('家长图片附件应支持发送且每条最多3张');
+    if (html.includes('teacher-record-onboarding-arrow') !== !hasContent) throw new Error('仅首次家长记录时展示指向输入栏的箭头');
   });
   await renderPage(`家长记录列表（内容${hasContent}）`, () => import('../components/parent-app/ParentBehaviorRecordList'), {
-    childName: '郑小磊', onCreate: noop, records: hasContent ? [{ id: 'parent-record-test', source: 'parent', guardianId: 'parent-a', author: '妈妈', subject: { schoolCode: 'school-a', studentNo: '001', name: '郑小磊' }, content: '主动帮助奶奶整理餐桌', occurredOn: '2026-11-03', createdAt: 1, images: ['/assets/c4d_growth.png'] }] : [],
+    childName: '郑小磊', records: hasContent ? [{ id: 'parent-record-test', source: 'parent', guardianId: 'parent-a', author: '妈妈', subject: { schoolCode: 'school-a', studentNo: '001', name: '郑小磊' }, content: '主动帮助奶奶整理餐桌', occurredOn: '2026-11-03', createdAt: 1, images: ['/assets/c4d_growth.png'] }] : [],
   }, html => {
     if (hasContent && (!html.includes('妈妈') || !html.includes('记录更多操作') || !html.includes('查看记录图片第 1 张'))) throw new Error('家长记录卡缺少评价人或更多操作');
-    if (!html.includes(hasContent ? '主动帮助奶奶整理餐桌' : '还没有家长记录')) throw new Error('记录列表或空状态未正确展示');
+    if (!html.includes(hasContent ? '主动帮助奶奶整理餐桌' : '试试通过语音描述孩子的表现')) throw new Error('记录列表或首次记录引导未正确展示');
+    if (!hasContent && (html.includes('评价时间范围') || html.includes('查看更早记录') || html.includes('aria-expanded'))) throw new Error('无家长记录时不展示时间筛选或月份入口');
+    if (html.includes('记录表现') || html.includes('记录第一件事')) throw new Error('家长记录列表不得保留重复的新建按钮');
+  });
+}
+for (const enabled of [false, true]) {
+  await renderPage(`成长记录来源标签（家长评价${enabled}）`, () => import('../components/ParentApp'), {
+    initialScreen: 'growthRecords', parentBehaviorRecordingEnabled: enabled,
+  }, html => {
+    if (html.includes('aria-label="记录来源"') !== enabled) throw new Error('来源标签仅在家长评价开启时展示');
+    if (!html.includes('评价时间范围') || !html.includes('当天统计')) throw new Error('成长记录应默认展示学校记录');
   });
 }
 await renderPage('家长记录入口不依赖学校明细与成长币权限', () => import('../components/ParentApp'), {

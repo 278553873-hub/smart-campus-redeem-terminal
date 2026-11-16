@@ -15,6 +15,7 @@ export interface VoiceController {
 }
 export interface MobileInputComposerProps {
     attachments?: readonly { id: string; url: string }[];
+    maxAttachments?: number;
     onRemoveAttachment?: (id: string) => void;
     shadow?: 'subtle' | 'floating';
     mode: 'voice' | 'text';
@@ -36,7 +37,7 @@ export interface MobileInputComposerProps {
 
 /** 三处共用的输入面板；只接收能力与输入回调，不处理评价、助理权限或提交业务。 */
 export default function MobileInputComposer({
-    attachments = [], onRemoveAttachment,
+    attachments = [], maxAttachments = 9, onRemoveAttachment,
     shadow = 'subtle',
     mode, value, placeholder = '请输入', disabled = false, voiceLabel = '按住说话',
     sendLabel = '发送问题', voice, voiceState = 'idle', onModeChange, onChange, onSubmit,
@@ -66,7 +67,7 @@ export default function MobileInputComposer({
     // 保持按住按钮挂载以保留指针捕获；语音反馈由手机公共浮层承载。
 
     return <div ref={anchor} className="relative">
-        {attachments.length > 0 && <div className="mobile-input-composer__attachments" role="group" aria-label={`待发送照片，共 ${attachments.length} 张，最多 9 张`}>
+        {attachments.length > 0 && <div className="mobile-input-composer__attachments" role="group" aria-label={`待发送照片，共 ${attachments.length} 张，最多 ${maxAttachments} 张`}>
             {attachments.map((photo, index) => <div key={photo.id} className="mobile-input-composer__attachment">
                 <img src={photo.url} alt={`待发送照片 ${index + 1}`} />
                 {onRemoveAttachment && <button type="button" disabled={disabled} onClick={() => onRemoveAttachment(photo.id)} aria-label={`删除照片 ${index + 1}`}><X size={14} aria-hidden="true" /></button>}
@@ -75,7 +76,7 @@ export default function MobileInputComposer({
         <MobileVoiceFeedback state={state} levelRef={voice?.levelRef ?? zeroLevel} anchorRef={anchor} />
         <div data-shadow={shadow} className={`mobile-input-composer relative grid h-[var(--tm-composer-height)] items-center rounded-[var(--tm-composer-panel-radius)] p-1 ${onCameraClick ? 'grid-cols-[44px_minmax(0,1fr)_44px]' : 'grid-cols-[minmax(0,1fr)_44px]'}`}
             style={mode === 'voice' && holding ? { opacity: 0 } : undefined}>
-            {onCameraClick && <button type="button" disabled={disabled || attachments.length >= 9} onClick={onCameraClick} aria-label={attachments.length >= 9 ? '最多添加9张照片' : '拍照记录'} className={`mobile-input-composer__icon ${mode === 'voice' ? 'absolute left-1 top-1 z-10' : ''}`}>
+            {onCameraClick && <button type="button" disabled={disabled || attachments.length >= maxAttachments} onClick={onCameraClick} aria-label={attachments.length >= maxAttachments ? `最多添加${maxAttachments}张照片` : '拍照记录'} className={`mobile-input-composer__icon ${mode === 'voice' ? 'absolute left-1 top-1 z-10' : ''}`}>
                 <Camera className="h-5 w-5" strokeWidth={2.2} aria-hidden="true" />
             </button>}
             {mode === 'voice' ? <button

@@ -49,17 +49,17 @@ import {
   ParentPageHeader,
   ParentPrimaryButton,
   ParentSecondaryButton,
-  ParentSegmentedControl,
   ParentUnderlineTabs,
 } from './parent-app/ParentUI';
 import AssignedQuestionnaireView from './parent-app/AssignedQuestionnaireView';
 import { ParentExchangePasswordSheet } from './parent-app/ParentExchangePasswordSheet';
 import HoloCardViewer from './parent-app/HoloCardViewer';
 import ParentCoinFlowView from './parent-app/ParentCoinFlowView';
-import ParentBehaviorRecordPage from './parent-app/ParentBehaviorRecordPage';
+import ParentBehaviorRecordComposer from './parent-app/ParentBehaviorRecordComposer';
 import ParentBehaviorRecordList from './parent-app/ParentBehaviorRecordList';
+import ParentRecordSourceTabs from './parent-app/ParentRecordSourceTabs';
 import {
-  createParentBehaviorDraft, parentBehaviorSubjectKey, readParentBehaviorRecords, readParentRecordsWithDemo, recordsForParentChild,
+  createParentBehaviorDraft, parentBehaviorSubjectKey, readParentRecordsWithDemo, recordsForParentChild,
   deleteParentBehaviorRecord, saveParentBehaviorRecord, type ParentBehaviorDraft, type ParentBehaviorRecord,
 } from '../shared/parentBehaviorRecords';
 import { createDemoGrowthCoinFlows } from '../shared/demoGrowthCoinFlow';
@@ -104,6 +104,9 @@ interface ParentAppProps {
   initialScreen?: Screen;
   parentEvaluationVisibility?: ParentEvaluationVisibilitySettings;
   parentBehaviorRecordingEnabled?: boolean;
+  parentRecordPreviewMode?: 'records' | 'empty';
+  onParentRecordPreviewModeChange?: (mode: 'records' | 'empty') => void;
+  onRecordSourceChange?: (source: 'school' | 'family') => void;
   parentGrowthCoinEnabled?: boolean;
   parentBankFeatureEnabled?: boolean;
   onActiveClassIdChange?: (classId: string) => void;
@@ -686,7 +689,6 @@ const GROWTH_RANGE_TABS: Array<[GrowthRangeMode, string]> = [
   ['term', '学期'],
 ];
 const GROWTH_RANGE_OPTIONS = GROWTH_RANGE_TABS.map(([value, label]) => ({ value, label }));
-const RECORD_SOURCE_OPTIONS = [{ value: 'school', label: '学校评价' }, { value: 'family', label: '家长记录' }] as const;
 const PARENT_PROFILE = {
   name: '郑小磊家长',
   relation: '妈妈',
@@ -708,6 +710,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
   initialScreen,
   parentEvaluationVisibility: parentEvaluationVisibilityInput,
   parentBehaviorRecordingEnabled: recordingEnabledOverride = true,
+  parentRecordPreviewMode,
+  onParentRecordPreviewModeChange,
+  onRecordSourceChange,
   parentGrowthCoinEnabled = true,
   parentBankFeatureEnabled = true,
   onActiveClassIdChange,
@@ -766,7 +771,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const [behaviorDrafts, setBehaviorDrafts] = useState<Record<string, ParentBehaviorDraft>>({});
   const [behaviorError, setBehaviorError] = useState('');
   const [editingBehavior, setEditingBehavior] = useState<ParentBehaviorRecord | null>(null);
-  const [behaviorComposerOpen, setBehaviorComposerOpen] = useState(false);
 
 
   const activeChild = useMemo(
@@ -782,21 +786,26 @@ const ParentApp: React.FC<ParentAppProps> = ({
   }, []);
   const recordingSettings = readParentRecordingSettings(activeChild?.schoolCode ?? '');
   const parentBehaviorRecordingEnabled = recordingEnabledOverride && recordingSettings.enabled;
+  const effectiveRecordSource = parentBehaviorRecordingEnabled ? recordSource : 'school';
   useEffect(() => {
-    if (!parentBehaviorRecordingEnabled) setBehaviorComposerOpen(false);
-  }, [parentBehaviorRecordingEnabled, screen]);
+    if (!parentBehaviorRecordingEnabled) {
+      setRecordSource('school');
+      setEditingBehavior(null);
+      setBehaviorError('');
+    }
+  }, [parentBehaviorRecordingEnabled]);
+  useEffect(() => {
+    onRecordSourceChange?.(effectiveRecordSource);
+  }, [effectiveRecordSource, onRecordSourceChange]);
   const behaviorSubjectKey = activeChild ? parentBehaviorSubjectKey(activeChild) : '';
   const behaviorDraft = behaviorDrafts[behaviorSubjectKey] ?? createParentBehaviorDraft();
   const activeParentRecords = activeChild ? recordsForParentChild(parentBehaviorRecords, PARENT_PROFILE.phone, activeChild) : [];
-  const autoRecordId = useRef<string | undefined>(undefined);
+  const visibleParentRecords = parentRecordPreviewMode === 'empty' ? [] : activeParentRecords;
   const openBehaviorRecord = () => {
     if (!activeChild || !parentBehaviorRecordingEnabled) return;
-    if (autoRecordId.current) setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: createParentBehaviorDraft() }));
-    autoRecordId.current = undefined;
     setBehaviorError('');
     setRecordSource('family');
     setScreen('growthRecords');
-    setBehaviorComposerOpen(true);
   };
   const saveBehaviorRecord = (draft: ParentBehaviorDraft, targetChildId?: string) => {
     const recordChild = targetChildId ? childrenList.find(child => child.id === targetChildId && child.schoolCode === activeChild?.schoolCode) : activeChild;
@@ -804,10 +813,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
     try {
       const nextRecords = saveParentBehaviorRecord(recordingSettings.photoEnabled || editingBehavior ? draft : { ...draft, images: [] }, recordChild, PARENT_PROFILE.phone, PARENT_PROFILE.relation, editingBehavior?.id);
       setParentBehaviorRecords(nextRecords);
-      setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: createParentBehaviorDraft() }));
+      if (!editingBehavior) setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: createParentBehaviorDraft() }));
+      if (!editingBehavior) onParentRecordPreviewModeChange?.('records');
       setBehaviorError('');
       setEditingBehavior(null);
-      setBehaviorComposerOpen(false);
 
       setRecordSource('family');
       setScreen('growthRecords');
@@ -818,14 +827,6 @@ const ParentApp: React.FC<ParentAppProps> = ({
       setBehaviorError(error instanceof Error ? error.message : '保存失败，请重试。');
       return false;
     }
-  };
-  const autoSaveBehaviorRecord = (draft: ParentBehaviorDraft) => {
-    if (!activeChild || !parentBehaviorRecordingEnabled) return;
-    try {
-      const next = saveParentBehaviorRecord(recordingSettings.photoEnabled ? draft : { ...draft, images: [] }, activeChild, PARENT_PROFILE.phone, PARENT_PROFILE.relation, autoRecordId.current);
-      if (!autoRecordId.current) autoRecordId.current = next[0].id;
-      setParentBehaviorRecords(next); setBehaviorError('');
-    } catch (error) { setBehaviorError(error instanceof Error ? error.message : '自动保存失败，请重试。'); }
   };
   const coinSchoolId = activeChild ? resolveCoinSchoolId(activeChild.schoolCode) : DEMO_COIN_SCHOOL_ID;
   const GROWTH_COIN_TERMS = useGrowthCoinTerms(coinSchoolId);
@@ -1764,15 +1765,14 @@ const ParentApp: React.FC<ParentAppProps> = ({
         ? 'grid-cols-2'
         : 'grid-cols-1';
     const statisticTitle = growthRangeMode === 'day' ? '当天统计' : growthRangeMode === 'week' ? '本周统计' : growthRangeMode === 'month' ? '本月统计' : '本学期统计';
+    const showRecordComposer = effectiveRecordSource === 'family';
     return (
       <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
         <Header title="成长记录" showBack backLabel="返回成长页" onBack={() => setScreen('growth')} />
-        <ParentPageShell className="pb-[calc(var(--pm-space-8)+var(--mini-program-bottom-safe-area,0px))]">
-          <div className="px-5 pt-4">
-            <ParentSegmentedControl<'school' | 'family'> value={recordSource} items={RECORD_SOURCE_OPTIONS} onChange={setRecordSource} ariaLabel="记录来源" />
-          </div>
-          {recordSource === 'family' ? (
-            <ParentBehaviorRecordList onDelete={record => { if (!activeChild) return; try { setParentBehaviorRecords(deleteParentBehaviorRecord(record.id, activeChild, PARENT_PROFILE.phone)); setSubmitSuccessMessage('记录已删除'); } catch { setSubmitSuccessMessage('删除失败，请重试'); } }} onEdit={record => { setEditingBehavior(record); setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: { content: record.content, images: record.images, occurredOn: record.occurredOn } })); setBehaviorError(''); }} records={activeParentRecords} childName={activeChild.name} onCreate={parentBehaviorRecordingEnabled ? openBehaviorRecord : undefined} />
+        {parentBehaviorRecordingEnabled && <ParentRecordSourceTabs value={effectiveRecordSource} onChange={setRecordSource} />}
+        <ParentPageShell className={showRecordComposer ? 'scroll-pt-[var(--pm-size-touch)] pb-3' : 'pb-[calc(var(--pm-space-8)+var(--mini-program-bottom-safe-area,0px))]'}>
+          {effectiveRecordSource === 'family' ? (
+            <ParentBehaviorRecordList onDelete={record => { if (!activeChild) return; try { setParentBehaviorRecords(deleteParentBehaviorRecord(record.id, activeChild, PARENT_PROFILE.phone)); setSubmitSuccessMessage('记录已删除'); } catch { setSubmitSuccessMessage('删除失败，请重试'); } }} onEdit={record => { setEditingBehavior(record); setBehaviorError(''); }} records={visibleParentRecords} childName={activeChild.name} canRecord={parentBehaviorRecordingEnabled} />
           ) : <>
             <div className="mx-5 mt-2">
               <ParentUnderlineTabs<GrowthRangeMode> value={growthRangeMode} items={GROWTH_RANGE_OPTIONS} onChange={setGrowthRangeMode} ariaLabel="评价时间范围" />
@@ -1837,6 +1837,11 @@ const ParentApp: React.FC<ParentAppProps> = ({
             )}
           </>}
         </ParentPageShell>
+        {showRecordComposer && <ParentBehaviorRecordComposer key={behaviorSubjectKey} draft={behaviorDraft} error={behaviorError}
+          showFirstRecordGuide={visibleParentRecords.length === 0}
+          photoEnabled={recordingSettings.photoEnabled} disabled={Boolean(editingBehavior)}
+          onChange={draft => { setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: draft })); setBehaviorError(''); }}
+          onSave={saveBehaviorRecord} />}
       </div>
     );
   };
@@ -2962,13 +2967,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
             <SubmitSuccessToast />
             <ChildSwitcherSheet />
             <ExchangePasswordSheet />
-            <MobileBottomSheet open={behaviorComposerOpen && parentBehaviorRecordingEnabled && Boolean(activeChild)} title="记录表现" onClose={() => setBehaviorComposerOpen(false)} contentInset="none">
-              {behaviorComposerOpen && activeChild && <ParentBehaviorRecordPage key={behaviorSubjectKey} child={activeChild} header={null} draft={behaviorDraft} error={behaviorError} saved={Boolean(autoRecordId.current)} photoEnabled={recordingSettings.photoEnabled}
-                onChange={draft => { setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: draft })); setBehaviorError(''); }} onSave={autoSaveBehaviorRecord} />}
-            </MobileBottomSheet>
-            <MobileBottomSheet open={Boolean(editingBehavior)} title="修改记录" onClose={() => { saveBehaviorRecord(behaviorDraft); }}>
-              <label className="block text-[length:var(--pm-font-size-body)]">发生日期<input aria-label="发生日期" type="date" value={behaviorDraft.occurredOn} max={createParentBehaviorDraft().occurredOn} onChange={event => setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: { ...behaviorDraft, occurredOn: event.target.value } }))} className="ml-3 min-h-11 bg-transparent" /></label>
-              <textarea aria-label="孩子的表现" rows={5} maxLength={2000} value={behaviorDraft.content} onChange={event => setBehaviorDrafts(previous => ({ ...previous, [behaviorSubjectKey]: { ...behaviorDraft, content: event.target.value } }))} className="mt-3 w-full rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-bg-surface)] p-3 text-[length:var(--pm-font-size-body)] outline-none focus:ring-0" />
+            <MobileBottomSheet open={Boolean(editingBehavior)} title="修改记录" onClose={() => { if (editingBehavior) saveBehaviorRecord(editingBehavior); }}>
+              <label className="block text-[length:var(--pm-font-size-body)]">发生日期<input aria-label="发生日期" type="date" value={editingBehavior?.occurredOn ?? ''} max={createParentBehaviorDraft().occurredOn} onChange={event => { const occurredOn = event.target.value; setEditingBehavior(previous => previous ? { ...previous, occurredOn } : null); setBehaviorError(''); }} className="ml-3 min-h-11 bg-transparent" /></label>
+              <textarea aria-label="孩子的表现" rows={5} maxLength={2000} value={editingBehavior?.content ?? ''} onChange={event => { const content = event.target.value; setEditingBehavior(previous => previous ? { ...previous, content } : null); setBehaviorError(''); }} className="mt-3 w-full rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-bg-surface)] p-3 text-[length:var(--pm-font-size-body)] outline-none focus:ring-0" />
               {behaviorError && <p role="alert">{behaviorError}</p>}
             </MobileBottomSheet>
 
