@@ -22,8 +22,8 @@ export default function VendingExchangeView({ schoolId, authorizedClasses, cabin
   const [activeTab, setActiveTab] = useState<'inventory' | 'records'>('inventory');
   const schoolCabinets = useMemo(() => cabinets.filter(item => item.schoolId === schoolId), [cabinets, schoolId]);
   return <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]">
-    <MobilePageHeader title="货柜兑换明细" onBack={onBack} />
-    <ReportDateRangeTabs value={activeTab} items={tabs} onChange={setActiveTab} ariaLabel="货柜兑换内容" semantics="tabs" className="shrink-0" />
+    <MobilePageHeader title="货柜管理" onBack={onBack} />
+    <ReportDateRangeTabs value={activeTab} items={tabs} onChange={setActiveTab} ariaLabel="货柜管理内容" semantics="tabs" className="shrink-0" />
     <div role="tabpanel" aria-label="商品库存" hidden={activeTab !== 'inventory'} className={activeTab === 'inventory' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
       <VendingInventoryPanel key={schoolId} cabinets={schoolCabinets} active={activeTab === 'inventory'} />
     </div>

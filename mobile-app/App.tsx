@@ -1743,7 +1743,7 @@ const App: React.FC<MobileAppProps> = ({
             case 'subject_management': return '科目管理';
             case 'department_management': return '部门管理';
             case 'coin_issuance': return '成长币发放';
-            case 'vending_exchange': return '货柜兑换明细';
+            case 'vending_exchange': return '货柜管理';
             case 'suggestion_feedback': return '建议反馈';
             case 'questionnaire': return '问卷采集';
             case 'archive_design': return '档案设计';

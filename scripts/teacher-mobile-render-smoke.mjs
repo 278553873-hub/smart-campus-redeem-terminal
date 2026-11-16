@@ -2095,7 +2095,7 @@ for (const showWechatLogin of [false, true]) {
   });
 }
 
-// 货柜兑换：覆盖真实列表渲染、空结果和演示适配，权限校验必须先于展示。
+// 货柜管理：覆盖真实列表渲染、空结果和演示适配，权限校验必须先于展示。
 await renderPage('手机栏下筛选（单列展开与选中态）', async () => {
   const { default: Dropdown, MobileDropdownOptionList } = await import('../mobile-app/components/ui/MobileFilterDropdown');
   return { default: () => React.createElement(Dropdown, { open: true, id: 'dropdown-smoke', label: '选择货柜', triggerRef: { current: null }, onClose: noop },
@@ -2125,13 +2125,13 @@ const vendingSample = {
   time: '2026-11-05 10:32:00', status: 'failed', refundStatus: 'refunded', refundedAmount: 20,
 };
 for (const authorized of [true, false]) {
-  await renderPage('货柜兑换明细（' + (authorized ? '默认全部状态' : '无授权班级') + '）', () => import('../mobile-app/views/VendingExchangeView'), {
+  await renderPage('货柜管理（' + (authorized ? '默认全部状态' : '无授权班级') + '）', () => import('../mobile-app/views/VendingExchangeView'), {
     schoolId: 'school-vending', today: '2026-11-05', onBack: noop,
     authorizedClasses: authorized ? [{ id: 'vending-class', name: '2026级1班', gradeLevel: '一年级' }] : [],
     records: [{ ...vendingSample, status: 'completed', refundStatus: 'none', refundedAmount: 0 }, { ...vendingSample, id: 'other-vending', schoolId: 'other-school', studentName: '未授权学生' }],
   }, html => {
     const text = plainText(html);
-    for (const label of ['货柜兑换明细', '商品库存', '兑换记录', '全部分类']) if (!text.includes(label)) throw new Error('货柜兑换缺少：' + label);
+    for (const label of ['货柜管理', '商品库存', '兑换记录', '全部分类']) if (!text.includes(label)) throw new Error('货柜管理缺少：' + label);
     if (text.includes('搜索学生姓名') || html.includes('type="search"')) throw new Error('兑换记录应移除搜索功能');
     if (!html.includes('aria-selected="true"') || !html.includes('aria-label="商品库存"')) throw new Error('默认应进入商品库存');
     if (text.includes('未授权学生')) throw new Error('兑换明细泄露其他学校数据');
@@ -2205,7 +2205,7 @@ await renderPage('货柜兑换失败卡片（保留退币状态）', () => impor
   if (!['兑换失败', '已退币'].every(label => plainText(html).includes(label))) throw new Error('失败记录应分别展示兑换状态与退币状态');
   if (!html.includes('/assets/c4d_shop.png')) throw new Error('历史记录未保存商品图时应使用公共默认商品图');
 });
-await renderPage('货柜兑换演示适配', () => import('../mobile-app/views/vending-exchange/VendingExchangeDemoView'), {
+await renderPage('货柜管理演示适配', () => import('../mobile-app/views/vending-exchange/VendingExchangeDemoView'), {
   space: { id: 'school-vending', type: 'school', role: 'teacher' },
   teacher: { homeroomClassIds: ['vending-class'], teachingAssignments: [], gradeLeaderGrades: [] },
   classes: [{ id: 'vending-class', name: '2026级1班', gradeLevel: '一年级' }],
@@ -2219,16 +2219,16 @@ for (const role of ['administrator', 'homeroomTeacher', 'teacher', 'owner']) {
     isSpaceSheetOpen: false, pendingCollectionCount: 0,
     currentSpace: { ...profileSpace, type: role === 'owner' ? 'personal' : 'school', role },
   }, html => {
-    if (html.includes('aria-label="货柜兑换"') !== (role !== 'owner')) throw new Error('货柜入口学校权限不正确');
+    if (html.includes('aria-label="货柜管理"') !== (role !== 'owner')) throw new Error('货柜入口学校权限不正确');
   });
 }
-await renderPage('极速版不开放货柜兑换', () => import('../mobile-app/views/MeView'), {
+await renderPage('极速版不开放货柜管理', () => import('../mobile-app/views/MeView'), {
   ...meStyleActions, onOpenVendingExchange: noop, teacherProfile: rosterTeacher,
   isSpaceSheetOpen: false, pendingCollectionCount: 0,
   currentSpace: { ...profileSpace, type: 'school', role: 'administrator' },
   availableTools: teacherAppFeatures.lite.meTools,
 }, html => {
-  if (html.includes('aria-label="货柜兑换"')) throw new Error('极速版泄露货柜入口');
+  if (html.includes('aria-label="货柜管理"')) throw new Error('极速版泄露货柜入口');
 });
 
 // 渲染结束后主动退出：个别模块会留下常驻定时器。

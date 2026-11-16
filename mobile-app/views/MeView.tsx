@@ -235,7 +235,7 @@ const MeView: React.FC<MeViewProps> = ({
         },
         {
             id: 'vendingExchange',
-            title: '货柜兑换',
+            title: '货柜管理',
             icon: PackageCheck,
             onClick: onOpenVendingExchange,
         },
