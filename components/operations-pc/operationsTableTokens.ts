@@ -1,0 +1,28 @@
+/** 运营表格的内容列宽，遵循 PC 后台的 8px 尺度；统计列由 Arco 等分剩余空间。 */
+export const operationsTableTokens = {
+  columnWidth: {
+    account: 152,
+    name: 96,
+    school: 192,
+    dateTime: 176,
+    action: 88,
+  },
+  statisticMinWidth: 112,
+  organizationTypeWidth: 144,
+  schoolColumnWidth: {
+    schoolName: 240,
+    schoolId: 112,
+    schoolType: 144,
+    level: 112,
+    region: 256,
+    administrator: 112,
+    phone: 152,
+    teacherCount: 112,
+    classCount: 112,
+    studentCount: 112,
+    authorizationStatus: 112,
+    authorizationPeriod: 248,
+    organizations: 256,
+    action: 88,
+  },
+} as const;

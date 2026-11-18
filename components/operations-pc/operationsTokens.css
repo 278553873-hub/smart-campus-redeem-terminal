@@ -1,0 +1,43 @@
+.operations-pc,
+.operations-pc-overlay {
+  --ops-color-primary: rgb(var(--primary-6));
+  --ops-color-primary-soft: var(--color-primary-light-1);
+  --ops-color-text: var(--color-text-1);
+  --ops-color-text-secondary: var(--color-text-2);
+  --ops-color-text-muted: var(--color-text-3);
+  --ops-color-surface: var(--color-bg-2);
+  --ops-color-canvas: #f5f7fa;
+  --ops-color-fill: var(--color-fill-1);
+  --ops-color-border: var(--color-border-2);
+  --ops-color-divider: var(--color-border-1);
+  --ops-color-danger: rgb(var(--danger-6));
+  --ops-color-success: rgb(var(--success-6));
+  --ops-color-on-primary: var(--color-white);
+  --ops-font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --ops-font-caption: 13px;
+  --ops-font-body: 14px;
+  --ops-font-section: 16px;
+  --ops-font-brand: 18px;
+  --ops-weight-regular: 400;
+  --ops-weight-medium: 500;
+  --ops-weight-semibold: 600;
+  --ops-space-1: 4px;
+  --ops-space-2: 8px;
+  --ops-space-3: 12px;
+  --ops-space-4: 16px;
+  --ops-space-5: 24px;
+  --ops-space-6: 32px;
+  --ops-space-7: 48px;
+  --ops-page-inset: var(--ops-space-5);
+  --ops-filter-width: 220px;
+  --ops-form-width: 420px;
+  --ops-radius: var(--border-radius-medium);
+  --ops-header-height: 56px;
+  --ops-sidebar-width: 256px;
+  --ops-sidebar-collapsed-width: 64px;
+}
+
+@media (max-width: 1024px) {
+  .operations-pc,
+  .operations-pc-overlay { --ops-page-inset: var(--ops-space-4); }
+}

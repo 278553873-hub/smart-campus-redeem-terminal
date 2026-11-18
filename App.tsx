@@ -41,6 +41,7 @@ import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
 import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
+import OperationsPcAdmin from './components/operations-pc/OperationsPcAdmin';
 import UiRenovationDemo from './components/UiRenovationDemo';
 // 两套候选大屏独立维护：学校 PC 顶部入口与 Demo 独立项目不可共用展示组件。
 import SchoolPcDataScreen from './components/data-screen/StudentEvaluationDataScreen';
@@ -1445,10 +1446,10 @@ const AppSwitcher: React.FC = () => {
   const questionnaireInviteCode = useMemo(() => (
     new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
   ), []);
-  const [currentApp, setCurrentApp] = useState<'teacher-mobile-lite' | 'teacher-pad' | 'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation' | 'data-screen' | 'school-pc-screen'>(() => {
+  const [currentApp, setCurrentApp] = useState<'teacher-mobile-lite' | 'teacher-pad' | 'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'operations-pc' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation' | 'data-screen' | 'school-pc-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'teacher-mobile-lite' || app === 'teacher-pad' || app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation' || app === 'data-screen' || app === 'school-pc-screen') {
+    if (app === 'teacher-mobile-lite' || app === 'teacher-pad' || app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'operations-pc' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation' || app === 'data-screen' || app === 'school-pc-screen') {
       return app;
     }
     return 'admin'; // Demo 默认展示教师手机端
@@ -1885,6 +1886,7 @@ const AppSwitcher: React.FC = () => {
         {currentApp === 'teacher-evaluation' && <TeacherDevelopmentApp />}
         {currentApp === 'all-in-one' && <TerminalApp mode="all-in-one" />}
         {currentApp === 'pc-workspace' && <PcWorkspace />}
+        {currentApp === 'operations-pc' && <OperationsPcAdmin />}
         {currentApp === 'region-pc' && <RegionalPcAdmin onLogout={handleRegionalPcLogout} />}
         {currentApp === 'region-pc-screen' && <RegionalPcAdmin screenOnly />}
         {(currentApp === 'admin' || currentApp === 'teacher-mobile-lite') && (
@@ -2312,6 +2314,16 @@ const AppSwitcher: React.FC = () => {
             >
               <Monitor size={22} className="mb-1" />
               <span className="text-[9px] font-bold leading-tight">学校-PC端</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentApp('operations-pc')}
+              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'operations-pc' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+              title="运营-PC端 - SaaS运营配置后台"
+              aria-label="运营-PC端"
+            >
+              <Settings size={22} className="mb-1" aria-hidden="true" />
+              <span className="text-[9px] font-bold leading-tight">运营-PC端</span>
             </button>
             {showAdvancedApps && (
               <>

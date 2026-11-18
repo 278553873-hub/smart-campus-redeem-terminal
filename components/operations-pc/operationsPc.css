@@ -1,0 +1,130 @@
+.operations-pc {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ops-color-canvas);
+  color: var(--ops-color-text);
+  font-family: var(--ops-font-family);
+  font-size: var(--ops-font-body);
+}
+
+.operations-pc-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ops-space-5);
+  height: var(--ops-header-height);
+  padding: 0 var(--ops-space-5);
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ops-color-border);
+  background: var(--ops-color-surface);
+}
+
+.operations-pc-brand { display: flex; align-items: center; gap: var(--ops-space-3); flex-shrink: 0; }
+.operations-pc-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ops-color-primary);
+  color: var(--ops-color-on-primary);
+}
+.operations-pc-brand-name { font-size: var(--ops-font-brand); font-weight: var(--ops-weight-semibold); white-space: nowrap; }
+.operations-pc-account { display: flex; align-items: center; gap: var(--ops-space-2); margin-left: auto; white-space: nowrap; }
+.operations-pc-body { display: flex; flex: 1; min-height: 0; }
+.operations-pc-sidebar {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: var(--ops-sidebar-width);
+  border-right: 1px solid var(--ops-color-border);
+  background: var(--ops-color-surface);
+}
+.operations-pc-sidebar.is-collapsed { width: var(--ops-sidebar-collapsed-width); }
+.operations-pc-navigation { flex: 1; min-height: 0; padding-top: var(--ops-space-2); overflow-y: auto; }
+.operations-pc-sidebar-footer { padding: var(--ops-space-2); border-top: 1px solid var(--ops-color-divider); }
+.operations-pc-nav-icon { display: inline-block; vertical-align: -4px; }
+
+/* 仅运营侧栏：对齐学校后台的蓝色选中态，不修改其他页面的 Arco Menu。 */
+.operations-pc-navigation .arco-menu-light .arco-menu-item.arco-menu-selected {
+  background: var(--ops-color-primary-soft);
+  color: var(--ops-color-primary);
+  font-weight: var(--ops-weight-semibold);
+}
+.operations-pc-navigation .arco-menu-selected .operations-pc-nav-icon { color: currentColor; }
+.operations-pc-main { flex: 1; min-width: 0; padding: var(--ops-space-4) var(--ops-page-inset) var(--ops-page-inset); overflow-y: auto; }
+.operations-pc-breadcrumb { margin-bottom: var(--ops-space-4); }
+.operations-pc-page { min-height: 480px; border-radius: var(--ops-radius); background: var(--ops-color-surface); }
+.operations-pc-page-heading { padding: var(--ops-space-5) var(--ops-page-inset) var(--ops-space-4); }
+.operations-pc-page-heading h1 { margin: 0; font-size: var(--ops-font-section); font-weight: var(--ops-weight-semibold); line-height: 1.5; }
+.operations-pc-list-content { padding: 0 var(--ops-page-inset) var(--ops-page-inset); }
+/* 仅学校列表：页签标题与面板共用左右留白，筛选区由真实页签面板承载。 */
+.ops-customer-tabs > .arco-tabs-header-nav { margin-inline: var(--ops-page-inset); }
+.ops-customer-tabs > .arco-tabs-content { padding-top: var(--ops-space-5); }
+.operations-pc-filters { padding-bottom: var(--ops-space-5); margin-bottom: var(--ops-space-5); border-bottom: 1px solid var(--ops-color-divider); }
+.operations-pc-filters.arco-form-inline { align-items: center; gap: var(--ops-space-4) var(--ops-space-5); }
+.operations-pc-filters.arco-form-inline > .arco-form-item { margin: 0; }
+.ops-personal-list .operations-pc-filters { padding-bottom: var(--ops-space-4); margin-bottom: var(--ops-space-4); }
+.operations-pc-filters .arco-input-inner-wrapper,
+.operations-pc-filters .arco-select { width: var(--ops-filter-width); max-width: 100%; }
+.operations-pc-table-empty { padding: var(--ops-space-7) 0; }
+.operations-pc-page-empty { display: flex; align-items: center; justify-content: center; min-height: 360px; padding: var(--ops-space-5); }
+.operations-pc :focus-visible,
+.operations-pc-overlay :focus-visible { outline: 2px solid var(--ops-color-primary); outline-offset: 2px; }
+
+.operations-pc-overlay { color: var(--ops-color-text); font-family: var(--ops-font-family); font-size: var(--ops-font-body); }
+.ops-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--ops-space-4); margin-bottom: var(--ops-space-4); }
+.ops-list-toolbar h2,
+.ops-section-title { margin: 0; color: var(--ops-color-text); font-size: var(--ops-font-section); font-weight: var(--ops-weight-semibold); line-height: 1.5; }
+.ops-actions,
+.ops-row-actions { display: flex; align-items: center; gap: var(--ops-space-2); }
+.ops-row-actions { gap: 0; }
+.ops-table-cell { display: grid; gap: var(--ops-space-1); line-height: 1.5; }
+.ops-table-cell > span,
+.ops-secondary { color: var(--ops-color-text-secondary); font-size: var(--ops-font-caption); }
+.ops-statistic-value { font-weight: var(--ops-weight-medium); font-variant-numeric: tabular-nums; }
+.ops-related-links { display: grid; justify-items: start; }
+.ops-scheme-meta { display: flex; flex-wrap: wrap; gap: var(--ops-space-3); align-items: baseline; margin-bottom: var(--ops-space-4); }
+.ops-scheme-meta > span { color: var(--ops-color-text-secondary); font-size: var(--ops-font-caption); }
+.ops-setup-intro { padding: 0 var(--ops-page-inset) var(--ops-space-4); }
+.ops-setup-steps { padding: 0 var(--ops-page-inset) var(--ops-space-5); }
+.ops-setup-body { padding: var(--ops-space-5) var(--ops-page-inset); border-top: 1px solid var(--ops-color-divider); }
+.ops-setup-body > .ops-section-title { margin-bottom: var(--ops-space-5); }
+.ops-organization-form { max-width: var(--ops-form-width); }
+.ops-form-section { border-top: 1px solid var(--ops-color-divider); margin-top: var(--ops-space-5); padding-top: var(--ops-space-5); }
+.ops-form-section h3,
+.ops-review-section h3 { font-size: var(--ops-font-body); font-weight: var(--ops-weight-semibold); margin: 0 0 var(--ops-space-4); }
+.ops-import-schools { display: flex; align-items: center; flex-wrap: wrap; gap: var(--ops-space-3); padding-bottom: var(--ops-space-5); }
+.ops-import-schools .arco-select { width: 280px; max-width: 100%; }
+.ops-selection-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ops-space-3); margin-bottom: var(--ops-space-4); }
+.ops-selection-toolbar .arco-input-inner-wrapper { width: var(--ops-filter-width); max-width: 100%; }
+.ops-selection-toolbar > span { margin-left: auto; }
+.ops-field-help { color: var(--ops-color-text-secondary); font-size: var(--ops-font-caption); line-height: 1.6; margin: var(--ops-space-3) 0 0; }
+.ops-context-alert { margin-bottom: var(--ops-space-5); }
+.ops-error-text { color: var(--ops-color-danger); font-size: var(--ops-font-caption); margin-bottom: var(--ops-space-3); }
+.ops-review-section { margin-top: var(--ops-space-5); padding-top: var(--ops-space-5); border-top: 1px solid var(--ops-color-divider); }
+.ops-review-section > .arco-alert { margin-bottom: var(--ops-space-4); }
+.ops-school-names { display: flex; flex-wrap: wrap; gap: var(--ops-space-2); }
+.ops-setup-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--ops-space-4); padding: var(--ops-space-4) var(--ops-page-inset); border-top: 1px solid var(--ops-color-divider); }
+
+@media (prefers-reduced-motion: reduce) {
+  .operations-pc *, .operations-pc-overlay * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+@media (max-width: 1024px) {
+  .operations-pc-sidebar:not(.is-collapsed) { width: 224px; }
+  .operations-pc-main { padding: 16px; }
+  .operations-pc-header { gap: 16px; padding-right: 16px; }
+}
+@media (max-width: 760px) {
+  .operations-pc-brand-name { font-size: var(--ops-font-body); }
+  .operations-pc-account > span:last-child { display: none; }
+  .operations-pc-sidebar:not(.is-collapsed) { width: 200px; }
+  .operations-pc-main { padding: 16px 12px; }
+  .operations-pc-page-heading { padding-inline: 16px; }
+  .operations-pc-list-content { padding-inline: 16px; }
+  .operations-pc-filters .arco-input-inner-wrapper { width: 180px; }
+}
