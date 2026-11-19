@@ -2295,26 +2295,6 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold leading-tight">UI改造</span>
             </button>
             <button
-              type="button"
-              onClick={() => { setCurrentApp('data-screen'); setIsDemoOpen(false); }}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'data-screen' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="数据大屏 - 学生评价"
-              aria-label="数据大屏"
-            >
-              <Monitor size={22} className="mb-1" aria-hidden="true" />
-              <span className="text-[9px] font-bold leading-tight">数据大屏</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setCurrentApp('moral-education-screen'); setIsDemoOpen(false); }}
-              className="w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all text-slate-500 active:bg-slate-100"
-              title="德育管理全景"
-              aria-label="德育管理全景"
-            >
-              <TrendingUp size={22} className="mb-1" aria-hidden="true" />
-              <span className="text-[9px] font-bold leading-tight">德育管理<span className="block">全景</span></span>
-            </button>
-            <button
               onClick={() => setCurrentApp('pc-workspace')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'pc-workspace' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="统一SaaS平台 - 学校-PC端"
