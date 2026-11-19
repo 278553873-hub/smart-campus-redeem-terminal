@@ -122,8 +122,9 @@ export const ASSISTANT_REPORT_DEFINITIONS: Record<AssistantReportType, ReportDef
   },
   principal_weekly: {
     role: 'principal',
-    cardOrder: ['judgement', 'actions', 'metrics', 'progress', 'findings'],
+    cardOrder: ['judgement', 'highlights', 'actions', 'metrics', 'progress', 'findings'],
     cards: {
+      highlights: { kind: 'insights', title: '育人亮点' },
       judgement: { kind: 'summary', title: '本周优先判断' },
       actions: { kind: 'actions', title: '本周管理动作' },
       metrics: { kind: 'metrics', title: '上周核心数据' },
@@ -250,7 +251,7 @@ const parseCard = (
     return items.length > 0 ? { key, kind: 'actions', items } : null;
   }
 
-  const items = value.items.slice(0, 6).map(parseInsight).filter((item): item is AssistantReportInsight => Boolean(item));
+  const items = value.items.slice(0, key === 'highlights' && definition === ASSISTANT_REPORT_DEFINITIONS.principal_weekly ? 3 : 6).map(parseInsight).filter((item): item is AssistantReportInsight => Boolean(item));
   return items.length > 0 ? { key, kind: cardDefinition.kind, items } : null;
 };
 

@@ -1,0 +1,5 @@
+.screen-panorama-navigation { display:inline-flex; align-items:center; flex:none; gap:4px; padding:3px; border:1px solid #ffd08a40; border-radius:6px; background:#110e0bd9; }
+.screen-panorama-navigation > a { display:flex; align-items:center; justify-content:center; min-height:38px; padding:0 12px; border-radius:3px; color:#b8aea3; font-family:inherit; font-size:18px; font-weight:600; line-height:1.4; text-decoration:none; white-space:nowrap; }
+.screen-panorama-navigation > a:hover { background:#ffd08a14; color:#f3f0ea; }
+.screen-panorama-navigation > a[aria-current=page] { background:#ffd08a24; color:#ffd08a; }
+.screen-panorama-navigation > a:focus-visible { outline:2px solid #ffd08a; outline-offset:2px; }

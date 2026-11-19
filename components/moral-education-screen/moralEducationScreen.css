@@ -1,0 +1,184 @@
+/* 德育页只使用独立业务布局；文字规格来自驾驶舱共用视觉变量。 */
+.moral-viewport {
+  --moral-bg:#0b0908;
+  --moral-text:#f3f0ea;
+  --moral-muted:#b8aea3;
+  --moral-accent:var(--screen-accent);
+  --moral-accent-light:var(--screen-accent-light);
+  --moral-border:#665443;
+  --moral-glass-border:#f2ece470;
+  --moral-track:#d9c5ae24;
+  --moral-hover:#ffe1a60a;
+  --moral-panel:linear-gradient(135deg,#17141124,#0806050f 70%);
+  --moral-solid:#171411;
+  --moral-blur:blur(10px) saturate(115%);
+  --moral-shadow:inset 0 1px 0 #fff9eb26,inset 0 -1px 0 #fff9eb0a,0 8px 28px #0000001a;
+  --moral-indicator-1:#f5a623;
+  --moral-indicator-2:#70a8de;
+  --moral-indicator-3:#83c8ae;
+  --moral-indicator-4:#b17ad5;
+  --moral-indicator-5:#eee9df;
+  --moral-chart-1-from:#ffc95c; --moral-chart-1-to:#f4b33d;
+  --moral-chart-2-from:#82c6ff; --moral-chart-2-to:#5eb0f5;
+  --moral-chart-3-from:#79dcc6; --moral-chart-3-to:#51c9ac;
+  --moral-chart-4-from:#c1a0f4; --moral-chart-4-to:#a680e7;
+  --moral-chart-5-from:#ffa38e; --moral-chart-5-to:#f48778;
+  --moral-chart-number:24px;
+  position:relative; width:100%; height:100%; overflow:hidden; background:var(--moral-bg); color-scheme:dark;
+  font-family:var(--screen-font-text); font-size:var(--screen-body); font-weight:var(--screen-weight-regular); line-height:1.4;
+}
+.moral-screen { position:absolute; top:0; left:0; display:grid; grid-template-rows:86px minmax(0,1fr); gap:20px; box-sizing:border-box; padding:0 28px 24px; isolation:isolate; overflow:hidden; color:var(--moral-text); font-variant-numeric:tabular-nums; background:radial-gradient(ellipse at 8% 3%,#74512926,transparent 58%),radial-gradient(ellipse at 95% 80%,#5262721a,transparent 65%),var(--moral-bg); }
+.moral-screen *, .moral-screen *::before, .moral-screen *::after { box-sizing:border-box; }
+.moral-screen h2, .moral-screen h3, .moral-screen p, .moral-screen dl, .moral-screen dd { margin:0; }
+.moral-screen ul, .moral-screen ol { padding:0; margin:0; list-style:none; }
+.moral-screen :where(strong,b) { font-weight:var(--screen-weight-emphasis); }
+.moral-screen small { font-family:var(--screen-font-text); font-size:var(--screen-caption); font-weight:var(--screen-weight-regular); }
+.moral-content { min-height:0; display:grid; grid-template-rows:80px minmax(0,1fr); gap:20px; }
+.moral-overview { min-width:0; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:20px; }
+.moral-metric, .moral-panel { position:relative; border:1px solid var(--moral-glass-border); border-radius:18px; background:var(--moral-panel); backdrop-filter:var(--moral-blur); -webkit-backdrop-filter:var(--moral-blur); box-shadow:var(--moral-shadow); }
+.moral-metric::before, .moral-panel::before { content:''; position:absolute; pointer-events:none; top:-1px; left:24px; width:42%; height:1px; background:linear-gradient(90deg,#fff5dfb3,#fff5df26,transparent); }
+.moral-metric { display:flex; justify-content:space-between; align-items:center; gap:12px; min-width:0; padding:8px 16px; }
+.moral-metric > div { display:flex; align-items:center; gap:8px; font-size:var(--screen-detail); color:#fff; white-space:nowrap; }
+.moral-metric > div svg { flex:none; }
+.moral-metric > strong { margin:4px 0; font-family:var(--screen-font-number); font-size:var(--screen-metric-number); font-weight:var(--screen-weight-emphasis); line-height:1.1; color:var(--moral-accent-light); white-space:nowrap; }
+.moral-metric small { margin-left:8px; color:var(--moral-muted); }
+.moral-workspace { min-height:0; display:grid; grid-template-rows:minmax(0,1fr) 310px; gap:20px; }
+.moral-primary-grid, .moral-secondary-grid { display:grid; gap:20px; min-height:0; min-width:0; }
+.moral-primary-grid { grid-template-columns:minmax(0,18fr) minmax(0,44fr) minmax(0,38fr); }
+.moral-secondary-grid { grid-template-columns:minmax(0,20fr) minmax(0,35fr) minmax(0,18fr) minmax(0,27fr); }
+.moral-panel { display:flex; flex-direction:column; min-width:0; min-height:0; padding:20px; }
+.moral-panel-heading { display:flex; align-items:center; justify-content:space-between; flex:none; gap:8px; margin-bottom:16px; }
+.moral-panel-heading h2 { padding-left:12px; border-left:3px solid var(--moral-text); font-size:var(--screen-panel-title); font-weight:var(--screen-weight-emphasis); line-height:1.2; white-space:nowrap; }
+.moral-panel-detail { color:var(--moral-muted); font-size:var(--screen-caption); white-space:nowrap; }
+.moral-secondary-grid .moral-panel-heading { margin-bottom:12px; }
+.moral-data-number { color:var(--moral-accent-light); font-family:var(--screen-font-number); font-size:var(--moral-chart-number); line-height:27px; white-space:nowrap; }
+.moral-ranking-head, .moral-ranking-list li { display:grid; grid-template-columns:40px minmax(0,1fr) 48px; align-items:center; gap:12px; }
+.moral-ranking-head { flex:none; padding-bottom:8px; color:var(--moral-muted); font-size:var(--screen-caption); line-height:22px; }
+.moral-ranking-head > span { white-space:nowrap; }
+.moral-ranking-head > :first-child, .moral-rank { text-align:center; }
+.moral-ranking-head > :last-child { text-align:right; }
+.moral-ranking-list { display:flex; flex-direction:column; min-height:0; }
+.moral-ranking-list li { flex:none; height:40px; font-size:var(--screen-detail); line-height:27px; }
+.moral-rank, .moral-ranking-score { font-family:var(--screen-font-number); font-weight:var(--screen-weight-emphasis); }
+.moral-rank { color:var(--moral-muted); }
+.moral-screen .is-top .moral-rank { color:var(--moral-accent); }
+.moral-class-name { display:flex; align-items:center; gap:8px; min-width:0; white-space:nowrap; }
+.moral-class-name strong { font-weight:var(--screen-weight-regular); }
+.moral-class-name small { color:var(--moral-muted); }
+.moral-screen .is-top .moral-class-name strong { color:var(--moral-accent-light); }
+.moral-ranking-score { text-align:right; }
+.moral-problems, .moral-grade-problems { padding-inline:12px; }
+.moral-grade-problems-page { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; flex:1; min-height:0; }
+.moral-grade-problems-page > article { position:relative; display:flex; flex-direction:column; min-width:0; min-height:0; }
+.moral-grade-problems-page ol { display:flex; flex-direction:column; gap:8px; }
+.moral-grade-problems-page li { display:grid; grid-template-columns:22px minmax(0,1fr) max-content; align-items:center; column-gap:2px; min-height:44px; font-size:var(--screen-detail); line-height:27px; white-space:nowrap; }
+.moral-grade-problems-page .moral-grade-heading { flex-direction:column; align-items:flex-start; gap:2px; }
+.moral-grade-problems-page li > strong { text-align:right; }
+.moral-grade-problem-name { min-width:0; color:var(--moral-text); white-space:nowrap; }
+.moral-grade-problem-total { color:var(--moral-muted); font-size:var(--screen-caption); white-space:nowrap; }
+.moral-grade-problem-total strong { color:var(--moral-text); font-family:var(--screen-font-number); font-weight:var(--screen-weight-emphasis); }
+.moral-comparison-legend { display:flex; align-items:center; gap:12px; color:var(--moral-muted); font-size:var(--screen-caption); white-space:nowrap; }
+.moral-comparison-legend > span { display:flex; align-items:center; gap:4px; }
+.moral-comparison-legend i { width:10px; height:5px; background:var(--moral-muted); opacity:.45; }
+.moral-comparison-legend i.is-current { background:var(--moral-chart-1-to); opacity:1; }
+.moral-change-chart { display:grid; grid-template-columns:repeat(var(--moral-change-columns),minmax(0,1fr)); gap:16px; flex:1; min-height:0; }
+.moral-change-chart > li { display:flex; flex-direction:column; align-items:center; min-width:0; min-height:0; }
+.moral-change-column-pair { display:flex; gap:4px; width:40px; align-self:center; flex:1; min-height:0; margin-top:22px; border-bottom:1px solid var(--moral-border); }
+.moral-change-column { position:relative; flex:0 0 18px; min-width:0; }
+.moral-change-column > i { position:absolute; bottom:0; left:50%; width:18px; max-width:100%; transform:translateX(-50%); border-radius:3px 3px 0 0; background:linear-gradient(0deg,var(--moral-chart-1-to),var(--moral-chart-1-from)); }
+.moral-change-column.is-previous > i { background:var(--moral-muted); opacity:.45; }
+.moral-change-column > span { position:absolute; left:50%; padding-bottom:4px; transform:translateX(-50%); color:var(--moral-accent-light); font-family:var(--screen-font-number); font-size:var(--screen-caption); line-height:18px; white-space:nowrap; }
+.moral-change-column.is-previous > span { color:var(--moral-muted); }
+.moral-change-name { display:grid; place-items:center; flex:none; width:2em; min-height:48px; margin-top:8px; color:var(--moral-text); font-size:var(--screen-detail); line-height:24px; text-align:center; word-break:break-all; }
+.moral-change-delta { flex:none; margin-top:12px; color:var(--moral-muted); text-align:center; white-space:nowrap; font-family:var(--screen-font-number); font-size:var(--screen-body); line-height:28px; }
+.moral-problem-changes small { margin-left:4px; color:var(--moral-muted); }
+.moral-problem-changes .is-up { color:var(--moral-accent-light); }
+.moral-problem-changes .is-down { color:var(--moral-indicator-3); }
+.moral-grade-rankings-page { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; flex:1; min-height:0; }
+.moral-grade-rankings-page > article { position:relative; display:flex; flex-direction:column; min-width:0; min-height:0; }
+.moral-grade-rankings-page > article + article::before, .moral-grade-problems-page > article + article::before { content:''; position:absolute; top:-2px; left:-12px; width:1px; height:32px; background:var(--moral-border); pointer-events:none; }
+.moral-grade-problems-page > article + article::before { top:0; left:-12px; height:100%; }
+.moral-grade-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.moral-grade-heading h3 { font-size:var(--screen-body); font-weight:var(--screen-weight-emphasis); line-height:28px; }
+.moral-grade-rankings-page .moral-ranking-list li { height:30px; }
+.moral-problems .moral-panel-heading { gap:4px; margin-bottom:8px; }
+.moral-problems .moral-panel-tabs { gap:4px; }
+.moral-problems .moral-panel-tabs button { padding-inline:2px; }
+.moral-problems-content { display:flex; flex:1; min-height:0; }
+.moral-problems-content > ol { display:flex; flex-direction:column; justify-content:space-between; flex:1; min-height:0; }
+.moral-problems li { display:grid; grid-template-columns:22px minmax(0,1fr) max-content; align-items:center; column-gap:8px; min-height:36px; font-size:var(--screen-detail); line-height:27px; }
+.moral-problem-index { color:var(--moral-muted); font-family:var(--screen-font-number); font-size:var(--screen-detail); }
+.moral-problem-path { min-width:0; white-space:nowrap; color:var(--moral-text); }
+.moral-problem-value { text-align:right; }
+.moral-problem-value small { margin-left:4px; color:var(--moral-muted); }
+.moral-trend-plot { position:relative; flex:1; min-width:0; min-height:0; }
+.moral-trend svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; --moral-trend-color:var(--moral-accent-light); }
+.moral-trend-grid { stroke:var(--moral-border); stroke-width:1; stroke-dasharray:3 5; }
+.moral-trend-axis { fill:var(--moral-muted); font-size:var(--screen-caption); }
+.moral-trend-line { fill:none; stroke:var(--moral-trend-color); stroke-width:3; stroke-linejoin:round; stroke-linecap:round; }
+.moral-trend-dot { fill:var(--moral-solid); stroke:var(--moral-trend-color); stroke-width:3; }
+.moral-trend-latest-halo { fill:var(--moral-accent-light); opacity:.18; }
+.moral-trend-value { font-family:var(--screen-font-number); font-size:var(--screen-body); font-weight:var(--screen-weight-emphasis); }
+.moral-trend-value:not(.is-latest) { fill:var(--moral-muted); }
+.moral-trend-value.is-latest { font-size:var(--moral-chart-number); }
+.moral-trend .moral-panel-heading { margin-bottom:8px; }
+.moral-panel-tabs { display:flex; gap:12px; }
+.moral-panel-tabs button { position:relative; min-height:44px; padding:0 4px; border:0; color:var(--moral-muted); background:transparent; font-family:var(--screen-font-text); font-size:var(--screen-detail); white-space:nowrap; cursor:pointer; }
+.moral-panel-tabs button[aria-selected=true] { color:var(--moral-accent-light); font-weight:var(--screen-weight-emphasis); }
+.moral-panel-tabs button[aria-selected=true]::after { content:''; position:absolute; left:4px; right:4px; bottom:2px; height:2px; background:var(--moral-accent); }
+.moral-panel-tabs button:focus-visible { outline:2px solid var(--moral-accent); outline-offset:2px; }
+.moral-trend-chart { display:flex; flex:1; min-height:0; }
+.moral-problem-distribution-content { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); align-items:center; gap:20px; flex:1; min-height:0; }
+.moral-problem-distribution-content ul { display:grid; gap:12px; }
+.moral-problem-distribution-content li { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; column-gap:12px; row-gap:4px; }
+.moral-problem-dimension-name { display:flex; grid-column:1 / -1; align-items:center; gap:8px; font-size:var(--screen-detail); }
+.moral-problem-dimension-name i { flex:none; width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,var(--moral-dimension-from),var(--moral-dimension-to)); }
+.moral-problem-distribution-content li > strong { font-family:var(--screen-font-number); font-size:28px; line-height:1.2; }
+.moral-problem-dimension-count { font-family:var(--screen-font-number); font-size:var(--screen-body); white-space:nowrap; }
+.moral-problem-distribution-content small { margin-left:4px; color:var(--moral-muted); }
+.moral-problem-total-label { color:var(--moral-muted); font-size:24px; white-space:nowrap; }
+.moral-problem-total { color:var(--moral-text); font-family:var(--screen-font-number); font-size:64px; font-weight:var(--screen-weight-emphasis); line-height:1.1; white-space:nowrap; }
+.moral-problem-total small { font-family:var(--screen-font-text); font-size:var(--screen-panel-title); font-weight:var(--screen-weight-regular); }
+.moral-empty { display:grid; place-content:center; flex:1; min-height:80px; color:var(--moral-muted); font-size:var(--screen-body); }
+.moral-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; color:var(--moral-muted); font-size:var(--screen-body); }
+.moral-screen .moral-loading .arco-btn { display:flex; align-items:center; gap:8px; min-height:44px; color:var(--moral-accent); }
+.moral-screen .arco-btn:focus-visible { outline:2px solid var(--moral-accent); outline-offset:3px; }
+
+.moral-viewport[data-theme=light] {
+  --moral-bg:#eeeae2; --moral-text:#263341; --moral-muted:#515c68; --moral-border:#8b795a38; --moral-glass-border:#ffffffe0;
+  --moral-track:#8b795a1a; --moral-hover:#ffffff70;
+  --moral-panel:linear-gradient(135deg,#ffffffa8,#ffffff70 60%,#ffffff52); --moral-solid:#faf8f3;
+  --moral-blur:blur(16px) saturate(120%);
+  --moral-shadow:inset 0 1px 0 #fffffff2,inset 0 -1px 0 #ffffff66,0 8px 24px #775b3212,0 0 0 1px #a58e6a1a;
+  --moral-indicator-1:#8c4d08; --moral-indicator-2:#28639e; --moral-indicator-3:#1d6b56; --moral-indicator-4:#784a96; --moral-indicator-5:#56606b;
+  --moral-chart-1-from:#f5bc48; --moral-chart-1-to:#e9a92e;
+  --moral-chart-2-from:#69b7f5; --moral-chart-2-to:#489fe6;
+  --moral-chart-3-from:#5bd0b4; --moral-chart-3-to:#38b99a;
+  --moral-chart-4-from:#af8bee; --moral-chart-4-to:#956de0;
+  --moral-chart-5-from:#fa987e; --moral-chart-5-to:#ec7c6b;
+  color-scheme:light;
+}
+.moral-screen[data-theme=light] { background:radial-gradient(ellipse 65% 70% at 8% 8%,#ebce9d8c,transparent 75%),radial-gradient(ellipse 56% 74% at 96% 70%,#c9d8e3b8,transparent 80%),radial-gradient(ellipse 55% 45% at 46% 100%,#ddc29f73,transparent 82%),var(--moral-bg); }
+.moral-screen[data-theme=light] .moral-metric > div { color:var(--moral-text); }
+.moral-screen[data-theme=light] .moral-metric::before, .moral-screen[data-theme=light] .moral-panel::before { background:linear-gradient(90deg,#fffffff2,#ffffff80,transparent); }
+.moral-screen[data-theme=light] .screen-panorama-header { color:var(--moral-text); }
+.moral-screen[data-theme=light] .screen-panorama-header-art { opacity:.55; }
+.moral-screen[data-theme=light] .screen-panorama-header h1 { filter:drop-shadow(0 1px 0 #ffffffcc); }
+.moral-screen[data-theme=light] .screen-panorama-header h1 > span { background:none; color:var(--screen-system-title-color); -webkit-text-fill-color:currentColor; }
+.moral-screen[data-theme=light] .screen-panorama-weekday { color:var(--moral-muted); }
+.moral-screen[data-theme=light] .screen-panorama-navigation { border-color:var(--moral-glass-border); background:var(--moral-panel); backdrop-filter:var(--moral-blur); -webkit-backdrop-filter:var(--moral-blur); box-shadow:var(--moral-shadow); }
+.moral-screen[data-theme=light] .screen-panorama-navigation > a { color:var(--moral-muted); }
+.moral-screen[data-theme=light] .screen-panorama-navigation > a:hover, .moral-screen[data-theme=light] .screen-panorama-navigation > a[aria-current=page] { background:#ffffffb3; color:var(--moral-accent); }
+.moral-screen[data-theme=light] .screen-panorama-fullscreen:hover, .moral-screen[data-theme=light] .screen-panorama-theme-toggle.arco-btn:hover { background:var(--moral-hover); color:var(--moral-accent); }
+.moral-screen[data-theme=light] .screen-panorama-navigation > a:focus-visible, .moral-screen[data-theme=light] .screen-panorama-fullscreen:focus-visible, .moral-screen[data-theme=light] .screen-panorama-theme-toggle.arco-btn:focus-visible { outline-color:var(--moral-accent); }
+.moral-screen[data-theme=light] .screen-panorama-notice { background:var(--moral-solid); color:var(--moral-text); border:1px solid var(--moral-border); }
+@supports ((background-clip:text) or (-webkit-background-clip:text)) {
+  .moral-secondary-grid .moral-data-number { background-image:var(--screen-metric-number-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .moral-secondary-grid .moral-data-number small { -webkit-text-fill-color:var(--moral-muted); }
+  .moral-metric > strong, .moral-screen .is-top .moral-class-name strong { background-image:var(--screen-metric-number-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .moral-screen[data-theme=light] .screen-panorama-header h1 > span { background-image:var(--screen-system-title-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .moral-screen[data-theme=light] .moral-metric > div > span, .moral-screen[data-theme=light] .is-top .moral-class-name strong { background-image:var(--screen-metric-label-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .moral-metric > strong small { -webkit-text-fill-color:var(--moral-muted); }
+}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) { .moral-viewport { --moral-panel:var(--moral-solid); } }
+@media (prefers-reduced-transparency:reduce) { .moral-viewport { --moral-panel:var(--moral-solid); --moral-blur:none; } }

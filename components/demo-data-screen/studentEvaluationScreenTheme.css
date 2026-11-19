@@ -1,0 +1,111 @@
+/* 浅色毛玻璃仅作用于学校全景，渐变文字与透明面板延续驾驶舱的金属质感。 */
+.demo-evaluation-screen-viewport[data-theme='light'] { background:#eeeae2; color-scheme:light; }
+.demo-student-evaluation-data-screen[data-theme='light'] {
+  --es-bg:#eeeae2;
+  --es-surface:#faf8f3;
+  --es-surface-raised:#ffffffa6;
+  --es-border:#8b795a38;
+  --es-text:#263341;
+  --es-muted:#515c68;
+  --es-accent:#8c4d08;
+  --es-accent-light:#8c4d08;
+  --es-accent-rgb:140, 77, 8;
+  --es-positive:#146b56;
+  --es-negative:#ae393e;
+  --es-education-virtue:#8c4d08;
+  --es-education-wisdom:#1d6b56;
+  --es-education-fitness:#28639e;
+  --es-education-aesthetic:#784a96;
+  --es-education-labor:#56606b;
+  --es-education-innovation:#9d446a;
+  --es-gold-light:var(--screen-gold-light);
+  --es-gold-highlight:var(--screen-gold-highlight);
+  --es-gold-main:var(--screen-gold-main);
+  --es-gold-deep:var(--screen-gold-deep);
+  --es-system-title-color:var(--screen-system-title-color);
+  --es-system-title-gradient:var(--screen-system-title-gradient);
+  --es-metric-label-gradient:var(--screen-metric-label-gradient);
+  --es-progress-track:#8b795a1a;
+  --es-progress-fill:linear-gradient(90deg, #aab4bf, #71808f);
+  --es-progress-accent-fill:linear-gradient(90deg, #d8ad60, #a56612);
+  --es-glass-background:linear-gradient(135deg, #ffffffa8 0%, #ffffff70 60%, #ffffff52 100%);
+  --es-glass-border:#ffffffe0;
+  --es-glass-blur:blur(16px) saturate(120%);
+  --es-glass-shadow:inset 0 1px 0 #fffffff2, inset 0 -1px 0 #ffffff66, 0 8px 24px #775b3212, 0 0 0 1px #a58e6a1a;
+  --es-gauge-disc-inner:#ffffff80;
+  --es-gauge-disc-outer:#e4e8e580;
+  --es-hero-core-inner:#ffffff80;
+  --es-hero-core-outer:#edf0ec66;
+  --es-hero-core-rim:#b7c0ca;
+  --es-hero-sector-edge:#fff;
+  --es-hero-virtue-text:var(--es-education-virtue);
+  --es-hero-wisdom-text:var(--es-education-wisdom);
+  --es-hero-fitness-text:var(--es-education-fitness);
+  --es-hero-aesthetic-text:var(--es-education-aesthetic);
+  --es-hero-labor-text:var(--es-education-labor);
+  --es-hero-innovation-text:var(--es-education-innovation);
+  --es-hero-labor-0:#e9edf2;
+  --es-hero-labor-1:#b6c0cb;
+  --es-hero-labor-2:#7d8a99;
+  background:
+    radial-gradient(ellipse 65% 70% at 8% 8%, #ebce9d8c, transparent 75%),
+    radial-gradient(ellipse 56% 74% at 96% 70%, #c9d8e3b8, transparent 80%),
+    radial-gradient(ellipse 55% 45% at 46% 100%, #ddc29f73, transparent 82%),
+    linear-gradient(145deg, #f6f3ed80, transparent 60%), var(--es-bg);
+  color-scheme:light;
+}
+
+/* 页头共享结构，通过局部主题覆盖配色，学生全景继续沿用深色外观。 */
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-header { color:var(--es-text); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-header-art { display:block; opacity:.55; }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-header h1 { filter:drop-shadow(0 1px 0 #ffffffcc) drop-shadow(0 2px 2px #8e692518); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-header h1 > span { background:none; color:var(--es-system-title-color); -webkit-text-fill-color:currentColor; }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-weekday { color:var(--es-muted); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-navigation { border-color:var(--es-glass-border); background:var(--es-glass-background); backdrop-filter:var(--es-glass-blur); -webkit-backdrop-filter:var(--es-glass-blur); box-shadow:var(--es-glass-shadow); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-navigation > a { color:var(--es-muted); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-navigation > a:hover { background:#ffffff70; color:var(--es-text); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-navigation > a[aria-current=page] { background:#ffffffb3; color:var(--es-accent); box-shadow:0 1px 3px #77614614; }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-navigation > a:focus-visible,
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-fullscreen:focus-visible,
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-theme-toggle.arco-btn:focus-visible { outline-color:var(--es-accent); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-fullscreen:hover,
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-theme-toggle.arco-btn:hover { background:var(--es-surface-raised); color:var(--es-accent); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-notice { border:1px solid var(--es-border); background:var(--es-surface); color:var(--es-text); }
+
+/* 静态柔光透过面板；深色光纤保持隐藏及暂停，不增加浅色动画开销。 */
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-background { display:block; }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-background::before { background:linear-gradient(125deg, transparent 18%, #ffffff59 34%, transparent 49%), linear-gradient(68deg, transparent 20%, #c8ae7c1f 46%, transparent 64%); }
+.demo-student-evaluation-data-screen[data-theme='light'] .screen-ghost-fibers-container { display:none; }
+/* 全部卡片共用透明度、模糊与投影，避免各区质感不一致。 */
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-metric,
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-panel { box-shadow:var(--es-glass-shadow); }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-metric::before,
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-panel::before { display:block; background:linear-gradient(90deg, #fffffff2, #ffffff80, transparent); box-shadow:0 0 8px #ffffff66; }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-metric-label { color:var(--es-text); }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-gauge-track,
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-grade-ring-track { stroke:#dce2e8; }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-grade-records::before { border-bottom-color:var(--es-border); background-image:linear-gradient(#e8ecf0 1px, transparent 1px); }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-grade-column { background:var(--es-progress-fill); box-shadow:none; }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-grade-records .is-top-grade .demo-evaluation-screen-grade-column { background:var(--es-progress-accent-fill); }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-hero-legend button:hover { background:var(--es-surface-raised); }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-hero-legend button[aria-pressed=true]::after { box-shadow:none; }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-growth-activity-list li,
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-insight-topics,
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-insight-suggestion,
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-insight-highlights .demo-insight-item + .demo-insight-item { border-color:var(--es-border); }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-insight-panel { border-color:#b8955959; }
+.demo-student-evaluation-data-screen[data-theme='light'] .demo-insight-panel::before { background:linear-gradient(90deg, transparent, #b88b4299, transparent); }
+
+/* 保留浅色底上可读的金属渐变，常规正文继续使用稳定的深色。 */
+@supports ((background-clip:text) or (-webkit-background-clip:text)) {
+  .demo-student-evaluation-data-screen[data-theme='light'] .screen-panorama-header h1 > span { background-image:var(--es-system-title-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+  .demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-metric-label > span,
+  .demo-student-evaluation-data-screen[data-theme='light'] .demo-evaluation-screen-teacher-list li:nth-child(-n+3) .demo-evaluation-screen-teacher-name { background-image:var(--es-metric-label-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+}
+
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .demo-student-evaluation-data-screen[data-theme='light'] { --es-glass-background:#ffffffde; }
+}
+@media (prefers-reduced-transparency:reduce) {
+  .demo-student-evaluation-data-screen[data-theme='light'] { --es-glass-background:#faf8f3; --es-glass-blur:none; }
+}

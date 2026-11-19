@@ -1,6 +1,10 @@
 import { TEACHER_SPACE_OPTIONS } from '../../mobile-app/data/teacherSpaces';
 import { getLeaderReportSnapshot } from '../../mobile-app/services/leaderReportService';
 import { createEvaluationScreenSnapshot, SCREEN_PERIODS, type EvaluationScreenPeriods } from './studentEvaluationScreenModel';
+import { alignDemoLevelOneStats, buildDemoIndicatorUsage } from './studentEvaluationScreenIndicators';
+import { createDemoGrowthTrend } from './studentEvaluationScreenGrowth';
+import { PRINCIPAL_PERIODIC_REPORTS, getPrincipalWeeklyReport } from '../../mobile-app/data/principalPeriodicReports';
+import { adaptPrincipalPeriodicReport } from '../../mobile-app/domain/assistantReportAdapters';
 
 // Demo完整姓名，与报表演示ID固定对应；不将“姓+老师”作为完整姓名展示。
 const DEMO_TEACHER_NAMES: Record<string, string> = {
@@ -48,9 +52,19 @@ export const reconcileDemoGradeRecords = (report: Awaited<ReturnType<typeof getL
 // 大屏仅适配既有报表；真实接口和实时事件源可在这一层替换。
 export const loadStudentEvaluationScreen = async (now = Date.now()): Promise<EvaluationScreenPeriods> => {
   const schoolName = TEACHER_SPACE_OPTIONS.find(space => space.id === 'school-star')?.title ?? '星河实验学校';
-  const entries = await Promise.all(SCREEN_PERIODS.map(async ({ key }) => {
-    const report = await getLeaderReportSnapshot({ period: key });
-    return [key, createEvaluationScreenSnapshot(withDemoTeacherNames(reconcileDemoGradeRecords(report)), schoolName, now)] as const;
-  }));
-  return Object.fromEntries(entries) as EvaluationScreenPeriods;
+  const reports = await Promise.all(SCREEN_PERIODS.map(async ({ key }) => [key, await getLeaderReportSnapshot({ period: key })] as const));
+  const recordTotal = (key: 'week' | 'month' | 'term') => reports.find(([period]) => period === key)![1].summary.totalEvaluationCount;
+  const indicatorUsage = buildDemoIndicatorUsage({ week: recordTotal('week'), month: recordTotal('month'), term: recordTotal('term') });
+  const alignedReports = reports.map(([key, report]) => [key, alignDemoLevelOneStats(withDemoTeacherNames(reconcileDemoGradeRecords(report)), indicatorUsage)] as const);
+  const growthTrend = createDemoGrowthTrend(alignedReports.find(([key]) => key === 'week')![1], now);
+  const entries = alignedReports.map(([key, report]) => [key, createEvaluationScreenSnapshot(
+    report, schoolName, now, growthTrend,
+  )] as const);
+  const periods = Object.fromEntries(entries) as EvaluationScreenPeriods;
+  // 两端复用同一份演示周报，覆盖日期按上一个完整自然周计算；不代表接入真实学校数据。
+  periods.week.principalReports = {
+    weekly: adaptPrincipalPeriodicReport(getPrincipalWeeklyReport(now), schoolName),
+    monthly: adaptPrincipalPeriodicReport(PRINCIPAL_PERIODIC_REPORTS.monthly, schoolName),
+  };
+  return periods;
 };

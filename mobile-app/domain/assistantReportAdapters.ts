@@ -130,6 +130,13 @@ export const adaptPrincipalPeriodicReport = (
         successMetric: item.metric,
       })),
     },
+    ...(report.kind === 'weekly' ? [{
+      key: 'highlights',
+      kind: 'insights' as const,
+      items: (report.highlights ?? []).slice(0, 3).map((item, index) => ({
+        id: `highlight-${index + 1}`, title: item.title, body: item.detail, evidence: item.evidence,
+      })),
+    }] : []),
     { key: 'metrics', kind: 'metrics', items: report.metrics },
     {
       key: 'progress',

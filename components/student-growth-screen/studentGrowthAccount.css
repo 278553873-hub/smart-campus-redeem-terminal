@@ -1,0 +1,28 @@
+.student-growth-account { font-family:'PingFang SC','Microsoft YaHei',sans-serif; color:#f3f0ea; padding:8px 8px 24px; }
+.student-growth-account * { box-sizing:border-box; }
+.student-growth-login-intro { margin:0 0 24px; color:#d8c8b2; font-size:20px; }
+.student-growth-account .arco-form-label-item > label { color:#e8dccb; font-size:20px; }
+.student-growth-account .arco-input-inner-wrapper,.student-growth-account input.arco-input { min-height:56px; background:#262018; color:#fff5e6; border:1px solid #7e674a; font-size:22px; }
+.student-growth-account .arco-input-inner-wrapper input.arco-input { border:0; background:transparent; }
+.student-growth-account input::placeholder { color:#b6a48c; }
+.student-growth-account .arco-input-inner-wrapper:focus-within { border-color:#ffd18a; outline:2px solid #ffd18a; outline-offset:2px; }
+.student-growth-account .arco-form-message { color:#ffb6a6; font-size:16px; }
+.student-growth-account .arco-btn-primary { min-height:56px; background:#e5b575; border-color:#e5b575; color:#241707; font-size:22px; font-weight:600; }
+.student-growth-account .arco-btn-primary:hover { background:#f9d59e; border-color:#f9d59e; color:#241707; }
+.student-growth-login-error { min-height:28px; margin:0 0 16px; color:#ffb6a6; font-size:18px; }
+.student-growth-login-help { margin:20px 0 0; color:#c7b69d; font-size:18px; }
+.student-growth-private-heading { display:flex; justify-content:space-between; align-items:center; gap:24px; }
+.student-growth-private-heading h3 { font-size:28px; margin:0; }
+.student-growth-private-heading p { color:#c7b69d; font-size:20px; margin:8px 0 0; }
+.student-growth-private-heading > div:last-child { display:flex; align-items:baseline; gap:16px; }
+.student-growth-private-heading strong { color:#ffd18a; font-size:40px; }
+.student-growth-private-dimensions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin:24px 0; }
+.student-growth-private-dimensions > div { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #7e674a55; }
+.student-growth-private-dimensions strong { color:#ffd18a; }
+.student-growth-private-title { font-size:22px; margin:24px 0 12px; }
+.student-growth-private-records { list-style:none; padding:0; margin:0; max-height:36dvh; overflow:auto; overscroll-behavior:contain; }
+.student-growth-private-records li { border-bottom:1px solid #7e674a55; padding:16px 0; }
+.student-growth-private-records li > div { display:flex; align-items:center; gap:16px; font-size:18px; }
+.student-growth-private-records time { color:#bfae97; }
+.student-growth-private-records b { color:#ffd18a; margin-left:auto; }
+.student-growth-private-records p { font-size:20px; line-height:1.6; margin:8px 0 0; }

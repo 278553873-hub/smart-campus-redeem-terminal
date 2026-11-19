@@ -1,3 +1,5 @@
+import { PRINCIPAL_WEEKLY_SCHOOL_HIGHLIGHTS } from './principalWeeklySchoolEvidence';
+
 export type PrincipalPeriodicReportKind = 'weekly' | 'monthly';
 
 export interface PrincipalReportMetric {
@@ -33,6 +35,7 @@ export interface PrincipalPeriodicReportContent {
   metrics: PrincipalReportMetric[];
   judgementTitle: string;
   judgement: string;
+  highlights?: PrincipalReportFinding[];
   progressTitle?: string;
   progress: PrincipalReportFinding[];
   findingsTitle: string;
@@ -51,26 +54,28 @@ export const PRINCIPAL_WEEKLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
   loadingTitle: '正在生成本周管理建议',
   analysisSteps: [
     '正在核对上周学校数据',
-    '正在比较班级与教师参与变化',
+    '正在分析各年级和不同活动中的表现',
     '正在筛选需要优先处理的信号',
     '正在生成本周管理建议',
   ],
   metricsTitle: '上周核心数据',
   metrics: [
-    { label: '评价事件', value: '1,843', change: '较前周 +12%', detail: '记录节奏有所提升' },
-    { label: '学生覆盖', value: '93.6%', change: '较前周 +2.8%', detail: '仍有52名学生未进入记录' },
-    { label: '活跃教师', value: '29/56', change: '较前周 +4人', detail: '参与面继续扩大' },
-    { label: '活跃班级', value: '15/16', change: '较前周 +1班', detail: '1个班级上周无新增记录' },
+    { label: '评价事件', value: '1,843', change: '', detail: '本报告周原始评价次数' },
+    { label: '学生覆盖', value: '93.6%', change: '', detail: '仍有52名学生未进入记录' },
+    { label: '活跃教师', value: '29/56', change: '', detail: '29位教师参与记录' },
+    { label: '活跃班级', value: '15/16', change: '', detail: '1个班级上周无新增记录' },
   ],
   judgementTitle: '本周优先判断',
-  judgement: '学校整体记录节奏较前周改善，但参与增长仍主要来自少数高频班级。本周应先恢复无新增班级的记录节奏，再推动年级组复制已经验证有效的短时记录方法。',
+  judgement: '各年级的合作互助、自主尝试和公共事务参与均有具体表现。学校可重点协调中年级合作任务的分工，让更多学生承担实际工作。',
+  // 全校输入与分析预设统一维护在principalWeeklySchoolEvidence，两端使用同一报告。
+  highlights: PRINCIPAL_WEEKLY_SCHOOL_HIGHLIGHTS,
   progress: [],
   findingsTitle: '上周关键信号',
   findings: [
     {
-      title: '低频班级数量继续下降',
-      detail: '前周4个低频班级中已有2个恢复到学校周记录中位数附近，年级组跟进开始产生可观察变化。',
-      evidence: '低频班级由4个降至2个；其中2个班级活跃教师均增加1人。',
+      title: '仍有班级缺少日常观察记录',
+      detail: '15个班级有评价记录，1个班级暂无新增。需要了解实际记录情况，不能把没有记录理解为学生没有表现。',
+      evidence: '本报告周16个班级中15个有记录、1个暂无记录；没有使用前周数据或措施执行信息。',
     },
     {
       title: '教师参与仍集中在少数班级',
@@ -78,9 +83,9 @@ export const PRINCIPAL_WEEKLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
       evidence: '前4个班级贡献全校47%的原始评价事件，8个班级仅有1至2名教师记录。',
     },
     {
-      title: '过程性学习记录占比偏低',
-      detail: '课堂结果和行为提醒记录较充分，但任务过程、合作方法和改进轨迹进入记录的比例较低。',
-      evidence: '过程性学习类记录占13.8%，低于近4周均值17.2%。',
+      title: '有些孩子在小组任务中参与得不多',
+      detail: '三、四年级4个班级都有类似记录：少数孩子完成了主要任务，其他孩子在等结果。孩子虽然坐在同一个小组里，实际参与的机会却不一样。',
+      evidence: '三、四年级4个班级，固定观察120名学生，其中42名在多次合作任务中出现等待或旁观；由具体行为描述识别，不因缺少记录推断缺少参与。',
     },
   ],
   actionsTitle: '本周管理动作',
@@ -100,11 +105,11 @@ export const PRINCIPAL_WEEKLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
       metric: '至少3个班级完成试用',
     },
     {
-      title: '补充过程性学习证据',
-      detail: '提醒任课教师优先记录学生解决问题、合作分工或改进过程，不要求为覆盖指标而机械补录。',
-      owner: '评价负责人、任课教师',
-      checkpoint: '本周持续观察',
-      metric: '过程性学习记录占比回升',
+      title: '学校可以先把每个孩子的分工安排清楚',
+      detail: '教务处组织三、四年级试行轮换分工。两周内，各年级选2次已有的小组任务，让每名孩子承担一项具体工作，轮换讲解、操作和整理。老师结合日常记录，看看孩子是否真正完成了自己的分工。',
+      owner: '教务处、年级组',
+      checkpoint: '两周内完成2次任务观察',
+      metric: '每名孩子是否承担并完成一项具体分工',
     },
   ],
   notice: '本报告由AI基于学校上一完整自然周的评价数据生成，仅供学校管理与工作复盘参考。',
@@ -185,7 +190,22 @@ export const PRINCIPAL_MONTHLY_REPORT_SAMPLE: PrincipalPeriodicReportContent = {
   notice: '本报告由AI基于学校上一个完整自然月的评价数据生成，仅供学校管理与工作复盘参考。',
 };
 
+/** 演示周报按中国时区的上一个完整自然周组织，正文继续复用同一份预设分析。 */
+export const getPrincipalWeeklyReport = (now = Date.now()): PrincipalPeriodicReportContent => {
+  const local = new Date(now + 8 * 60 * 60 * 1000);
+  const today = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate());
+  const monday = today - ((local.getUTCDay() + 6) % 7) * 86_400_000;
+  const dateLabel = (time: number) => new Date(time).toISOString().slice(0, 10).replaceAll('-', '.');
+  const generated = new Date(monday);
+  return {
+    ...PRINCIPAL_WEEKLY_REPORT_SAMPLE,
+    periodLabel: `${dateLabel(monday - 7 * 86_400_000)} - ${dateLabel(monday - 86_400_000)}`,
+    periodDetail: `用于指导 ${dateLabel(monday)} - ${dateLabel(monday + 6 * 86_400_000)} 管理动作`,
+    generatedDate: `${generated.getUTCFullYear()}年${generated.getUTCMonth() + 1}月${generated.getUTCDate()}日`,
+  };
+};
+
 export const PRINCIPAL_PERIODIC_REPORTS: Record<PrincipalPeriodicReportKind, PrincipalPeriodicReportContent> = {
-  weekly: PRINCIPAL_WEEKLY_REPORT_SAMPLE,
+  weekly: getPrincipalWeeklyReport(),
   monthly: PRINCIPAL_MONTHLY_REPORT_SAMPLE,
 };

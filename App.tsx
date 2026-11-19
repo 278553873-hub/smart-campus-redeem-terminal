@@ -45,8 +45,9 @@ import OperationsPcAdmin from './components/operations-pc/OperationsPcAdmin';
 import UiRenovationDemo from './components/UiRenovationDemo';
 // 两套候选大屏独立维护：学校 PC 顶部入口与 Demo 独立项目不可共用展示组件。
 import SchoolPcDataScreen from './components/data-screen/StudentEvaluationDataScreen';
-import DemoStudentEvaluationDataScreen from './components/demo-data-screen/StudentEvaluationDataScreen';
-import { Button as ArcoButton } from '@arco-design/web-react';
+import ScreenPanoramaHost from './components/screen-navigation/ScreenPanoramaHost';
+import { SchoolCockpitEntry, StudentHonorEntry } from './components/SchoolScreenEntries';
+import StudentHonorScreen from './components/student-honor-screen/StudentHonorScreen';
 import TeacherMobileDeveloperNotes, { type TeacherMobileDeveloperNotesContext } from './components/TeacherMobileDeveloperNotes';
 import PlatformBrandMark from './components/PlatformBrandMark';
 import Loader from './components/Loader';
@@ -1413,13 +1414,8 @@ const PcWorkspace: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 pr-5">
-          <ArcoButton
-            type="text"
-            href="?app=school-pc-screen"
-            target="_blank"
-            anchorProps={{ rel: 'noopener noreferrer', title: '打开育人大屏（新窗口）' }}
-            icon={<Monitor size={16} aria-hidden="true" />}
-          >育人大屏</ArcoButton>
+          <SchoolCockpitEntry />
+          <StudentHonorEntry />
           <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
               <span className="text-[13px] font-black">{teacherProfile.name.slice(0, 1)}</span>
@@ -1446,10 +1442,10 @@ const AppSwitcher: React.FC = () => {
   const questionnaireInviteCode = useMemo(() => (
     new URLSearchParams(window.location.search).get('questionnaireInvite')?.trim() ?? ''
   ), []);
-  const [currentApp, setCurrentApp] = useState<'teacher-mobile-lite' | 'teacher-pad' | 'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'operations-pc' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation' | 'data-screen' | 'school-pc-screen'>(() => {
+  const [currentApp, setCurrentApp] = useState<'teacher-mobile-lite' | 'teacher-pad' | 'terminal' | 'admin' | 'teacher-c-mobile' | 'companion' | 'all-in-one' | 'parent' | 'pc-workspace' | 'operations-pc' | 'region-pc' | 'region-pc-screen' | 'ui-renovation' | 'teacher-evaluation' | 'data-screen' | 'school-pc-screen' | 'student-growth-screen' | 'moral-education-screen' | 'student-honor-screen'>(() => {
     const params = new URLSearchParams(window.location.search);
     const app = params.get('app');
-    if (app === 'teacher-mobile-lite' || app === 'teacher-pad' || app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'operations-pc' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation' || app === 'data-screen' || app === 'school-pc-screen') {
+    if (app === 'teacher-mobile-lite' || app === 'teacher-pad' || app === 'terminal' || app === 'admin' || app === 'teacher-c-mobile' || app === 'companion' || app === 'all-in-one' || app === 'parent' || app === 'pc-workspace' || app === 'operations-pc' || app === 'region-pc' || app === 'region-pc-screen' || app === 'ui-renovation' || app === 'teacher-evaluation' || app === 'data-screen' || app === 'school-pc-screen' || app === 'student-growth-screen' || app === 'moral-education-screen' || app === 'student-honor-screen') {
       return app;
     }
     return 'admin'; // Demo 默认展示教师手机端
@@ -1921,7 +1917,8 @@ const AppSwitcher: React.FC = () => {
           />
         )}
         {currentApp === 'ui-renovation' && <UiRenovationDemo />}
-        {currentApp === 'data-screen' && <DemoStudentEvaluationDataScreen />}
+        {(currentApp === 'data-screen' || currentApp === 'moral-education-screen' || currentApp === 'student-growth-screen') && <ScreenPanoramaHost initial={currentApp === 'data-screen' ? 'school' : 'moral'} />}
+        {currentApp === 'student-honor-screen' && <StudentHonorScreen />}
         {currentApp === 'school-pc-screen' && <SchoolPcDataScreen />}
         {currentApp === 'teacher-pad' && <TeacherPadPreview />}
         {currentApp === 'teacher-c-mobile' && <TeacherCMobileLowFi />}
@@ -2220,7 +2217,7 @@ const AppSwitcher: React.FC = () => {
       )}
 
       {/* 对外展示的大屏不显示内部环境切换浮层。 */}
-      {currentApp !== 'region-pc-screen' && currentApp !== 'school-pc-screen' && currentApp !== 'data-screen' && (
+      {currentApp !== 'region-pc-screen' && currentApp !== 'school-pc-screen' && currentApp !== 'data-screen' && currentApp !== 'student-growth-screen' && currentApp !== 'moral-education-screen' && currentApp !== 'student-honor-screen' && (
         <div
           ref={demoPanelRef}
           className={`fixed z-[9999] touch-none select-none transition-[left,right,top,bottom,transform] duration-300 ${demoPanelPosition ? '' : 'right-0 top-1/2 -translate-y-1/2'} ${isDemoOpen ? demoPanelOpenClass : demoPanelClosedClass}`}
@@ -2306,6 +2303,16 @@ const AppSwitcher: React.FC = () => {
             >
               <Monitor size={22} className="mb-1" aria-hidden="true" />
               <span className="text-[9px] font-bold leading-tight">数据大屏</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setCurrentApp('moral-education-screen'); setIsDemoOpen(false); }}
+              className="w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all text-slate-500 active:bg-slate-100"
+              title="德育管理全景"
+              aria-label="德育管理全景"
+            >
+              <TrendingUp size={22} className="mb-1" aria-hidden="true" />
+              <span className="text-[9px] font-bold leading-tight">德育管理<span className="block">全景</span></span>
             </button>
             <button
               onClick={() => setCurrentApp('pc-workspace')}

@@ -1,0 +1,37 @@
+/* 驾驶舱共用的文字与渐变规格；不包含任何业务布局或数据状态。 */
+.screen-visual-theme {
+  --screen-font-text:'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif;
+  --screen-font-number:'NumberFont','Outfit',var(--screen-font-text);
+  --screen-weight-regular:400;
+  --screen-weight-emphasis:600;
+  --screen-weight-strong:700;
+  --screen-body:20px;
+  --screen-detail:18px;
+  --screen-caption:16px;
+  --screen-panel-title:22px;
+  --screen-hero-title:28px;
+  --screen-hero-heading:32px;
+  --screen-system-title:48px;
+  --screen-metric-number:48px;
+  --screen-accent:#f59a2a;
+  --screen-accent-light:#ffd08a;
+  --screen-gold-light:#ffd18a;
+  --screen-gold-highlight:#ffb34b;
+  --screen-gold-main:var(--screen-accent);
+  --screen-gold-deep:#de7618;
+  --screen-gold-gradient-stops:var(--screen-gold-light) 0%,var(--screen-gold-highlight) 32%,var(--screen-gold-main) 64%,var(--screen-gold-deep) 100%;
+  --screen-metric-number-gradient:linear-gradient(180deg,var(--screen-gold-gradient-stops));
+  --screen-system-title-color:#f8e7c3;
+  --screen-system-title-gradient:linear-gradient(180deg,#fffcf3 0%,#fff0cf 36%,#e4bd7a 72%,#c79852 100%);
+}
+.screen-visual-theme[data-theme=light] {
+  --screen-accent:#8c4d08;
+  --screen-accent-light:#8c4d08;
+  --screen-gold-light:#8b530e;
+  --screen-gold-highlight:#ae6e17;
+  --screen-gold-main:#92510a;
+  --screen-gold-deep:#74410a;
+  --screen-system-title-color:#82501b;
+  --screen-system-title-gradient:linear-gradient(180deg,#71430e 0%,#a06518 38%,#82501b 66%,#63380e 100%);
+  --screen-metric-label-gradient:linear-gradient(180deg,#66411a 0%,#875419 42%,#70451b 100%);
+}

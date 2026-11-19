@@ -57,3 +57,18 @@ if (invalidContent.success || !invalidContent.issues.includes('没有可展示�
 }
 
 console.log('Assistant report contract assertions passed');
+
+const principalWeekly = parseAssistantReportDocument({
+  ...validPayload,
+  reportType: 'principal_weekly',
+  cards: [{ key: 'highlights', kind: 'insights', items: Array.from({ length: 4 }, (_, index) => ({
+    id: `highlight-${index}`, title: `亮点${index + 1}`, body: '从行为记录中归纳具体表现及其育人含义。',
+  })) }],
+});
+if (!principalWeekly.success || principalWeekly.data.cards[0]?.items?.length !== 3) {
+  throw new Error('校长周报应支持独立的育人亮点板块，并限制最多3条。');
+}
+const legacyPrincipal = parseAssistantReportDocument({
+  ...validPayload, reportType: 'principal_weekly', cards: [{ key: 'judgement', kind: 'summary', body: '旧周报仍可阅读。' }],
+});
+if (!legacyPrincipal.success) throw new Error('旧周报没有亮点字段时应保持兼容。');

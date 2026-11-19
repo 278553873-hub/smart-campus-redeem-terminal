@@ -1,0 +1,137 @@
+{
+  "overall_score": "PASS",
+  "scope": "德育管理全景，学校PC及1920×1080横向大屏",
+  "method": "源码与静态组件渲染评审，未启动浏览器自动化",
+  "summary": "所有榜单名次共用格式：01、02，不足两位补零。年级高频问题 TOP3每屏三个年级，合计“总20条”放在年级名称下方，组间留白增至24像素并使用竖向分隔线，避免前组条数与后组名次混淆。下排20/35/18/27，趋势保持五周期日期单行。",
+  "violations": [
+    {
+      "skill": "consistent-spacing",
+      "severity": "High",
+      "issue": "把横向留白误解成行距过大，24像素行高导致阅读压力",
+      "location": "全校榜、年级榜",
+      "fix": "全校榜收窄至主行18%，行高40；年级列宽约238像素，行高30，12班整屏展示",
+      "status": "RESOLVED"
+    },
+    {
+      "skill": "eliminate-clutter",
+      "severity": "High",
+      "issue": "全校榜增加无意义得分条，年级榜增加无关字段并变成明细表",
+      "location": "两类排行榜",
+      "fix": "两类榜单仅保留名次、班级、得分，删除得分条、管理明细表及其样式",
+      "status": "RESOLVED"
+    },
+    {
+      "skill": "button-hierarchy",
+      "severity": "High",
+      "issue": "无人值守大屏加入播放、暂停和翻页操作，还会因鼠标停留而停止",
+      "location": "年级榜轮播",
+      "fix": "删除操作控件和手动控制状态；30秒自动换组，只有离开或隐藏才暂停，返回继续，保留被动页码",
+      "status": "RESOLVED"
+    },
+    {
+      "skill": "grouping",
+      "severity": "High",
+      "issue": "仅测试差异班数，页面仍是每级5班，无法展示真实混合班数效果",
+      "location": "德育模拟数据",
+      "fix": "本地模拟5/8/12/6/10/7班共48班，保持班评指标与总量，重算关联均分；手机端源服务保持",
+      "status": "RESOLVED"
+    },
+    {
+      "skill": "consistent-spacing",
+      "severity": "High",
+      "issue": "旧分数分段不符合各学校非标准分制；年级总量卡缺少具体事项",
+      "location": "下排数据卡",
+      "fix": "删除分数分段逻辑，改为年级问题前三项及全校一级指标本期条数变化，无内部滚动",
+      "status": "RESOLVED"
+    },
+    {
+      "skill": "visual-hierarchy",
+      "severity": "High",
+      "issue": "下排四卡文字层级接近且缺少比较图形，近期变化仅占14%过窄",
+      "location": "全校高频问题 TOP5、年级高频问题 TOP3、近期问题变化、德育趋势",
+      "fix": "下排20/35/18/27，问题卡收紧左右留白并保留名称和真实条数，近期变化保留纵向分组柱状图；趋势加宽并完整单行显示五周期日期，沿用原有字号与颜色",
+      "status": "RESOLVED"
+    },
+    {
+      "skill": "grouping",
+      "severity": "High",
+      "issue": "年级条形没有新增信息，近期柱状图组内、组外间距接近，指标名与持平文字过近",
+      "location": "各年级高频问题、近期问题变化",
+      "fix": "年级问题改为名次与条数列表；同指标两柱固定40像素居中成组，内部4像素间距，指标组间16像素网格间距；名称与增减间距12像素",
+      "status": "RESOLVED"
+    }
+  ],
+  "priority_fixes": [
+    "按内容长度缩窄卡片，恢复舒展行距",
+    "恢复三字段排名列表，删除多余元素",
+    "实际模拟不同班数，12班一屏展示",
+    "无人值守自动换组，删除播放及翻页按钮",
+    "以具体问题及条数变化替换分数分段"
+  ],
+  "skill_breakdown": {
+    "visual-hierarchy": {
+      "status": "PASS",
+      "issues": 0,
+      "result": "问题分布采用普通卡片标题，读取手机端全校一级指标数据，仅显示记录条数与百分比，无二三级展开",
+      "initial_status": "FAIL",
+      "resolved_issues": 1
+    },
+    "typography-scale": {
+      "status": "PASS",
+      "issues": 0,
+      "result": "沿用学校页字体及18/16/22像素明细、辅助、标题；下排关键数字24像素，趋势根据真实容器尺寸重排坐标，避免随SVG缩小字号",
+      "initial_status": "FAIL",
+      "resolved_issues": 1
+    },
+    "color-palette": {
+      "status": "PASS",
+      "issues": 0,
+      "rationale": "四卡主图形统一复用已有暖金色，历史比较用全局暖灰；标题及正文使用全局文字角色，关键数字保留原金色渐变，增减沿用金色与已有青绿。删除独立蓝色、蓝灰变量，暗浅同步适配"
+    },
+    "consistent-spacing": {
+      "status": "PASS",
+      "issues": 0,
+      "result": "下排20/35/18/27；年级组间24像素，名次列22像素，合计位于年级名称下方，保留问题名称和条数单行及现有字号",
+      "initial_status": "FAIL",
+      "resolved_issues": 1
+    },
+    "button-hierarchy": {
+      "status": "PASS",
+      "issues": 0,
+      "rationale": "年级榜只有被动页码，无播放、暂停、前后翻页控件；问题分布静态全量展示；德育趋势两标签10秒自动轮播，保留点击和键盘选择"
+    },
+    "eliminate-clutter": {
+      "status": "PASS",
+      "issues": 0,
+      "rationale": "移除班级得分分布及年级总量卡，仅新增用户确认有用的问题前三项和条数变化；评价次数放入顶部，不堆叠覆盖、教师、荣誉或跟进信息"
+    },
+    "empty-states": {
+      "status": "PASS",
+      "issues": 0,
+      "rationale": "按班评、指标、问题分别显示空态，加载失败提供重试"
+    },
+    "shadows": {
+      "status": "PASS",
+      "issues": 0,
+      "rationale": "保留用户指定玻璃质感，用统一轻阴影区分透明面板"
+    },
+    "color-contrast": {
+      "status": "PASS",
+      "issues": 0,
+      "rationale": "浅色标签和前三用深金文字渐变，大号数字用金色渐变，正文使用稳定深色；五项直接显示名称与分数，不依赖颜色读图"
+    },
+    "grouping": {
+      "status": "PASS",
+      "issues": 0,
+      "result": "每屏三个年级；年级名称与总条数上下排列，组间留白及贯穿内容的竖向分隔线明确归属，名次统一两位显示",
+      "initial_status": "FAIL",
+      "resolved_issues": 1
+    }
+  },
+  "implementation_status": "源代码及静态渲染检查覆盖统一两位名次、三年级一屏、真实问题总条数及五周期日期单行；未启动浏览器自动化。",
+  "tradeoffs": [
+    "遵循用户指定的学校页文字、金属渐变与毛玻璃规范",
+    "用户明确无人值守且不要播放按钮，覆盖技能通用自动轮播控件建议；以无移动动画的静态数据换屏完整展示内容",
+    "本地模拟名册隔离在德育目录，按用户要求改变班数并重算均分，不改共享手机端服务或其他大屏"
+  ]
+}

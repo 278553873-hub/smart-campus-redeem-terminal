@@ -1,0 +1,2 @@
+.screen-particle-background { position:absolute; inset:0; z-index:-1; pointer-events:none; opacity:1; overflow:hidden; }
+.screen-particle-background::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 32% 15% at 50% 68%,#ffa62b8c 0%,#f47a1052 32%,#aa470621 66%,transparent 100%),radial-gradient(ellipse 48% 30% at 50% 66%,#b65b1b33,transparent 80%); }

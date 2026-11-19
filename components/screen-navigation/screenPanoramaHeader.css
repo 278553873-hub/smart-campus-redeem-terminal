@@ -1,0 +1,19 @@
+.screen-panorama-header { position:relative; display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,2.7fr) minmax(0,1.4fr); align-items:center; gap:20px; flex:0 0 86px; height:86px; box-sizing:border-box; padding-bottom:16px; color:#f3f0ea; }
+.screen-panorama-header-art { position:absolute; inset:0 -28px; width:calc(100% + 56px); height:100%; z-index:-1; overflow:visible; pointer-events:none; }
+.screen-panorama-header-left { display:flex; gap:12px; align-items:center; align-self:stretch; min-width:0; padding-left:8px; }
+.screen-panorama-logo { display:block; flex:none; width:auto; max-width:100px; height:40px; object-fit:contain; }
+.screen-panorama-header h1 { display:flex; align-items:baseline; justify-content:center; min-width:0; margin:0; text-align:center; align-self:center; font-size:48px; font-weight:700; line-height:1.15; letter-spacing:.08em; white-space:nowrap; filter:drop-shadow(0 1px 0 #704c2c) drop-shadow(0 2px 3px #00000073); }
+.screen-panorama-header h1 > span { display:block; flex:none; color:#f8e7c3; }
+.screen-panorama-header h1 > .screen-panorama-school-name { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; }
+@supports (background-clip:text) { .screen-panorama-header h1 > span { background-image:linear-gradient(180deg,#fffcf3 0%,#fff0cf 36%,#e4bd7a 72%,#c79852 100%); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; } }
+.screen-panorama-header-right { display:flex; align-items:center; justify-content:flex-end; gap:16px; }
+.screen-panorama-header time { display:flex; flex-direction:column; align-items:flex-end; gap:2px; text-align:right; font-size:20px; line-height:1.4; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.screen-panorama-weekday { font-size:16px; color:#b8aea3; }
+.screen-panorama-header .screen-panorama-fullscreen { display:grid; place-content:center; width:44px; height:44px; padding:0; border:0; background:transparent; color:inherit; cursor:pointer; }
+.screen-panorama-fullscreen:hover { background:#fff1d614; color:#ffd08a; }
+.screen-panorama-fullscreen:focus-visible { outline:2px solid #ffd08a; outline-offset:4px; }
+.screen-panorama-notice { position:absolute; right:0; top:100%; z-index:4; margin:0; padding:8px 12px; background:#171411; color:#f3f0ea; font-size:18px; }
+.screen-panorama-header-right:has(.screen-panorama-theme-toggle) { gap:8px; }
+.screen-panorama-header .screen-panorama-theme-toggle.arco-btn { display:grid; place-content:center; flex:none; width:44px; height:44px; padding:0; color:inherit; background:transparent; border:0; }
+.screen-panorama-header .screen-panorama-theme-toggle.arco-btn:hover { background:#fff1d614; color:#ffd08a; }
+.screen-panorama-header .screen-panorama-theme-toggle.arco-btn:focus-visible { outline:2px solid #ffd08a; outline-offset:4px; }

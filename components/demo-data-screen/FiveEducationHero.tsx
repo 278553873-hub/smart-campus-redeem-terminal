@@ -1,85 +1,140 @@
 import React, { useEffect, useId, useState } from 'react';
-import type { LeaderReportFiveEducationStat } from '../../mobile-app/services/leaderReportService';
-import { percentage } from './studentEvaluationScreenModel';
+import { percentage, type ScreenFiveEducationStat } from './studentEvaluationScreenModel';
 import { formatScreenNumber } from './StudentEvaluationCharts';
+import { HERO_SELECTION, useHeroSectorMotion } from './useHeroSectorMotion';
 
-const HERO_ROTATION_INTERVAL = 3600;
-const CENTER = { x: 300, y: 300 };
-const OUTER_RADIUS = 260;
-const INNER_RADIUS = 220;
-const pointAt = (radius: number, angle: number) => `${(CENTER.x + radius * Math.cos(angle)).toFixed(3)},${(CENTER.y + radius * Math.sin(angle)).toFixed(3)}`;
-
-// 拆为两段圆弧，保证单一类别占满100%时仍能绘制完整圆环。
+const COLORS = {
+  virtue: ['#ffd77c', '#f5a623', '#a05c12'],
+  wisdom: ['#b4f5da', '#78c9ad', '#356b5a'],
+  fitness: ['#c4e4ff', '#76a9df', '#355e93'],
+  aesthetic: ['#e1c3ff', '#b080d3', '#654481'],
+  labor: ['#fffdf7', '#e7e5df', '#8f8a81'],
+  innovation: ['#ffe1eb', '#e49dbb', '#88506a'],
+} as const;
+const sectorColor = (key: keyof typeof COLORS, index: 0 | 1 | 2) => `var(--es-hero-${key}-${index}, ${COLORS[key][index]})`;
+const labelColor = (key: keyof typeof COLORS) => `var(--es-hero-${key}-text, ${COLORS[key][1]})`;
+const point = (radius: number, angle: number) => [320 + radius * Math.cos(angle), 286 + radius * Math.sin(angle)];
+const position = (radius: number, angle: number) => point(radius, angle).map(value => value.toFixed(3)).join(',');
 const arc = (radius: number, start: number, end: number, clockwise = true) => {
-  const middle = (start + end) / 2;
-  return `A${radius},${radius} 0 0,${clockwise ? 1 : 0} ${pointAt(radius, middle)} A${radius},${radius} 0 0,${clockwise ? 1 : 0} ${pointAt(radius, end)}`;
-};
-const createSegments = (dimensions: LeaderReportFiveEducationStat[], total: number) => {
-  let angle = -Math.PI / 2;
-  return dimensions.filter(item => item.eventCount > 0).map(item => {
-    const start = angle;
-    angle += item.eventCount / total * Math.PI * 2;
-    return {
-      ...item,
-      path: `M${pointAt(OUTER_RADIUS, start)} ${arc(OUTER_RADIUS, start, angle)} L${pointAt(INNER_RADIUS, angle)} ${arc(INNER_RADIUS, angle, start, false)} Z`,
-      categoryEdge: `M${pointAt(265, start)} ${arc(265, start, angle)}`,
-    };
-  });
+  const mid = (start + end) / 2;
+  return `A${radius},${radius} 0 0,${clockwise ? 1 : 0} ${position(radius, mid)} A${radius},${radius} 0 0,${clockwise ? 1 : 0} ${position(radius, end)}`;
 };
 
-export const FiveEducationHero = ({ dimensions, visible, reducedMotion }: {
-  dimensions: LeaderReportFiveEducationStat[]; visible: boolean; reducedMotion: boolean;
-}) => {
-  const gradientId = useId().replace(/:/g, '');
+export const getHeroSectorTransform = (angle: number, progress: number) => {
+  const offset = HERO_SELECTION.offset * progress;
+  return `translate(${Math.cos(angle) * offset} ${Math.sin(angle) * offset})`;
+};
+
+export const getHeroSectorPath = (start: number, end: number, progress: number) => {
+  const radius = 221 + HERO_SELECTION.radiusGrowth * progress;
+  return `M${position(radius, start)} ${arc(radius, start, end)} L${position(153, end)} ${arc(153, end, start, false)}Z`;
+};
+
+export const getHeroCalloutLayout = (angle: number, progress = 1) => {
+  const right = Math.cos(angle) >= 0;
+  const radius = 221 + (HERO_SELECTION.radiusGrowth + HERO_SELECTION.offset) * progress;
+  const start = point(radius + 3, angle);
+  const elbow = point(221 + HERO_SELECTION.radiusGrowth + HERO_SELECTION.offset + 25, angle);
+  const titleY = Math.max(58, Math.min(354, elbow[1] - 12));
+  const left = right ? 596 : -164;
+  const end = left + 208;
+  const anchorX = right ? left : end;
+  return { right, left, end, anchorX, titleY, start, elbow, points: `${start.join(',')} ${elbow.join(',')} ${anchorX},${titleY + 14}` };
+};
+
+export function FiveEducationHero({ dimensions, focusDimension, visible = true, reducedMotion = false }: {
+  dimensions: ScreenFiveEducationStat[]; focusDimension?: ScreenFiveEducationStat['key']; visible?: boolean; reducedMotion?: boolean;
+}) {
+  const id = `demo-hero-${useId().replace(/:/g, '')}`;
   const [activeKey, setActiveKey] = useState(dimensions[0]?.key);
   const [interacting, setInteracting] = useState(false);
   const total = dimensions.reduce((sum, item) => sum + item.eventCount, 0);
-  const hasRecords = total > 0;
-  const active = dimensions.find(item => item.key === activeKey) ?? dimensions[0];
-  const dimensionKeys = dimensions.map(item => item.key).join(',');
-  const segments = hasRecords ? createSegments(dimensions, total) : [];
-
+  const describeDimension = (item: ScreenFiveEducationStat) => `${item.name}${percentage(item.eventCount, total)}%，${item.eventCount}条事件，总加分${item.plusScore}分，加分学生数${item.positiveStudentCount}人`;
+  const selectedKey = interacting ? activeKey : focusDimension ?? activeKey;
+  const active = dimensions.find(item => item.key === selectedKey && (item.eventCount > 0 || focusDimension && !interacting)) ?? dimensions.find(item => item.eventCount > 0);
+  const keys = dimensions.filter(item => item.eventCount > 0).map(item => item.key).join(',');
+  const emphasis = useHeroSectorMotion(active?.key, keys, visible && !reducedMotion);
   useEffect(() => {
-    if (!visible || reducedMotion || interacting || !hasRecords) return;
-    const keys = dimensionKeys.split(',') as LeaderReportFiveEducationStat['key'][];
-    const timer = window.setInterval(() => setActiveKey(previous => keys[(keys.indexOf(previous!) + 1) % keys.length]), HERO_ROTATION_INTERVAL);
+    if (!visible || reducedMotion || interacting || focusDimension || !keys) return;
+    const values = keys.split(',') as ScreenFiveEducationStat['key'][];
+    const timer = window.setInterval(() => setActiveKey(previous => values[(values.indexOf(previous!) + 1) % values.length]), 3600);
     return () => window.clearInterval(timer);
-  }, [visible, reducedMotion, interacting, hasRecords, dimensionKeys]);
-
-  return <section className="demo-evaluation-screen-panel demo-evaluation-screen-hero" aria-labelledby="demo-five-education-title">
-    <div className="demo-evaluation-screen-hero-heading"><h2 id="demo-five-education-title">五育事件占比</h2></div>
-    {!hasRecords ? <p className="demo-evaluation-screen-empty">本周期暂无已归类的五育记录</p> : <>
+  }, [visible, reducedMotion, interacting, keys, focusDimension]);
+  let cursor = -Math.PI / 2;
+  const sectors = dimensions.filter(item => item.eventCount > 0).map(item => {
+    const start = cursor;
+    cursor += item.eventCount / total * Math.PI * 2;
+    const gap = item.eventCount < total ? Math.min(.007, (cursor - start) / 5) : 0;
+    const path = getHeroSectorPath(start + gap, cursor - gap, emphasis[item.key] ?? 0);
+    return { ...item, path, middle: (start + cursor) / 2 };
+  });
+  const activeSector = sectors.find(item => item.key === active?.key);
+  const callout = activeSector ? getHeroCalloutLayout(activeSector.middle, emphasis[activeSector.key] ?? 0) : null;
+  const calloutMetrics = active ? [
+    { label: '事件占比', value: percentage(active.eventCount, total), unit: '%', primary: true },
+    { label: '事件条数', value: active.eventCount, unit: '条' },
+    { label: '总加分', value: active.plusScore, unit: '分', positive: true },
+    { label: '加分学生数', value: active.positiveStudentCount, unit: '人' },
+  ] : [];
+  return <section className="demo-evaluation-screen-panel demo-evaluation-screen-hero" aria-labelledby={`${id}-title`}>
+    <h2 id={`${id}-title`}><span className="demo-evaluation-screen-hero-heading-text">五育并举，全面成长</span></h2>
+    {!total ? <p className="demo-evaluation-screen-empty">本周期暂无已归类的五育记录</p> : <>
       <div className="demo-evaluation-screen-hero-visual">
-        <div className="demo-evaluation-screen-hero-chart" role="img" aria-label={`五育事件分布，共${total}条。${dimensions.map(item => `${item.name}${item.eventCount}条，占${percentage(item.eventCount, total)}%`).join('；')}`}>
-          <svg viewBox="0 0 600 600" aria-hidden="true" focusable="false" onPointerLeave={() => setInteracting(false)}>
-            <defs>
-              <linearGradient id={`${gradientId}-ivory`} x1="0" y1="0" x2=".65" y2="1">
-                <stop offset="0%" stopColor="#fff9ed" /><stop offset="38%" stopColor="#dfd9ce" /><stop offset="100%" stopColor="#928b80" />
-              </linearGradient>
-              <linearGradient id={`${gradientId}-gold`} x1="0" y1="0" x2=".65" y2="1">
-                <stop offset="0%" stopColor="var(--es-accent-light)" /><stop offset="45%" stopColor="var(--es-accent)" /><stop offset="100%" stopColor="#b66a21" />
-              </linearGradient>
-              <radialGradient id={`${gradientId}-center`}>
-                <stop offset="0%" stopColor="var(--es-bg)" stopOpacity=".2" /><stop offset="100%" stopColor="var(--es-bg)" stopOpacity=".04" />
-              </radialGradient>
-            </defs>
-            <circle cx="300" cy="300" r="274" className="demo-evaluation-screen-hero-rim" />
-            <circle cx="300" cy="300" r="212" fill={`url(#${gradientId}-center)`} className="demo-evaluation-screen-hero-inner-rim" />
-            {segments.map(item => <g key={item.key} className={`demo-evaluation-screen-hero-sector education-${item.key} ${item.key === active?.key ? 'is-active' : ''}`} onPointerEnter={() => { setInteracting(true); setActiveKey(item.key); }} onClick={() => setActiveKey(item.key)}>
-              <path data-education={item.key} d={item.path} fill={`url(#${gradientId}-ivory)`} className="demo-evaluation-screen-hero-segment" />
-              <path d={item.path} fill={`url(#${gradientId}-gold)`} className="demo-evaluation-screen-hero-focus" />
-              <path d={item.path} className="demo-evaluation-screen-hero-sheen" />
-              <path d={item.categoryEdge} className="demo-evaluation-screen-hero-category-edge" />
+        <svg viewBox="-184 -20 1008 630" role="img" aria-label={`五育事件占比：${dimensions.map(describeDimension).join('；')}`} onPointerLeave={() => setInteracting(false)}>
+          <defs>
+            {sectors.map(item => <linearGradient key={item.key} id={`${id}-${item.key}`} x1=".2" y1="0" x2=".9" y2="1"><stop stopColor={sectorColor(item.key, 0)} /><stop offset=".25" stopColor={sectorColor(item.key, 1)} /><stop offset=".68" stopColor={sectorColor(item.key, 1)} /><stop offset="1" stopColor={sectorColor(item.key, 2)} /></linearGradient>)}
+            <radialGradient id={`${id}-core`}><stop stopColor="var(--es-hero-core-inner, #17120d)" stopOpacity=".15" /><stop offset=".88" stopColor="var(--es-hero-core-outer, #0a0807)" stopOpacity=".65" /><stop offset="1" stopColor="var(--es-hero-core-rim, #ffb94a)" stopOpacity=".14" /></radialGradient>
+            <linearGradient id={`${id}-sheen`} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#ffffff" stopOpacity=".6" /><stop offset=".22" stopColor="#ffffff" stopOpacity="0" /><stop offset=".75" stopColor="#ffffff" stopOpacity="0" /><stop offset="1" stopColor="#ffffff" stopOpacity=".3" /></linearGradient>
+            <linearGradient id={`${id}-halo`}><stop stopColor="#b76d1d" stopOpacity="0" /><stop offset=".2" stopColor="#e8a33f" stopOpacity=".5" /><stop offset=".5" stopColor="#ffe3aa" /><stop offset=".8" stopColor="#e8a33f" stopOpacity=".5" /><stop offset="1" stopColor="#b76d1d" stopOpacity="0" /></linearGradient>
+            <filter id={`${id}-glow`} x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4" /></filter>
+            <pattern id={`${id}-groove`} width="3" height="3" patternUnits="userSpaceOnUse"><path d="M0 1H3" stroke="#f8dab3" strokeOpacity=".045" strokeWidth=".5" /></pattern>
+          </defs>
+          <ellipse cx="320" cy="535" rx="257" ry="22" fill="none" stroke={`url(#${id}-halo)`} strokeWidth="7" filter={`url(#${id}-glow)`} />
+          <ellipse cx="320" cy="535" rx="257" ry="22" fill="none" stroke={`url(#${id}-halo)`} strokeWidth="1.8" />
+          <ellipse cx="320" cy="537" rx="286" ry="28" fill="none" stroke="#d4943245" strokeWidth=".7" />
+          <circle cx="320" cy="286" r="253" fill="none" stroke="#d59f3b38" />
+          {Array.from({ length: 120 }, (_, index) => {
+            const angle = index / 120 * Math.PI * 2 - Math.PI / 2;
+            const [x1, y1] = point(index % 5 === 0 ? 240 : 244, angle);
+            const [x2, y2] = point(248, angle);
+            return <line key={index} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#e8b858" strokeWidth={index % 5 === 0 ? 1.3 : .7} opacity={index % 5 === 0 ? .8 : .35} />;
+          })}
+          <circle cx="320" cy="286" r="149" fill={`url(#${id}-core)`} stroke="#d29d535e" />
+          <circle cx="320" cy="286" r="146" fill={`url(#${id}-groove)`} />
+          {sectors.map(item => {
+            const selected = item.key === active?.key;
+            return <g key={item.key} className={`demo-evaluation-screen-hero-sector${selected ? ' is-active' : ''}`} data-education={item.key}
+              transform={getHeroSectorTransform(item.middle, emphasis[item.key] ?? 0)}
+              onPointerEnter={() => { setInteracting(true); setActiveKey(item.key); }} onClick={() => setActiveKey(item.key)}>
+              <title>{describeDimension(item)}</title>
+              <path d={item.path} transform="translate(0 5)" fill={sectorColor(item.key, 2)} stroke="var(--es-hero-sector-edge, #060605)" strokeWidth="2" />
+              <path d={item.path} fill={`url(#${id}-${item.key})`} stroke={sectorColor(item.key, 0)} strokeWidth="1.6" />
+              <path d={item.path} fill={`url(#${id}-sheen)`} stroke="#fff7e8" strokeOpacity=".25" strokeWidth=".6" />
+            </g>;
+          })}
+          <circle cx="320" cy="286" r="151" fill="none" stroke="#ffc366" strokeOpacity=".45" strokeWidth="3" filter={`url(#${id}-glow)`} />
+          <text x="320" y="252" textAnchor="middle" className="demo-evaluation-screen-hero-core-label">五育事件总数</text>
+          <text x="320" y="326" textAnchor="middle" className="demo-evaluation-screen-hero-total">{formatScreenNumber(total)}<tspan>条</tspan></text>
+          {active && callout && <g key={active.key} className="demo-evaluation-screen-hero-callout" style={{ '--education-color': labelColor(active.key) } as React.CSSProperties}>
+            <polyline className="demo-evaluation-screen-hero-leader" points={callout.points} />
+            <circle cx={callout.start[0]} cy={callout.start[1]} r="3.5" className="demo-evaluation-screen-hero-leader-dot" />
+            <circle cx={callout.anchorX} cy={callout.titleY + 14} r="2.5" className="demo-evaluation-screen-hero-leader-dot" />
+            <text x={callout.anchorX} y={callout.titleY} textAnchor={callout.right ? 'start' : 'end'} className="demo-evaluation-screen-hero-callout-name">{active.name}</text>
+            {calloutMetrics.map((metric, index) => <g key={metric.label}>
+              <text x={callout.left} y={callout.titleY + 54 + index * 38} className="demo-evaluation-screen-hero-stat-label">{metric.label}</text>
+              <text x={callout.end} y={callout.titleY + 54 + index * 38} textAnchor="end" className={`demo-evaluation-screen-hero-stat-number${metric.positive ? ' is-positive' : ''}${metric.primary ? ' is-primary' : ''}`}>{metric.positive ? '+' : ''}{formatScreenNumber(metric.value)}<tspan>{metric.unit}</tspan></text>
             </g>)}
-          </svg>
-        </div>
-        <div className={`demo-evaluation-screen-hero-center education-${active?.key}`}>
-          <span>{active?.name}</span><strong>{percentage(active?.eventCount ?? 0, total)}<small>%</small></strong><span>{formatScreenNumber(active?.eventCount ?? 0)} 条事件</span>
-        </div>
+          </g>}
+        </svg>
       </div>
-      <div className="demo-evaluation-screen-hero-legend" aria-label="五育类别">
-        {dimensions.map(item => <button key={item.key} type="button" aria-pressed={item.key === active?.key} aria-label={`${item.name}，${item.eventCount}条，占${percentage(item.eventCount, total)}%`} className={`education-${item.key}`} onPointerEnter={() => { setInteracting(true); setActiveKey(item.key); }} onPointerLeave={() => setInteracting(false)} onFocus={() => { setInteracting(true); setActiveKey(item.key); }} onBlur={() => setInteracting(false)} onClick={() => setActiveKey(item.key)}><span className="demo-evaluation-screen-hero-legend-label"><i aria-hidden="true" />{item.name}</span><strong>{percentage(item.eventCount, total)}<small>%</small></strong></button>)}
+      <div className="demo-evaluation-screen-hero-legend" aria-label="选择五育类别">
+        {dimensions.map(item => <button key={item.key} type="button" className={`education-${item.key}`} style={{ '--education-color': labelColor(item.key) } as React.CSSProperties} aria-pressed={item.key === active?.key}
+          aria-label={describeDimension(item)}
+          onClick={() => setActiveKey(item.key)} onPointerEnter={() => { setInteracting(true); setActiveKey(item.key); }} onPointerLeave={() => setInteracting(false)}
+          onFocus={() => { setInteracting(true); setActiveKey(item.key); }} onBlur={() => setInteracting(false)}>
+          <span className="demo-evaluation-screen-hero-legend-label"><i aria-hidden="true" />{item.name}</span><strong>{formatScreenNumber(item.eventCount)}<small>条</small></strong>
+        </button>)}
       </div>
     </>}
   </section>;
-};
+}

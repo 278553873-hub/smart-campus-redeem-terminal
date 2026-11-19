@@ -1,0 +1,4 @@
+.dashboard-donut-chart { position:relative; width:100%; min-width:0; aspect-ratio:1; }
+.dashboard-donut-canvas { position:absolute; inset:0; }
+.dashboard-donut-center { position:absolute; inset:25%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; pointer-events:none; }
+.dashboard-donut-status { position:absolute; inset:0; display:grid; place-content:center; font-size:inherit; }

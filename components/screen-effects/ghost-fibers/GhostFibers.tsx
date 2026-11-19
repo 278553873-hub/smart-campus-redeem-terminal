@@ -1192,8 +1192,8 @@ const GhostFibers = ({
   const { className = '', ...attributes } = rest;
 
   return (
-    <div ref={containerRef} className={`demo-ghost-fibers-container${className ? ` ${className}` : ''}`} {...attributes}>
-      <canvas ref={canvasRef} className="demo-ghost-fibers-canvas" aria-hidden="true" />
+    <div ref={containerRef} className={`screen-ghost-fibers-container${className ? ` ${className}` : ''}`} {...attributes}>
+      <canvas ref={canvasRef} className="screen-ghost-fibers-canvas" aria-hidden="true" />
     </div>
   );
 };

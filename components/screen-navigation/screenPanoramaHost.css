@@ -1,0 +1,4 @@
+.screen-panorama-host { position:fixed; inset:0; overflow:hidden; isolation:isolate; background:#0b0908; }
+.screen-panorama-layer { position:absolute; inset:0; opacity:0; visibility:hidden; pointer-events:none; z-index:0; transition:opacity 200ms linear,visibility 0s 200ms; }
+.screen-panorama-layer.is-current { opacity:1; visibility:visible; pointer-events:auto; z-index:1; transition-delay:0s; }
+@media (prefers-reduced-motion:reduce) { .screen-panorama-layer { transition:none; } }

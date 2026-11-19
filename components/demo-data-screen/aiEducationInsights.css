@@ -1,0 +1,34 @@
+/* AI字标与明确的内容归属共同标识分析区，沿用大屏既有暖金及黑玻璃体系。 */
+.demo-insight-panel { grid-area: insights; gap: 0; border-color: var(--es-accent-light); }
+.demo-insight-panel::before { left: 24px; width: calc(100% - 48px); height: 2px; background: linear-gradient(90deg, transparent, var(--es-accent-light), transparent); }
+.demo-insight-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: var(--es-gap); flex: none; }
+.demo-insight-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.demo-insight-period { flex: none; color: var(--es-muted); font-size: var(--es-detail); font-weight: var(--es-weight-regular); line-height: 1.4; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.demo-insight-ai-mark { display: grid; place-items: center; width: 64px; height: 64px; flex: none; border: 1px solid var(--es-accent-light); border-radius: 12px; background: linear-gradient(145deg, rgba(var(--es-accent-rgb), .15), rgba(var(--es-accent-rgb), .03)); color: var(--es-accent-light); font-family: var(--es-font-number); font-size: var(--es-metric-number); font-weight: var(--es-weight-emphasis); line-height: 1; letter-spacing: .02em; }
+.demo-insight-header h2 { color: var(--es-text); font-size: var(--es-hero-heading); font-weight: var(--es-weight-emphasis); line-height: 1.2; white-space: nowrap; }
+.demo-insight-topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); margin-bottom: var(--es-gap); border-bottom: 1px solid #f3f0ea24; flex: none; }
+.demo-insight-panel .demo-insight-topics button { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 0 0 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--es-muted); font-size: var(--es-detail); font-weight: var(--es-weight-strong); white-space: nowrap; }
+.demo-insight-panel .demo-insight-topics button[aria-selected=true] { color: var(--es-accent-light); border-bottom-color: var(--es-accent-light); }
+.demo-insight-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.demo-insight-content:focus-visible { outline: 2px solid var(--es-accent); outline-offset: 4px; }
+.demo-insight-conclusion { padding-bottom: var(--es-gap); flex: none; }
+.demo-insight-conclusion h3 { margin: 0 0 12px; font-size: var(--es-hero-title); font-weight: var(--es-weight-emphasis); line-height: 1.35; color: var(--es-accent-light); text-wrap: pretty; }
+.demo-insight-summary { color: var(--es-text); font-size: var(--es-body); line-height: 1.5; text-wrap: pretty; }
+.demo-insight-suggestion { padding-top: 16px; border-top: 1px solid #f3f0ea24; flex: none; }
+/* 区块标题同级，结论置于下一级；只用于改进重点，不改变亮点页。 */
+.demo-insight-panel .demo-insight-section-heading { margin: 0 0 12px; color: var(--es-accent-light); font-size: var(--es-panel-title); font-weight: var(--es-weight-emphasis); line-height: 1.4; }
+.demo-insight-finding-title, .demo-insight-advice-title { margin: 0 0 12px; color: var(--es-text); font-weight: var(--es-weight-emphasis); line-height: 1.4; text-wrap: pretty; }
+.demo-insight-finding-title { font-size: var(--es-hero-title); }
+.demo-insight-advice-title { font-size: var(--es-panel-title); }
+.demo-insight-suggestion p { color: var(--es-text); font-size: var(--es-detail); line-height: 1.5; text-wrap: pretty; }
+.demo-insight-action-task { font-weight: var(--es-weight-regular, 400); }
+
+/* 三条亮点同页完整展示，按自然高度排列，不使用滚动或单条轮播。 */
+.demo-insight-items { display: flex; flex-direction: column; gap: var(--es-gap); min-height: 0; }
+.demo-insight-highlights .demo-insight-item + .demo-insight-item { padding-top: 16px; border-top: 1px solid #f3f0ea24; }
+.demo-insight-highlights .demo-insight-conclusion { padding-bottom: 0; }
+.demo-insight-highlights .demo-insight-conclusion h3 { font-size: var(--es-panel-title); margin-bottom: 8px; line-height: 1.4; }
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .demo-insight-header h2 { background-image: var(--es-system-title-gradient); background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+}

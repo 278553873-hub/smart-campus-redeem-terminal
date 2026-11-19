@@ -1,0 +1,24 @@
+{
+  "generator": "内置 image_gen",
+  "date": "2026-11-18",
+  "assets": [
+    {
+      "key": "honor_crown",
+      "transparent_background": true,
+      "prompt": "Create a production-ready transparent PNG game UI asset: one joyful soft 3D golden crown for a Chinese primary school student honor leaderboard, front view with very slight top perspective. Rounded three large points with round tips, warm sunshine yellow and apricot gold enamel, one small coral pink rounded gem in the front, tiny mint turquoise side gems. Chunky premium toy-like material, soft clay/plastic highlights, friendly smooth curves, subtle ambient occlusion, bright light cheerful palette. Crown is centered and fills 80% of a square canvas, isolated with genuine alpha transparency. No characters, no face, no person, no letters, no numbers, no wording, no watermark, no surrounding scene, no floor, no border. Crisp clean silhouette suitable above a circular student avatar. This is a reusable UI illustration asset, not a whole interface.",
+      "file": "crown.png"
+    },
+    {
+      "key": "honor_podium",
+      "transparent_background": true,
+      "prompt": "Create a production-ready wide transparent PNG illustration asset of a three-place winners podium for a joyful student honor leaderboard, matching a soft 3D toy/clay aesthetic. Three connected chunky rounded step blocks ordered visually left medium height, CENTER tallest, right lowest, each block equal width. Center block warm sunshine yellow with apricot side, left lavender with lilac side, right mint/turquoise with aqua side. Gentle cream flat base, softly beveled pill corners, slight overhead front orthographic view, minimal perspective so the three front faces are almost rectangular. The top surface is clearly visible on each block, and each vertical front face has large clean blank space for HTML rank numerals overlaid later. Center block top at roughly y=30%, left at y=47%, right at y=58% of illustration height. All blocks share a baseline. Image composition wide 2:1, entire podium visible and centered, tiny contact shadow beneath base only with alpha transparency. No people, no portraits, no avatars, no crowns, NO NUMERALS, no letters, no wording, no medals, no background scene, no watermark, no UI panels. Bright playful refined finish, no dark dramatic lighting. Reusable standalone PNG asset for a school interactive whiteboard.",
+      "file": "podium.png"
+    },
+    {
+      "key": "honor_background",
+      "transparent_background": false,
+      "prompt": "Generate a clean 16:9 wide landscape BACKGROUND illustration for a primary school classroom student honor leaderboard, 2560x1440 composition. Bright, gentle, joyful colorful soft 3D toy/clay aesthetic. Mostly warm ivory / very pale peach sky with huge quiet open negative space across the central 80% for readable student names and charts. A few softly sculpted cream clouds near upper outer corners, tiny lilac, apricot and mint confetti or round stars sparsely near the edges. A low dreamy landscape of rounded pastel mint, aqua, lavender and pale apricot hills across bottom 12%, with soft soft lighting and very subtle paper-like finish, sophisticated and cheerful. Decorative assets confined to borders, spacious almost plain cream center. No text at all, no letters, no numerals, no logos, no people, no animals, no podium, no crown, no trophies, no interface, no frames or cards, no dark areas, no heavy noise, no dense confetti. This will sit behind a real coded interface, prioritize calm high-contrast readability.",
+      "file": "celebration-background.png"
+    }
+  ]
+}

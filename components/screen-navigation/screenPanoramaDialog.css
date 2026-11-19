@@ -1,0 +1,9 @@
+.screen-panorama-dialog.arco-modal { color:#f3f0ea; background:#18130e; border:1px solid #e7d9c245; border-radius:16px; font-family:'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; box-shadow:0 24px 80px #0008; }
+.screen-panorama-dialog .arco-modal-header { padding:24px; height:auto; border-bottom:1px solid #d6c2a32e; }
+.screen-panorama-dialog .arco-modal-header .arco-modal-title { color:#f0dfc1; font-size:26px; line-height:1.3; font-weight:600; text-align:left; }
+.screen-panorama-dialog .arco-modal-content { padding:0 24px; color:inherit; }
+.screen-panorama-dialog .arco-modal-footer { padding:16px 24px; border-top:1px solid #d6c2a32e; text-align:right; }
+.screen-panorama-dialog-return.arco-btn { height:56px; min-width:144px; padding:0 24px; border:1px solid #d8ae6f66; border-radius:8px; background:#352617; color:#ffdcaa; font-size:20px; }
+.screen-panorama-dialog-return.arco-btn:hover { background:#48331d; color:#ffe9c7; border-color:#e1b877; }
+.screen-panorama-dialog :focus-visible { outline:2px solid #ffd18a; outline-offset:2px; }
+@media (prefers-reduced-motion:reduce) { .screen-panorama-dialog-wrap *, .screen-panorama-dialog-wrap { animation:none !important; transition:none !important; } }
