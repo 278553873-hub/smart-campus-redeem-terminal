@@ -5,7 +5,7 @@ interface MobileConfirmSheetProps {
   open: boolean;
   shape?: 'default' | 'subtle';
   title: string;
-  description: string;
+  description: React.ReactNode;
   errorMessage?: string;
   confirmLabel: string;
   cancelLabel?: string;

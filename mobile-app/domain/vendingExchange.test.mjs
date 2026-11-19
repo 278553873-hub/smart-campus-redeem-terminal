@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
-  createVendingExchangeFilter, filterVendingExchangeRecords,
-  getVendingExchangeAuthorizedClasses, groupVendingExchangeRecordsByMonth, scopeVendingExchangeRecords, VENDING_EXCHANGE_STATUS_LABELS,
+  applyManualVendingRefunds, createVendingExchangeFilter, filterVendingExchangeRecords,
+  getVendingExchangeAuthorizedClasses, groupVendingExchangeRecordsByMonth, refundVendingExchangeRecordManually, scopeVendingExchangeRecords, VENDING_EXCHANGE_STATUS_LABELS,
 } from './vendingExchange.ts';
 import { getTeacherSpaceMenuPolicy } from './teacherSpaceAccess.ts';
 
@@ -86,4 +86,18 @@ assert.deepEqual(groupVendingExchangeRecordsByMonth([], '2026-11'), [{ month: '2
 assert.deepEqual(groupVendingExchangeRecordsByMonth([
   ...query({}), { ...base, id: 'previous-year', time: '2025-12-31 23:59:59' },
 ], '2026-11').map(item => item.month), ['2026-11', '2026-10', '2025-12'], '跨年份按真实年月倒序');
+const refundable = { ...base, id: 'refundable', chargedAmount: 20, refundedAmount: 0, quantity: 1, time: '2026-11-05 09:00:00' };
+const refunded = refundVendingExchangeRecordManually(refundable, { operator: '刘飞', time: '2026-11-05 09:10:00' });
+assert.equal(refunded.status, 'failed', '手动退币后记录应落为兑换失败');
+assert.equal(refunded.refundStatus, 'refunded', '手动退币后记录应落为已退币');
+assert.equal(refunded.refundedAmount, 20, '手动退币按实际扣币整单退还');
+assert.equal(refunded.refundReason, 'exchange_revoked', '学生明细应按撤回兑换展示并明确是老师手动处理');
+assert.equal(refunded.refundedBy, '刘飞');
+assert.equal(refunded.refundedAt, '2026-11-05 09:10:00');
+assert.equal(refundVendingExchangeRecordManually(refunded, { operator: '重复', time: '2026-11-05 09:20:00' }), refunded, '同一货柜单不得重复退币');
+assert.equal(refundVendingExchangeRecordManually({ ...refundable, status: 'failed', refundStatus: 'refunded' }, { operator: '刘飞', time: '2026-11-05 09:10:00' }).status, 'failed', '系统已退币的失败记录不再生成新状态');
+const merged = applyManualVendingRefunds([refundable, { ...refundable, id: 'untouched' }], [refunded]);
+assert.equal(merged[0], refunded, '手动退币快照应覆盖同一货柜单');
+assert.equal(merged[1].id, 'untouched', '未退币记录保持原样');
+
 console.log('货柜兑换查询与权限校验通过');

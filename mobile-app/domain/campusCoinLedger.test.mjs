@@ -7,6 +7,7 @@ import {
   countActiveCoinLedgerEntries,
   createCoinLedgerEntry,
   expandCoinLedgerForStudent,
+  expandCoinLedgerRefundsForStudent,
   filterCoinLedgerEntries,
   formatCoinLedgerStudentSummary,
   formatCoinLedgerTimeLabel,
@@ -53,18 +54,33 @@ assert.equal(formatCoinLedgerStudentSummary(batchEntry.shares), '李明、韦小
 assert.equal(formatCoinLedgerStudentSummary(batchEntry.shares.slice(0, 2)), '李明、韦小宝', '两人应并列表述。');
 assert.equal(formatCoinLedgerStudentSummary(batchEntry.shares.slice(0, 1)), '李明', '单人应直接显示姓名。');
 
-assert.equal(isCoinLedgerEntryRevocable(batchEntry, '2026-09-20'), true, '当天兑换的记录可以撤回。');
-assert.equal(isCoinLedgerEntryRevocable(batchEntry, '2026-09-21'), false, '隔天的兑换记录不能再撤回。');
-assert.equal(isCoinLedgerEntryRevocable(clearEntry, '2026-09-20'), false, '清空成长币的记录不支持撤回。');
+assert.equal(isCoinLedgerEntryRevocable(batchEntry), true, '未撤回的班级兑换可以撤回，不限制日期。');
+assert.equal(isCoinLedgerEntryRevocable(clearEntry), false, '清空成长币的记录不支持撤回。');
 
-const revokedPatch = revokeCoinLedgerEntry(recordCoinLedgerEntry(EMPTY_COIN_LEDGER_PATCH, batchEntry), 'ledger-redeem-1', '2026-09-20 17:02');
+const revokedPatch = revokeCoinLedgerEntry(recordCoinLedgerEntry(EMPTY_COIN_LEDGER_PATCH, batchEntry), 'ledger-redeem-1', '2026-11-18 10:00');
 const revokedLedger = applyCoinLedgerPatch([], revokedPatch);
 assert.equal(revokedLedger.length, 1, '撤回只做标记，不删除记录。');
 assert.equal(revokedLedger[0].revoked, true, '撤回后记录应标记为已撤回。');
-assert.equal(revokedLedger[0].revokedAt, '2026-09-20 17:02', '撤回后应写入撤回时间。');
+assert.equal(revokedLedger[0].revokedAt, '2026-11-18 10:00', '跨月撤回应写入实际撤回时间，保留原兑换日期。');
+assert.equal(revokedLedger[0].time, batchEntry.time, '撤回后应保留原兑换日期。');
 assert.equal(revokedLedger[0].totalAmount, 1500, '撤回后仍保留原始金额，便于对账。');
-assert.equal(isCoinLedgerEntryRevocable(revokedLedger[0], '2026-09-20'), false, '已撤回的记录不能再次撤回。');
-assert.equal(expandCoinLedgerForStudent(revokedLedger, 's1').length, 0, '已撤回的兑换不应出现在学生成长币明细里。');
+assert.equal(isCoinLedgerEntryRevocable(revokedLedger[0]), false, '已撤回的记录不能再次撤回。');
+const originalExpense = expandCoinLedgerForStudent([batchEntry], 's1')[0];
+assert.deepEqual(expandCoinLedgerForStudent(revokedLedger, 's1'), [originalExpense], '撤回后完整保留原支出的金额、商品与时间。');
+const refund = expandCoinLedgerRefundsForStudent(revokedLedger, 's1')[0];
+assert.deepEqual(refund, {
+  id: 'ledger-redeem-1-s1-refund', category: 'exchange_refund', refundReason: 'exchange_revoked',
+  relatedRecordId: originalExpense.id, productName: batchEntry.productName, quantity: 1,
+  amount: 500, time: '2026-11-18 10:00',
+}, '撤回新增该学生原扣币数的收入，关联原支出并使用实际撤回时间。');
+assert.equal(refund.amount - originalExpense.amount, 0, '原支出与退还收入应等额冲抵。');
+assert.equal(batchEntry.shares.reduce((sum, share) => sum + expandCoinLedgerRefundsForStudent(revokedLedger, share.studentId)[0].amount, 0), batchEntry.totalAmount, '多人兑换分别退还，收入合计应等于原批次扣币合计。');
+assert.deepEqual(expandCoinLedgerRefundsForStudent(revokedLedger, 'other-student'), [], '不向未参与兑换的学生生成退还。');
+assert.deepEqual(expandCoinLedgerRefundsForStudent([batchEntry, clearEntry], 's1'), [], '未撤回的兑换及清空不生成退还收入。');
+assert.deepEqual(expandCoinLedgerRefundsForStudent([{ ...revokedLedger[0], revokedAt: null }], 's1'), [], '历史缺失实际撤回时间时，不编造入账时间。');
+const repeatedPatch = revokeCoinLedgerEntry(revokedPatch, batchEntry.id, '2026-11-19 11:00');
+assert.deepEqual(repeatedPatch, revokedPatch, '重复撤回不覆盖首次时间，也不重复生成收入。');
+assert.deepEqual(expandCoinLedgerRefundsForStudent(applyCoinLedgerPatch([], repeatedPatch), 's1'), [refund]);
 
 const historyEntry = createCoinLedgerEntry({
   id: 'ledger-redeem-2',
@@ -75,6 +91,8 @@ const historyEntry = createCoinLedgerEntry({
   productName: '精美笔记本一本',
   shares: [{ studentId: 's1', studentName: '李明', amount: 150 }],
 });
+
+assert.equal(isCoinLedgerEntryRevocable(historyEntry), true, '历史月份的班级兑换仍可撤回。');
 
 const mergedLedger = applyCoinLedgerPatch([historyEntry], recordCoinLedgerEntry(EMPTY_COIN_LEDGER_PATCH, batchEntry));
 assert.deepEqual(mergedLedger.map(entry => entry.id), ['ledger-redeem-1', 'ledger-redeem-2'], '新增记录应合并进流水并按时间倒序。');

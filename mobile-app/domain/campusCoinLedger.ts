@@ -1,4 +1,4 @@
-import type { CampusCoinConsumeRecord } from '../types';
+import type { CampusCoinConsumeRecord, CampusCoinIssueRecord } from '../types';
 import { GROWTH_COIN_TERMS } from '../../shared/growthCoinTerminology.ts';
 
 export type CampusCoinLedgerEntryType = 'redeem' | 'clear';
@@ -165,10 +165,14 @@ export const revokeCoinLedgerEntry = (
   patch: CampusCoinLedgerPatch,
   entryId: string,
   revokedAt: string,
-): CampusCoinLedgerPatch => ({
-  entries: patch.entries,
-  revokedAtById: { ...patch.revokedAtById, [entryId]: revokedAt },
-});
+): CampusCoinLedgerPatch => {
+  // 同一笔兑换只落一次退还，保留首次撤回时间。
+  if (patch.revokedAtById[entryId]) return patch;
+  return {
+    entries: patch.entries,
+    revokedAtById: { ...patch.revokedAtById, [entryId]: revokedAt },
+  };
+};
 
 /** 把运行期间的新增记录与撤回状态合并到基础流水上，按时间倒序返回。 */
 export const applyCoinLedgerPatch = (
@@ -182,9 +186,9 @@ export const applyCoinLedgerPatch = (
     .sort((left, right) => right.time.localeCompare(left.time))
 );
 
-/** 只有当天发起的兑换可以撤回，且整批一起撤回；清空学生成长币不支持撤回。 */
-export const isCoinLedgerEntryRevocable = (entry: CampusCoinLedgerEntry, todayKey: string) => (
-  entry.type === 'redeem' && !entry.revoked && getCoinLedgerDateKey(entry.time) === todayKey
+/** 未撤回的班级兑换均可整批撤回，不限制兑换日期；清空学生成长币不支持撤回。 */
+export const isCoinLedgerEntryRevocable = (entry: CampusCoinLedgerEntry) => (
+  entry.type === 'redeem' && !entry.revoked
 );
 
 export const filterCoinLedgerEntries = (
@@ -232,14 +236,13 @@ export const formatCoinLedgerFullTime = (time: string) => {
 /**
  * 学生侧成长币明细：把批次记录展开成该学生自己的支出。
  * 一次兑换落一条班级兑换，一次清空也落一条「手动清空」（可用与已存合并计一条，明细写清清掉了哪部分资产）。
- * 已撤回的记录不产生支出，因此不进学生流水。
+ * 撤回后仍保留原支出，退还收入单独生成，避免抹掉历史扣币。
  */
 export const expandCoinLedgerForStudent = (
   entries: CampusCoinLedgerEntry[],
   studentId: string,
 ): CampusCoinConsumeRecord[] => (
   entries
-    .filter(entry => !entry.revoked)
     .flatMap(entry => entry.shares
       .filter(share => share.studentId === studentId)
       .flatMap(share => {
@@ -265,3 +268,22 @@ export const expandCoinLedgerForStudent = (
         }];
       }))
 );
+
+/** 整批撤回按学生原扣币份额分别退还；收入关联原支出，使用实际撤回时间。 */
+export const expandCoinLedgerRefundsForStudent = (
+  entries: CampusCoinLedgerEntry[],
+  studentId: string,
+): CampusCoinIssueRecord[] => entries
+  .filter(entry => entry.type === 'redeem' && entry.revoked && entry.revokedAt)
+  .flatMap(entry => entry.shares
+    .filter(share => share.studentId === studentId && share.amount > 0)
+    .map(share => ({
+      id: `${entry.id}-${studentId}-refund`,
+      category: 'exchange_refund' as const,
+      refundReason: 'exchange_revoked' as const,
+      relatedRecordId: `${entry.id}-${studentId}`,
+      productName: getCoinLedgerEntryTitle(entry),
+      quantity: 1,
+      amount: share.amount,
+      time: entry.revokedAt!,
+    })));

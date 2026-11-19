@@ -2134,6 +2134,21 @@ const vendingSample = {
   terminalDeviceId: 'terminal-1', terminalDeviceName: '人北华侨城一楼', channelName: '0101',
   time: '2026-11-05 10:32:00', status: 'failed', refundStatus: 'refunded', refundedAmount: 20,
 };
+const exchangeTabClass = { id: 'vending-class', name: '2026级1班', gradeLevel: '一年级' };
+const exchangeTabRecords = [
+  { ...vendingSample, id: 'exchange-tab-record', classId: exchangeTabClass.id, status: 'completed', refundStatus: 'none', refundedAmount: 0 },
+  { ...vendingSample, id: 'exchange-tab-failed', classId: exchangeTabClass.id, studentName: '失败记录学生', time: '2026-11-04 10:32:00' },
+];
+await renderPage('成长币记录页（班级与货柜兑换记录页签）', () => import('../mobile-app/views/ClassExchangeRecordView'), {
+  students: demoStudents, entries: ledgerEntries, onRevokeEntry: noop, onBack: noop,
+  cabinet: { schoolId: 'school-vending', classInfo: exchangeTabClass, records: exchangeTabRecords },
+}, html => {
+  const text = plainText(html);
+  for (const label of ['兑换记录', '班级兑换记录', '货柜兑换记录']) if (!text.includes(label)) throw new Error('兑换记录页签缺少：' + label);
+  if (!html.includes('aria-label="兑换记录分类"') || !html.includes('aria-selected="true"')) throw new Error('兑换记录页签缺少标准页签语义');
+  if (!html.includes('aria-label="货柜兑换记录"') || !html.includes('hidden=""')) throw new Error('非当前页签内容应隐藏');
+});
+
 for (const authorized of [true, false]) {
   await renderPage('货柜管理（' + (authorized ? '默认全部状态' : '无授权班级') + '）', () => import('../mobile-app/views/VendingExchangeView'), {
     schoolId: 'school-vending', today: '2026-11-05', onBack: noop,
@@ -2147,6 +2162,7 @@ for (const authorized of [true, false]) {
     if (text.includes('未授权学生')) throw new Error('兑换明细泄露其他学校数据');
     if (text.includes('张雨桐') !== authorized) throw new Error('兑换明细没有按授权班级过滤');
     if (authorized && !['兑换成功', '张雨桐', '2026年11月'].every(label => text.includes(label))) throw new Error('兑换明细缺少记录状态、学生或月份入口');
+    if (authorized && !text.includes('共 1 笔')) throw new Error('货柜兑换记录应展示当前月份笔数');
     if (text.includes('清除筛选') || /共\s*\d+\s*条/.test(text)) throw new Error('兑换记录不应显示条数与清除筛选');
     if (!authorized && !text.includes('暂无兑换记录')) throw new Error('无权限数据时应展示空状态');
   });
@@ -2180,6 +2196,7 @@ await renderPage('货柜兑换记录（月份分组与集中筛选入口）', ()
   const text = plainText(html);
   for (const label of ['2026年11月', '2026年10月', '兑换成功', '兑换失败', '张雨桐', '失败记录学生', '上月记录学生']) if (!text.includes(label)) throw new Error('默认兑换记录缺少：' + label);
   if (!(text.indexOf('张雨桐') < text.indexOf('失败记录学生') && text.indexOf('失败记录学生') < text.indexOf('2026年10月') && text.indexOf('2026年10月') < text.indexOf('上月记录学生'))) throw new Error('月份和记录都应按时间倒序');
+  if (!text.includes('共 2 笔')) throw new Error('货柜兑换记录应统计当前展示月份的笔数');
   if (text.includes('清除筛选') || /共\s*\d+\s*条/.test(text) || text.includes('本月')) throw new Error('不应显示条数、清除筛选或“本月”筛选值');
   const filterBar = html.match(/<div role="group" aria-label="兑换记录筛选"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
   if ((filterBar.match(/<button\b/g) ?? []).length !== 2 || !filterBar.includes('选择日期，2026年11月') || !filterBar.includes('筛选兑换记录')) throw new Error('兑换记录外层应展示日期与统一筛选入口');
@@ -2201,7 +2218,7 @@ await renderPage('货柜兑换记录（默认货柜、货柜顺序与学校隔�
   if (!text.includes('二楼学生') || text.includes('一楼学生')) throw new Error('默认货柜应按当前学校的货柜顺序选择，不按记录顺序选择');
   if (text.includes('其他学校学生')) throw new Error('不得混入其他学校的数据');
 });
-await renderPage('货柜兑换卡片（分行布局、学生班级及商品单价）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
+await renderPage('货柜兑换流水行（学生班级及商品单价）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
   record: { ...vendingSample, studentName: '林天雅', className: '小2025级3班', productImage: '/assets/product-snapshot.png', quantity: 2, chargedAmount: 40, status: 'completed', refundStatus: 'none' }, today: '2026-11-05', onOpen: noop,
 }, html => {
   const text = plainText(html);
@@ -2209,7 +2226,7 @@ await renderPage('货柜兑换卡片（分行布局、学生班级及商品单�
   if (!html.includes('/assets/product-snapshot.png') || !html.includes('alt="卡通笔袋商品图"')) throw new Error('应展示记录中的商品图并保留替代文字');
   if (!html.includes('商品单价20') || html.includes('实际扣币40') || text.includes('人北华侨城一楼')) throw new Error('列表展示商品单价和必要摘要，实际扣币与货柜在详情中查看');
 });
-await renderPage('货柜兑换失败卡片（保留退币状态）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
+await renderPage('货柜兑换失败流水行（保留退币状态）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
   record: vendingSample, today: '2026-11-05', onOpen: noop,
 }, html => {
   if (!['兑换失败', '已退币'].every(label => plainText(html).includes(label))) throw new Error('失败记录应分别展示兑换状态与退币状态');

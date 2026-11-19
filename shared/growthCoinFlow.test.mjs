@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {
   GROWTH_COIN_FLOW_LABELS, GROWTH_COIN_INCOME_CATEGORIES, GROWTH_COIN_EXPENSE_CATEGORIES,
   formatGrowthAwardDetail, getGrowthCoinFlowDetail, getGrowthCoinFlowStatus,
+  getCampusCoinIssueDetail,
   toGrowthCoinIncomeFlow, toGrowthCoinExpenseFlow,
 } from './growthCoinFlow.ts';
 import { createDemoGrowthCoinFlows, createDemoGrowthCoinIssueRecords, createDemoGrowthCoinConsumeRecords } from './demoGrowthCoinFlow.ts';
@@ -41,6 +42,22 @@ const refund = find('refund');
 assert.equal(getGrowthCoinFlowStatus(purchase, [purchase]), undefined, '退款未到账不标已退还');
 assert.equal(getGrowthCoinFlowStatus(purchase, [purchase, { ...refund, amount: 10 }]), undefined, '未等额退款不标已退还');
 assert.equal(getGrowthCoinFlowStatus(purchase, [purchase, refund]), '已退还');
+const classPurchase = find('class-exchange-revoked');
+const classRefund = find('class-refund');
+assert.equal(getGrowthCoinFlowStatus(classPurchase, [classPurchase]), undefined, '未退还到账时原班级支出不标撤回');
+assert.equal(getGrowthCoinFlowStatus(classPurchase, [classPurchase, { ...classRefund, amount: 100 }]), undefined, '未等额退还时不标撤回');
+assert.equal(getGrowthCoinFlowStatus(classPurchase, [classPurchase, { ...classRefund, relatedRecordId: 'other-student' }]), undefined, '其他学生的退还不能改变当前支出状态');
+assert.equal(getGrowthCoinFlowStatus(classPurchase, [classPurchase, { ...classRefund, refundReason: 'not_dispensed' }]), undefined, '未出货退还不能被当成班级兑换撤回');
+assert.equal(getGrowthCoinFlowStatus(classPurchase, [classPurchase, classRefund]), '已撤回');
+assert.equal(getGrowthCoinFlowDetail(classRefund), '撤回兑换 · 班长体验券', '班级撤回描述不追加数量');
+assert.equal(getGrowthCoinFlowDetail(classRefund, { canViewEvaluationDetails: false }), '撤回兑换 · 班长体验券', '家长无评价明细权限仍可查看兑换退还');
+assert.equal(getCampusCoinIssueDetail(createDemoGrowthCoinIssueRecords('student-a').find(record => record.id === classRefund.id)), '撤回兑换 · 班长体验券', '教师原始收入与家长、货柜通用流水描述相同');
+const manualVendingPurchase = find('vending-manual');
+const manualVendingRefund = find('vending-manual-refund');
+assert.equal(getGrowthCoinFlowStatus(manualVendingPurchase, [manualVendingPurchase, manualVendingRefund]), '已撤回', '老师手动退币应让原货柜支出显示已撤回');
+assert.equal(getGrowthCoinFlowDetail(manualVendingRefund), '撤回兑换 · 卡通笔袋', '老师手动退币在学生明细沿用撤回兑换样式');
+assert.equal(getGrowthCoinFlowStatus(purchase, [purchase, refund]), '已退还', '货柜机自动未出货退款仍显示已退还');
+assert.equal(getGrowthCoinFlowDetail(refund), '未出货退还 · 笔记本×1', '旧货柜退款缺少原因时保留原文案');
 assert.equal(getGrowthCoinFlowStatus(find('score-supplement'), records), undefined, '补发收入不增加标签');
 assert.equal(JSON.stringify(records), snapshot, '格式化和关联状态判断不能改写历史金额、时间或快照');
 
@@ -58,4 +75,4 @@ assert.deepEqual(records, [
 ], '教师端的收入、支出快照应与货柜和家长端完全同源');
 assert.equal(new Set(records.map(record => record.id)).size, records.length);
 assert.ok(records.every(record => record.amount > 0), '扣分、币数不变、余额为零不生成虚假的零金额流水');
-console.log('校园币流水规则检查通过：17个展示场景、关联状态、不可变历史和家长权限');
+console.log(`校园币流水规则检查通过：${COIN_FLOW_SCENARIOS.length}个展示场景、关联状态、不可变历史和家长权限`);

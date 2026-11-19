@@ -1,9 +1,11 @@
 import type { ClassInfo, TeacherProfile } from '../types';
 import type { TeacherSpaceOption } from './teacherSpaceAccess';
 import type { MobileDateRange } from '../components/ui/mobileDatePickerModel';
+import type { GrowthCoinExchangeRefundReason } from '../../shared/growthCoinFlow.ts';
 
 export type VendingExchangeStatus = 'completed' | 'failed';
 export type VendingRefundStatus = 'none' | 'pending' | 'refunded';
+export type VendingRefundReason = GrowthCoinExchangeRefundReason;
 
 /** 历史字段均为兑换发生时的快照，不随商品、学生或设备的当前配置改写。 */
 export interface VendingExchangeRecord {
@@ -31,6 +33,11 @@ export interface VendingExchangeRecord {
   status: VendingExchangeStatus;
   refundStatus: VendingRefundStatus;
   refundedAmount: number;
+  /** 历史退币原因；缺省视为货柜未出货自动退还。 */
+  refundReason?: VendingRefundReason;
+  /** 老师手动退币时记录操作人与时间，自动退币不填。 */
+  refundedBy?: string;
+  refundedAt?: string;
 }
 
 export interface VendingExchangeFilter {
@@ -104,6 +111,33 @@ export const filterVendingExchangeRecords = (
       && (!filter.terminalDeviceId || record.terminalDeviceId === filter.terminalDeviceId)
       && (!filter.status || record.status === filter.status);
   }).sort((left, right) => right.time.localeCompare(left.time) || left.id.localeCompare(right.id));
+};
+
+/** 老师确认货柜未出货后整单退币；只允许对成功且未退币的记录执行一次。 */
+export const refundVendingExchangeRecordManually = (
+  record: VendingExchangeRecord,
+  { operator, time }: { operator: string; time: string },
+): VendingExchangeRecord => {
+  if (record.status !== 'completed' || record.refundStatus !== 'none') return record;
+  return {
+    ...record,
+    status: 'failed',
+    refundStatus: 'refunded',
+    refundedAmount: record.chargedAmount,
+    refundReason: 'exchange_revoked',
+    refundedBy: operator,
+    refundedAt: time,
+  };
+};
+
+/** 用已发生的老师手动退币快照覆盖演示数据，保证货柜管理与班级兑换记录看到同一结果。 */
+export const applyManualVendingRefunds = (
+  records: readonly VendingExchangeRecord[],
+  refunds: readonly VendingExchangeRecord[],
+): VendingExchangeRecord[] => {
+  if (!refunds.length) return [...records];
+  const refundById = new Map(refunds.map(item => [item.id, item]));
+  return records.map(record => refundById.get(record.id) ?? record);
 };
 
 export const createVendingExchangeFilter = (today: string): VendingExchangeFilter => ({

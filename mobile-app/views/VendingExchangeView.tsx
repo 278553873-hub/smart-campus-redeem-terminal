@@ -13,12 +13,14 @@ interface Props {
   cabinets?: readonly VendingCabinetInventory[];
   records: readonly VendingExchangeRecord[];
   onBack: () => void;
+  onRefundRecord?: (record: VendingExchangeRecord) => void;
+  canRefundRecord?: (record: VendingExchangeRecord) => boolean;
   today?: string;
 }
 
 const tabs = [{ value: 'inventory', label: '商品库存' }, { value: 'records', label: '兑换记录' }] as const;
 
-export default function VendingExchangeView({ schoolId, authorizedClasses, cabinets = [], records, onBack, today }: Props) {
+export default function VendingExchangeView({ schoolId, authorizedClasses, cabinets = [], records, onBack, today, onRefundRecord, canRefundRecord }: Props) {
   const [activeTab, setActiveTab] = useState<'inventory' | 'records'>('inventory');
   const schoolCabinets = useMemo(() => cabinets.filter(item => item.schoolId === schoolId), [cabinets, schoolId]);
   return <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]">
@@ -28,7 +30,7 @@ export default function VendingExchangeView({ schoolId, authorizedClasses, cabin
       <VendingInventoryPanel key={schoolId} cabinets={schoolCabinets} active={activeTab === 'inventory'} />
     </div>
     <div role="tabpanel" aria-label="兑换记录" hidden={activeTab !== 'records'} className={activeTab === 'records' ? 'flex min-h-0 flex-1 flex-col' : 'hidden'}>
-      <VendingExchangeRecordsPanel key={schoolId} schoolId={schoolId} authorizedClasses={authorizedClasses} cabinets={schoolCabinets} records={records} today={today} active={activeTab === 'records'} />
+      <VendingExchangeRecordsPanel key={schoolId} schoolId={schoolId} authorizedClasses={authorizedClasses} cabinets={schoolCabinets} records={records} today={today} active={activeTab === 'records'} onRefundRecord={onRefundRecord} canRefundRecord={canRefundRecord} />
     </div>
   </div>;
 }

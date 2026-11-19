@@ -12,11 +12,22 @@ function CoinAmount({ amount }: { amount: number }) {
   </span>;
 }
 
-export default function VendingExchangeDetailSheet({ record, onClose }: { record: VendingExchangeRecord | null; onClose: () => void }) {
+export default function VendingExchangeDetailSheet({ record, onClose, canRefund = false, onRequestRefund }: {
+  record: VendingExchangeRecord | null;
+  onClose: () => void;
+  canRefund?: boolean;
+  onRequestRefund?: () => void;
+}) {
+  const refundAuditRows: [string, React.ReactNode][] = record?.refundReason === 'exchange_revoked' ? [
+    ['退币方式', '老师手动撤回'],
+    ...(record.refundedBy ? [['操作老师', record.refundedBy] as [string, React.ReactNode]] : []),
+    ...(record.refundedAt ? [['退币时间', record.refundedAt] as [string, React.ReactNode]] : []),
+  ] : [];
   const groups: { title: string; rows: [string, React.ReactNode][] }[] = record ? [
     { title: '兑换结果', rows: [
       ['兑换状态', <VendingExchangeStatusTags record={record} />],
       ...(record.refundStatus !== 'none' || record.status === 'failed' ? [['已退币数', <CoinAmount amount={record.refundedAmount} />] as [string, React.ReactNode]] : []),
+      ...refundAuditRows,
     ] },
     { title: '商品信息', rows: [
       ['商品名称', record.productName], ['商品分类', record.categoryName], ['兑换数量', `${record.quantity}件`],
@@ -26,7 +37,20 @@ export default function VendingExchangeDetailSheet({ record, onClose }: { record
     { title: '兑换信息', rows: [['兑换时间', record.time], ['终端设备名称', record.terminalDeviceName], ['货道', record.channelName], ['兑换单号', record.orderNo]] },
   ] : [];
   return (
-    <MobileBottomSheet open={Boolean(record)} title="兑换详情" onClose={onClose}>
+    <MobileBottomSheet
+      open={Boolean(record)}
+      title="兑换详情"
+      onClose={onClose}
+      footer={canRefund && onRequestRefund ? (
+        <button
+          type="button"
+          onClick={onRequestRefund}
+          className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
+        >
+          未出货，退币
+        </button>
+      ) : undefined}
+    >
       <div className="divide-y divide-[var(--tm-border-subtle)] pb-[var(--tm-space-4)]">
         {groups.map(group => (
           <section key={group.title} className="py-[var(--tm-space-3)] first:pt-0">

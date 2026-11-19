@@ -339,7 +339,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         return () => window.clearTimeout(timer);
     }, [loadKey, demoLoadDuration, demoHoldLoading]);
     const [activeActionClassId, setActiveActionClassId] = useState<string | null>(null);
-    const [showTeachingOnly, setShowTeachingOnly] = useState(false);
+    const [showTeachingOnly, setShowTeachingOnly] = useState(true);
     const [showGradeFilter, setShowGradeFilter] = useState(false);
     const [showParticipatingTeamsOnly, setShowParticipatingTeamsOnly] = useState(false);
     const [gradeFilter, setGradeFilter] = useState('全部');
@@ -419,7 +419,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
         setShowDisplaySettings(false);
         setShowGradeFilter(false);
         setGradeFilter('全部');
-        setShowTeachingOnly(false);
+        setShowTeachingOnly(true);
         setShowParticipatingTeamsOnly(false);
         setActiveActionTeamId(null);
         setTeamCreateOpen(false);

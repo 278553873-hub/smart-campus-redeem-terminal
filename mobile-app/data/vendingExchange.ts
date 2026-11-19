@@ -66,6 +66,7 @@ export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudent
         time, status,
         refundStatus: status === 'failed' ? 'refunded' : 'none',
         refundedAmount: status === 'failed' ? chargedAmount : 0,
+        refundReason: status === 'failed' ? 'not_dispensed' : undefined,
       };
     });
   });

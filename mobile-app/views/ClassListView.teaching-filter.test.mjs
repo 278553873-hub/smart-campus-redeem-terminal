@@ -9,6 +9,7 @@ const requireText = (source, needle, message) => {
 
 requireText(classListSource, 'teacherProfile: TeacherProfile;', '班级列表应接收教师资料，用任教关系过滤班级。');
 requireText(classListSource, 'showTeachingOnly', '班级列表应有“任教班级”的勾选状态。');
+requireText(classListSource, 'const [showTeachingOnly, setShowTeachingOnly] = useState(true);', '班级列表默认应勾选“任教班级”。');
 requireText(classListSource, 'teachingClassIds', '班级列表应基于 teachingAssignments 生成任教班级集合。');
 requireText(classListSource, 'homeroomClassIds', '任教班级应同时包含班主任班级。');
 requireText(classListSource, 'assignedClassIds', '班级列表应合并任教学科和班主任关系。');

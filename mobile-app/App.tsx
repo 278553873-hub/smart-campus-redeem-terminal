@@ -33,7 +33,7 @@ import ClassLeaderboardView from './views/ClassLeaderboardView';
 import EvaluationRecordsLogView from './views/EvaluationRecordsLogView';
 import MoralEducationCockpitView from './views/MoralEducationCockpitView';
 import RewardVerificationView from './views/reward-verification/RewardVerificationView';
-import ClassExchangeRecordView from './views/ClassExchangeRecordView';
+import ClassExchangeRecordsDemoView from './views/class-exchange-records/ClassExchangeRecordsDemoView';
 import VendingExchangeDemoView from './views/vending-exchange/VendingExchangeDemoView';
 import MedalIssuanceView from './views/MedalIssuanceView';
 import FaceUpdateView from './views/face-update/FaceUpdateView';
@@ -113,6 +113,7 @@ import {
     createCoinLedgerEntry,
     EMPTY_COIN_LEDGER_PATCH,
     expandCoinLedgerForStudent,
+    expandCoinLedgerRefundsForStudent,
     formatCoinLedgerTimeValue,
     recordCoinLedgerEntry,
     revokeCoinLedgerEntry,
@@ -138,7 +139,8 @@ import {
     GET_MOCK_CAMPUS_COIN_DETAIL,
     MOCK_BEHAVIOR_RECORDS,
 } from './constants';
-import { ClassInfo, Student, TeacherDepartment, TeacherProfile, type CoinIssuanceConfig, type GroupCardDisplaySettings, type SchoolStudentTeam, type StudentCardDisplaySettings, type StudentTeamLabel } from './types';
+import { ClassInfo, Student, TeacherDepartment, TeacherProfile, type CampusCoinConsumeRecord, type CampusCoinIssueRecord, type CoinIssuanceConfig, type GroupCardDisplaySettings, type SchoolStudentTeam, type StudentCardDisplaySettings, type StudentTeamLabel } from './types';
+import { refundVendingExchangeRecordManually, type VendingExchangeRecord } from './domain/vendingExchange';
 import {
     QUESTIONNAIRE_STORE_EVENT,
     getCompletedStudentCollectionHistory,
@@ -554,6 +556,8 @@ const App: React.FC<MobileAppProps> = ({
     const [coinIssuanceConfig, setCoinIssuanceConfig] = useState<CoinIssuanceConfig>(DEFAULT_COIN_ISSUANCE_CONFIG);
     // 成长币记录（兑换 / 清空）按班级存放运行期间的变更，历史流水由演示数据生成。
     const [coinLedgerPatchByClassId, setCoinLedgerPatchByClassId] = useState<Record<string, CampusCoinLedgerPatch>>({});
+    // 老师手动确认货柜未出货后的退币快照，按学校保存，货柜管理与班级兑换记录共用。
+    const [manualVendingRefundsBySchool, setManualVendingRefundsBySchool] = useState<Record<string, VendingExchangeRecord[]>>({});
     const [growthProfile, setGrowthProfile] = useState(() => ensureStudentGrowthProfile(activeStudent.id));
     const schoolStudentEvaluationRecords = evaluationRecordsByStudentId[activeStudent.id] ?? createInitialStudentEvaluationRecords();
     const [selectedSubject, setSelectedSubject] = useState<string>('');
@@ -670,6 +674,28 @@ const App: React.FC<MobileAppProps> = ({
     const activeStudentClassId = classes.find(classInfo => classInfo.name === activeStudent.class)?.id ?? selectedClassId;
     const activeStudentClassSize = classes.find(classInfo => classInfo.id === activeStudentClassId)?.studentCount ?? 60;
     const activeCampusCoinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(activeStudent, coinIssuanceConfig, activeStudentClassSize);
+    const manualVendingRefundsForSpace = manualVendingRefundsBySchool[activeTeacherSpace.id] ?? [];
+    const canRefundVendingRecord = (record: VendingExchangeRecord) => {
+        if (activeTeacherSpace.type !== 'school') return false;
+        if (activeTeacherSpace.role === 'administrator' || activeTeacherSpace.role === 'leader') return true;
+        return teacherProfile.homeroomClassIds.includes(record.classId)
+            || (teacherProfile.deputyHomeroomClassIds ?? []).includes(record.classId);
+    };
+    const handleRefundVendingRecord = (record: VendingExchangeRecord) => {
+        if (!canRefundVendingRecord(record)) return;
+        const refunded = refundVendingExchangeRecordManually(record, {
+            operator: teacherProfile.name,
+            time: formatCoinLedgerTimeValue(new Date()),
+        });
+        if (refunded === record) return;
+        setManualVendingRefundsBySchool(current => ({
+            ...current,
+            [activeTeacherSpace.id]: [
+                ...(current[activeTeacherSpace.id] ?? []).filter(item => item.id !== record.id),
+                refunded,
+            ],
+        }));
+    };
     const canEditOtherTeachersEvaluationRecords = teacherProfile.homeroomClassIds.includes(activeStudentClassId);
     const canEditClassEvaluationRecords = activeTeacherSpace.type === 'school'
         && ['administrator', 'leader', 'homeroomTeacher', 'teacher'].includes(activeTeacherSpace.role);
@@ -1112,11 +1138,48 @@ const App: React.FC<MobileAppProps> = ({
         }));
     };
 
-    // 学生侧成长币明细：把班级兑换与清空按学生各自的份额展开，撤回后自动消失。
+    // 学生侧按各自份额保留原支出，班级兑换撤回后另增等额退还收入。
     const activeStudentCampusCoinDetail = (() => {
-        const exchanged = expandCoinLedgerForStudent(getCoinLedgerForClass(activeStudentClassId), activeStudent.id);
-        if (exchanged.length === 0) return activeCampusCoinDetail;
-        return { ...activeCampusCoinDetail, consumeRecords: [...activeCampusCoinDetail.consumeRecords, ...exchanged] };
+        const entries = getCoinLedgerForClass(activeStudentClassId);
+        const exchanged = expandCoinLedgerForStudent(entries, activeStudent.id);
+        const refunds = expandCoinLedgerRefundsForStudent(entries, activeStudent.id);
+        // 老师手动退币的货柜单同时补回原支出与关联退还收入，学生明细可看到“已撤回”。
+        const manualVendingRefunds = manualVendingRefundsForSpace.filter(record => (
+            record.studentId === activeStudent.id && record.refundStatus === 'refunded' && record.refundedAmount > 0
+        ));
+        const manualVendingExpenses: CampusCoinConsumeRecord[] = manualVendingRefunds.map(record => ({
+            id: `vending-${record.id}`,
+            category: 'vending_exchange',
+            productName: record.productName,
+            quantity: record.quantity,
+            amount: record.chargedAmount,
+            time: record.time,
+            relatedRecordId: record.id,
+        }));
+        const manualVendingRefundIncomes: CampusCoinIssueRecord[] = manualVendingRefunds.map(record => ({
+            id: `vending-${record.id}-manual-refund`,
+            category: 'exchange_refund',
+            refundReason: 'exchange_revoked',
+            productName: record.productName,
+            quantity: record.quantity,
+            amount: record.refundedAmount,
+            time: record.refundedAt ?? record.time,
+            relatedRecordId: record.id,
+        }));
+        const existingIds = new Set([
+            ...activeCampusCoinDetail.issueRecords.map(item => item.id),
+            ...activeCampusCoinDetail.consumeRecords.map(item => item.id),
+        ]);
+        const extraExpenses = manualVendingExpenses.filter(item => !existingIds.has(item.id));
+        const extraIncomes = manualVendingRefundIncomes.filter(item => !existingIds.has(item.id));
+        if (exchanged.length === 0 && refunds.length === 0 && extraExpenses.length === 0 && extraIncomes.length === 0) {
+            return activeCampusCoinDetail;
+        }
+        return {
+            ...activeCampusCoinDetail,
+            issueRecords: [...activeCampusCoinDetail.issueRecords, ...refunds, ...extraIncomes],
+            consumeRecords: [...activeCampusCoinDetail.consumeRecords, ...exchanged, ...extraExpenses],
+        };
     })();
 
     const activeSpaceStudents = activeSpaceClasses.flatMap(classInfo => getMergedStudentsForClass(classInfo.id));
@@ -2289,9 +2352,18 @@ const App: React.FC<MobileAppProps> = ({
                             )}
 
                             {currentView === 'class_exchange_records' && selectedClassInfo && (
-                                <ClassExchangeRecordView
+                                <ClassExchangeRecordsDemoView
+                                    key={`${activeTeacherSpace.id}-${selectedClassInfo.id}`}
+                                    classInfo={selectedClassInfo}
+                                    space={activeTeacherSpace}
+                                    teacher={teacherProfile}
+                                    classes={activeSpaceClasses}
+                                    getStudents={getMergedStudentsForClass}
                                     students={getActiveRoster(selectedClassInfo.id)}
                                     entries={getCoinLedgerForClass(selectedClassInfo.id)}
+                                    manualRefunds={manualVendingRefundsForSpace}
+                                    onRefundRecord={handleRefundVendingRecord}
+                                    canRefundRecord={canRefundVendingRecord}
                                     onRevokeEntry={entryId => handleRevokeCoinLedgerEntry(selectedClassInfo.id, entryId)}
                                     onBack={goBack}
                                 />
@@ -2489,6 +2561,9 @@ const App: React.FC<MobileAppProps> = ({
                                     teacher={teacherProfile}
                                     classes={activeSpaceClasses}
                                     getStudents={getMergedStudentsForClass}
+                                    manualRefunds={manualVendingRefundsForSpace}
+                                    onRefundRecord={handleRefundVendingRecord}
+                                    canRefundRecord={canRefundVendingRecord}
                                     onBack={goBack}
                                 />
                             )}
