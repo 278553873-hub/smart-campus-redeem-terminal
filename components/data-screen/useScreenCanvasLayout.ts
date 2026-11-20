@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-export const getScreenCanvasLayout = (viewportWidth: number, viewportHeight: number, minimumWidth = 1920, minimumHeight = 920) => {
+export const getScreenCanvasLayout = (viewportWidth: number, viewportHeight: number, minimumWidth = 1920, minimumHeight = 1080) => {
   const scale = Math.max(0, Math.min(viewportWidth / minimumWidth, viewportHeight / minimumHeight));
   return { scale, canvasWidth: scale ? viewportWidth / scale : minimumWidth, canvasHeight: scale ? viewportHeight / scale : minimumHeight };
 };

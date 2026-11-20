@@ -72,7 +72,7 @@ for (const required of [
   'ariaLabel="问题分布年级筛选"',
   '<TeacherReportDonutChart',
   'seriesName="问题分布"',
-  'selectedName={selectedProblemDimension.name}',
+  'selectedName={selectedProblemDimension?.name}',
   'onCategorySelect={changeProblemDimensionByName}',
   'ariaLabel="问题分布一级指标筛选"',
   'ariaLabel={`${selectedProblemDimension.name}下的二级指标筛选`}',

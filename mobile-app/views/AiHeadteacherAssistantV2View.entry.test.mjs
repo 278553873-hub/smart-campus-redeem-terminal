@@ -222,6 +222,9 @@ requireText(viewSource, 'selectedDimension={selectedRanking?.dimension}', '周�
 requireText(viewSource, 'selectedRecords = records.filter', '周数据页评价明细应跟随一级指标筛选。');
 requireText(viewSource, "record.indicatorPath?.join(' / ')", '每笔扣分明细应展示一、二、三级完整指标路径。');
 requireText(viewSource, '>原文</div>', '每笔扣分明细应展示评价原文。');
+requireText(viewSource, 'record.images?.length', '评价明细应在记录有配图时展示图片区域。');
+requireText(viewSource, '<ImageGallery', '评价明细的配图应复用通用图片网格。');
+requireText(viewSource, 'label="评价图片"', '评价明细的配图应提供完整可访问名称。');
 assert.ok(!viewSource.includes('selectedDeduction'), '多笔扣分明细不应汇总扣分合计。');
 assert.ok(!viewSource.includes('>扣分依据</dt>'), '扣分明细不应展示扣分依据。');
 requireText(viewSource, '该周此指标暂无评价记录', '周数据页应处理一级指标无评价记录的状态。');

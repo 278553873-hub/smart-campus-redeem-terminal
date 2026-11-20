@@ -4,6 +4,7 @@ import MobileBottomSheet from '../ui/MobileBottomSheet';
 import CompactSegmentedControl from '../ui/CompactSegmentedControl';
 import IndividualEvaluationRateHelp from './IndividualEvaluationRateHelp';
 import MobileRankingBadge from '../ui/MobileRankingBadge';
+import { CalendarRange } from 'lucide-react';
 
 type RankingType = 'active' | 'low';
 
@@ -18,16 +19,21 @@ const columns = [
 ] as const;
 
 export default function TeacherUsageRankingSheet({
-    rankingType, teachers, onRankingTypeChange, onClose,
+    rankingType, teachers, periodLabel, onRankingTypeChange, onClose,
 }: {
     rankingType: RankingType;
     teachers: LeaderReportTeacherUsage[];
+    periodLabel: string;
     onRankingTypeChange: (value: RankingType) => void;
     onClose: () => void;
 }) {
     return (
         <MobileBottomSheet open title="教师使用完整榜单" onClose={onClose} size="tall" contentInset="none">
-            <div className="sticky left-0 top-0 z-30 flex h-[60px] w-full items-center bg-[var(--tm-bg-surface)] px-4">
+            <div className="sticky left-0 top-0 z-30 w-full bg-[var(--tm-bg-surface)] px-4 pb-2 pt-1">
+                <div className="flex h-6 min-w-0 items-center gap-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-secondary)]">
+                    <CalendarRange aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 truncate tabular-nums">统计时间：{periodLabel}</span>
+                </div>
                 <CompactSegmentedControl
                     shape="subtle"
                     value={rankingType}
@@ -46,7 +52,7 @@ export default function TeacherUsageRankingSheet({
                 <colgroup>{columns.map(column => <col key={column.key} style={{ width: column.width }} />)}</colgroup>
                 <thead>
                     <tr>{columns.map((column, index) => (
-                        <th key={column.key} scope="col" className={`sticky top-[60px] whitespace-nowrap bg-[var(--tm-bg-surface)] px-3 py-0 font-medium ${index === 0 ? 'left-0 z-20 text-left' : 'z-10 text-right'}`}>
+                        <th key={column.key} scope="col" className={`sticky top-[80px] whitespace-nowrap bg-[var(--tm-bg-surface)] px-3 py-0 font-medium ${index === 0 ? 'left-0 z-20 text-left' : 'z-10 text-right'}`}>
                             {column.key === 'individualEvaluationRate' ? <IndividualEvaluationRateHelp /> : column.label}
                         </th>
                     ))}</tr>

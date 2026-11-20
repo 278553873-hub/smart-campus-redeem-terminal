@@ -1,6 +1,7 @@
 import { ReportEvaluationRecordList, ReportEvaluationRecordsPage } from '../components/report/ReportEvaluationRecords';
 import { buildClassReportEvaluationRecords, getClassReportRecordRange, type ClassReportEvaluationRecord } from '../domain/classReportEvaluationRecords';
 import MobileInfoHint from '../components/ui/MobileInfoHint';
+import MobileQuoteNote from '../components/ui/MobileQuoteNote';
 import { buildReportIndicatorColorMap } from '../domain/reportIndicatorColors';
 import ReportScoreLegend from '../components/report/ReportScoreLegend';
 import { classReportColorPreviewStyle } from '../styles/teacherMobileTokens';
@@ -14,8 +15,6 @@ import {
     ArrowUpDown,
     ArrowUpNarrowWide,
     ChevronRight,
-    Quote,
-    Triangle,
 } from 'lucide-react';
 import MobileRankingBadge from '../components/ui/MobileRankingBadge';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
@@ -112,32 +111,13 @@ const ReportSection = ({ id, title, children, action, titleAccessory }: ReportSe
 );
 
 const ChartAnalysis = ({ summary, supplement }: ClassReportChartAnalysis) => (
-    <div
-        role="note"
-        aria-label="数据解析"
-        className="relative mt-3 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-soft)] px-3 py-3"
-    >
-        <Triangle
-            aria-hidden="true"
-            fill="currentColor"
-            strokeWidth={0}
-            className="absolute -top-2 left-1/2 h-3 w-4 -translate-x-1/2 text-[var(--tm-bg-surface-soft)]"
-        />
-        <div className="flex items-start gap-2">
-            <Quote
-                aria-hidden="true"
-                fill="currentColor"
-                strokeWidth={1.5}
-                className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tm-chart-data-default)]"
-            />
-            <div className="min-w-0">
-                <p className="text-[var(--tm-font-size-body)] font-semibold leading-5 text-[var(--tm-text-primary)]">{summary}</p>
-                {supplement && (
-                    <p className="mt-1 text-[var(--tm-font-size-compact)] tm-font-regular leading-5 text-[var(--tm-text-tertiary)]">{supplement}</p>
-                )}
-            </div>
-        </div>
-    </div>
+    <MobileQuoteNote
+        ariaLabel="数据解析"
+        summary={summary}
+        supplement={supplement}
+        className="mt-3"
+        iconClassName="text-[var(--tm-chart-data-default)]"
+    />
 );
 
 const formatCustomRangeLabel = (start: string, end: string) => {

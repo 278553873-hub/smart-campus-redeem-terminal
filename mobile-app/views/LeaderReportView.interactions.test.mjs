@@ -5,6 +5,7 @@ const teacherRankingSheet = readFileSync(new URL('../components/report/TeacherUs
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const reportDateTabsSource = readFileSync(new URL('../components/report/ReportDateRangeTabs.tsx', import.meta.url), 'utf8');
 const compactSegmentedSource = readFileSync(new URL('../components/ui/CompactSegmentedControl.tsx', import.meta.url), 'utf8');
+const pageHeaderSource = readFileSync(new URL('../components/ui/MobilePageHeader.tsx', import.meta.url), 'utf8');
 const tokenSource = readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 const slice = (startMarker, endMarker) => {
@@ -21,7 +22,7 @@ const donut = slice('const FiveEducationDonutChart', 'const IndicatorUsageSummar
 const teacherRows = slice('const TeacherUsageRankingHeader', 'const scoreSortTabs');
 const fullScoreSheet = source.slice(source.indexOf('教师赋分完整榜单'), source.indexOf('{showIndicatorUsageSheet'));
 const fullTeacherSheet = source.slice(source.indexOf('教师使用完整榜单'), source.indexOf('export default'));
-const reportTypeTabs = slice('const ReportTypeTabs', 'const useAnimatedNumber');
+const reportTypeTabs = slice('const reportTypeTabs:', 'const useAnimatedNumber');
 const leaderView = slice('const LeaderReportView', 'export default LeaderReportView');
 
 if ((source.match(/label: '总分'/g) ?? []).length < 1 || !source.includes("net: '总分'")) {
@@ -38,8 +39,10 @@ for (const required of [
   'ariaLabel="学生评价报表类型"',
   'w-[var(--tm-report-header-tabs-width)]',
   'semantics="tabs"',
-  'density="compact"',
+  'density="comfortable"',
   'motion="sliding"',
+  "label: '教师使用情况'",
+  "label: '五育并举进展'",
 ]) {
   if (!reportTypeTabs.includes(required)) {
     throw new Error(`学校数据报表类型需要复用一级紧凑分段控件，缺少：${required}`);
@@ -74,9 +77,12 @@ if (source.includes('--tm-report-type-indicator-') || source.includes('--tm-repo
   throw new Error('学校数据报表类型改为公共紧凑分段后，不应保留旧短线或字号 Token');
 }
 for (const [token, value] of [
-  ['--tm-report-header-tabs-width', '176px'],
+  ['--tm-report-header-tabs-width', '100%'],
   ['--tm-selection-segment-compact-track-height', '36px'],
   ['--tm-selection-segment-compact-active-height', '32px'],
+  ['--tm-selection-segment-comfortable-touch-height', '48px'],
+  ['--tm-selection-segment-comfortable-track-height', '40px'],
+  ['--tm-selection-segment-comfortable-active-height', '36px'],
   ['--tm-selection-segment-compact-font-size', '15px'],
   ['--tm-selection-segment-compact-inset', '2px'],
   ['--tm-selection-segment-compact-track-radius', 'var(--tm-radius-inner)'],
@@ -91,22 +97,20 @@ for (const [token, value] of [
 for (const required of [
   'relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar',
   'px-[var(--tm-report-page-inline)]',
-  'space-y-[var(--tm-report-card-gap)]',
+  'space-y-[var(--tm-space-3)]',
   '<ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />',
   'sticky -top-px z-30 -mt-px border-b bg-[var(--tm-page-plain-content-bg)]',
   'onScroll={handleReportScroll}',
   "? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'",
   ": 'border-transparent'",
-  '<h1 className="sr-only">学生评价报表</h1>',
-  'absolute inset-y-0 left-1/2 -translate-x-1/2',
+  '<MobilePageHeader title="学生评价报表" onBack={onBack} />',
+  'relative z-40 flex shrink-0 items-center justify-center',
   '<ReportDateRangeTabs',
   'items={leaderReportDateTabs}',
   'onChange={handleReportPeriodChange}',
   'ariaLabel="学生评价报表时间范围"',
   'className="-mx-[var(--tm-report-page-inline)]"',
   'activePeriod === \'custom\' && confirmedDateRange',
-  '教师使用',
-  '事件分布',
 ]) {
   if (!leaderView.includes(required)) {
     throw new Error(`学校数据报表顶部筛选需要使用单层静态结构并复用班级报告间距，缺少：${required}`);
@@ -138,19 +142,19 @@ if (leaderView.includes('--tm-report-period-') || leaderView.includes("replace('
 if (!leaderView.includes('relative flex h-full min-h-0 flex-col overflow-hidden')) {
   throw new Error('学校数据报表根容器必须锁定为单一内部滚动层，避免标题栏与吸顶筛选之间穿模');
 }
-if (leaderView.includes('text-[17px] font-bold tracking-tight">学生评价报表</div>')) {
-  throw new Error('学校数据报表标题栏不应继续展示页面标题，应将空间用于报表类型切换');
+if (leaderView.includes('<h1 className="sr-only">学生评价报表</h1>')) {
+  throw new Error('学校数据报表需要展示可见页面标题，不得仅供读屏');
 }
-if (!leaderView.includes('relative z-40 flex h-11 shrink-0 items-center') || leaderView.includes('relative z-40 flex h-[44px] shrink-0 items-center justify-between border-b border-[var(--tm-border-subtle)] bg-[var(--tm-page-plain-header-bg)] px-4 py-2')) {
-  throw new Error('学校数据报表标题栏必须使用完整 44 像素盒模型，不得通过上下内边距撑破高度');
+if (!pageHeaderSource.includes('relative z-40 flex h-11 shrink-0 items-center') || !leaderView.includes('<MobilePageHeader title="学生评价报表" onBack={onBack} />')) {
+  throw new Error('学校数据报表标题栏必须复用公共页面标题，保持 44 像素高度');
 }
-const reportHeaderStart = leaderView.indexOf('<div className="relative z-40');
+const reportHeaderStart = leaderView.indexOf('<MobilePageHeader');
 const reportHeaderEnd = leaderView.indexOf('<div className="relative min-h-0 flex-1', reportHeaderStart);
 const reportHeader = leaderView.slice(reportHeaderStart, reportHeaderEnd);
 if (reportHeader.includes('border-b') || reportHeader.includes('border-[var(--tm-border-subtle)]')) {
   throw new Error('学校数据报表标题栏与日期筛选之间不应显示整行分割线');
 }
-const scrollHandledViews = appSource.match(/const viewHandlesScroll = \[([^\]]+)\]/)?.[1] ?? '';
+const scrollHandledViews = appSource.match(/const viewHandlesScroll = [^\n]*\[([^\]]+)\]/)?.[1] ?? '';
 if (!scrollHandledViews.includes("'leader_report'")) {
   throw new Error('学校数据报表必须由页面内部管理滚动，禁止与 App 外层形成双滚动穿模');
 }
@@ -240,4 +244,7 @@ if (teacherRows.includes('>{rank}</span>') || fullTeacherSheet.includes('>{rank}
 }
 if (!teacherRankingSheet.includes("rankingType === 'active' && index < 3") || !teacherRankingSheet.includes('<MobileRankingBadge')) {
   throw new Error('完整榜单应仅为积极使用的前三名展示统一数字徽章');
+}
+if (!teacherRankingSheet.includes('统计时间：{periodLabel}') || !source.includes('periodLabel={getActivePeriodLabel(activePeriod, confirmedDateRange)}')) {
+  throw new Error('教师使用完整榜单应在弹窗内显示当前筛选时间，避免老师误解统计范围');
 }

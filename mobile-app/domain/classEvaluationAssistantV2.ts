@@ -17,6 +17,8 @@ export interface ClassEvaluationRecord {
     /** 历史扣分值，非负；与 scoreChange 同时存在时以 scoreChange 为准。 */
     deduction: number;
     rule: string;
+    /** 评价现场配图；没有配图时不展示图片区域。 */
+    images?: string[];
 }
 
 export const getClassEvaluationScoreChange = (record: ClassEvaluationRecord) => (

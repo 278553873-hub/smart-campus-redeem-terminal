@@ -126,8 +126,9 @@ if (appSource.includes("setStudentDetailInitialSection('overview')") || appSourc
 }
 
 requireText(dashboardSource, 'onEditBasicInfo', '学生详情总览应接收基础信息编辑入口。');
-const scrollHandledViews = appSource.match(/const viewHandlesScroll = \[([^\]]+)\]/)?.[1] ?? '';
+const scrollHandledViews = appSource.match(/const viewHandlesScroll = [^\n]*?\[([^\]]+)\]/)?.[1] ?? '';
 requireText(scrollHandledViews, "'student_detail'", '学生详情页应在手机屏幕内自行管理滚动。');
+requireText(scrollHandledViews, "'student_initial_imaging_report'", '初成像报告页应使用嵌入页面自身滚动。');
 requireText(dashboardSource, 'relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent', '学生详情根容器应占满屏幕、保持透明，并支持固定标题栏布局。');
 requireText(dashboardSource, 'min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar', '学生详情标题栏下方内容应独立滚动，避免底部抽屉挂到长页面底部。');
 requireText(dashboardSource, 'aria-label="编辑基础信息"', '学生头像编辑入口必须保留无障碍标签。');

@@ -15,6 +15,7 @@ import {
     Telescope,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import { ImageGallery, ImagePreview } from '../../components/media/ImageGallery';
 import { getAssistantGreeting, useAssistantTypewriter } from '../hooks/useAssistantTypewriter';
 import { useAssistantScrollFollow } from '../hooks/useAssistantScrollFollow';
 import AssistantClassSwitchButton from '../components/AssistantClassSwitchButton';
@@ -350,31 +351,45 @@ const ClassEvaluationHistoryPage: React.FC<{
 
 const RecordDetailList: React.FC<{
     records: ClassEvaluationRecord[];
-}> = ({ records }) => (
-    <div className="divide-y divide-[var(--tm-border-subtle)]">
-        {records.map(record => {
-            const scoreChange = getClassEvaluationScoreChange(record);
-            return (
-                <article key={record.id} className="py-4 first:pt-0">
-                    <div className="flex items-center justify-between gap-3">
-                        <time className="text-[12px] tabular-nums text-[var(--tm-text-tertiary)]" dateTime={record.date}>{formatRecordDate(record.date)}</time>
-                        <div className={`shrink-0 text-[16px] font-bold tabular-nums ${scoreChange > 0 ? 'text-[var(--tm-record-positive-text)]' : scoreChange < 0 ? 'text-[var(--tm-score-negative)]' : 'text-[var(--tm-text-secondary)]'}`}>{scoreChange > 0 ? '+' : ''}{scoreChange.toFixed(1)}分</div>
-                    </div>
+}> = ({ records }) => {
+    const [preview, setPreview] = useState<{ images: string[]; index: number } | null>(null);
 
-                    <div className="mt-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
-                        <span className="mr-2 text-[var(--tm-text-tertiary)]">指标</span>
-                        <span>{record.indicatorPath?.join(' / ') ?? [record.dimension, record.indicator].join(' / ')}</span>
-                    </div>
+    return (
+        <div className="divide-y divide-[var(--tm-border-subtle)]">
+            {preview && <ImagePreview portalRootId="teacher-mobile-overlay-root" images={preview.images} initialIndex={preview.index} label="评价图片预览" onClose={() => setPreview(null)} />}
+            {records.map(record => {
+                const scoreChange = getClassEvaluationScoreChange(record);
+                return (
+                    <article key={record.id} className="py-4 first:pt-0">
+                        <div className="flex items-center justify-between gap-3">
+                            <time className="text-[12px] tabular-nums text-[var(--tm-text-tertiary)]" dateTime={record.date}>{formatRecordDate(record.date)}</time>
+                            <div className={`shrink-0 text-[16px] font-bold tabular-nums ${scoreChange > 0 ? 'text-[var(--tm-record-positive-text)]' : scoreChange < 0 ? 'text-[var(--tm-score-negative)]' : 'text-[var(--tm-text-secondary)]'}`}>{scoreChange > 0 ? '+' : ''}{scoreChange.toFixed(1)}分</div>
+                        </div>
 
-                    <div className="mt-3">
-                        <div className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">原文</div>
-                        <p className="mt-1 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
-                    </div>
-                </article>
-            );
-        })}
-    </div>
-);
+                        <div className="mt-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
+                            <span className="mr-2 text-[var(--tm-text-tertiary)]">指标</span>
+                            <span>{record.indicatorPath?.join(' / ') ?? [record.dimension, record.indicator].join(' / ')}</span>
+                        </div>
+
+                        <div className="mt-3">
+                            <div className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">原文</div>
+                            <p className="mt-1 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
+                        </div>
+
+                        {!!record.images?.length && (
+                            <ImageGallery
+                                images={record.images}
+                                label="评价图片"
+                                className="mt-3"
+                                onSelect={index => setPreview({ images: record.images!, index })}
+                            />
+                        )}
+                    </article>
+                );
+            })}
+        </div>
+    );
+};
 
 const DimensionScoreBullet: React.FC<{
     score: number;

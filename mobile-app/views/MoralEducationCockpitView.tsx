@@ -10,6 +10,7 @@ import {
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import ClassRankingList from '../components/ui/ClassRankingList';
 import PillSelectionControl from '../components/ui/PillSelectionControl';
+import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import { toMobilePeriodOptions, periodTypeLabels } from '../components/report/ReportPeriodCalendar';
 import {
     TeacherReportDonutChart,
@@ -82,9 +83,9 @@ const getDisplaySnapshot = (
     return { ...snapshot, grades, classRanking, gradeReports };
 };
 
-const trendMetricOptions: Array<{ key: TrendMetric; label: string }> = [
-    { key: 'averageScore', label: '平均得分' },
-    { key: 'deduction', label: '累计待改进' },
+const trendMetricOptions: Array<{ value: TrendMetric; label: string }> = [
+    { value: 'averageScore', label: '平均得分' },
+    { value: 'deduction', label: '累计待改进' },
 ];
 
 const trendMetricConfig: Record<TrendMetric, {
@@ -511,10 +512,10 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                     onChange={changeProblemGrade}
                                     ariaLabel="问题分布年级筛选"
                                 />
-                                {problemGradeReport && selectedProblemDimension && selectedProblemCategory && (
+                                {problemGradeReport && problemGradeReport.problemDimensions.length > 0 ? (
                                     <div className="mt-[var(--tm-space-2)]">
                                         <TeacherReportDonutChart
-                                            ariaLabel={problemGradeReport.problemDimensions.map(item => `${item.name}扣${item.deduction}分`).join('，')}
+                                            ariaLabel={`${problemGradeReport.gradeId === 'all' ? '全校' : displaySnapshot.grades.find(grade => grade.id === problemGradeReport.gradeId)?.name ?? ''}问题分布：${problemGradeReport.problemDimensions.map(item => `${item.name}扣${item.deduction}分`).join('，')}`}
                                             data={problemGradeReport.problemDimensions.map(item => {
                                                 const dimensionIndex = problemGradeReport.dimensions.findIndex(dimension => dimension.id === item.id);
                                                 return {
@@ -526,17 +527,17 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                             optionKey={`${snapshot.period.id}-${problemGradeReport.gradeId}-problem-distribution`}
                                             seriesName="问题分布"
                                             valueSuffix="分"
-                                            selectedName={selectedProblemDimension.name}
+                                            selectedName={selectedProblemDimension?.name}
                                             className="h-64"
                                             onCategorySelect={changeProblemDimensionByName}
                                         />
-                                        <ReportTextTabs
+                                        {selectedProblemDimension && <ReportTextTabs
                                             items={problemGradeReport.problemDimensions}
                                             value={selectedProblemDimension.id}
                                             onChange={changeProblemDimension}
                                             ariaLabel="问题分布一级指标筛选"
-                                        />
-                                        <div className="mt-[var(--tm-space-3)]">
+                                        />}
+                                        {selectedProblemDimension && selectedProblemCategory && <div className="mt-[var(--tm-space-3)]">
                                             <ReportSegmentTabs
                                                 items={selectedProblemDimension.categories}
                                                 value={selectedProblemCategory.id}
@@ -561,31 +562,20 @@ const MoralEducationCockpitView: React.FC<MoralEducationCockpitViewProps> = ({ o
                                                     </div>
                                                 ))}
                                             </div>
-                                        </div>
+                                        </div>}
                                     </div>
-                                )}
+                                ) : <p className="py-[var(--tm-space-6)] text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]">本周期暂无待改进记录</p>}
                             </section>
 
                             <section className={reportCardClassName}>
-                                <SectionHeader
-                                    title="周期趋势"
-                                    action={(
-                                        <div className="flex h-9 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-1">
-                                            {trendMetricOptions.map(option => (
-                                                <button
-                                                    key={option.key}
-                                                    type="button"
-                                                    aria-pressed={trendMetric === option.key}
-                                                    onClick={() => setTrendMetric(option.key)}
-                                                    className={`min-w-[66px] rounded-[var(--tm-form-segment-active-radius)] px-2 text-[11px] font-semibold ${trendMetric === option.key
-                                                        ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-control)]'
-                                                        : 'text-[var(--tm-text-secondary)]'}`}
-                                                >
-                                                    {option.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
+                                <SectionHeader title="周期趋势" />
+                                <CompactSegmentedControl
+                                    value={trendMetric}
+                                    items={trendMetricOptions}
+                                    onChange={setTrendMetric}
+                                    ariaLabel="周期趋势指标"
+                                    semantics="tabs"
+                                    fullWidth
                                 />
                                 <TeacherReportLineChart
                                     ariaLabel={`${periodTypeNames[reportPeriodType]}度${trendConfig.label}趋势`}

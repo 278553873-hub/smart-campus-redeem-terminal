@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const viewSource = fs.readFileSync(new URL('./ClassReportView.tsx', import.meta.url), 'utf8');
+const quoteNoteSource = fs.readFileSync(new URL('../components/ui/MobileQuoteNote.tsx', import.meta.url), 'utf8');
 const chartSource = fs.readFileSync(new URL('../components/report/TeacherReportChart.tsx', import.meta.url), 'utf8');
 const recordComparisonSource = fs.readFileSync(new URL('../components/report/RecordDistributionComparison.tsx', import.meta.url), 'utf8');
 const tokenSource = fs.readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
@@ -69,9 +70,9 @@ assert.equal((viewSource.match(/<ChartAnalysis\b/g) ?? []).length, 3, '三个图
 assert.ok(viewSource.includes('<ChartAnalysis {...recordDistributionAnalysis} />'), '评价记录分布应展示总结与补充。');
 assert.ok(viewSource.includes('<ChartAnalysis {...educationScoreAnalysis} />'), '五育得分分布应展示总结与补充。');
 assert.ok(viewSource.includes('<ChartAnalysis {...educationEventAnalysis} />'), '五育事件分布应展示总结与补充。');
-assert.ok(viewSource.includes('role="note"') && viewSource.includes('aria-label="数据解析"'), '数据解析提示块应具备可识别的无障碍语义。');
-assert.ok(viewSource.includes('font-semibold') && viewSource.includes('tm-font-regular'), '图表解析应使用较强字重的总结和常规字重的补充。');
-assert.ok(viewSource.includes('<Quote') && viewSource.includes('<Triangle'), '图表解析应使用图标库还原引用符号与顶部指向。');
+assert.ok(viewSource.includes('<MobileQuoteNote') && viewSource.includes('ariaLabel="数据解析"') && quoteNoteSource.includes('role="note"'), '数据解析应复用具有提示语义的引用组件。');
+assert.ok(quoteNoteSource.includes('font-semibold') && quoteNoteSource.includes('tm-font-regular'), '图表解析应使用较强字重的总结和常规字重的补充。');
+assert.ok(quoteNoteSource.includes('<Quote') && quoteNoteSource.includes('<Triangle'), '图表解析应使用图标库还原引用符号与顶部指向。');
 assert.ok(!viewSource.includes('chartSummaryClass'), '图表解析不应继续使用普通段落样式。');
 
 assert.ok(!viewSource.includes('{classInfo.name}') && !viewSource.includes('{totalStudents}名学生'), '班级报告内容区不应重复展示班级名称和班级人数。');

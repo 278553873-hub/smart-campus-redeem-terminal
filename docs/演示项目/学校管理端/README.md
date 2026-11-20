@@ -1,5 +1,6 @@
 # 学校 PC 端文档
 
+- [学校基本信息设置](学校基本信息设置.md)
 - [成绩管理页面计划](实施计划/2026-05-18-grade-management-page.md)
 - [成绩管理考试视角计划](实施计划/2026-05-21-grade-exam-perspective.md)
 - [学期报告配置计划](实施计划/2026-05-26-pc-term-report-config.md)

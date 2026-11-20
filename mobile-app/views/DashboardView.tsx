@@ -13,6 +13,7 @@ import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
 import StudentTermSelector, { type StudentTermOption } from '../components/student-detail/StudentTermSelector';
+import { STUDENT_INITIAL_IMAGING_REPORT, isInitialImagingReportInPeriod } from '../data/studentInitialImagingReport';
 import StudentEvaluationRecordsView, { type StudentEvaluationRecord } from './StudentEvaluationRecordsView';
 import { EvaluationRecordDetailContent } from './student-evaluation/EvaluationRecordDetailView';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
@@ -27,6 +28,7 @@ interface DashboardViewProps {
     scores: ScoreItem[];
     growthReports: GrowthReportItem[];
     onViewTermReport?: () => void; // New optional prop
+    onViewInitialImagingReport?: () => void;
     onBack: () => void;
     onEditBasicInfo: () => void;
     onUpdateStudentStatus: (student: Student, status: Student['status']) => void;
@@ -294,6 +296,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     scores,
     growthReports,
     onViewTermReport,
+    onViewInitialImagingReport,
     onBack,
     onEditBasicInfo,
     onUpdateStudentStatus,
@@ -453,6 +456,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <StudentTermSelector value={selectedTerm} options={STUDENT_TERM_OPTIONS} onChange={setSelectedTerm} ariaLabel="选择成长报告学期" />
 
             <section className="overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-card)]">
+                {onViewInitialImagingReport && isInitialImagingReportInPeriod(selectedTermOption.startDate, selectedTermOption.endDate) && <button
+                    type="button"
+                    onClick={onViewInitialImagingReport}
+                    className="flex min-h-[76px] w-full items-center justify-between gap-3 border-b border-[var(--tm-border-subtle)] px-4 py-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
+                >
+                    <span className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><ClipboardList size={18} aria-hidden="true" /></span>
+                        <span className="min-w-0"><span className="block text-sm font-semibold leading-6 text-[var(--tm-text-primary)]">{STUDENT_INITIAL_IMAGING_REPORT.title}</span><span className="mt-0.5 block text-xs text-[var(--tm-text-secondary)]">{STUDENT_INITIAL_IMAGING_REPORT.exampleLabel}</span></span>
+                    </span>
+                    <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
+                </button>}
                 <button
                     onClick={() => toggleSection('term_report')}
                     className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"

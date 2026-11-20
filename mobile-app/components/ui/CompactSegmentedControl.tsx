@@ -15,7 +15,7 @@ interface CompactSegmentedControlProps<TValue extends string> {
   sizing?: 'equal' | 'content';
   className?: string;
   semantics?: 'tabs' | 'group';
-  density?: 'default' | 'compact';
+  density?: 'default' | 'compact' | 'comfortable';
   motion?: 'static' | 'sliding';
   variant?: 'default' | 'settings';
   shape?: 'default' | 'subtle';
@@ -62,10 +62,12 @@ const CompactSegmentedControl = <TValue extends string,>({
   const precedingWeight = items.slice(0, selectedIndex).reduce((sum, item) => sum + (item.weight ?? 1), 0);
   const settingsVariant = variant === 'settings';
   const compact = !settingsVariant && density === 'compact';
+  const comfortable = !settingsVariant && density === 'comfortable';
+  const insetTrack = compact || comfortable;
   const subtleShape = shape === 'subtle';
   const trackRadiusStyle = subtleShape ? { borderRadius: 'var(--tm-form-control-radius)' } : undefined;
   const activeRadiusStyle = subtleShape ? {
-    borderRadius: compact
+    borderRadius: insetTrack
       ? 'var(--tm-form-segment-compact-active-radius)'
       : 'var(--tm-form-segment-active-radius)',
   } : undefined;
@@ -75,17 +77,30 @@ const CompactSegmentedControl = <TValue extends string,>({
       ? `calc(var(--tm-selection-segment-settings-item-width) * ${items.length})`
       : undefined
     : undefined;
-  const activeHeightClass = compact
-    ? 'h-[var(--tm-selection-segment-compact-active-height)]'
-    : 'h-[var(--tm-selection-segment-visible-height)]';
-  const motionInsetClass = compact
+  const touchHeightClass = comfortable
+    ? 'h-[var(--tm-selection-segment-comfortable-touch-height)]'
+    : 'h-[var(--tm-selection-touch-height)]';
+  const touchMinHeightClass = comfortable
+    ? 'min-h-[var(--tm-selection-segment-comfortable-touch-height)]'
+    : 'min-h-[var(--tm-selection-touch-height)]';
+  const trackHeightClass = comfortable
+    ? 'h-[var(--tm-selection-segment-comfortable-track-height)]'
+    : compact
+      ? 'h-[var(--tm-selection-segment-compact-track-height)]'
+      : 'h-[var(--tm-selection-touch-height)]';
+  const activeHeightClass = comfortable
+    ? 'h-[var(--tm-selection-segment-comfortable-active-height)]'
+    : compact
+      ? 'h-[var(--tm-selection-segment-compact-active-height)]'
+      : 'h-[var(--tm-selection-segment-visible-height)]';
+  const motionInsetClass = insetTrack
     ? 'px-[var(--tm-selection-segment-compact-inset)]'
     : 'px-[var(--tm-space-1)]';
 
   return (
     <div
       ref={rootRef}
-      className={`${fullWidth ? 'grid w-full' : 'inline-grid'} relative h-[var(--tm-selection-touch-height)] items-center ${compact ? 'text-[length:var(--tm-selection-segment-compact-font-size)]' : 'text-[length:var(--tm-font-size-body)]'} ${contentSizing ? 'px-[var(--tm-space-1)]' : ''} ${className}`}
+      className={`${fullWidth ? 'grid w-full' : 'inline-grid'} relative ${touchHeightClass} items-center ${insetTrack ? 'text-[length:var(--tm-selection-segment-compact-font-size)]' : 'text-[length:var(--tm-font-size-body)]'} ${contentSizing ? 'px-[var(--tm-space-1)]' : ''} ${className}`}
       style={{
         gridTemplateColumns: contentSizing ? `repeat(${items.length}, max-content)` : items.map(item => `minmax(0, ${item.weight ?? 1}fr)`).join(' '),
         width: contentSizing ? 'max-content' : fullWidth ? undefined : settingsWidth,
@@ -96,7 +111,7 @@ const CompactSegmentedControl = <TValue extends string,>({
       <span
         aria-hidden="true"
         style={trackRadiusStyle}
-        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${compact ? 'h-[var(--tm-selection-segment-compact-track-height)] rounded-[var(--tm-selection-segment-compact-track-radius)] bg-[var(--tm-selection-segment-track-bg)]' : 'h-[var(--tm-selection-touch-height)] rounded-[var(--tm-selection-segment-track-radius)] bg-[var(--tm-selection-segment-track-bg)]'}`}
+        className={`pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 ${trackHeightClass} bg-[var(--tm-selection-segment-track-bg)] ${insetTrack ? 'rounded-[var(--tm-selection-segment-compact-track-radius)]' : 'rounded-[var(--tm-selection-segment-track-radius)]'}`}
       />
       {effectiveMotion === 'sliding' && (
         <span
@@ -113,7 +128,7 @@ const CompactSegmentedControl = <TValue extends string,>({
           >
             <span
               style={activeRadiusStyle}
-              className={`block h-full bg-[var(--tm-selection-segment-active-bg)] [box-shadow:var(--tm-selection-segment-active-shadow)] ${contentSizing ? 'rounded-[var(--tm-selection-segment-active-radius)]' : compact ? 'mx-[var(--tm-selection-segment-compact-inset)] rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'mx-[var(--tm-space-1)] rounded-[var(--tm-selection-segment-active-radius)]'}`}
+              className={`block h-full bg-[var(--tm-selection-segment-active-bg)] [box-shadow:var(--tm-selection-segment-active-shadow)] ${contentSizing ? 'rounded-[var(--tm-selection-segment-active-radius)]' : insetTrack ? 'mx-[var(--tm-selection-segment-compact-inset)] rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'mx-[var(--tm-space-1)] rounded-[var(--tm-selection-segment-active-radius)]'}`}
             />
           </span>
         </span>
@@ -135,9 +150,9 @@ const CompactSegmentedControl = <TValue extends string,>({
             aria-pressed={semantics === 'group' ? selected : undefined}
             disabled={disabled}
             onClick={() => !disabled && onChange(item.value)}
-            className={`${fullWidth || settingsVariant ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${disabled ? 'cursor-not-allowed opacity-75' : ''} ${contentSizing ? 'px-0' : effectiveMotion === 'sliding' ? motionInsetClass : (compact ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
+            className={`${fullWidth || settingsVariant ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex ${touchMinHeightClass} items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${disabled ? 'cursor-not-allowed opacity-75' : ''} ${contentSizing ? 'px-0' : effectiveMotion === 'sliding' ? motionInsetClass : (insetTrack ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
           >
-            <span style={activeRadiusStyle} className={`relative z-10 flex w-full items-center justify-center ${contentSizing ? 'whitespace-nowrap px-[var(--tm-space-3)]' : settingsVariant ? 'whitespace-nowrap px-[var(--tm-space-1)]' : 'px-[var(--tm-space-2)]'} [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${compact ? 'rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'rounded-[var(--tm-radius-control)]'} ${effectiveMotion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
+            <span style={activeRadiusStyle} className={`relative z-10 flex w-full items-center justify-center ${contentSizing ? 'whitespace-nowrap px-[var(--tm-space-3)]' : settingsVariant ? 'whitespace-nowrap px-[var(--tm-space-1)]' : 'px-[var(--tm-space-2)]'} [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${insetTrack ? 'rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'rounded-[var(--tm-radius-control)]'} ${effectiveMotion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
               {item.label}
             </span>
           </button>

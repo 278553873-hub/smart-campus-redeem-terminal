@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import { phoneRadius, phoneTone, type PhoneTone } from '../../styles/teacherMobileTokens';
 
 type IconBadgeSize = 'sm' | 'md' | 'lg' | 'xl';
-type IconBadgeShape = 'rounded' | 'circle';
+type IconBadgeShape = 'rounded' | 'circle' | 'subtle';
 
 interface IconBadgeProps {
   icon: LucideIcon;
@@ -28,7 +28,7 @@ export const IconBadge: React.FC<IconBadgeProps> = ({
   className = '',
 }) => {
   const sizing = sizeClass[size];
-  const radius = shape === 'circle' ? phoneRadius.full : size === 'sm' ? phoneRadius.md : phoneRadius.lg;
+  const radius = shape === 'circle' ? phoneRadius.full : shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : size === 'sm' ? phoneRadius.md : phoneRadius.lg;
 
   return (
     <div className={`flex shrink-0 items-center justify-center border ${sizing.box} ${radius} ${phoneTone[tone].box} ${className}`}>

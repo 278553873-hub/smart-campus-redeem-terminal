@@ -2,6 +2,12 @@ export type CustomerEdition = 'personal' | 'school' | 'organization';
 export type OrganizationKind = 'city' | 'district' | 'group';
 export const schoolTypes = ['小学', '初中', '高中', '九年一贯制', '十二年一贯制', '幼儿园'] as const;
 export type SchoolAuthorizationStatus = '合作中' | '已到期' | '未开始';
+export type OrganizationAuthorizationStatus = SchoolAuthorizationStatus | '待开通' | '未配置';
+
+export interface AuthorizationPeriod {
+  authorizationStartsAt: string;
+  authorizationEndsAt: string;
+}
 
 export interface PersonalCustomer {
   id: string;
@@ -34,7 +40,7 @@ export interface SchoolCustomer {
   status: '已开通' | '已停用';
 }
 
-export interface OrganizationCustomer {
+export interface OrganizationCustomer extends AuthorizationPeriod {
   id: string;
   name: string;
   kind: OrganizationKind;
@@ -46,7 +52,7 @@ export interface OrganizationCustomer {
   createdAt: string;
 }
 
-export interface OrganizationDraft {
+export interface OrganizationDraft extends AuthorizationPeriod {
   name: string;
   kind: OrganizationKind;
   administrator: string;
@@ -73,6 +79,7 @@ export const organizationKindLabels: Record<OrganizationKind, string> = { city: 
 
 export const createOrganizationDraft = (): OrganizationDraft => ({
   name: '', kind: 'district', administrator: '', phone: '', schoolIds: [], indicatorId: '',
+  authorizationStartsAt: '', authorizationEndsAt: '',
 });
 
 export const indicatorSchemes: IndicatorScheme[] = [
@@ -115,24 +122,48 @@ export const createOperationsCustomers = (): OperationsCustomers => ({
     { id: '1047', name: '青禾第三小学', region: '四川省 / 成都市 / 金牛区', administrator: '钱老师', phone: '13900000007', schoolType: '小学', level: 1, teacherCount: 28, classCount: 12, studentCount: 480, authorizationStartsAt: '2025-09-01', authorizationEndsAt: '2026-08-31', indicatorId: 'primary-v1', status: '已停用' },
   ],
   organizations: [
-    { id: 'Q1003', name: '成都市教育局', kind: 'city', administrator: '刘主任', phone: '13700000003', schoolIds: ['1053', '1052', '1051', '1050'], indicatorId: 'primary-v1', status: '已开通', createdAt: '2026-11-16' },
-    { id: 'Q1002', name: '成都市高新区', kind: 'district', administrator: '张主任', phone: '13700000001', schoolIds: ['1053', '1052'], indicatorId: 'primary-v1', status: '已开通', createdAt: '2026-11-12' },
-    { id: 'G1001', name: '明远教育集团', kind: 'group', administrator: '陈主任', phone: '13700000002', schoolIds: ['1051', '1050'], indicatorId: 'primary-v1', status: '已开通', createdAt: '2026-11-05' },
+    { id: 'Q1003', name: '成都市教育局', kind: 'city', administrator: '刘主任', phone: '13700000003', schoolIds: ['1053', '1052', '1051', '1050'], indicatorId: 'primary-v1', authorizationStartsAt: '2026-11-16', authorizationEndsAt: '2027-11-15', status: '已开通', createdAt: '2026-11-16' },
+    { id: 'Q1002', name: '成都市高新区', kind: 'district', administrator: '张主任', phone: '13700000001', schoolIds: ['1053', '1052'], indicatorId: 'primary-v1', authorizationStartsAt: '2026-11-12', authorizationEndsAt: '2027-11-11', status: '已开通', createdAt: '2026-11-12' },
+    { id: 'G1001', name: '明远教育集团', kind: 'group', administrator: '陈主任', phone: '13700000002', schoolIds: ['1051', '1050'], indicatorId: 'primary-v1', authorizationStartsAt: '2026-12-01', authorizationEndsAt: '2027-11-30', status: '已开通', createdAt: '2026-11-05' },
   ],
 });
 
 export const maskPhone = (phone: string) => phone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2');
 
 /** 授权按中国时区的自然日计算，结束日期当天仍为合作中。 */
-export const getSchoolAuthorizationStatus = (
-  school: Pick<SchoolCustomer, 'authorizationStartsAt' | 'authorizationEndsAt'>,
+const getAuthorizationStatus = (
+  period: AuthorizationPeriod,
   now = new Date(),
 ): SchoolAuthorizationStatus => {
   const date = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
-  if (date < school.authorizationStartsAt) return '未开始';
-  if (date > school.authorizationEndsAt) return '已到期';
+  if (date < period.authorizationStartsAt) return '未开始';
+  if (date > period.authorizationEndsAt) return '已到期';
   return '合作中';
 };
+
+export const getSchoolAuthorizationStatus = getAuthorizationStatus;
+
+export const getOrganizationAuthorizationStatus = (organization: OrganizationCustomer, now = new Date()): OrganizationAuthorizationStatus => {
+  if (organization.status === '待开通') return '待开通';
+  if (!organization.authorizationStartsAt || !organization.authorizationEndsAt) return '未配置';
+  return getAuthorizationStatus(organization, now);
+};
+
+/** 每个组织内部按学校编号去重汇总；草稿仅展示拟关联学校数。 */
+export const getOrganizationStatistics = (data: OperationsCustomers, organization: OrganizationCustomer) => {
+  const schoolIds = new Set(organization.schoolIds);
+  const schools = data.schools.filter(school => schoolIds.has(school.id));
+  const active = organization.status === '已开通';
+  return {
+    schoolCount: schools.length,
+    teacherCount: active ? schools.reduce((total, school) => total + school.teacherCount, 0) : null,
+    classCount: active ? schools.reduce((total, school) => total + school.classCount, 0) : null,
+    studentCount: active ? schools.reduce((total, school) => total + school.studentCount, 0) : null,
+  };
+};
+
+const isAuthorizationDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)
+  && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 
 export const getSchoolOrganizations = (data: OperationsCustomers, schoolId: string) => (
   data.organizations.filter(item => item.status === '已开通' && item.schoolIds.includes(schoolId))
@@ -147,6 +178,8 @@ export const validateOrganizationDraft = (draft: OrganizationDraft, data: Operat
   if (!draft.administrator.trim()) errors.administrator = '请输入管理员姓名';
   else if (draft.administrator.trim().length > 30) errors.administrator = '管理员姓名不能超过30个字';
   if (!/^1\d{10}$/.test(draft.phone.trim())) errors.phone = '请输入11位管理员手机号';
+  if (!isAuthorizationDate(draft.authorizationStartsAt) || !isAuthorizationDate(draft.authorizationEndsAt)) errors.authorizationStartsAt = '请选择完整的授权起止日期';
+  else if (draft.authorizationStartsAt > draft.authorizationEndsAt) errors.authorizationStartsAt = '授权结束日期不能早于开始日期';
   if (!draft.schoolIds.length) errors.schoolIds = '请至少选择一所关联学校';
   else if (draft.schoolIds.some(id => !data.schools.some(school => school.id === id && school.status === '已开通'))) errors.schoolIds = '所选学校不可用，请重新选择已开通的学校';
   if (!indicatorSchemes.some(item => item.id === draft.indicatorId)) errors.indicatorId = '请选择统一评价指标方案';

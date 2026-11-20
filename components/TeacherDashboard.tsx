@@ -1,6 +1,6 @@
 import { GrowthCoinIcon, useGrowthCoinTerms } from './GrowthCoinBranding';
 import React, { useEffect, useState } from 'react';
-import { Alert, Breadcrumb, Button, Cascader, DatePicker, Input, InputNumber, Message, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Tabs, Typography, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
+import { Alert, Breadcrumb, Button, Cascader, DatePicker, Input, InputNumber, Message, Modal, Pagination, Popover, Radio, Select as ArcoSelect, Switch, Table, Tabs, Typography, Checkbox, Popconfirm, Upload as ArcoUpload } from '@arco-design/web-react';
 import {
     LayoutDashboard, FileText, ClipboardList, PenTool,
     Settings, Users, BookOpen, Database, Download,
@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import HealthDataImportView from './HealthDataImportView';
 import GrowthDataSettingsView from './GrowthDataSettingsView';
+import SchoolBasicInfoSettings from './SchoolBasicInfoSettings';
+import { TEACHER_SPACE_OPTIONS } from '../mobile-app/data/teacherSpaces';
 import TeacherCampaignPreview from '../mobile-app/components/TeacherCampaignPreview';
 import { PasswordRevealButton } from '../mobile-app/components/ui/PasswordRevealButton';
 import CoinIssuanceSettings from './CoinIssuanceSettings';
@@ -204,6 +206,26 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     });
 
     const [activeMenu, setActiveMenu] = useState('货柜超市');
+    const [schoolBasicInfoDirty, setSchoolBasicInfoDirty] = useState(false);
+    const [schoolBasicInfoBusy, setSchoolBasicInfoBusy] = useState(false);
+
+    const selectMenu = (menu: string) => {
+        if (menu === activeMenu) return;
+        if (activeMenu === '学校基本信息' && schoolBasicInfoBusy) {
+            Message.info('Logo正在处理，请稍候');
+            return;
+        }
+        if (activeMenu === '学校基本信息' && schoolBasicInfoDirty) {
+            Modal.confirm({
+                title: '有未保存的修改',
+                content: '离开后，本次未保存的修改将丢失。',
+                okText: '放弃修改', cancelText: '继续编辑',
+                onOk: () => { setSchoolBasicInfoDirty(false); setActiveMenu(menu); },
+            });
+            return;
+        }
+        setActiveMenu(menu);
+    };
 
     const toggleMenu = (title: string) => {
         setExpandedMenus(prev => ({ ...prev, [title]: !prev[title] }));
@@ -224,7 +246,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         },
         {
             title: '基础信息配置', icon: <Settings size={18} />,
-            children: ['学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理']
+            children: ['学校基本信息', '学期管理', '部门管理', '科目管理', '年级管理', '班级管理', '教师管理', '角色管理', '学生管理', '学生成绩管理', '考试等级管理']
         },
         {
             title: '报告配置', icon: <FileText size={18} />,
@@ -1680,7 +1702,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
         menu: menu.title,
         pages: menu.children.map(page => ({
             page,
-            buttons: ['查看', '新增', '编辑', '删除', '导出']
+            buttons: page === '学校基本信息' ? ['查看', '编辑'] : ['查看', '新增', '编辑', '删除', '导出']
         }))
     }));
 
@@ -2985,7 +3007,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                                     {menu.children.map((child, cIdx) => (
                                         <div
                                             key={cIdx}
-                                            onClick={() => setActiveMenu(child)}
+                                            onClick={() => selectMenu(child)}
                                             className={`pl-12 pr-6 py-2 text-[13px] cursor-pointer transition-colors ${(activeMenu === child ||
                                                 (child === '终端设备' && (activeMenu === '终端设备管理' || activeMenu === '设备基础配置')) ||
                                                 (child === '货柜超市' && activeMenu === '货柜超市管理') ||
@@ -4851,6 +4873,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         </div>
                     )}
 
+                    {activeMenu === '学校基本信息' && <SchoolBasicInfoSettings schoolId="school-star" schoolName={TEACHER_SPACE_OPTIONS.find(space => space.id === 'school-star')?.title ?? '星河实验学校'} onDirtyChange={setSchoolBasicInfoDirty} onBusyChange={setSchoolBasicInfoBusy} />}
                     {activeMenu === '成长数据设置' && <GrowthDataSettingsView spaceId="school-star" />}
                     {activeMenu === '成长数据导入' && <HealthDataImportView spaceId="school-star" />}
 

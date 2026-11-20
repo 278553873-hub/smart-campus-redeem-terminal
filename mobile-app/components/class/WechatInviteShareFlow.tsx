@@ -221,7 +221,7 @@ const WechatInviteShareFlow: React.FC<WechatInviteShareFlowProps> = ({ open, tar
 
       {step === 'confirm' && !sent && (
         <div className="absolute inset-0 z-10 flex flex-col justify-end">
-          <button type="button" aria-label="取消发送" onClick={backToPicker} className="absolute inset-0 bg-black/50" />
+          <button type="button" aria-label="取消发送" onClick={backToPicker} className="absolute inset-0 bg-[var(--tm-mask)]" />
           <section
             role="dialog"
             aria-label="发送给"

@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import {
     CalendarRange,
-    ChevronLeft,
     ChevronRight,
     ClipboardList,
     Info,
@@ -39,6 +38,7 @@ import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
 import TeacherUsageRankingSheet from '../components/report/TeacherUsageRankingSheet';
 import IndividualEvaluationRateHelp from '../components/report/IndividualEvaluationRateHelp';
 import MobileRankingBadge from '../components/ui/MobileRankingBadge';
+import MobilePageHeader from '../components/ui/MobilePageHeader';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
@@ -96,14 +96,19 @@ const getCoveragePercentageTone = (percent: number) => coveragePercentageToneMap
 const getCoverageChartColor = (percent: number) => teacherReportChartSemantic.percentage[getPercentageLevel(percent)].fill;
 
 const reportTypeTabs: { value: ReportTab; label: string }[] = [
-    { value: 'teacher', label: '教师使用' },
-    { value: 'event', label: '事件分布' },
+    { value: 'teacher', label: '教师使用情况' },
+    { value: 'event', label: '五育并举进展' },
 ];
 
 const leaderReportDateTabs: { value: LeaderReportPeriod; label: string }[] = [
     ...leaderReportPeriods.map(period => ({ value: period.key, label: period.label })),
     { value: 'custom', label: '自定义' },
 ];
+
+const getActivePeriodLabel = (period: LeaderReportPeriod, range: LeaderReportDateRange | null) => {
+    if (period === 'custom') return range ? `自定义 ${range.startDate} 至 ${range.endDate}` : '自定义';
+    return leaderReportPeriods.find(item => item.key === period)?.label ?? '';
+};
 
 const ReportTypeTabs = ({
     value,
@@ -120,7 +125,7 @@ const ReportTypeTabs = ({
         ariaLabel="学生评价报表类型"
         className="w-[var(--tm-report-header-tabs-width)]"
         semantics="tabs"
-        density="compact"
+        density="comfortable"
         motion="sliding"
     />
 );
@@ -218,14 +223,17 @@ const MetricUnit = ({
         brand: {
             icon: 'bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary)]',
             bar: 'bg-[var(--tm-brand-primary)]',
+            track: 'bg-[var(--tm-brand-primary-soft)]',
         },
         secondary: {
             icon: 'bg-[var(--tm-brand-secondary-soft)] text-[var(--tm-brand-secondary-strong)]',
             bar: 'bg-[var(--tm-brand-secondary)]',
+            track: 'bg-[var(--tm-brand-secondary-soft)]',
         },
         reward: {
             icon: 'bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]',
             bar: 'bg-[var(--tm-brand-reward)]',
+            track: 'bg-[var(--tm-brand-reward-soft)]',
         },
     }[tone];
     const showProgress = percent !== undefined;
@@ -234,7 +242,7 @@ const MetricUnit = ({
     const numberReplayKey = showProgress ? animationKey : `${animationKey ?? label}-value`;
 
     return (
-        <div className="min-w-0 rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface-soft)] p-3.5">
+        <div className="min-w-0">
             <div className="flex items-center justify-between gap-2">
                 <div className="truncate text-xs font-medium text-[var(--tm-text-secondary)]">{label}</div>
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${theme.icon}`}>
@@ -242,7 +250,7 @@ const MetricUnit = ({
                 </div>
             </div>
             <div className="mt-3">
-                <div className="flex items-end justify-between gap-2">
+                <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
                     <div className="text-3xl font-bold leading-none tracking-normal text-[var(--tm-text-primary)]">
                         {showProgress ? `${displayedPercent}%` : <AnimatedNumber value={Number(value ?? 0)} replayKey={numberReplayKey} />}
                     </div>
@@ -253,7 +261,7 @@ const MetricUnit = ({
                     )}
                 </div>
                 {showProgress && (
-                    <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-[var(--tm-bg-surface-muted)]" aria-label={`${label}进度${displayedPercent}%`}>
+                    <div className={`mt-3 h-1.5 overflow-hidden rounded-full ${theme.track}`} aria-label={`${label}进度${displayedPercent}%`}>
                         <div className={`h-full rounded-full ${theme.bar}`} style={{ width: `${displayedPercent}%` }} />
                     </div>
                 )}
@@ -265,12 +273,12 @@ const MetricUnit = ({
 const OverviewCard = ({ snapshot, animationKey }: { snapshot: LeaderReportSnapshot | null; animationKey: string }) => (
     <section className={reportCardClassName}>
         <h2 className="text-[17px] font-semibold text-[var(--tm-text-primary)]">数据总览</h2>
-        <div className="mt-3 grid grid-cols-1 gap-3">
-            <div className="grid grid-cols-2 gap-3">
+        <div className="mt-[var(--tm-report-card-content-gap)] grid grid-cols-1 gap-[var(--tm-space-6)]">
+            <div className="grid grid-cols-2 gap-[var(--tm-space-6)]">
                 <MetricUnit label="使用教师" percent={snapshot?.summary.teacherPercent ?? 0} fraction={`${snapshot?.summary.activeTeachers ?? 0} / ${snapshot?.summary.totalTeachers ?? 0}`} icon={UserCheck} tone="brand" animationKey={`${animationKey}-teacher`} />
                 <MetricUnit label="覆盖学生" percent={snapshot?.summary.studentPercent ?? 0} fraction={`${snapshot?.summary.totalCoveredStudents ?? 0} / ${snapshot?.summary.totalStudents ?? 0}`} icon={Users} tone="secondary" animationKey={`${animationKey}-student`} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-[var(--tm-space-6)]">
                 <MetricUnit label="评价次数" value={`${snapshot?.summary.totalRecords ?? 0}`} icon={ClipboardList} tone="reward" animationKey={`${animationKey}-records`} />
                 <MetricUnit label="评价条数" value={`${snapshot?.summary.totalEvaluationCount ?? 0}`} icon={ClipboardList} tone="secondary" animationKey={`${animationKey}-evaluation-count`} />
             </div>
@@ -2170,15 +2178,9 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
             className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]"
             style={teacherBrandCssVariables as React.CSSProperties}
         >
-            <div className="relative z-40 flex h-11 shrink-0 items-center justify-between bg-[var(--tm-page-plain-header-bg)] px-4">
-                <button onClick={onBack} aria-label="返回" className="flex h-10 w-10 -ml-2 items-center justify-center rounded-full text-[var(--tm-text-secondary)] transition-colors active:bg-[var(--tm-bg-surface-muted)]">
-                    <ChevronLeft className="h-5 w-5" />
-                </button>
-                <h1 className="sr-only">学生评价报表</h1>
-                <div className="absolute inset-y-0 left-1/2 -translate-x-1/2">
-                    <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
-                </div>
-                <div className="w-10" aria-hidden="true" />
+            <MobilePageHeader title="学生评价报表" onBack={onBack} />
+            <div className="relative z-40 flex shrink-0 items-center justify-center bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]">
+                <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
             </div>
 
             <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
@@ -2506,6 +2508,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
                 <TeacherUsageRankingSheet
                     rankingType={fullRankingType}
                     teachers={fullRanking}
+                    periodLabel={getActivePeriodLabel(activePeriod, confirmedDateRange)}
                     onRankingTypeChange={setFullRankingType}
                     onClose={() => setFullRankingType(null)}
                 />

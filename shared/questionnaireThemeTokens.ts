@@ -4,6 +4,7 @@ import sportsHeader from '../mobile-app/assets/resources/highlight-defaults/dail
 import creativityHeader from '../mobile-app/assets/resources/highlight-defaults/daily-art-creativity.png';
 import ambientFlowHeader from '../mobile-app/assets/resources/header-defaults/ambient-flow.png';
 import ambientTechHeader from '../mobile-app/assets/resources/header-defaults/ambient-tech.png';
+import { overlaySemantic } from './overlayTokens';
 
 export const questionnaireThemePalette = {
   red: {
@@ -141,7 +142,7 @@ export const getQuestionnaireThemeCssVariables = (
   '--tm-focus-ring': accent.primary,
   '--tm-input-focus-border': useTeacherMobileInput ? questionnaireThemePalette.neutral[200] : accent.primary,
   '--tm-input-focus-ring': useTeacherMobileInput ? 'transparent' : accent.focusRing,
-  '--tm-mask': 'rgba(23, 21, 19, 0.42)',
+  '--tm-mask': useTeacherMobileInput ? overlaySemantic.mask : 'rgba(23, 21, 19, 0.42)',
   '--tm-shadow-card': '0 10px 28px -20px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-control': '0 6px 16px -12px rgba(64, 60, 58, 0.18)',
   '--tm-shadow-sheet': '0 -20px 52px -34px rgba(64, 60, 58, 0.18)',

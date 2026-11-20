@@ -794,7 +794,7 @@ const HighlightImagePreview = ({ image, onClose }: { image: string; onClose: () 
 
     return createPortal(
         <div
-            className="fixed z-[9999] flex items-center justify-center bg-black/90 p-3 backdrop-blur-md highlight-preview-backdrop"
+            className="fixed z-[9999] flex items-center justify-center bg-[var(--tm-mask-media)] p-3 backdrop-blur-md highlight-preview-backdrop"
             style={{
                 left: previewBounds.left,
                 top: previewBounds.top,
@@ -917,7 +917,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
 
         return createPortal(
             <div
-                className="fixed flex items-end justify-center bg-black/35 p-4 backdrop-blur-sm"
+                className="fixed flex items-end justify-center bg-[var(--tm-mask)] p-4 backdrop-blur-sm"
                 style={{
                     left: sheetBounds.left,
                     top: sheetBounds.top,
@@ -980,7 +980,7 @@ const HighbrightMomentsContent = ({ id, student, className = "", neutralEditActi
 
                                     <div className="absolute inset-0 bg-gradient-to-b from-black/15 to-transparent pointer-events-none"></div>
                                     {isEditing ? (
-                                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/35 backdrop-blur-[2px]">
+                                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--tm-mask)] backdrop-blur-[2px]">
                                             <button
                                                 type="button"
                                                 onClick={(event) => {

@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { questionnaireThemePalette } from '../../shared/questionnaireThemeTokens';
 import { evaluationScoreSemantic } from '../../shared/evaluationScoreTokens';
+import { overlaySemantic } from '../../shared/overlayTokens';
 
 export const teacherBrandPalette = {
   red: {
@@ -129,7 +130,7 @@ export const teacherBrandSemantic = {
   border: teacherBrandPalette.neutral[200],
   borderControl: teacherBrandPalette.neutral[450],
   gridLine: teacherBrandPalette.neutral[100],
-  mask: 'rgba(23, 21, 19, 0.42)',
+  mask: overlaySemantic.mask,
   chartTooltip: 'rgba(23, 21, 19, 0.92)',
   chartHover: 'rgba(224, 39, 39, 0.06)',
 } as const;
@@ -808,6 +809,8 @@ export const teacherBrandCssVariables = {
   '--tm-focus-ring': teacherBrandSemantic.primary,
   '--tm-input-focus-ring': 'transparent',
   '--tm-mask': teacherBrandSemantic.mask,
+  '--tm-mask-strong': overlaySemantic.maskStrong,
+  '--tm-mask-media': overlaySemantic.maskMedia,
   // 相机取景界面：深色操作区与高对比取景标记。
   '--tm-camera-bg': '#080808',
   '--tm-camera-text': '#FFFFFF',
@@ -1083,6 +1086,10 @@ export const teacherBrandCssVariables = {
   '--tm-selection-segment-compact-inset': '2px',
   '--tm-selection-segment-compact-track-radius': 'var(--tm-radius-inner)',
   '--tm-selection-segment-compact-active-radius': 'calc(var(--tm-radius-inner) - var(--tm-selection-segment-compact-inset))',
+  // 独立一级页签的舒展规格，由公共分段控件按需启用。
+  '--tm-selection-segment-comfortable-touch-height': '48px',
+  '--tm-selection-segment-comfortable-track-height': '40px',
+  '--tm-selection-segment-comfortable-active-height': '36px',
   '--tm-selection-segment-settings-item-width': '72px',
   '--tm-selection-segment-slide-duration': '220ms',
   '--tm-selection-segment-slide-easing': 'cubic-bezier(0.22, 1, 0.36, 1)',
@@ -1148,7 +1155,7 @@ export const teacherBrandCssVariables = {
   '--tm-report-filter-padding-bottom': '0px',
   '--tm-report-filter-padding-pinned': '0px',
   '--tm-report-filter-row-height': 'var(--tm-size-touch)',
-  '--tm-report-header-tabs-width': '176px',
+  '--tm-report-header-tabs-width': '100%',
   '--tm-report-scroll-hint-width': '28px',
   '--tm-report-summary-surface': 'var(--tm-bg-surface)',
   '--tm-report-summary-data-surface': 'var(--tm-chart-data-default-soft)',
@@ -1200,6 +1207,9 @@ export const teacherBrandCssVariables = {
   '--tm-duration-fast': '150ms',
   '--tm-duration-standard': '200ms',
   '--tm-duration-panel': '300ms',
+  // 版本卡片柔和起步后停靠，不影响其他页面和弹层动效。
+  '--tm-edition-carousel-duration': '260ms',
+  '--tm-edition-carousel-easing': 'cubic-bezier(0.25, 0.1, 0.25, 1)',
   '--tm-context-switch-duration': '320ms',
   '--tm-duration-sheet-enter': '350ms',
   '--tm-duration-sheet-exit': '220ms',

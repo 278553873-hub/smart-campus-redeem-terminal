@@ -6,10 +6,16 @@ import { ASSETS } from '../assets/images';
 import { PasswordRevealButton } from '../components/ui/PasswordRevealButton';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileToast from '../components/ui/MobileToast';
+import TeacherSchoolAccessView from './TeacherSchoolAccessView';
+import { RECENT_TEACHER_LOGIN_PHONE, WECHAT_TEACHER_LOGIN_PHONES, resolveDemoTeacherLoginAccount } from '../data/teacherLoginAccounts';
+import { confirmTeacherPersonalChoice, maskTeacherLoginPhone, readTeacherPersonalChoice, resolveTeacherLoginDestination, type TeacherLoginAccount, type TeacherLoginSession } from '../domain/teacherLoginAccess';
 
 interface TeacherLoginViewProps {
-  onLogin: () => void;
+  onLogin: (session?: TeacherLoginSession) => void;
   showWechatLogin?: boolean;
+  enableSchoolOnboarding?: boolean;
+  previewSchoolAccess?: boolean;
+  resolveAccount?: (phone: string) => TeacherLoginAccount;
 }
 
 type LoginSheet = 'wechat' | 'phone' | null;
@@ -23,7 +29,7 @@ const phoneLoginLinkClass = 'flex min-h-11 items-center justify-center px-4 text
 const sheetPrimaryButtonClass = 'mx-auto flex min-h-12 w-full max-w-[300px] items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-card-title)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[transform,background-color,opacity] [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-55';
 const fieldClass = 'h-[52px] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-4 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none placeholder:text-[var(--tm-input-placeholder)]';
 
-const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechatLogin = true }) => {
+const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechatLogin = true, enableSchoolOnboarding = false, previewSchoolAccess = false, resolveAccount = resolveDemoTeacherLoginAccount }) => {
   // Demo convenience only; production login must require explicit user consent.
   const [agreed, setAgreed] = useState(true);
   const [activeSheet, setActiveSheet] = useState<LoginSheet>(null);
@@ -37,6 +43,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
   const [formMessage, setFormMessage] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [unlinkedAccount, setUnlinkedAccount] = useState<TeacherLoginAccount | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const loginTimerRef = useRef<number | null>(null);
 
@@ -68,6 +75,12 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
   };
 
   const openSheet = (sheet: Exclude<LoginSheet, null>) => {
+    // 仅一键登录和手机号登录/注册用于预览；最近登录始终按账号学校关系进入。
+    if (previewSchoolAccess && enableSchoolOnboarding) {
+      setActiveSheet(null);
+      setUnlinkedAccount(resolveAccount(WECHAT_TEACHER_LOGIN_PHONES[0]));
+      return;
+    }
     if (!agreed) {
       showToast('请先阅读并同意隐私保护指引');
       return;
@@ -85,11 +98,24 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
     setActiveSheet(null);
   };
 
-  const completeLogin = () => {
+  const completeLogin = (loginPhone = RECENT_TEACHER_LOGIN_PHONE) => {
+    if (submitting) return;
     setSubmitting(true);
     loginTimerRef.current = window.setTimeout(() => {
       loginTimerRef.current = null;
-      onLogin();
+      setSubmitting(false);
+      setActiveSheet(null);
+      if (!enableSchoolOnboarding) {
+        onLogin();
+        return;
+      }
+      const account = resolveAccount(loginPhone);
+      const destination = resolveTeacherLoginDestination(account, readTeacherPersonalChoice(account.phone));
+      if (destination.type === 'school-guide') {
+        setUnlinkedAccount(account);
+        return;
+      }
+      onLogin({ account, spaceId: destination.spaceId });
     }, 420);
   };
 
@@ -100,6 +126,34 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
     }
     completeLogin();
   };
+
+  const resetPhoneLoginForm = () => {
+    setPhone('');
+    setVerificationCode('');
+    setPassword('');
+    setShowPassword(false);
+    setPhoneLoginMode('sms');
+    setFormMessage('');
+    setCountdown(0);
+    setHasRequestedCode(false);
+  };
+
+  if (unlinkedAccount) {
+    return (
+      <TeacherSchoolAccessView
+        phone={unlinkedAccount.phone}
+        onEnterPersonal={() => {
+          confirmTeacherPersonalChoice(unlinkedAccount.phone);
+          onLogin({ account: unlinkedAccount, spaceId: 'personal' });
+        }}
+        onReturnToLogin={() => {
+          closeActiveSheet();
+          resetPhoneLoginForm();
+          setUnlinkedAccount(null);
+        }}
+      />
+    );
+  }
 
   const requestVerificationCode = () => {
     if (!phoneNumberPattern.test(phone.trim())) {
@@ -125,7 +179,7 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
       return;
     }
     setFormMessage('');
-    completeLogin();
+    completeLogin(phone.trim());
   };
 
   return (
@@ -190,19 +244,19 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
         <div className="-mx-[var(--tm-space-4)] flex flex-col bg-[var(--tm-bg-surface-soft)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-6)+env(safe-area-inset-bottom))]">
           <div className="pt-[var(--tm-space-4)]">
             <h2 className="text-[length:var(--tm-font-size-section-title)] font-semibold leading-6 text-[var(--tm-text-primary)]">申请获取并验证你的手机号</h2>
-            <p className="mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] leading-5 text-[var(--tm-text-tertiary)]">用户正常进行授权登录</p>
+            <p className="mt-[var(--tm-space-2)] text-[length:var(--tm-font-size-body)] leading-5 text-[var(--tm-text-tertiary)]">用于识别您的学校与班级</p>
           </div>
 
           <div className="mt-[var(--tm-space-6)] overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)]">
-            {['152****1332', '199****8610'].map((maskedPhone, index) => (
+            {WECHAT_TEACHER_LOGIN_PHONES.map((loginPhone, index) => (
               <button
-                key={maskedPhone}
+                key={loginPhone}
                 type="button"
-                onClick={completeLogin}
+                onClick={() => completeLogin(loginPhone)}
                 disabled={submitting}
                 className={`relative flex ${index === 0 ? 'min-h-[72px]' : 'min-h-14'} w-full flex-col items-center justify-center px-4 text-center transition-colors after:absolute after:bottom-0 after:left-4 after:right-4 after:h-px after:bg-[var(--tm-border-subtle)] last:after:hidden active:bg-[var(--tm-bg-surface-soft)] disabled:opacity-55`}
               >
-                <span className="text-[length:var(--tm-font-size-section-title)] font-medium leading-6 tabular-nums text-[var(--tm-text-primary)]">{maskedPhone}</span>
+                <span className="text-[length:var(--tm-font-size-section-title)] font-medium leading-6 tabular-nums text-[var(--tm-text-primary)]">{maskTeacherLoginPhone(loginPhone)}</span>
                 {index === 0 && <span className="mt-1 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-platform-wechat)]">上次提供</span>}
               </button>
             ))}

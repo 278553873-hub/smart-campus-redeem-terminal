@@ -6,7 +6,7 @@ const storageKey = 'letu-operations-customers:v1';
 const load = (): OperationsCustomers => {
   try {
     const value = JSON.parse(window.localStorage.getItem(storageKey) ?? 'null');
-    if ([2, 3].includes(value?.version) && Array.isArray(value.data?.organizations) && Array.isArray(value.data?.schools)) {
+    if ([2, 3, 4].includes(value?.version) && Array.isArray(value.data?.organizations) && Array.isArray(value.data?.schools)) {
       const seed = createOperationsCustomers();
       const organizations = value.data.organizations.filter((item: any) => (
         item && typeof item.id === 'string' && typeof item.name === 'string' &&
@@ -16,8 +16,12 @@ const load = (): OperationsCustomers => {
         typeof item.indicatorId === 'string' && ['已开通', '待开通'].includes(item.status)
       )).map((item: any) => {
         const seeded = seed.organizations.find(organization => organization.id === item.id);
-        return value.version === 2 && item.kind === 'district' && seeded?.kind === 'city'
-          ? { ...item, kind: 'city' } : item;
+        return {
+          ...item,
+          kind: value.version === 2 && item.kind === 'district' && seeded?.kind === 'city' ? 'city' : item.kind,
+          authorizationStartsAt: typeof item.authorizationStartsAt === 'string' ? item.authorizationStartsAt : seeded?.authorizationStartsAt ?? '',
+          authorizationEndsAt: typeof item.authorizationEndsAt === 'string' ? item.authorizationEndsAt : seeded?.authorizationEndsAt ?? '',
+        };
       });
       const schools = seed.schools.map(school => ({
         ...school,
@@ -32,7 +36,7 @@ const load = (): OperationsCustomers => {
 export default function useOperationsCustomers() {
   const [data, setData] = useState(load);
   const save = (next: OperationsCustomers) => {
-    try { window.localStorage.setItem(storageKey, JSON.stringify({ version: 3, data: next })); }
+    try { window.localStorage.setItem(storageKey, JSON.stringify({ version: 4, data: next })); }
     catch { throw new Error('保存失败，请检查浏览器存储空间后重试，当前输入已保留。'); }
     setData(next);
   };

@@ -27,3 +27,26 @@ export const validateImageUpload = (file: { type?: string; size?: number } | nul
   }
   return null;
 };
+
+/** 校验并等比缩小图片，保留透明背景；返回可保存的展示图，不裁切原始比例。 */
+export const readImageUpload = async (file: File, maxDimension = 512): Promise<string> => {
+  const error = validateImageUpload(file);
+  if (error) throw new Error(error);
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = objectUrl;
+    await image.decode().catch(() => { throw new Error('图片无法读取，请更换图片'); });
+    if (!image.naturalWidth || !image.naturalHeight) throw new Error('图片尺寸无效，请更换图片');
+    const ratio = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('图片处理失败，请重试');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const result = canvas.toDataURL('image/webp', .9);
+    if (!/^data:image\/(png|jpeg|webp);base64,/.test(result)) throw new Error('图片处理失败，请更换图片');
+    return result;
+  } finally { URL.revokeObjectURL(objectUrl); }
+};

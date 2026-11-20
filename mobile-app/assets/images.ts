@@ -16,6 +16,13 @@ import aiPrincipalAssistantIcon from './resources/ai-principal-assistant-icon.pn
 import teacherMeHeroBg from './resources/teacher-me-hero-bg.png';
 import teacherMePageBg from './resources/teacher-me-page-bg.png';
 import teacherLoginIconImg from './resources/teacher-login-icon.jpg';
+import teacherSchoolAiFeatureImg from './resources/teacher-school-features/ai-assistant-v4.png';
+import teacherSchoolIndicatorsFeatureImg from './resources/teacher-school-features/custom-indicators-v4.png';
+import teacherSchoolReportsFeatureImg from './resources/teacher-school-features/growth-reports-v4.png';
+import teacherSchoolToolsFeatureImg from './resources/teacher-school-features/education-tools-v4.png';
+import teacherSchoolFeatureBackgroundImg from './resources/teacher-school-features/school-edition-background-v1.jpg';
+import teacherPersonalFeatureBackgroundImg from './resources/teacher-school-features/personal-edition-background-v1.jpg';
+import teacherSchoolContactQrImg from './resources/teacher-school-features/school-contact-qr.png';
 import teacherDefaultAvatarImg from './resources/teacher-default-avatar.png';
 import platformDeyuStarMedalImg from './resources/medals/platform-deyu-star.png';
 import platformZhiyuStarMedalImg from './resources/medals/platform-zhiyu-star.png';
@@ -189,6 +196,13 @@ export const ASSETS = {
     TEACHER_ME_HERO_BG: teacherMeHeroBg,
     TEACHER_ME_PAGE_BG: teacherMePageBg,
     TEACHER_LOGIN_ICON: teacherLoginIconImg,
+    TEACHER_SCHOOL_AI_FEATURE: teacherSchoolAiFeatureImg,
+    TEACHER_SCHOOL_INDICATORS_FEATURE: teacherSchoolIndicatorsFeatureImg,
+    TEACHER_SCHOOL_REPORTS_FEATURE: teacherSchoolReportsFeatureImg,
+    TEACHER_SCHOOL_TOOLS_FEATURE: teacherSchoolToolsFeatureImg,
+    TEACHER_SCHOOL_FEATURE_BACKGROUND: teacherSchoolFeatureBackgroundImg,
+    TEACHER_PERSONAL_FEATURE_BACKGROUND: teacherPersonalFeatureBackgroundImg,
+    TEACHER_SCHOOL_CONTACT_QR: teacherSchoolContactQrImg,
   },
   MEDALS: {
     PLATFORM_DEYU_STAR: platformDeyuStarMedalImg,

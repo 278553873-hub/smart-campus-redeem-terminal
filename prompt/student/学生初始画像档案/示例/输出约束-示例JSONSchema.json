@@ -135,7 +135,7 @@
       }
     },
     "promptVersion": {
-      "const": "tool4-v1.1.0"
+      "const": "tool4-v1.2.1"
     }
   },
   "required": [
@@ -312,19 +312,23 @@
             },
             "example_tool4_32": {
               "type": "string",
-              "maxLength": 120
+              "maxLength": 120,
+              "pattern": "^(?:(?:求真|从善|尚美|学活|乐健|悦群)(?:（[^（）\\r\\n]+）)?)?(?![\\s\\S])"
             },
             "example_tool4_33": {
               "type": "string",
-              "maxLength": 120
+              "maxLength": 120,
+              "pattern": "^(?:(?:求真|从善|尚美|学活|乐健|悦群)(?:（[^（）\\r\\n]+）)?)?(?![\\s\\S])"
             },
             "example_tool4_34": {
               "type": "string",
-              "maxLength": 120
+              "maxLength": 120,
+              "pattern": "^(?:(?:求真|从善|尚美|学活|乐健|悦群)(?:（[^（）\\r\\n]+）)?(?:、(?:求真|从善|尚美|学活|乐健|悦群)(?:（[^（）\\r\\n]+）)?){0,5})?(?![\\s\\S])"
             },
             "example_tool4_35": {
               "type": "string",
-              "maxLength": 120
+              "maxLength": 120,
+              "pattern": "^(?:(?:求真|从善|尚美|学活|乐健|悦群)(?:（[^（）\\r\\n]+）)?)?(?![\\s\\S])"
             },
             "example_tool4_36": {
               "type": "string",

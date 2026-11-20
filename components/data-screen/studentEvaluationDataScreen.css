@@ -1,153 +1,230 @@
-/* 学校 PC 育人大屏：局部独立主题；深色玻璃卡片与五色立体主图。 */
-.evaluation-screen-viewport { position:relative; width:100%; height:100dvh; overflow:hidden; background:#080706; color-scheme:dark; }
-.evaluation-screen-viewport:fullscreen { width:100vw; height:100dvh; }
-.student-evaluation-data-screen {
-  --es-text:#f3f0ea; --es-muted:#b8aea3; --es-quiet:#a99f92; --es-accent:#f5a623; --es-accent-light:#ffd08a;
-  --es-positive:#83c8ae; --es-negative:#e77b96; --es-border:#edddc846; --es-gap:16px;
-  --es-education-virtue:#f5a623; --es-education-wisdom:#78c9ad; --es-education-fitness:#76a9df; --es-education-aesthetic:#b080d3; --es-education-labor:#e7e5df;
-  --es-caption:16px; --es-detail:19px; --es-progress-track:#d8ccba25;
-  --es-progress-fill:linear-gradient(90deg,#b8b1a6,#f2eee7); --es-progress-accent-fill:linear-gradient(90deg,#e58a13,#ffca58);
-  --es-positive-fill:linear-gradient(90deg,#498e78,#b2eacf); --es-negative-fill:linear-gradient(270deg,#b74466,#efa0b5);
-  position:absolute; inset:0 auto auto 0; isolation:isolate; padding:0 20px 16px; display:grid;
-  grid-template-rows:86px minmax(0,1fr); gap:18px; overflow:hidden;
-  color:var(--es-text); background:radial-gradient(ellipse at 50% 65%,#20160c 0%,#090807 53%,#040303 100%);
-  font:20px/1.4 'PingFang SC','Microsoft YaHei','Noto Sans CJK SC',sans-serif; color-scheme:dark;
+/* Demo 独立大屏：图形等比、网格延展，背景与数据层铺满当前窗口。 */
+.school-pc-evaluation-screen-viewport { position: relative; width: 100%; height: 100dvh; overflow: hidden; background: #0b0908; color-scheme: dark; }
+.school-pc-evaluation-screen-viewport:fullscreen { width: 100vw; height: 100dvh; }
+.school-pc-student-evaluation-data-screen {
+  --es-bg: #0b0908;
+  --es-surface: #171411;
+  --es-surface-raised: #2a2119;
+  --es-border: #665443;
+  --es-text: #f3f0ea;
+  --es-muted: #b8aea3;
+  --es-accent: #f59a2a;
+  --es-accent-light: #ffd08a;
+  --es-accent-rgb: 245, 154, 42;
+  --es-positive: #7ae1ce;
+  --es-negative: #ff9389;
+  --es-education-virtue: var(--es-accent);
+  --es-education-wisdom: #83c8ae;
+  --es-education-fitness: #70a8de;
+  --es-education-aesthetic: #b17ad5;
+  --es-education-labor: #eee9df;
+  --es-education-innovation: #e49dbb;
+  --es-gap: 20px;
+  --es-padding: 28px;
+  --es-panel-padding: 20px;
+  --es-font-text: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+  --es-font-number: 'NumberFont', 'Outfit', var(--es-font-text);
+  --es-weight-regular: 400;
+  --es-weight-emphasis: 600;
+  --es-body: 20px;
+  --es-detail: 18px;
+  --es-caption: 16px;
+  --es-panel-title: 22px;
+  --es-hero-title: 28px;
+  --es-hero-heading: 32px;
+  --es-gold-light: #ffd18a;
+  --es-gold-highlight: #ffb34b;
+  --es-gold-main: var(--es-accent);
+  --es-gold-deep: #de7618;
+  --es-gold-gradient-stops: var(--es-gold-light) 0%, var(--es-gold-highlight) 32%, var(--es-gold-main) 64%, var(--es-gold-deep) 100%;
+  --es-system-title: 48px;
+  --es-system-title-weight: 700;
+  --es-system-title-color: #f8e7c3;
+  --es-system-title-gradient: linear-gradient(180deg, #fffcf3 0%, #fff0cf 36%, #e4bd7a 72%, #c79852 100%);
+  --es-metric-number: 48px;
+  --es-metric-number-gradient: linear-gradient(180deg, var(--es-gold-gradient-stops));
+  --es-progress-track: #d9c5ae24;
+  --es-progress-fill: linear-gradient(90deg, #a69f95, #eee9df);
+  --es-progress-accent-fill: linear-gradient(270deg, var(--es-gold-gradient-stops));
+  --es-positive-fill: linear-gradient(90deg, #4ccbb6, #9aedde);
+  --es-negative-fill: linear-gradient(270deg, #f47b75, #ffb2a4);
+  --es-glass-background: linear-gradient(135deg, #17141124, #0806050f 70%);
+  --es-glass-border: #f2ece470;
+  --es-glass-blur: blur(10px) saturate(115%);
+  position: absolute; top: 0; left: 0;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 1920px; height: 1080px;
+  padding: 0 var(--es-padding) 16px;
+  display: grid; grid-template-rows: 86px minmax(0, 1fr);
+  gap: var(--es-gap); overflow: hidden;
+  color: var(--es-text);
+  background: radial-gradient(ellipse at 50% 48%, #1c130e 0%, var(--es-bg) 48%, #040302 100%);
+  font-family: var(--es-font-text);
+  font-size: var(--es-body); font-weight: var(--es-weight-regular); line-height: 1.4; color-scheme: dark;
 }
-.student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { box-sizing:border-box; }
-.student-evaluation-data-screen :is(h1,h2,p,ul,ol) { margin:0; }
-.student-evaluation-data-screen :is(ul,ol) { padding:0; list-style:none; }
-.student-evaluation-data-screen :is(strong,b) { font-weight:600; }
-.student-evaluation-data-screen small { font-size:var(--es-caption); font-weight:400; }
-.student-evaluation-data-screen button { font:inherit; color:inherit; cursor:pointer; }
-.student-evaluation-data-screen button:focus-visible { outline:2px solid var(--es-accent-light); outline-offset:3px; }
-.student-evaluation-data-screen .is-positive { color:var(--es-positive); }
-.student-evaluation-data-screen .is-negative { color:var(--es-negative); }
-.evaluation-screen-background { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
-.evaluation-screen-background::after { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 34% 15% at 50% 68%,#ffae3252,transparent 85%),linear-gradient(#05040333,transparent 25%,#0504030a); }
-/* 标题区：装饰轨道独立于文字，避免对正文卡片施加科技边框。 */
-.evaluation-screen-header { position:relative; display:grid; grid-template-columns:1fr 1.5fr 1fr; align-items:center; gap:20px; }
-.evaluation-screen-header-art { position:absolute; inset:0 -20px; width:calc(100% + 40px); height:100%; z-index:-1; overflow:visible; }
-.evaluation-screen-school { display:flex; gap:12px; align-items:center; font-size:24px; font-weight:500; padding-left:8px; }
-.evaluation-screen-header h1 { text-align:center; align-self:start; padding-top:4px; font-size:42px; font-weight:600; letter-spacing:.16em; white-space:nowrap; text-shadow:0 0 22px #ffd08a1a; }
-.evaluation-screen-header-right { display:flex; align-items:center; justify-content:flex-end; gap:16px; padding-bottom:16px; }
-.evaluation-screen-updated { text-align:right; }
-.evaluation-screen-updated > span { display:block; font-size:15px; color:var(--es-muted); }
-.evaluation-screen-updated time { font-size:20px; white-space:nowrap; font-variant-numeric:tabular-nums; }
-.evaluation-screen-viewport .evaluation-screen-fullscreen { display:grid; place-content:center; width:44px; height:44px; padding:0; border:0; background:transparent; color:var(--es-text); }
-.evaluation-screen-viewport .evaluation-screen-fullscreen:hover { background:#fff1d614; color:var(--es-accent-light); }
-/* 局部面板规范：通透黑玻璃、完整细线、柔和圆角，无切角及标题装饰。 */
-.evaluation-screen-workspace { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.42fr) minmax(0,1.04fr); grid-template-rows:minmax(0,1fr) 246px; gap:var(--es-gap); min-height:0; }
-.evaluation-screen-side { display:grid; min-width:0; min-height:0; gap:var(--es-gap); }
-.evaluation-screen-left { grid-template-rows:210px minmax(0,1fr); }
-.evaluation-screen-right { grid-template-rows:1fr 1fr; }
-.evaluation-screen-bottom { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,.82fr) minmax(0,1.43fr) minmax(0,1.1fr) minmax(0,1.18fr); gap:var(--es-gap); min-height:0; }
-.evaluation-screen-panel, .evaluation-screen-metric { min-width:0; min-height:0; border:1px solid var(--es-border); border-radius:17px; background:linear-gradient(135deg,#14121047,#0706051a); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); box-shadow:inset 0 1px 0 #fff2da10,0 8px 20px #0000000d; }
-.evaluation-screen-panel { display:flex; flex-direction:column; padding:16px 20px 14px; overflow:hidden; }
-.evaluation-screen-panel-heading { display:flex; align-items:center; gap:10px; min-height:30px; margin-bottom:12px; flex-shrink:0; }
-.evaluation-screen-panel-heading h2 { font-size:23px; line-height:1.3; font-weight:600; white-space:nowrap; }
-.evaluation-screen-panel-action { margin-left:auto; display:flex; align-items:center; }
-.evaluation-screen-panel-detail { color:var(--es-muted); font-size:14px; margin-left:auto; white-space:nowrap; }
-.evaluation-screen-metrics { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1.1fr; gap:12px; }
-.evaluation-screen-metric { padding:10px 16px; display:flex; flex-direction:column; justify-content:center; }
-.evaluation-screen-metric-label { display:flex; align-items:center; gap:10px; color:var(--es-text); font-size:19px; white-space:nowrap; }
-.evaluation-screen-metric-label svg { color:#d7c9b3; flex-shrink:0; }
-.evaluation-screen-metric-value { display:flex; align-items:baseline; gap:6px; padding-left:32px; font-variant-numeric:tabular-nums; line-height:1.15; margin-top:3px; }
-.evaluation-screen-metric-value strong { font-size:42px; font-weight:600; letter-spacing:-.03em; }
-.evaluation-screen-metric-value > span { color:var(--es-muted); font-size:17px; }
-.evaluation-screen-metric[data-emphasis=primary] strong { color:var(--es-accent); }
-.evaluation-screen-metric-detail { color:var(--es-muted); font-size:16px; padding-left:32px; margin-top:3px; white-space:nowrap; }
-/* 中央五色主图：颜色表示类别，焦点不覆盖类别颜色。 */
-.evaluation-screen-hero { padding:8px 14px 4px; align-items:stretch; }
-.evaluation-screen-hero > h2 { flex-shrink:0; text-align:center; font-size:28px; line-height:40px; letter-spacing:.08em; font-weight:600; }
-.evaluation-screen-hero-visual { display:flex; flex:1; align-items:center; justify-content:center; min-height:0; min-width:0; }
-.evaluation-screen-hero-visual svg { width:100%; height:100%; overflow:visible; }
-.evaluation-screen-hero-active-label { fill:var(--es-accent); font-size:29px; font-weight:500; }
-.evaluation-screen-hero-percentage { fill:var(--es-text); font-size:90px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-2px; }
-.evaluation-screen-hero-percentage tspan { font-size:30px; font-weight:400; letter-spacing:0; }
-.evaluation-screen-hero-event-count { fill:#d3c5af; font-size:22px; }
-.evaluation-screen-hero-sector { cursor:pointer; transition:transform 240ms ease; }
-.evaluation-screen-hero-sector.is-active { filter:drop-shadow(0 0 5px #ffdb8a55); }
-.evaluation-screen-hero-orbits { transform-origin:320px 286px; animation:evaluation-screen-orbit 64s linear infinite; }
-.evaluation-screen-hero-legend { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:4px; flex-shrink:0; padding:0 20px 3px; }
-.evaluation-screen-hero-legend button { position:relative; display:flex; flex-direction:column; align-items:center; border:0; border-radius:6px; background:transparent; min-height:56px; padding:3px 0 8px; font-size:18px; }
-.evaluation-screen-hero-legend button > span { display:flex; align-items:center; gap:8px; }
-.evaluation-screen-hero-legend i { width:10px; height:10px; border-radius:50%; background:var(--education-color); box-shadow:inset 0 1px 1px #ffffff70; }
-.evaluation-screen-hero-legend button strong { font-size:21px; font-weight:500; }
-.evaluation-screen-hero-legend button[aria-pressed=true]::after { content:''; position:absolute; height:2px; bottom:2px; left:15%; right:15%; background:var(--es-accent); box-shadow:0 0 8px #f5a62355; }
-.evaluation-screen-hero-legend button:hover { background:#ffe1a60a; }
-.student-evaluation-data-screen .education-virtue { --education-color:var(--es-education-virtue); }
-.student-evaluation-data-screen .education-wisdom { --education-color:var(--es-education-wisdom); }
-.student-evaluation-data-screen .education-fitness { --education-color:var(--es-education-fitness); }
-.student-evaluation-data-screen .education-aesthetic { --education-color:var(--es-education-aesthetic); }
-.student-evaluation-data-screen .education-labor { --education-color:var(--es-education-labor); }
-/* 排行与年级：中性轨道、金色前三、右对齐数值。 */
-.evaluation-screen-teacher-list { display:flex; flex-direction:column; justify-content:space-evenly; gap:4px; flex:1; min-height:0; }
-.evaluation-screen-teacher-list li { display:flex; align-items:center; gap:9px; font-size:var(--es-detail); line-height:1.2; min-height:22px; }
-.evaluation-screen-rank { width:2ch; flex-shrink:0; color:var(--es-muted); font-variant-numeric:tabular-nums; }
-.evaluation-screen-teacher-list li:nth-child(-n+3) .evaluation-screen-rank { color:var(--es-accent); }
-.evaluation-screen-teacher-name { width:4em; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.evaluation-screen-teacher-track { flex:1; min-width:0; height:10px; background:var(--es-progress-track); border-radius:6px; overflow:hidden; }
-.evaluation-screen-teacher-track > span { display:block; height:100%; border-radius:inherit; background:var(--es-progress-fill); transition:width 300ms; }
-.evaluation-screen-teacher-list li:nth-child(-n+3) .evaluation-screen-teacher-track > span { background:var(--es-progress-accent-fill); }
-.evaluation-screen-teacher-list strong { min-width:3.6em; text-align:right; font-variant-numeric:tabular-nums; }
-.evaluation-screen-teacher-list small { color:var(--es-muted); margin-left:3px; }
-.evaluation-screen-grade-records, .evaluation-screen-grade-list { display:flex; flex:1; flex-direction:column; justify-content:space-evenly; min-height:0; gap:5px; }
-.evaluation-screen-grade-records li, .evaluation-screen-grade-list li { display:grid; grid-template-columns:3.5em minmax(16px,1fr) 6ch; gap:12px; align-items:center; font-size:var(--es-detail); }
-.evaluation-screen-grade-list li { grid-template-columns:3.5em minmax(16px,1fr) 4ch; }
-.evaluation-screen-coverage-track { height:11px; border-radius:6px; background:var(--es-progress-track); overflow:hidden; }
-.evaluation-screen-coverage-track > span { display:block; height:100%; border-radius:inherit; background:var(--es-progress-fill); transition:width 300ms; }
-.evaluation-screen-grade-records .is-top-grade .evaluation-screen-coverage-track > span, .evaluation-screen-grade-list .is-top-grade .evaluation-screen-coverage-track > span { background:var(--es-progress-accent-fill); }
-.evaluation-screen-grade-records strong, .evaluation-screen-grade-list strong { text-align:right; font-variant-numeric:tabular-nums; }
-.evaluation-screen-grade-records small { color:var(--es-muted); margin-left:3px; }
-.evaluation-screen-pagination { display:flex; align-items:center; gap:2px; font-size:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
-.evaluation-screen-pagination button { width:44px; height:36px; border:0; border-radius:5px; background:transparent; display:grid; place-items:center; color:var(--es-muted); }
-.evaluation-screen-pagination button:hover { background:#ffdfad12; color:var(--es-text); }
-.evaluation-screen-pagination small { color:var(--es-muted); font-size:14px; }
-/* 底部：小仪表、五条单行动向、共用零轴的加减分。 */
-.evaluation-screen-indicator-usage { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:12px; min-height:0; }
-.evaluation-screen-indicator-gauge { --es-gauge-color:var(--es-text); display:flex; flex-direction:column; align-items:center; min-width:0; min-height:0; }
-.evaluation-screen-indicator-gauge.is-accent { --es-gauge-color:var(--es-accent); }
-.evaluation-screen-indicator-label { font-size:16px; white-space:nowrap; }
-.evaluation-screen-indicator-gauge svg { display:block; width:100%; flex:1; min-height:0; }
-.evaluation-screen-gauge-track, .evaluation-screen-gauge-value { fill:none; stroke-width:7px; stroke-linecap:butt; }
-.evaluation-screen-gauge-track { stroke:#f3f0ea1a; }
-.evaluation-screen-gauge-value { stroke:var(--es-gauge-color); transition:stroke-dasharray 300ms; }
-.evaluation-screen-gauge-tick { stroke:var(--es-text); fill:var(--es-text); stroke-width:.6px; }
-.evaluation-screen-gauge-percent { fill:var(--es-gauge-color); font-size:32px; font-weight:500; font-variant-numeric:tabular-nums; }
-.evaluation-screen-gauge-percent tspan { font-size:16px; }
-.evaluation-screen-feed-window { flex:1; min-height:0; }
-.evaluation-screen-feed-track { display:grid; height:100%; }
-.evaluation-screen-feed-track li, .evaluation-screen-student-changes article { display:grid; align-items:center; gap:8px; min-height:0; padding:4px 0; border-bottom:1px solid #d9c5ae12; font-size:16px; line-height:1.3; white-space:nowrap; }
-.evaluation-screen-feed-track li { grid-template-columns:72px 4em minmax(0,1fr) 48px; }
-.evaluation-screen-feed-track li:last-child, .evaluation-screen-student-changes article:last-child { border:0; }
-.evaluation-screen-feed-track time, .evaluation-screen-student-changes time { color:var(--es-quiet); font-size:15px; font-variant-numeric:tabular-nums; }
-.evaluation-screen-feed-teacher, .evaluation-screen-student-name { overflow:hidden; text-overflow:ellipsis; color:var(--es-text); font-size:17px; }
-.evaluation-screen-feed-indicator { color:var(--es-muted); overflow:hidden; text-overflow:ellipsis; }
-.evaluation-screen-feed-delta, .evaluation-screen-student-delta { font-size:20px; text-align:right; font-variant-numeric:tabular-nums; }
-.evaluation-screen-student-changes { display:grid; grid-template-rows:repeat(5,minmax(0,1fr)); flex:1; min-height:0; }
-.evaluation-screen-student-changes article { grid-template-columns:72px minmax(0,1fr) 3em 48px; }
-.evaluation-screen-education-tag { color:var(--education-color); overflow:hidden; text-overflow:ellipsis; }
-.evaluation-screen-score-totals { display:flex; gap:18px; font-size:22px; white-space:nowrap; line-height:1; font-variant-numeric:tabular-nums; }
-.evaluation-screen-score-totals small { font-size:15px; margin-left:3px; }
-.evaluation-screen-bottom .evaluation-screen-panel:last-child .evaluation-screen-panel-heading { gap:4px; }
-.evaluation-screen-bottom .evaluation-screen-panel:last-child .evaluation-screen-panel-heading h2 { font-size:22px; }
-.evaluation-screen-scores { display:flex; flex-direction:column; flex:1; min-height:0; }
-.evaluation-screen-score-legend { display:grid; grid-template-columns:1fr 1fr; padding-left:3em; font-size:15px; gap:16px; }
-.evaluation-screen-score-legend > span:first-child { text-align:right; }
-.evaluation-screen-score-bars { display:flex; flex:1; flex-direction:column; justify-content:space-evenly; min-height:0; }
-.evaluation-screen-score-row { display:grid; grid-template-columns:3em 1fr 1fr; align-items:center; font-size:17px; }
-.evaluation-screen-score-half { display:grid; grid-template-columns:minmax(0,1fr) 5ch; gap:5px; align-items:center; min-width:0; font-variant-numeric:tabular-nums; }
-.evaluation-screen-score-half.is-negative { grid-template-columns:5ch minmax(0,1fr); text-align:right; border-right:1px solid #f2e8d866; }
-.evaluation-screen-score-bar-track { display:flex; min-width:0; height:14px; align-items:center; }
-.evaluation-screen-score-half i { display:block; width:var(--bar-width); height:12px; transition:width 300ms; }
-.evaluation-screen-score-half.is-negative .evaluation-screen-score-bar-track { justify-content:flex-end; }
-.evaluation-screen-score-half.is-negative i { background:var(--es-negative-fill); border-radius:6px 0 0 6px; }
-.evaluation-screen-score-half.is-positive i { background:var(--es-positive-fill); border-radius:0 6px 6px 0; }
-.evaluation-screen-loading { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; min-height:300px; color:var(--es-muted); }
-.evaluation-screen-loading-dot { width:12px; height:12px; border:2px solid var(--es-accent); border-radius:50%; }
-.evaluation-screen-empty { display:flex; flex:1; align-items:center; justify-content:center; text-align:center; color:var(--es-muted); font-size:18px; padding:16px 0; }
-.evaluation-screen-notice:empty { display:none; }
-.evaluation-screen-notice:not(:empty) { position:absolute; z-index:10; top:80px; right:20px; padding:12px 20px; max-width:90%; border:1px solid #a9804d; border-radius:8px; background:#211911; color:#f3f0ea; font:16px/1.5 'PingFang SC',sans-serif; }
-@keyframes evaluation-screen-orbit { to { transform:rotate(360deg); } }
-.student-evaluation-data-screen.is-paused *, .student-evaluation-data-screen.has-reduced-motion * { animation-play-state:paused !important; }
-@media (prefers-reduced-motion:reduce) { .student-evaluation-data-screen *, .student-evaluation-data-screen *::before, .student-evaluation-data-screen *::after { animation:none !important; transition:none !important; } }
+.school-pc-evaluation-screen-background { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 1; overflow: hidden; }
+/* 暖光属于连续背景，穿过全部玻璃卡片，避免每个面板各自叠一层金色。 */
+.school-pc-evaluation-screen-background::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 32% 15% at 50% 68%, #ffa62b8c 0%, #f47a1052 32%, #aa470621 66%, transparent 100%), radial-gradient(ellipse 48% 30% at 50% 66%, #b65b1b33, transparent 80%); }
+.school-pc-student-evaluation-data-screen *, .school-pc-student-evaluation-data-screen *::before, .school-pc-student-evaluation-data-screen *::after { box-sizing: border-box; }
+.school-pc-student-evaluation-data-screen h1, .school-pc-student-evaluation-data-screen h2, .school-pc-student-evaluation-data-screen p { margin: 0; }
+.school-pc-student-evaluation-data-screen ul, .school-pc-student-evaluation-data-screen ol { margin: 0; padding: 0; list-style: none; }
+.school-pc-student-evaluation-data-screen :where(strong, b) { font-weight: var(--es-weight-emphasis); }
+.school-pc-student-evaluation-data-screen small { font-family: var(--es-font-text); font-size: var(--es-caption); font-weight: var(--es-weight-regular); }
+.school-pc-student-evaluation-data-screen button { font: inherit; color: inherit; cursor: pointer; }
+.school-pc-student-evaluation-data-screen button:focus-visible { outline: 2px solid var(--es-accent); outline-offset: 4px; }
+.school-pc-student-evaluation-data-screen .is-positive { color: var(--es-positive); }
+.school-pc-student-evaluation-data-screen .is-negative { color: var(--es-negative); }
+.school-pc-evaluation-screen-secondary { color: var(--es-muted); }
+.school-pc-evaluation-screen-header { position:relative; display:grid; grid-template-columns:1fr 1.5fr 1fr; align-items:center; gap:20px; }
+.school-pc-evaluation-screen-header-art { position:absolute; inset:0 calc(-1 * var(--es-padding)); width:calc(100% + var(--es-padding) * 2); height:100%; z-index:-1; overflow:visible; }
+.school-pc-evaluation-screen-school { display:flex; gap:12px; align-items:center; font-size:24px; font-weight:var(--es-weight-emphasis); padding-left:8px; }
+.school-pc-evaluation-screen-header h1 { display:flex; align-items:baseline; justify-content:center; gap:12px; text-align:center; align-self:start; padding-top:5px; font-size:var(--es-system-title); font-weight:var(--es-system-title-weight); line-height:1.15; letter-spacing:.08em; white-space:nowrap; filter:drop-shadow(0 1px 0 #704c2c) drop-shadow(0 2px 3px #00000073); }
+.school-pc-evaluation-screen-header h1 > span { display:block; color:var(--es-system-title-color); }
+.school-pc-evaluation-screen-header .school-pc-evaluation-screen-title-ai { font-family:'Outfit', 'DIN Alternate', var(--es-font-text); font-size:1.08em; line-height:1; letter-spacing:.02em; }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .school-pc-evaluation-screen-header h1 > span { background-image:var(--es-system-title-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+}
+.school-pc-evaluation-screen-header-right { display:flex; align-items:center; justify-content:flex-end; gap:16px; padding-bottom:16px; }
+.school-pc-evaluation-screen-updated { display:flex; flex-direction:column; align-items:flex-end; gap:2px; text-align:right; font-size:var(--es-body); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.school-pc-evaluation-screen-weekday { font-size:var(--es-caption); color:var(--es-muted); }
+.school-pc-evaluation-screen-fullscreen { display:grid; place-content:center; width:44px; height:44px; padding:0; border:0; background:transparent; color:var(--es-text); }
+.school-pc-evaluation-screen-fullscreen:hover { background:#fff1d614; color:var(--es-accent-light); }
+.school-pc-evaluation-screen-workspace { --es-layout-columns: minmax(0, 27fr) minmax(0, 46fr) minmax(0, 27fr); display: grid; grid-template-columns: var(--es-layout-columns); grid-template-rows: minmax(0, 1fr) 320px; gap: var(--es-gap); min-height: 0; }
+.school-pc-evaluation-screen-side { display: grid; min-width: 0; min-height: 0; gap: var(--es-gap); }
+.school-pc-evaluation-screen-left { grid-template-rows: auto minmax(0, 1fr); }
+.school-pc-evaluation-screen-right { grid-template-rows: 1fr 1fr; }
+.school-pc-evaluation-screen-bottom { grid-column: 1 / -1; display: grid; grid-template-columns: var(--es-layout-columns); gap: var(--es-gap); min-height: 0; }
+.school-pc-evaluation-screen-bottom-center { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--es-gap); min-width: 0; min-height: 0; }
+.school-pc-evaluation-screen-indicator-usage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; flex: 1; gap: 16px; min-height: 0; }
+.school-pc-evaluation-screen-indicator-gauge { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-width: 0; min-height: 0; }
+.school-pc-evaluation-screen-indicator-label { color: var(--es-text); font-size: var(--es-detail); line-height: 1.2; white-space: nowrap; }
+.school-pc-evaluation-screen-indicator-gauge svg { display: block; width: 100%; height: auto; max-height: 180px; aspect-ratio: 120 / 124; flex: none; overflow: visible; }
+.school-pc-evaluation-screen-gauge-track, .school-pc-evaluation-screen-gauge-value { fill: none; stroke-width: 6px; stroke-linecap: round; }
+.school-pc-evaluation-screen-gauge-track { stroke: #f3f0ea16; }
+.school-pc-evaluation-screen-gauge-value { stroke: var(--es-coverage-color); transition: stroke-dasharray 300ms ease-out; }
+.school-pc-evaluation-screen-gauge-tick { fill: var(--es-text); stroke: var(--es-text); stroke-width: .6px; }
+.school-pc-evaluation-screen-gauge-percent { fill: var(--es-coverage-color); font-family: var(--es-font-number); font-size: 32px; font-weight: var(--es-weight-emphasis); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-gauge-percent tspan { font-family: var(--es-font-text); font-size: var(--es-caption); font-weight: var(--es-weight-regular); }
+.school-pc-evaluation-screen-grade-records { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); flex: 1; min-height: 0; gap: 12px; animation: school-pc-evaluation-screen-reveal 150ms ease-out; }
+.school-pc-evaluation-screen-grade-records::before { content: ''; position: absolute; inset: 28px 0 30px; pointer-events: none; border-bottom: 1px solid #f3f0ea30; background: linear-gradient(#f3f0ea12 1px, transparent 1px); background-size: 100% 50%; }
+.school-pc-evaluation-screen-grade-records li { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) 22px; gap: 8px; min-width: 0; min-height: 0; text-align: center; }
+.school-pc-evaluation-screen-grade-column-area { display: flex; justify-content: center; align-items: flex-end; min-height: 0; padding-top: 28px; }
+.school-pc-evaluation-screen-grade-column { position: relative; width: clamp(20px, 48%, 38px); border-radius: 5px 5px 0 0; background: linear-gradient(0deg, #8b8276cc, #eee9df); box-shadow: inset 1px 0 0 #fff9ed26; transition: height 300ms ease-out; }
+.school-pc-evaluation-screen-grade-records .is-top-grade .school-pc-evaluation-screen-grade-column { background: linear-gradient(0deg, #b86514, var(--es-accent) 65%, #ffce75); }
+.school-pc-evaluation-screen-grade-column strong { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); color: var(--es-text); font-family: var(--es-font-number); font-size: var(--es-detail); font-weight: var(--es-weight-emphasis); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.school-pc-evaluation-screen-grade-name { color: var(--es-text); font-size: var(--es-detail); line-height: 22px; white-space: nowrap; }
+.school-pc-evaluation-screen-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.school-pc-evaluation-screen-metric, .school-pc-evaluation-screen-panel { position: relative; background: var(--es-glass-background); backdrop-filter: var(--es-glass-blur); -webkit-backdrop-filter: var(--es-glass-blur); border: 1px solid var(--es-glass-border); box-shadow: inset 0 1px 0 #fff9eb26, inset 0 -1px 0 #fff9eb0a, 0 8px 28px #0000001a; border-radius: 18px; }
+.school-pc-evaluation-screen-metric::before, .school-pc-evaluation-screen-panel::before { content: ''; position: absolute; pointer-events: none; top: -1px; left: 24px; width: 42%; height: 1px; background: linear-gradient(90deg, #fff5dfb3, #fff5df26, transparent); box-shadow: 0 0 8px #fff0ce26; }
+.school-pc-evaluation-screen-metric { padding: 12px 16px; min-width: 0; }
+.school-pc-evaluation-screen-metric-label { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-size: var(--es-detail); color: #fff; white-space: nowrap; }
+.school-pc-evaluation-screen-metric-label svg { color: inherit; flex-shrink: 0; }
+.school-pc-evaluation-screen-metric-value { display: flex; align-items: baseline; gap: 8px; margin: 4px 0; line-height: 1.1; }
+.school-pc-evaluation-screen-metric-value strong { font-family: var(--es-font-number); font-size: var(--es-metric-number); color: var(--es-accent-light); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-teacher-list li:nth-child(-n+3) .school-pc-evaluation-screen-teacher-name { color: var(--es-accent-light); }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .school-pc-evaluation-screen-metric-value strong,
+  .school-pc-evaluation-screen-teacher-list li:nth-child(-n+3) .school-pc-evaluation-screen-teacher-name { background-image: var(--es-metric-number-gradient); background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+}
+.school-pc-evaluation-screen-metric-value > span, .school-pc-evaluation-screen-metric-detail { color: var(--es-muted); font-size: var(--es-caption); }
+.school-pc-evaluation-screen-metric-detail { white-space: nowrap; }
+.school-pc-evaluation-screen-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: var(--es-panel-padding); overflow: hidden; }
+.school-pc-evaluation-screen-panel-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; flex-shrink: 0; }
+.school-pc-evaluation-screen-panel-heading h2 { font-size: var(--es-panel-title); font-weight: var(--es-weight-emphasis); padding-left: 12px; border-left: 3px solid var(--es-text); line-height: 1.2; }
+.school-pc-evaluation-screen-panel-detail { color: var(--es-muted); font-size: var(--es-caption); margin-left: auto; white-space: nowrap; }
+.school-pc-evaluation-screen-panel-action { margin-left: auto; }
+.school-pc-evaluation-screen-hero { padding:8px 14px 4px; align-items:stretch; }
+.school-pc-evaluation-screen-hero > h2 { display:flex; align-items:baseline; justify-content:center; flex-shrink:0; text-align:center; font-size:var(--es-hero-heading); line-height:40px; letter-spacing:.08em; white-space:nowrap; font-weight:var(--es-weight-emphasis); }
+.school-pc-evaluation-screen-hero-heading-text { color:var(--es-system-title-color); }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .school-pc-evaluation-screen-hero-heading-text { background-image:var(--es-system-title-gradient); background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+}
+.school-pc-evaluation-screen-hero-visual { display:flex; flex:1; align-items:center; justify-content:center; min-height:0; min-width:0; }
+.school-pc-evaluation-screen-hero-visual svg { width:100%; height:100%; overflow:visible; }
+.school-pc-evaluation-screen-hero-core-label { fill:var(--es-muted); font-size:24px; }
+.school-pc-evaluation-screen-hero-total { fill:var(--es-text); font-family:var(--es-font-number); font-size:80px; font-weight:var(--es-weight-emphasis); font-variant-numeric:tabular-nums; letter-spacing:-2px; }
+.school-pc-evaluation-screen-hero-total tspan { fill:var(--es-muted); font-family:var(--es-font-text); font-size:var(--es-panel-title); font-weight:var(--es-weight-regular); letter-spacing:0; }
+.school-pc-evaluation-screen-hero-callout { pointer-events:none; animation:school-pc-evaluation-screen-reveal 220ms ease-out 120ms both; }
+.school-pc-evaluation-screen-hero-leader { fill:none; stroke:var(--education-color); stroke-width:1.4px; stroke-linejoin:round; opacity:.85; }
+.school-pc-evaluation-screen-hero-leader-dot { fill:var(--education-color); }
+.school-pc-evaluation-screen-hero-callout-name { fill:var(--education-color); font-size:var(--es-hero-title); font-weight:var(--es-weight-emphasis); }
+.school-pc-evaluation-screen-hero-stat-label { fill:var(--es-muted); font-size:var(--es-panel-title); }
+.school-pc-evaluation-screen-hero-stat-number { fill:var(--es-text); font-family:var(--es-font-number); font-size:28px; font-weight:var(--es-weight-emphasis); font-variant-numeric:tabular-nums; }
+.school-pc-evaluation-screen-hero-stat-number.is-primary { font-size:34px; }
+.school-pc-evaluation-screen-hero-stat-number.is-positive { fill:var(--es-positive); }
+.school-pc-evaluation-screen-hero-stat-number tspan { fill:var(--es-muted); font-family:var(--es-font-text); font-size:var(--es-caption); font-weight:var(--es-weight-regular); }
+.school-pc-evaluation-screen-hero-sector { cursor:pointer; }
+.school-pc-evaluation-screen-hero-legend { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:4px; flex-shrink:0; padding:0 20px 3px; }
+.school-pc-evaluation-screen-hero-legend button { position:relative; display:flex; flex-direction:column; align-items:center; border:0; border-radius:6px; background:transparent; min-height:56px; padding:3px 0 8px; font-size:var(--es-detail); }
+.school-pc-evaluation-screen-hero-legend button > span { display:flex; align-items:center; gap:8px; }
+.school-pc-evaluation-screen-hero-legend i { width:10px; height:10px; border-radius:50%; background:var(--education-color); box-shadow:inset 0 1px 1px #ffffff70; }
+.school-pc-evaluation-screen-hero-legend button strong { font-family:var(--es-font-number); font-size:var(--es-body); font-weight:var(--es-weight-emphasis); font-variant-numeric:tabular-nums; }
+.school-pc-evaluation-screen-hero-legend button[aria-pressed=true]::after { content:''; position:absolute; height:2px; bottom:2px; left:15%; right:15%; background:var(--es-accent); box-shadow:0 0 8px #f5a62355; }
+.school-pc-evaluation-screen-hero-legend button:hover { background:#ffe1a60a; }
+.school-pc-student-evaluation-data-screen .education-virtue { --education-color: var(--es-education-virtue); }
+.school-pc-student-evaluation-data-screen .education-wisdom { --education-color: var(--es-education-wisdom); }
+.school-pc-student-evaluation-data-screen .education-fitness { --education-color: var(--es-education-fitness); }
+.school-pc-student-evaluation-data-screen .education-aesthetic { --education-color: var(--es-education-aesthetic); }
+.school-pc-student-evaluation-data-screen .education-labor { --education-color: var(--es-education-labor); }
+.school-pc-student-evaluation-data-screen .education-innovation { --education-color: var(--es-education-innovation); }
+.school-pc-evaluation-screen-teacher-list { display: flex; flex: 1; flex-direction: column; justify-content: space-between; gap: 0; min-height: 0; font-size: var(--es-detail); line-height: 1.2; }
+.school-pc-evaluation-screen-teacher-list li { display: flex; gap: 12px; align-items: center; min-height: 24px; }
+.school-pc-evaluation-screen-rank { color: var(--es-muted); width: 2ch; font-family: var(--es-font-number); font-weight: var(--es-weight-emphasis); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-teacher-list li:nth-child(-n+3) .school-pc-evaluation-screen-rank { color: var(--es-accent); }
+.school-pc-evaluation-screen-teacher-name { min-width: 3.5em; }
+.school-pc-evaluation-screen-teacher-track { flex: 1; height: 12px; background: var(--es-progress-track); border-radius: 6px; overflow: hidden; }
+.school-pc-evaluation-screen-teacher-track > span { display: block; height: 100%; background: var(--es-progress-fill); border-radius: inherit; transition: width 300ms; }
+.school-pc-evaluation-screen-teacher-list li:nth-child(-n+3) .school-pc-evaluation-screen-teacher-track > span { background: var(--es-progress-accent-fill); }
+.school-pc-evaluation-screen-teacher-list strong { min-width: 3.5em; text-align: right; font-family: var(--es-font-number); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-teacher-list small { margin-left: 4px; color: var(--es-muted); }
+.school-pc-evaluation-screen-growth-legend { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 8px; color: var(--es-text); font-size: var(--es-caption); }
+.school-pc-evaluation-screen-growth-legend > span { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.school-pc-evaluation-screen-growth-legend i { width: 22px; border-top: 3px solid var(--es-accent-light); }
+.school-pc-evaluation-screen-growth-legend .is-recorded { border-top-color: var(--es-text); border-top-style: dashed; }
+/* 在320像素面板中保留完整绘图区；测量实际宽高重新布局坐标，不拉伸矢量图形。 */
+.school-pc-evaluation-screen-growth-plot { position: relative; flex: 1; min-width: 0; min-height: 190px; }
+.school-pc-evaluation-screen-growth-plot svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.school-pc-evaluation-screen-growth-grid { stroke: var(--es-text); stroke-opacity: .14; stroke-dasharray: 3 5; }
+.school-pc-evaluation-screen-growth-axis { fill: var(--es-muted); font-family: var(--es-font-number); font-size: var(--es-caption); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-growth-line { fill: none; stroke-width: 2.5px; stroke-linejoin: round; }
+.school-pc-evaluation-screen-growth-line.is-praised { stroke: var(--es-accent-light); }
+.school-pc-evaluation-screen-growth-line.is-recorded { stroke: var(--es-text); stroke-dasharray: 6 5; }
+.school-pc-evaluation-screen-growth-dot { fill: var(--es-surface); stroke: var(--es-accent-light); stroke-width: 2px; }
+.school-pc-evaluation-screen-chart-footnote { color: var(--es-muted); font-size: var(--es-caption); flex-shrink: 0; }
+.school-pc-evaluation-screen-pagination { display: flex; align-items: center; gap: 4px; font-size: var(--es-caption); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-pagination button { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 4px; background: transparent; border: 0; color: var(--es-muted); }
+.school-pc-evaluation-screen-pagination button:hover { background: var(--es-surface-raised); }
+.school-pc-evaluation-screen-grade-coverage-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); flex: 1; min-height: 0; gap: 12px 20px; animation: school-pc-evaluation-screen-reveal 150ms ease-out; }
+.school-pc-evaluation-screen-grade-coverage-grid li { display: grid; grid-template-rows: minmax(0, 1fr) 22px; justify-items: center; min-width: 0; min-height: 0; gap: 4px; }
+.school-pc-evaluation-screen-grade-ring { width: 100%; height: 100%; min-height: 0; }
+.school-pc-evaluation-screen-grade-ring svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.school-pc-evaluation-screen-grade-ring-track, .school-pc-evaluation-screen-grade-ring-value { fill: none; stroke-width: 4.5px; }
+.school-pc-evaluation-screen-grade-ring-track { stroke: #f3f0ea1f; }
+.school-pc-evaluation-screen-grade-ring-value { stroke: var(--es-coverage-color); stroke-linecap: round; transition: stroke-dasharray 300ms ease-out; }
+.school-pc-evaluation-screen-grade-ring-percent { fill: var(--es-coverage-color); font-family: var(--es-font-number); font-size: 28px; font-weight: var(--es-weight-emphasis); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-grade-ring-percent tspan { font-family: var(--es-font-text); font-size: var(--es-caption); font-weight: var(--es-weight-regular); }
+.school-pc-evaluation-screen-feed-window { flex: 1; min-height: 0; position: relative; }
+.school-pc-evaluation-screen-feed-track { display: grid; height: 100%; animation: school-pc-evaluation-screen-reveal 150ms ease-out; }
+/* 完整句子保持紧凑字号，用行距区分两行文字，仍容纳每组五条记录。 */
+.school-pc-evaluation-screen-feed-track li, .school-pc-evaluation-screen-student-changes article { display: grid; grid-template-columns: 68px minmax(0, 1fr); align-items: center; gap: 10px; padding: 1px 0; border-bottom: 1px solid #d9c5ae1c; min-height: 0; font-size: var(--es-caption); line-height: 1.4; }
+.school-pc-evaluation-screen-feed-track li:last-child, .school-pc-evaluation-screen-student-changes article:last-child { border-bottom: 0; }
+.school-pc-evaluation-screen-feed-track time, .school-pc-evaluation-screen-student-changes time { color: var(--es-muted); font-size: var(--es-caption); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-record-sentence { color: var(--es-muted); min-width: 0; overflow-wrap: anywhere; }
+.school-pc-evaluation-screen-feed-teacher, .school-pc-evaluation-screen-student-name { color: var(--es-text); font-size: inherit; font-weight: var(--es-weight-emphasis); }
+.school-pc-evaluation-screen-feed-indicator { color: var(--es-text); }
+.school-pc-evaluation-screen-education-tag { color: var(--education-color); }
+.school-pc-evaluation-screen-student-delta { font-family: var(--es-font-number); font-size: inherit; white-space: nowrap; font-weight: var(--es-weight-emphasis); font-variant-numeric: tabular-nums; }
+.school-pc-evaluation-screen-student-changes { display: grid; grid-template-rows: repeat(5, minmax(0, 1fr)); flex: 1; min-height: 0; }
+
+
+.school-pc-evaluation-screen-loading { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 24px; min-height: 300px; color: var(--es-muted); }
+.school-pc-evaluation-screen-loading button { display: flex; align-items: center; gap: 8px; border: 1px solid var(--es-border); background: var(--es-surface); padding: 12px 24px; border-radius: 8px; }
+.school-pc-evaluation-screen-loading-dot { width: 12px; height: 12px; border: 2px solid var(--es-accent); border-radius: 50%; }
+.school-pc-evaluation-screen-empty { display: flex; align-items: center; justify-content: center; flex: 1; height: 100%; color: var(--es-muted); font-size: var(--es-detail); text-align: center; padding: 16px 0; }
+.school-pc-evaluation-screen-notice:empty { display: none; }
+.school-pc-evaluation-screen-notice:not(:empty) { position: absolute; z-index: 10; top: 72px; right: 16px; max-width: calc(100% - 32px); border: 1px solid var(--es-border); padding: 12px 16px; border-radius: 8px; background: var(--es-surface-raised); color: var(--es-text); font-family: var(--es-font-text); font-size: var(--es-caption); line-height: 1.5; }
+@keyframes school-pc-evaluation-screen-reveal { from { opacity: .5; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .school-pc-student-evaluation-data-screen *, .school-pc-student-evaluation-data-screen *::before, .school-pc-student-evaluation-data-screen *::after { animation: none !important; transition: none !important; }
+}

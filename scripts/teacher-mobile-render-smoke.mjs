@@ -180,7 +180,7 @@ const demoStudents = Array.from({ length: 6 }, (_, index) => ({
 }));
 
 const { createDemoCoinLedger } = await import('../mobile-app/data/campusCoinLedger');
-const { expandCoinLedgerForStudent } = await import('../mobile-app/domain/campusCoinLedger');
+const { expandCoinLedgerForStudent, expandCoinLedgerRefundsForStudent, applyCoinLedgerPatch, revokeCoinLedgerEntry, EMPTY_COIN_LEDGER_PATCH } = await import('../mobile-app/domain/campusCoinLedger');
 const { DEFAULT_COIN_ISSUANCE_CONFIG, GET_MOCK_CAMPUS_COIN_DETAIL } = await import('../mobile-app/constants');
 
 // 用真实演示流水渲染，才能覆盖到列表、批次、撤回等分支，而不只是空状态。
@@ -530,7 +530,7 @@ for (const canViewEvaluationDetails of [true, false]) {
     if (!text.includes('成长嘉奖') || !text.includes('加分奖励') || !text.includes('每周奖励') || !text.includes('每月奖励')) throw new Error('家长流水缺少成长嘉奖奖励类型');
     if (canViewEvaluationDetails && !text.includes('加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）')) throw new Error('家长流水未展示完整指标及各项分值');
     if (!canViewEvaluationDetails && (text.includes('尊师孝亲') || text.includes('专注听讲') || text.includes('文明用餐'))) throw new Error('家长无明细权限时透出了评价指标');
-    for (const label of ['兑换退还', '评价修改补发', '已撤回', '存款利息']) {
+    for (const label of ['兑换退还', '撤回兑换 · 班长体验券', '评价修改补发', '已撤回', '存款利息']) {
       if (!text.includes(label)) throw new Error('家长流水缺少展示规则：' + label);
     }
     if (html.includes('line-clamp-2')) throw new Error('家长流水不应截断完整指标');
@@ -541,7 +541,7 @@ await renderPage('货柜流水（周期与加分奖励）', () => import('../com
   student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, onBack: noop,
 }, html => {
   const text = plainText(html);
-  for (const label of ['成长嘉奖', '加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）', '每月奖励', '兑换退还', '发币撤回', '评价修改补发', '已撤回', '已退还', '未出货退还 · 笔记本×1', '评价对象修改', '评价分数修改']) {
+  for (const label of ['成长嘉奖', '加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）', '每月奖励', '兑换退还', '撤回兑换 · 班长体验券', '班长体验券×1', '发币撤回', '评价修改补发', '已撤回', '已退还', '未出货退还 · 笔记本×1', '评价对象修改', '评价分数修改']) {
     if (!text.includes(label)) throw new Error('货柜流水缺少展示规则：' + label);
   }
   if (html.includes('line-clamp-2')) throw new Error('货柜流水不应截断完整指标');
@@ -954,6 +954,23 @@ await renderPage('学生成长币明细页', () => import('../mobile-app/views/S
   const text = plainText(html);
   if (!text.includes('成长嘉奖')) throw new Error('成长嘉奖应作为收入分类展示');
   if (!text.includes('每周奖励（10月26日—11月1日）')) throw new Error('按周发放时成长嘉奖应展示每周奖励与所属周期');
+  if (!text.includes('兑换退还') || !text.includes('撤回兑换 · 班长体验券')) throw new Error('教师流水应展示班级兑换撤回收入');
+});
+
+const studentClassExchange = ledgerEntries.find(entry => entry.type === 'redeem' && entry.shares.some(share => share.studentId === demoStudents[0].id));
+const classRevokeTime = '2026-11-18 10:00';
+const revokedClassLedger = applyCoinLedgerPatch(ledgerEntries, revokeCoinLedgerEntry(EMPTY_COIN_LEDGER_PATCH, studentClassExchange.id, classRevokeTime));
+const classRefundIncome = expandCoinLedgerRefundsForStudent(revokedClassLedger, demoStudents[0].id);
+await renderPage('学生成长币明细（班级兑换撤回退还）', () => import('../mobile-app/views/StudentCoinDetailView'), {
+  student: demoStudents[0],
+  coinDetail: { balance: 100, bankDeposit: 0, issueRecords: classRefundIncome,
+    consumeRecords: expandCoinLedgerForStudent(revokedClassLedger, demoStudents[0].id), settlementEstimate: { enabled: false } },
+  onBack: noop,
+}, html => {
+  const text = plainText(html);
+  if (!text.includes('兑换退还') || !text.includes(`撤回兑换 · ${studentClassExchange.productName}`)) throw new Error('真实班级撤回未生成独立退还收入');
+  if (!text.includes('11月18日 10:00') || !text.includes(`+${classRefundIncome[0].amount}`)) throw new Error('退还金额或实际撤回时间展示不正确');
+  if (text.includes(`撤回兑换 · ${studentClassExchange.productName}×`)) throw new Error('撤回兑换描述不应追加数量');
 });
 
 await renderPage('学生成长币明细页（按月发放）', () => import('../mobile-app/views/StudentCoinDetailView'), {
@@ -1365,8 +1382,17 @@ await renderPage('学生详情（成长报告目录）', () => import('../mobile
   scores: [], growthReports: [], collectionHistory: [], evaluationRecords: [],
   campusCoinDetail: GET_MOCK_CAMPUS_COIN_DETAIL(rosterStudents[0]), currentTeacherId: rosterTeacher.id,
   currentTeacherName: rosterTeacher.name, canEditOtherTeachersEvaluationRecords: false,
-  onBack: noop, onEditBasicInfo: noop, onUpdateStudentStatus: noop, onViewCampusCoins: noop, onViewTermReport: noop,
+  onBack: noop, onEditBasicInfo: noop, onUpdateStudentStatus: noop, onViewCampusCoins: noop, onViewTermReport: noop, onViewInitialImagingReport: noop,
   onUpdateEvaluationRecord: noop, onViewCollectionRecord: noop, onOpenStudentArchive: noop,
+}, html => {
+  if (!html.includes('学生初成像（2026年10月30日）')) throw new Error('成长报告缺少学生初成像入口');
+  if (!html.includes('吴浩 · 示例报告')) throw new Error('初成像入口应说明示例所属学生');
+});
+await renderPage('学生初成像（嵌入可编辑H5）', () => import('../mobile-app/views/StudentInitialImagingReportView'), {
+  spaceId: profileSpace.id, studentId: rosterStudents[0].id, onBack: noop,
+}, html => {
+  if (!html.includes('<iframe') || !html.includes('embed=teacher')) throw new Error('初成像未嵌入独立报告');
+  if (!html.includes('scope=')) throw new Error('初成像缺少学校与学生隔离的保存范围');
 });
 
 await renderPage('设置兑换密码页', () => import('../mobile-app/views/bank-password/BankPasswordView'), {
@@ -1473,6 +1499,28 @@ await renderPage('教师手机端登录页', () => import('../mobile-app/views/T
   onLogin: noop,
 });
 
+await renderPage('教师手机端未关联学校引导页', () => import('../mobile-app/views/TeacherSchoolAccessView'), {
+  phone: '15200001332',
+  onEnterPersonal: noop,
+  onReturnToLogin: noop,
+}, html => {
+  const text = plainText(html);
+  for (const copy of ['暂未关联学校', '请联系学校负责人添加账号，避免重新建班、导入学生。', '个人版与学校版有什么不同？', 'AI助理不限额度', '自定义评价指标', '问卷采集', '档案设计', '个人版（试用）', '学校版（登录）']) {
+    if (!text.includes(copy)) throw new Error('学校关联引导缺少必要信息：' + copy);
+  }
+  if (text.includes('15200001332')) throw new Error('学校关联页不应展示完整手机号');
+  if (!html.includes('aria-label="学校关联提醒"') || !text.includes('学校已统一使用？')) throw new Error('学校关联指引应展示可识别的引用提醒块');
+  const images = html.match(/<img\b[^>]*>/g) || [];
+  if (images.filter(image => image.includes('alt=""')).length !== 8) throw new Error('两版的四项能力应各展示对应图标');
+  if (!images.some(image => image.includes('alt="学校版咨询联系二维码"')) || !text.includes('扫码咨询学校版')) throw new Error('学校版功能下方应展示联系二维码及咨询文案');
+  for (const copy of ['AI语音与拍照记录', '通用评价指标', '期末综合报告', '基础班级管理', 'AI班主任助理', '有限额度的AI对话', '全校统一管理', '班级、年级多维对比']) {
+    if (!text.includes(copy)) throw new Error('版本对比缺少基础能力说明：' + copy);
+  }
+  for (const copy of ['内置常用评价标准', '汇总学期评价记录', '日常管理更轻松', '辅助班级管理与育人']) {
+    if (!text.includes(copy)) throw new Error('个人版能力缺少对应说明：' + copy);
+  }
+});
+
 // 班主任助理三种能力组合都要能打开：少挂一个能力分支就会出现打开即白屏。
 const assistantClasses = [
   { id: 'c_2025_4', name: '2025级四班', gradeLevel: '四年级', educationStage: 'primary' },
@@ -1525,6 +1573,7 @@ for (const week of assistantEvaluationWeeks) {
     if (!text.includes('+0.2分') || !/-[0-9]+\.[0-9]分/.test(text)) throw new Error('同一指标下的加分、扣分应同时展示，保留正确符号');
     if (!recordsHtml.includes('--tm-record-positive-text') || !recordsHtml.includes('--tm-score-negative')) throw new Error('加减分应复用已有正负分值颜色');
     if (!text.includes('健体班级 /') || !text.includes('原文')) throw new Error('评价明细应保留完整指标路径与评价原文');
+    if (week.id === assistantEvaluationWeeks[0].id && (!recordsHtml.includes('评价图片') || !recordsHtml.includes('morning-exercise-queue.jpg'))) throw new Error('评价记录有配图时应展示图片缩略图');
   });
 }
 await renderPage('班主任助理评价明细（其他班级无记录）', async () => ({
@@ -1698,8 +1747,11 @@ await renderPage('往期复盘页', () => import('../mobile-app/views/TeacherEva
 
 
 // 校长报告页：去掉页脚声明与徽章后，正文和数据来源仍要能正常渲染。
+const { getPrincipalWeeklyReport } = await import('../mobile-app/data/principalPeriodicReports');
+const weeklyReportForAudit = getPrincipalWeeklyReport(new Date('2026-11-16T09:29:01+08:00').getTime());
 await renderPage('本周管理建议页', () => import('../mobile-app/views/PrincipalPeriodicReportView'), {
   kind: 'weekly',
+  reportData: weeklyReportForAudit,
   schoolName: '示范小学',
   generated: true,
   onBack: noop,
@@ -1712,7 +1764,7 @@ await renderPage('本周管理建议页', () => import('../mobile-app/views/Prin
   if (text.includes('本周学校管理建议')) throw new Error('校长报告页不应再展示固定的报告标题文案');
   if (text.includes('示范小学')) throw new Error('校长报告页不应再展示学校名字');
   if (text.includes('用于指导')) throw new Error('校长报告页不应再展示周期说明文案');
-  if (!text.includes('根据7月13日-19日评价记录生成')) throw new Error('校长报告页应只保留一句数据来源');
+  if (!text.includes('根据11月9日-15日评价记录生成')) throw new Error('校长报告页应只保留一句对应报告周的数据来源');
 });
 
 await renderPage('上月学校复盘页', () => import('../mobile-app/views/PrincipalPeriodicReportView'), {

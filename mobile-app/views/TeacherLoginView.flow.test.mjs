@@ -14,7 +14,7 @@ const loginIconPath = path.join(mobileAppDir, 'assets/resources/teacher-login-ic
 assert.match(appSource, /const \[isAuthenticated, setIsAuthenticated\] = useState\(false\)/, '教师手机端默认应从登录页开始。');
 assert.match(appSource, /const handleTeacherLogout = \(\) => \{[\s\S]*resetAuthenticatedNavigation\(\);[\s\S]*setIsAuthenticated\(false\);[\s\S]*\};/, '退出登录应先清理导航状态，再切换到未登录态。');
 assert.match(appSource, /setHistory\(\[\]\);[\s\S]*setCurrentView\('home_log'\);/, '退出或登录时应重置历史栈与落地页。');
-assert.match(appSource, /<MineSettingsView onLogout=\{handleTeacherLogout\} \/>/, '设置页退出按钮应接入真实退出处理。');
+assert.match(appSource, /<MineSettingsView\b[^>]*\bonLogout=\{handleTeacherLogout\}/, '设置页退出按钮应接入真实退出处理。');
 assert.doesNotMatch(appSource, /退出登录功能演示中/, '教师端不应保留退出登录演示提示。');
 assert.match(appSource, /screenBackground=\{gradientPreview[\s\S]*?<TeacherMobileScreenBackground variant="preview" preview=\{gradientPreview\} \/>/, '渐变预览时登录页应复用统一屏幕背景。');
 assert.match(appSource, /gradientPreview \? 'bg-transparent' : 'bg-\[var\(--tm-bg-surface\)\]'/, '正常登录页承载层应保留教师端基础表面色，预览时允许透出渐变。');

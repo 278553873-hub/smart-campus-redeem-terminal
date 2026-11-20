@@ -518,7 +518,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                         },
                                         {
                                             value: 'class',
-                                            label: '记录班级',
+                                            label: '德育管理',
                                             indicatorClassName: 'bg-[var(--tm-record-class-selected-bg)]',
                                             activeTextClassName: 'text-[var(--tm-record-class-text)]',
                                         },

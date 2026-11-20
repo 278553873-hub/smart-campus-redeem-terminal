@@ -81,9 +81,7 @@
 .ops-section-title { margin: 0; color: var(--ops-color-text); font-size: var(--ops-font-section); font-weight: var(--ops-weight-semibold); line-height: 1.5; }
 .ops-actions,
 .ops-row-actions { display: flex; align-items: center; gap: var(--ops-space-2); }
-.ops-row-actions { gap: 0; }
-.ops-table-cell { display: grid; gap: var(--ops-space-1); line-height: 1.5; }
-.ops-table-cell > span,
+.ops-row-actions { gap: var(--ops-space-4); }
 .ops-secondary { color: var(--ops-color-text-secondary); font-size: var(--ops-font-caption); }
 .ops-statistic-value { font-weight: var(--ops-weight-medium); font-variant-numeric: tabular-nums; }
 .ops-related-links { display: grid; justify-items: start; }

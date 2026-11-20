@@ -12,7 +12,7 @@ const TeacherCampaignModal: React.FC<TeacherCampaignModalProps> = ({ campaign, o
     if (!campaign) return null;
 
     return (
-        <div className="pointer-events-auto absolute inset-0 z-[1100] flex items-center justify-center bg-black/[0.76] px-5 animate-in fade-in [animation-duration:var(--tm-duration-standard)]">
+        <div className="pointer-events-auto absolute inset-0 z-[1100] flex items-center justify-center bg-[var(--tm-mask-strong)] px-5 animate-in fade-in [animation-duration:var(--tm-duration-standard)]">
             <button type="button" className="absolute inset-0" onClick={onClose} aria-label="关闭广告弹窗" />
             <section
                 role="dialog"

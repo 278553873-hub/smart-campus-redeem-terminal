@@ -2,7 +2,7 @@
 from pathlib import Path
 from html import escape
 from zipfile import ZipFile
-import base64, csv, json, re, xml.etree.ElementTree as ET
+import argparse, base64, csv, json, re, xml.etree.ElementTree as ET
 from docx import Document
 from docx.shared import Mm, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -34,6 +34,17 @@ LIGHT_NOTE = next(p for p in P if p.startswith('（此为'))
 MESSAGE_LABELS = [next(p for p in P if p.startswith(x)) for x in ['这个孩子', '他/她', '我对接下来']]
 SOURCE_LABELS = ['家长说……', '孩子说……', '老师看到了……']
 MATRIX_LABELS = [c.replace('\n','') for c in S['tables'][0][0]]
+# 学校 2026-11-18 反馈仅调整报告展示；原表快照与学生原始资料继续保留。
+REPORT_TITLE = '学生初成像'
+SCHOOL_NAME = '四川大学附属实验小学分校'
+COVER_MESSAGE = '倾听那些正在发生且千姿百态的成长叙事……'
+DISPLAY_LABELS = {
+    '德（交往热情）': '德（文明习惯与交往方式）',
+    '体（生活适应力）': '体（作息与运动爱好）',
+    '内驱力（我要学）': '内驱力',
+    '判断力（我判断）': '判断力',
+    '创造力（我创造）': '创造力',
+}
 
 
 def validate():
@@ -72,11 +83,10 @@ def e(v):return escape(str(v),quote=True)
 def image_uri(d):
     path=ROOT/f'mobile-app/assets/resources/term-report-covers/primary-lower-{d["gender"]}-discovery-v2.png'
     return path,'data:image/png;base64,'+base64.b64encode(path.read_bytes()).decode()
-def heading(text,tag='h2'):
-    # 拆分只影响视觉层级，文字保持原表完整。
-    i=text.find('（')
-    main,note=(text[:i],text[i:]) if i>=0 else (text,'')
-    return f'<header class="section-heading"><{tag}>{e(main)}</{tag}>'+ (f'<p class="template-note">{e(note)}</p>' if note else '')+'</header>'
+def heading(text,tag='h2',preserve_note=False):
+    # 学校划掉的 AI 汇总、教师修改等制作说明不进入阅读版。
+    main=text if preserve_note else text.split('（',1)[0]
+    return f'<header class="section-heading"><{tag}>{e(main)}</{tag}></header>'
 def field(label,value,cls=''):
     return f'<div class="field {cls}"><dt>{e(label)}</dt><dd>{e(value)}</dd></div>'
 def quote_text(q):return q['context']+'：“'+q['quote']+'”。' if isinstance(q,dict) else '“'+q+'”'
@@ -89,34 +99,47 @@ def message_texts(d):
     c=MESSAGE_LABELS[2].replace('________',m['begin'])
     return [a,b,c]
 
+def message_html(d):
+    m=d['message']
+    paragraphs=[]
+    for template,values in zip(MESSAGE_LABELS,[m['traits'],[m['need']],[m['begin']]]):
+        prefix,*tails=template.split('________')
+        line=e(prefix.removesuffix('①'))+'<br>①' if len(values)==3 else e(prefix)+'<br>'
+        for value,tail in zip(values,tails):
+            line+=f'<span class="filled-answer">{e(value)}</span>'+e(tail)
+        paragraphs.append(f'<p class="sentence-fill">{line}</p>')
+    return '<div class="message-box">'+''.join(paragraphs)+'</div>'
+
 CSS = r'''
+.message-box .filled-answer{text-decoration-line:underline;text-decoration-thickness:1px;text-underline-offset:4px;text-decoration-skip-ink:none}
 :root{--ink:#12365c;--body:#263e55;--muted:#50677c;--line:#dce6f0;--paper:#fff;--blue:#eef5fc;--green:#edf8f4;--green-ink:#17644e;--violet:#f2f2fc;--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px}
 *{box-sizing:border-box}body{margin:0;background:#eaf0f7;color:var(--body);font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:14px;font-weight:400;line-height:1.65}h1,h2,h3,p,dl,dd,blockquote{margin:0}b,strong,h1,h2,h3{font-weight:700}button{font:inherit;font-weight:700;min-height:48px;padding:12px 20px;color:#fff;background:var(--ink);border:0;border-radius:12px;cursor:pointer}button:hover{background:#215783}button:focus-visible{outline:3px solid #215783;outline-offset:4px}.toolbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 24px;background:#fff;border-bottom:1px solid var(--line)}.toolbar strong{color:var(--ink)}
 .page{position:relative;width:210mm;height:297mm;margin:24px auto;padding:16mm 16mm 18mm;background:#fff;box-shadow:0 4px 16px #d8e2ec}.page footer{position:absolute;bottom:7mm;right:16mm;font-size:12px;line-height:1;color:var(--muted)}h2{font-size:28px;line-height:1.3;color:var(--ink)}h3{font-size:20px;line-height:1.4;color:var(--ink)}.section-heading{margin-bottom:24px}.template-note{font-size:12px;line-height:1.65;color:var(--muted);margin-top:8px}.section-heading.sub{margin-top:32px}.field dt{font-size:14px;font-weight:700;color:var(--muted);margin-bottom:8px}.field dd{font-size:16px;line-height:1.65;color:var(--ink)}
-.cover{display:flex;flex-direction:column;background:linear-gradient(150deg,#fff 55%,#f7fbff 88%,#fff)}.cover.girl{background:linear-gradient(150deg,#fff 55%,#fbf9ff 88%,#fff)}.school{font-size:20px;color:var(--muted);font-weight:700}.cover h1{font-size:52px;line-height:1.3;color:var(--ink);margin-top:40px}.cover h1 span{display:block}.cover .sources{font-size:16px;margin-top:16px;color:var(--muted)}.cover-art{width:104mm;height:104mm;object-fit:contain;align-self:center;margin:24px 0}.cover-identity{border-top:1px solid var(--line);padding-top:24px;margin-top:auto}.cover-name{font-size:40px;line-height:1.3;font-weight:700;color:var(--ink)}.cover-class{font-size:16px;margin-top:8px}.cover-date{font-size:14px;margin-top:24px;color:var(--muted)}
-.matrix-axis{font-size:12px;color:var(--muted);margin-bottom:8px}.matrix{display:grid;gap:16px}.matrix-item{break-inside:avoid}.matrix-item h3{font-size:18px;margin-bottom:8px}.triad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.triad dt{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}.triad dd{font-size:14px;line-height:1.6}.result{margin-top:8px;padding:8px 12px;background:var(--blue);border-radius:8px;display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;align-items:start}.result-label{font-size:12px;color:var(--muted);line-height:24px}.result-value{font-size:14px;line-height:24px;color:var(--ink);font-weight:700}.choice-list{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.choice{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:400;font-size:12px;line-height:24px}.choice .mark{display:inline-block;width:13px;height:13px;border:1px solid #617b93;border-radius:3px;line-height:12px;text-align:center;font-size:11px;color:#fff}.choice.selected{color:var(--ink);font-weight:700}.choice.selected .mark{background:var(--ink);border-color:var(--ink)}
-.student-meta{display:flex;gap:32px;margin:0 0 24px;font-size:14px}.student-meta b{color:var(--ink)}.quote-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.quote-card{background:var(--blue);border-radius:12px;padding:16px}.quote-card:nth-child(2){background:var(--violet)}.quote-card:nth-child(3){background:var(--green)}.quote-card h3{font-size:16px;margin-bottom:12px}.quote-card blockquote{font-size:14px;line-height:1.7;margin-top:8px}.quote-card .context{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}.rows-head,.evidence-row{display:grid;grid-template-columns:160px minmax(0,1fr);gap:24px}.rows-head{font-size:12px;color:var(--muted);margin-bottom:8px}.evidence-row{padding:16px 0;border-top:1px solid var(--line);break-inside:avoid}.evidence-row h3{font-size:16px;line-height:1.6}.dimension-main{display:block;font-size:24px;line-height:1.2;margin-bottom:8px}.dimension-note{display:block;font-size:14px;white-space:nowrap;line-height:1.5}.evidence-row p{font-size:15px;line-height:1.75}.three-rows .evidence-row{padding:20px 0}.three-rows .evidence-row p{font-size:16px}.light-fields{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px}.light-fields .field{padding:0}.light-fields dt{font-size:14px}.light-fields dd{font-size:16px}.synthesis{margin-top:24px;padding:20px 24px;background:var(--green);border-radius:12px}.synthesis dt{color:var(--green-ink);margin-bottom:8px}.synthesis dd{font-size:16px;color:var(--body)}.synthesis .template-note{color:var(--green-ink);margin-top:12px}.watch-help{font-size:14px;color:var(--muted);margin-bottom:24px}.watch-list{display:grid;gap:24px}.watch-item{display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px}.watch-number{font-size:20px;font-weight:700;color:#315d86;line-height:1.4}.watch-item h3{font-size:16px;margin-bottom:8px}.watch-item p{font-size:16px;line-height:1.75}.message-box{padding:24px;background:var(--blue);border-radius:12px}.message-box .field+.field{margin-top:24px}.traits{display:flex;gap:12px;flex-wrap:wrap}.traits span{font-size:16px;font-weight:700;color:var(--ink)}.message-box dt{font-size:14px}.message-box dd{font-size:16px}.sentence-fill{font-size:16px;line-height:1.75}.sentence-fill strong{font-weight:700;color:var(--ink)}
+.cover{display:flex;flex-direction:column;align-items:center;text-align:center;background:linear-gradient(150deg,#fff 55%,#f7fbff 88%,#fff)}.cover.girl{background:linear-gradient(150deg,#fff 55%,#fbf9ff 88%,#fff)}.cover-header{width:100%;display:flex;justify-content:flex-end}.cover-title{width:100%;margin-top:32px;text-align:center}.school{font-size:20px;color:var(--muted);font-weight:700}.cover h1{font-size:52px;line-height:1.3;color:var(--ink);margin-top:8px;letter-spacing:4px}.cover-message{font-size:16px;line-height:1.75;color:var(--body);text-align:right;opacity:.75;transform:translate(12px,-12px)}.cover .sources{font-size:14px;margin-top:12px;color:var(--muted)}.cover-art{width:104mm;height:104mm;object-fit:contain;margin:24px 0}.cover-identity{width:100%;padding-top:24px;margin-top:auto}.cover-name{font-size:40px;line-height:1.3;font-weight:700;color:var(--ink)}.cover-class{font-size:16px;margin-top:8px}.cover-date{font-size:14px;margin-top:24px;color:var(--muted)}
+.matrix{width:100%;border-collapse:collapse;table-layout:fixed;text-align:left}.matrix .dimension-col{width:100px}.matrix thead th{font-size:12px;font-weight:700;color:var(--muted);padding:12px 8px;background:var(--blue);vertical-align:top}.matrix thead th:first-child{padding-left:0;background:var(--paper)}.matrix tbody{break-inside:avoid}.matrix tbody th{font-size:16px;font-weight:700;line-height:1.65;color:var(--ink);padding:12px 16px 12px 0;vertical-align:top;border-top:1px solid var(--line);overflow-wrap:anywhere}.matrix .source-cell{font-size:14px;line-height:1.65;padding:12px 8px 8px;vertical-align:top;border-top:1px solid var(--line);overflow-wrap:anywhere}.source-mobile-label{display:none}.matrix .judgment-cell{padding:0 8px 12px}.result{padding:8px 12px;background:var(--blue);border-radius:8px;display:grid;grid-template-columns:60px minmax(0,1fr);gap:8px;align-items:start}.result-label{font-size:12px;color:var(--muted);line-height:24px}.result-value{font-size:14px;line-height:24px;color:var(--ink);font-weight:400}.choice-list{display:flex;gap:4px 12px;align-items:center;flex-wrap:wrap}.choice{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:400;font-size:12px;line-height:24px}.choice .mark{display:inline-block;width:13px;height:13px;border:1px solid #617b93;border-radius:3px;line-height:12px;text-align:center;font-size:11px;color:#fff}.choice.selected{color:var(--ink);font-weight:700}.choice.selected .mark{background:var(--ink);border-color:var(--ink)}
+.student-meta{display:flex;gap:32px;margin:0 0 24px;font-size:14px}.student-meta b{color:var(--ink)}.quote-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.quote-card{background:var(--blue);border-radius:12px;padding:16px}.quote-card:nth-child(2){background:var(--violet)}.quote-card:nth-child(3){background:var(--green)}.quote-card h3{font-size:16px;margin-bottom:12px}.quote-card blockquote{font-size:14px;line-height:1.7;margin-top:8px}.quote-card .context{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}.rows-head,.evidence-row{display:grid;grid-template-columns:160px minmax(0,1fr);gap:24px}.rows-head{font-size:12px;color:var(--muted);margin-bottom:8px}.evidence-row{padding:16px 0;border-top:1px solid var(--line);break-inside:avoid}.evidence-row h3{font-size:16px;line-height:1.6}.dimension-main{display:block;font-size:24px;line-height:1.2;margin-bottom:8px}.dimension-note{display:block;font-size:14px;white-space:nowrap;line-height:1.5}.evidence-row p{font-size:15px;line-height:1.75}.three-rows .evidence-row{padding:20px 0}.three-rows .evidence-row p{font-size:16px}.light-fields{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px}.light-fields .field{padding:0}.light-fields dt{font-size:14px}.light-fields dd{font-size:16px}.synthesis{margin-top:24px;padding:20px 24px;background:var(--green);border-radius:12px}.synthesis dt{color:var(--green-ink);margin-bottom:8px}.synthesis dd{font-size:16px;color:var(--body)}.synthesis .template-note{color:var(--green-ink);margin-top:12px}.watch-help{font-size:14px;color:var(--muted);margin-bottom:24px}.watch-list{display:grid;gap:24px}.watch-item{display:grid;grid-template-columns:32px minmax(0,1fr);gap:16px}.watch-number{font-size:20px;font-weight:700;color:#315d86;line-height:1.4}.watch-item h3{font-size:16px;margin-bottom:8px}.watch-item p{font-size:16px;line-height:1.75}.message-box{padding:24px;background:var(--blue);border-radius:12px}.message-box .field+.field{margin-top:24px}.traits{display:flex;gap:12px;flex-wrap:wrap}.traits span{font-size:16px;font-weight:700;color:var(--ink)}.message-box dt{font-size:14px}.message-box dd{font-size:16px}.sentence-fill{font-size:16px;line-height:1.75}.message-box .sentence-fill+.sentence-fill{margin-top:24px}.sentence-fill strong{font-weight:700;color:var(--ink)}
 @page{size:A4 portrait;margin:0}@media print{body{background:#fff}.toolbar{display:none}.page{margin:0;box-shadow:none;break-after:page;print-color-adjust:exact;-webkit-print-color-adjust:exact}.page:last-child{break-after:auto}}
-@media screen and (max-width:830px){.toolbar{padding:8px 16px}.toolbar strong{font-size:12px}.toolbar button{padding:12px 16px;font-size:14px;white-space:nowrap}.page{width:calc(100% - 20px);height:auto;margin:10px;padding:32px 24px 56px}.page footer{right:24px;bottom:20px}.cover{min-height:780px}.cover h1{font-size:40px}.cover-art{width:100%;height:auto;max-width:340px;aspect-ratio:1}.cover-name{font-size:32px}.cover .school{font-size:16px}.triad,.quote-grid,.light-fields{grid-template-columns:1fr}.triad{gap:12px}.triad dd,.result-value,.quote-card blockquote,.evidence-row p{font-size:16px}.matrix{gap:32px}.matrix-item h3{font-size:20px;margin-bottom:16px}.result{grid-template-columns:1fr;gap:4px;margin-top:16px;padding:12px 16px}.choice-list{gap:8px 16px}.choice{font-size:14px}.student-meta{flex-direction:column;gap:8px}.evidence-row{grid-template-columns:1fr;gap:8px}.rows-head{display:none}.evidence-row h3{font-size:18px}.light-fields{gap:24px}.watch-item{gap:8px}.message-box{padding:20px}.template-note{font-size:12px}.section-heading{margin-bottom:24px}}
+@media screen and (max-width:830px){.toolbar{padding:8px 16px}.toolbar strong{font-size:12px}.toolbar button{padding:12px 16px;font-size:14px;white-space:nowrap}.page{width:calc(100% - 20px);height:auto;margin:10px;padding:32px 24px 56px}.page footer{right:24px;bottom:20px}.cover{min-height:780px}.cover h1{font-size:40px;letter-spacing:2px}.cover-message{font-size:16px}.cover-art{width:100%;height:auto;max-width:340px;aspect-ratio:1}.cover-name{font-size:32px}.cover .school{font-size:16px}.quote-grid,.light-fields{grid-template-columns:1fr}.result-value,.quote-card blockquote,.evidence-row p{font-size:16px}.matrix,.matrix tbody,.matrix tr,.matrix th,.matrix td{display:block;width:100%}.matrix colgroup,.matrix thead{display:none}.matrix tbody+tbody{margin-top:32px}.matrix tbody th{padding:20px 0 12px;font-size:20px}.matrix .source-cell{padding:0 0 16px;border:0;font-size:16px}.source-mobile-label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}.matrix .judgment-cell{padding:0}.result{grid-template-columns:1fr;gap:4px;padding:12px 16px}.choice-list{gap:8px 16px}.choice{font-size:14px}.student-meta{flex-direction:column;gap:8px}.evidence-row{grid-template-columns:1fr;gap:8px}.rows-head{display:none}.evidence-row h3{font-size:18px}.light-fields{gap:24px}.watch-item{gap:8px}.message-box{padding:20px}.template-note{font-size:12px}.section-heading{margin-bottom:24px}}
 '''
 
 
-def render_html(name,d):
+def render_html(name,d,output_path=None):
     def page(n,body,cls=''):
         return f'<section class="page {cls}" id="page-{n}" aria-label="第{n}页"><div class="page-content">{body}</div><footer>{n:02d} / 05</footer></section>'
     _,uri=image_uri(d)
-    # 封面仍沿用上一版配色与形象，只展示识别信息。
-    cover=f'<div class="school">川大附小</div><h1>成像工具四：<span>AI信息汇聚</span></h1><p class="sources">家长问卷 × 学生访谈 × 教师观察</p><img class="cover-art" src="{uri}" width="1254" height="1254" alt="一年级学生主题虚拟形象"><div class="cover-identity"><p class="cover-name">{e(name)}</p><p class="cover-class">{e(d["class"])}</p><p class="cover-date">成像日期：{e(d["date"])}</p></div>'
+    cover=f'<header class="cover-header"><p class="cover-message">{e(COVER_MESSAGE)}</p></header><div class="cover-title"><div class="school">{e(SCHOOL_NAME)}</div><h1>{e(REPORT_TITLE)}</h1></div><p class="sources">家长问卷 × 学生访谈 × 教师观察</p><img class="cover-art" src="{uri}" width="1254" height="1254" alt="一年级学生主题虚拟形象"><div class="cover-identity"><p class="cover-name">{e(name)}</p><p class="cover-class">{e(d["class"])}</p><p class="cover-date">成像日期：{e(d["date"])}</p></div>'
     cover_page=f'<section class="page cover {d["gender"]}" id="page-1" aria-label="封面">{cover}<footer>01 / 05</footer></section>'
-    cards=[]
+    matrix_sources=['家长问卷','学生访谈','教师观察']
+    matrix=heading(H1)+'<table class="matrix" aria-label="三方资料与初步判断"><colgroup><col class="dimension-col"><col><col><col></colgroup><thead><tr><th scope="col" id="matrix-dimension">观察维度</th>'
+    matrix+=''.join(f'<th scope="col" id="matrix-{key}">{e(label)}</th>' for key,label in zip(['parent','child','teacher'],matrix_sources))+'</tr></thead>'
     for i,m in enumerate(d['matrix']):
-        triad=''.join(f'<div><dt>{e(label)}</dt><dd>{e(m[key])}</dd></div>' for key,label in zip(['parent','child','teacher'],MATRIX_LABELS[1:4]))
+        sources=''.join(f'<td class="source-cell" headers="matrix-row-{i} matrix-{key}"><span class="source-mobile-label">{e(label)}</span>{e(m[key])}</td>' for key,label in zip(['parent','child','teacher'],matrix_sources))
         if i==0:
             choices=''.join(f'<span class="choice {"selected" if option==m["insight"] else ""}"><span class="mark" aria-hidden="true">{"✓" if option==m["insight"] else ""}</span><span>{e(option)}</span></span>' for option in S['judgment_options'])
             value=f'<div class="choice-list" aria-label="初步判断：{e(m["insight"])}" data-selected="{e(m["insight"])}">{choices}</div>'
         else:value=f'<p class="result-value">{e(m["insight"])}</p>'
-        cards.append(f'<article class="matrix-item"><h3>{e(m["dim"])}</h3><dl class="triad">{triad}</dl><div class="result"><span class="result-label">初步判断</span>{value}</div></article>')
-    matrix=heading(H1)+f'<p class="matrix-axis">{e(MATRIX_LABELS[0])}</p><div class="matrix">'+''.join(cards)+'</div>'
+        matrix+=f'<tbody><tr><th scope="rowgroup" rowspan="2" id="matrix-row-{i}">{e(m["dim"])}</th>{sources}</tr><tr><td class="judgment-cell" colspan="3" headers="matrix-row-{i}"><div class="result"><span class="result-label">初步判断</span>{value}</div></td></tr></tbody>'
+    matrix+='</table>'
     quotes=[]
     for key,label in zip(['parent','child','teacher'],SOURCE_LABELS):
         qt=''
@@ -128,6 +151,7 @@ def render_html(name,d):
         heads=S['tables'][table_i][0]
         result=f'<div class="evidence-rows {cls}"><div class="rows-head"><span>{e(heads[0])}</span><span>{e(heads[1])}</span></div>'
         for label,value in rows:
+            label=DISPLAY_LABELS.get(label,label)
             label_html=(f'<span class="dimension-main">{e(label[0])}</span><span class="dimension-note">{e(label[1:])}</span>' if table_i==1 else e(label))
             result+=f'<article class="evidence-row"><h3>{label_html}</h3><p>{e(value)}</p></article>'
         return result+'</div>'
@@ -137,13 +161,11 @@ def render_html(name,d):
     light+=f'<dl class="synthesis">{field(LIGHT_RESULT,d["light"]["synthesis"])}<p class="template-note">{e(LIGHT_NOTE)}</p></dl>'
     watch=heading(WATCH)+f'<p class="watch-help">{e(WATCH_HELP)}</p><div class="watch-list">'
     for i,w in enumerate(d['watch'],1):watch+=f'<article class="watch-item"><span class="watch-number">{i:02d}</span><div><h3>{e(w["title"])}</h3><p>{e(w["text"])}</p></div></article>'
-    watch+='</div>'+heading(MESSAGE).replace('section-heading','section-heading sub')
-    traits=' '.join(c+t for c,t in zip('①②③',d['message']['traits']))
-    watch+='<div class="message-box"><dl>'+field(MESSAGE_LABELS[0].split('①')[0],traits)+field(MESSAGE_LABELS[1].split('________')[0],d['message']['need'])+'</dl>'
-    parts=MESSAGE_LABELS[2].split('________')
-    watch+=f'<p class="sentence-fill" style="margin-top:24px">{e(parts[0])}<strong>{e(d["message"]["begin"])}</strong>{e(parts[1])}</p></div>'
-    html='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>'+e(name)+'｜'+e(TITLE)+'</title><style>'+CSS+'</style></head><body><nav class="toolbar" aria-label="报告操作"><strong>'+e(name)+' · 工具四</strong><button type="button" onclick="window.print()">导出 PDF / 打印</button></nav><main>'+cover_page+page(2,matrix)+page(3,card)+page(4,light)+page(5,watch)+'</main></body></html>'
-    (OUT/f'{name}_工具四_初始成像.html').write_text(html)
+    watch+='</div>'+heading(MESSAGE,preserve_note=True).replace('section-heading','section-heading sub')
+    watch+=message_html(d)
+    html='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>'+e(name)+'｜'+e(REPORT_TITLE)+'</title><style>'+CSS+'</style></head><body><nav class="toolbar" aria-label="报告操作"><strong>'+e(name)+' · '+e(REPORT_TITLE)+'</strong><button type="button" onclick="window.print()">导出 PDF / 打印</button></nav><main>'+cover_page+page(2,matrix)+page(3,card)+page(4,light)+page(5,watch)+'</main></body></html>'
+    target=Path(output_path) if output_path else OUT/f'{name}_工具四_初始成像.html'
+    target.write_text(html)
 
 
 def render_markdown(name,d):
@@ -221,7 +243,14 @@ def render_docx(name,d):
     doc.save(OUT/f'{name}_工具四_初始成像.docx')
 
 if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--html-only',action='store_true',help='仅更新 HTML 阅读版，保留已有 Word 和文本文件')
+    parser.add_argument('--student',action='append',choices=list(DATA),help='只生成指定学生，可重复指定；不传时生成全部学生')
+    args=parser.parse_args()
     validate()
-    for name,d in DATA.items():
-        render_html(name,d);render_docx(name,d);render_markdown(name,d)
-        print(name,'原表字段核对通过；HTML / Word / 文本已更新')
+    for name in args.student or DATA:
+        d=DATA[name]
+        render_html(name,d)
+        if not args.html_only:
+            render_docx(name,d);render_markdown(name,d)
+        print(name,'原表字段核对通过；'+('HTML 已更新' if args.html_only else 'HTML / Word / 文本已更新'))

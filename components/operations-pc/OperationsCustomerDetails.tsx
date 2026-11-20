@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Descriptions, Drawer, Table, Tabs } from '@arco-design/web-react';
 import {
-  getIndicatorScheme, getSchoolAuthorizationStatus, getSchoolOrganizations, maskPhone, organizationKindLabels,
+  getIndicatorScheme, getOrganizationAuthorizationStatus, getOrganizationStatistics, getSchoolAuthorizationStatus, getSchoolOrganizations, maskPhone, organizationKindLabels,
   type CustomerEdition, type OperationsCustomers,
 } from './operationsCustomers';
 import OperationsIndicatorTable from './OperationsIndicatorTable';
@@ -23,9 +23,10 @@ export default function OperationsCustomerDetails({ selection, data, onClose }: 
   if (!item) return null;
   const organizationSchools = organization ? data.schools.filter(row => organization.schoolIds.includes(row.id)) : [];
   const schoolOrganizations = school ? getSchoolOrganizations(data, school.id) : [];
+  const organizationStatistics = organization ? getOrganizationStatistics(data, organization) : undefined;
   const basic = [
-    { label: personal ? '用户编号' : organization ? '组织编码' : '学校编号', value: item.id },
-    { label: school ? '授权状态' : '状态', value: <OperationsStatus value={school ? getSchoolAuthorizationStatus(school) : item.status} /> },
+    { label: personal ? '用户编号' : organization ? '组织编号' : '学校编号', value: item.id },
+    { label: school || organization ? '授权状态' : '状态', value: <OperationsStatus value={school ? getSchoolAuthorizationStatus(school) : organization ? getOrganizationAuthorizationStatus(organization) : item.status} /> },
     ...(personal ? [
       { label: '管理员账号', value: personal.adminAccount }, { label: '姓名', value: personal.name },
       { label: '填写学校', value: personal.schoolName }, { label: '注册日期', value: personal.registeredAt },
@@ -43,9 +44,13 @@ export default function OperationsCustomerDetails({ selection, data, onClose }: 
     ] : []),
     ...(organization ? [
       { label: '组织名称', value: organization.name }, { label: '组织类型', value: organizationKindLabels[organization.kind] },
-      { label: '管理员', value: organization.administrator }, { label: '管理员手机号', value: maskPhone(organization.phone) },
-      { label: '创建时间', value: organization.createdAt },
-      { label: organization.status === '待开通' ? '拟关联学校' : '关联学校', value: `${organizationSchools.length}所` },
+      { label: organization.status === '待开通' ? '拟关联学校数' : '关联学校数', value: organizationStatistics!.schoolCount },
+      { label: '管理员姓名', value: organization.administrator }, { label: '管理员手机', value: maskPhone(organization.phone) },
+      { label: '拥有教师数', value: organizationStatistics!.teacherCount?.toLocaleString('zh-CN') ?? '—' },
+      { label: '拥有班级数', value: organizationStatistics!.classCount?.toLocaleString('zh-CN') ?? '—' },
+      { label: '拥有学生数', value: organizationStatistics!.studentCount?.toLocaleString('zh-CN') ?? '—' },
+      { label: '授权起止时间', value: organization.authorizationStartsAt && organization.authorizationEndsAt ? `${organization.authorizationStartsAt} 至 ${organization.authorizationEndsAt}` : '未配置' },
+      { label: '创建日期', value: organization.createdAt },
       { label: '数据查看范围', value: organization.status === '待开通' ? '开通后生效' : '已关联学校' },
     ] : []),
   ];

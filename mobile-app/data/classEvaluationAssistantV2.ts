@@ -104,6 +104,7 @@ export const CLASS_EVALUATION_RECORDS: ClassEvaluationRecord[] = [
         indicatorPath: ['健体班级', '早操体锻', '精神风貌'],
         finding: '全班早操精神饱满、动作整齐，获本周优秀早操班级表扬。', scoreChange: 0.2, deduction: 0,
         rule: '获评优秀早操班级，本次加0.2分。',
+        images: ['/assets/class-evaluation-evidence/morning-exercise-queue.jpg'],
     },
     {
         id: 'CE-20260801-002', classId: 'c_2025_4', date: '2026-08-01', dimension: '健体班级', indicator: '眼操动作',
@@ -128,6 +129,7 @@ export const CLASS_EVALUATION_RECORDS: ClassEvaluationRecord[] = [
         indicatorPath: ['美净班级', '班级清洁', '午检'],
         finding: '地面发现两处纸屑，后排桌椅未对齐。', deduction: 0.4,
         rule: '午检发现纸屑或桌椅未对齐，按问题数量累计扣0.4分。',
+        images: ['/assets/class-evaluation-evidence/classroom-paper-scraps.jpg'],
     },
     {
         id: 'CE-20260806-001', classId: 'c_2025_4', date: '2026-08-06', dimension: '文雅班级', indicator: '路队放学',
@@ -146,6 +148,7 @@ export const CLASS_EVALUATION_RECORDS: ClassEvaluationRecord[] = [
         indicatorPath: ['美净班级', '班级清洁', '晨检'],
         finding: '楼梯转角发现垃圾未清理。', deduction: 1,
         rule: '公区发现垃圾未清理，每次扣1分。',
+        images: ['/assets/class-evaluation-evidence/stair-corner-trash.jpg'],
     },
     {
         id: 'CE-20260807-005', classId: 'c_2025_4', date: '2026-08-07', dimension: '文雅班级', indicator: '班级文化建设',

@@ -4,7 +4,7 @@ export const GROWTH_RANK_SIZE = 10;
 export interface GrowthRankingRow { student: GrowthStudent; score: number; rank: number; tied: boolean }
 
 /** 先在完整学校/年级集合中排名，再按展示需要截取；完整榜单传入Infinity。 */
-export function selectGrowthRanking(snapshot: GrowthSnapshot, metric = 'total', gradeId?: string, limit = GROWTH_RANK_SIZE): GrowthRankingRow[] {
+export function selectGrowthRanking(snapshot: { dimensions: GrowthSnapshot['dimensions']; studentScores: Pick<GrowthSnapshot['studentScores'][number], 'student' | 'total' | 'dimensions'>[] }, metric = 'total', gradeId?: string, limit = GROWTH_RANK_SIZE): GrowthRankingRow[] {
   if (metric !== 'total' && !snapshot.dimensions.some(item => item.name === metric)) return [];
   const scored = snapshot.studentScores.filter(item => !gradeId || item.student.gradeId === gradeId)
     .map(item => ({ student: item.student, score: metric === 'total' ? item.total : item.dimensions[metric] ?? 0 }))

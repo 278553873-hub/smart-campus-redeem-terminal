@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Checkbox, Descriptions, Empty, Form, Input, Radio, Select, Steps, Table, Tag } from '@arco-design/web-react';
+import { Alert, Button, Checkbox, DatePicker, Descriptions, Empty, Form, Input, Radio, Select, Steps, Table, Tag } from '@arco-design/web-react';
 import { ArrowLeft, Search } from 'lucide-react';
 import {
   createOrganizationDraft, getIndicatorConflicts, getIndicatorScheme, getSchoolOrganizations,
@@ -22,6 +22,7 @@ export default function OrganizationSetup({ data, existing, onSave, onCancel, on
   const initial = useRef<OrganizationDraft>(existing ? {
     name: existing.name, kind: existing.kind, administrator: existing.administrator, phone: existing.phone,
     schoolIds: [...existing.schoolIds], indicatorId: existing.indicatorId,
+    authorizationStartsAt: existing.authorizationStartsAt, authorizationEndsAt: existing.authorizationEndsAt,
   } : createOrganizationDraft());
   const [draft, setDraft] = useState<OrganizationDraft>(initial.current);
   const [step, setStep] = useState(1);
@@ -57,7 +58,7 @@ export default function OrganizationSetup({ data, existing, onSave, onCancel, on
     const all = validateOrganizationDraft(draft, data, existing?.id);
     setErrors(current => ({ ...current, [key]: all[key] }));
   };
-  const fieldsForStep: (keyof OrganizationDraft)[][] = [[], ['kind', 'name', 'administrator', 'phone'], ['schoolIds'], ['indicatorId']];
+  const fieldsForStep: (keyof OrganizationDraft)[][] = [[], ['kind', 'name', 'administrator', 'phone', 'authorizationStartsAt'], ['schoolIds'], ['indicatorId']];
   const next = () => {
     const all = validateOrganizationDraft(draft, data, existing?.id);
     const fields = fieldsForStep[step];
@@ -65,7 +66,8 @@ export default function OrganizationSetup({ data, existing, onSave, onCancel, on
     setErrors(Object.fromEntries(invalid.map(key => [key, all[key]])));
     if (invalid.length) {
       const first = document.getElementById(`ops-org-${invalid[0]}`);
-      first?.focus();
+      const target = first?.matches('input,button,[tabindex]') ? first : first?.querySelector<HTMLElement>('input,button,[tabindex]');
+      target?.focus();
       return;
     }
     setStep(value => value + 1);
@@ -101,6 +103,18 @@ export default function OrganizationSetup({ data, existing, onSave, onCancel, on
         <Form.Item label="组织名称" required {...fieldError('name')}>
           <Input id="ops-org-name" value={draft.name} onChange={value => update('name', value)} onBlur={() => validateField('name')}
             placeholder={draft.kind === 'city' ? '例如：成都市教育局' : draft.kind === 'district' ? '例如：成都市高新区教育局' : '例如：明远教育集团'} maxLength={50} showWordLimit aria-label="组织名称" {...fieldAccessibility('name')} />
+        </Form.Item>
+        <Form.Item label="授权起止时间" required extra="组织与各学校的授权分别管理。" {...fieldError('authorizationStartsAt')}>
+          <DatePicker.RangePicker format="YYYY-MM-DD" style={{ width: '100%' }} allowClear
+            inputProps={[
+              { id: 'ops-org-authorizationStartsAt', 'aria-label': '授权开始日期', ...fieldAccessibility('authorizationStartsAt') },
+              { 'aria-label': '授权结束日期', ...fieldAccessibility('authorizationStartsAt') },
+            ]}
+            value={draft.authorizationStartsAt && draft.authorizationEndsAt ? [draft.authorizationStartsAt, draft.authorizationEndsAt] : []}
+            onChange={dates => {
+              update('authorizationStartsAt', dates?.[0] ?? '');
+              update('authorizationEndsAt', dates?.[1] ?? '');
+            }} />
         </Form.Item>
         <div className="ops-form-section"><h3>管理员</h3>
           <Form.Item label="管理员姓名" required {...fieldError('administrator')}>
@@ -160,7 +174,9 @@ export default function OrganizationSetup({ data, existing, onSave, onCancel, on
       {step === 4 && <>
         <Descriptions column={2} labelStyle={{ width: 112 }} data={[
           { label: '组织名称', value: draft.name }, { label: '组织类型', value: organizationKindLabels[draft.kind] },
-          { label: '管理员', value: `${draft.administrator} · ${maskPhone(draft.phone)}` }, { label: '关联学校', value: `${selectedSchools.length}所` },
+          { label: '管理员姓名', value: draft.administrator }, { label: '管理员手机', value: maskPhone(draft.phone) },
+          { label: '关联学校数', value: selectedSchools.length },
+          { label: '授权起止时间', value: `${draft.authorizationStartsAt} 至 ${draft.authorizationEndsAt}` },
           { label: '统一评价指标', value: `${scheme?.name} · ${scheme?.version}` },
         ]} />
         <div className="ops-review-section"><h3>关联学校</h3><div className="ops-school-names">{selectedSchools.map(item => <Tag key={item.id}>{item.name}</Tag>)}</div></div>
