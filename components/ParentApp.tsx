@@ -828,6 +828,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
       return false;
     }
   };
+  const closeBehaviorEditor = () => {
+    setEditingBehavior(null);
+    setBehaviorError('');
+  };
   const coinSchoolId = activeChild ? resolveCoinSchoolId(activeChild.schoolCode) : DEMO_COIN_SCHOOL_ID;
   const GROWTH_COIN_TERMS = useGrowthCoinTerms(coinSchoolId);
   const exchangePasswordChild = useMemo(
@@ -2967,10 +2971,24 @@ const ParentApp: React.FC<ParentAppProps> = ({
             <SubmitSuccessToast />
             <ChildSwitcherSheet />
             <ExchangePasswordSheet />
-            <MobileBottomSheet open={Boolean(editingBehavior)} title="修改记录" onClose={() => { if (editingBehavior) saveBehaviorRecord(editingBehavior); }}>
-              <label className="block text-[length:var(--pm-font-size-body)]">发生日期<input aria-label="发生日期" type="date" value={editingBehavior?.occurredOn ?? ''} max={createParentBehaviorDraft().occurredOn} onChange={event => { const occurredOn = event.target.value; setEditingBehavior(previous => previous ? { ...previous, occurredOn } : null); setBehaviorError(''); }} className="ml-3 min-h-11 bg-transparent" /></label>
-              <textarea aria-label="孩子的表现" rows={5} maxLength={2000} value={editingBehavior?.content ?? ''} onChange={event => { const content = event.target.value; setEditingBehavior(previous => previous ? { ...previous, content } : null); setBehaviorError(''); }} className="mt-3 w-full rounded-[var(--pm-radius-control-compact)] bg-[var(--pm-bg-surface)] p-3 text-[length:var(--pm-font-size-body)] outline-none focus:ring-0" />
-              {behaviorError && <p role="alert">{behaviorError}</p>}
+            <MobileBottomSheet open={Boolean(editingBehavior)} title="修改记录" onClose={closeBehaviorEditor} footer={(
+              <div className="grid grid-cols-2 gap-[var(--tm-space-3)]">
+                <button type="button" onClick={closeBehaviorEditor} className="flex min-h-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]">取消</button>
+                <button type="button" onClick={() => { if (editingBehavior) saveBehaviorRecord(editingBehavior); }} className="flex min-h-[var(--tm-size-touch)] items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)]">保存</button>
+              </div>
+            )}>
+              <div className="space-y-[var(--tm-form-section-gap)] pb-[var(--tm-space-2)]">
+                <label className="block">
+                  <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">发生日期</span>
+                  <input aria-label="发生日期" type="date" value={editingBehavior?.occurredOn ?? ''} max={createParentBehaviorDraft().occurredOn} onChange={event => { const occurredOn = event.target.value; setEditingBehavior(previous => previous ? { ...previous, occurredOn } : null); setBehaviorError(''); }} className="h-[var(--tm-size-touch)] w-full rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] px-3 text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-input-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]" />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-secondary)]">记录内容</span>
+                  <textarea aria-label="记录内容" rows={5} maxLength={2000} value={editingBehavior?.content ?? ''} onChange={event => { const content = event.target.value; setEditingBehavior(previous => previous ? { ...previous, content } : null); setBehaviorError(''); }} className="w-full resize-none rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-input-border)] bg-[var(--tm-input-bg)] p-3 text-[length:var(--tm-font-size-body)] font-medium leading-relaxed text-[var(--tm-input-text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]" />
+                  <span className="mt-1 block text-right text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-tertiary)]">{(editingBehavior?.content ?? '').length}/2000</span>
+                </label>
+                {behaviorError && <p role="alert" className="text-[length:var(--tm-font-size-compact)] font-medium text-[var(--tm-status-negative)]">{behaviorError}</p>}
+              </div>
             </MobileBottomSheet>
 
           </div>
