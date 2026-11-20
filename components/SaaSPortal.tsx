@@ -5,7 +5,6 @@ import {
   Zap,
   Monitor,
   MonitorSmartphone,
-  ShieldCheck,
   BookOpen,
   LayoutGrid,
   PhoneCall,
@@ -19,7 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import PlatformBrandMark from './PlatformBrandMark';
-import { PasswordRevealButton } from '../mobile-app/components/ui/PasswordRevealButton';
+import SchoolPcLogin from './SchoolPcLogin';
 
 export type PcPortalApp = 'teacher' | 'all-in-one' | 'smart-big-screen';
 
@@ -53,44 +52,25 @@ const PortalSectionHeader: React.FC<PortalSectionHeaderProps> = ({ title, icon: 
   </div>
 );
 
-const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onLoginSuccess, onLogout, onNavigate }) => {
-  const [username, setUsername] = useState('');
-  const [credential, setCredential] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginTab, setLoginTab] = useState<'password' | 'code'>('password');
+const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onLoginSuccess, onNavigate }) => {
+  if (!isLoggedIn) {
+    return (
+      <SchoolPcLogin
+        isSchoolAdministrator={teacherProfile.role === '学校管理员'}
+        onLogin={(username) => {
+          const trimmed = username.trim();
+          const name = trimmed.endsWith('老师') ? trimmed : `${trimmed}老师`;
+          onLoginSuccess(/[一-龥]/.test(trimmed) ? { ...teacherProfile, name } : teacherProfile);
+        }}
+      />
+    );
+  }
+
+  return <SaaSPortalHome teacherProfile={teacherProfile} onNavigate={onNavigate} />;
+};
+
+const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavigate'>> = ({ teacherProfile, onNavigate }) => {
   const [storyWorkshopOpen, setStoryWorkshopOpen] = useState(false);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedCredential = credential.trim();
-
-    if (!trimmedCredential) {
-      setLoginError(loginTab === 'password' ? '请输入密码' : '请输入验证码');
-      setTimeout(() => setLoginError(''), 2000);
-      return;
-    }
-
-    if (loginTab === 'password' || trimmedCredential === '123456') {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        setLoginError('');
-        const trimmed = username.trim();
-        const loginProfile = /[一-龥]/.test(trimmed)
-          ? {
-            ...teacherProfile,
-            name: trimmed.endsWith('老师') ? trimmed : `${trimmed}老师`,
-          }
-          : teacherProfile;
-        onLoginSuccess(loginProfile);
-      }, 800);
-      return;
-    }
-    setLoginError('验证码错误，请重试');
-    setTimeout(() => setLoginError(''), 2000);
-  };
 
   const activeApps = [
     {
@@ -229,140 +209,6 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
     '感谢你把平凡的一天，教成了孩子们值得回忆的一课。',
     '你今天投入的每一分认真，都会变成孩子向前走的一小步。',
   ];
-
-  if (!isLoggedIn) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center relative overflow-hidden font-sans"
-        style={{ background: 'linear-gradient(135deg, #f0f7ff 0%, #fdfcfd 50%, #fff0f5 100%)' }}
-      >
-        <div className="absolute top-[15%] left-[15%] w-[300px] h-[300px] bg-blue-200/40 rounded-full blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-[10%] right-[20%] w-[250px] h-[250px] bg-pink-200/40 rounded-full blur-[80px] pointer-events-none" />
-
-        <div className="w-full max-w-[440px] bg-white/95 backdrop-blur-xl rounded p-8 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] border border-white/60 relative z-10">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 bg-[#2a68ff] rounded flex items-center justify-center shadow-md shadow-blue-200 shrink-0 text-white">
-              <PlatformBrandMark size={24} />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">乐途AI智慧教育平台</h2>
-              <p className="text-slate-500 text-[11px] font-medium mt-0.5">学校端安全登录</p>
-            </div>
-          </div>
-
-          <div className="flex gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => { setLoginTab('password'); setCredential(''); }}
-              className={`flex-1 py-2.5 rounded text-sm font-bold transition-all ${loginTab === 'password' ? 'bg-[#2a68ff] border border-[#2a68ff] text-white shadow-md shadow-blue-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-            >
-              密码登录
-            </button>
-            <button
-              type="button"
-              onClick={() => { setLoginTab('code'); setCredential(''); }}
-              className={`flex-1 py-2.5 rounded text-sm font-bold transition-all ${loginTab === 'code' ? 'bg-[#2a68ff] border border-[#2a68ff] text-white shadow-md shadow-blue-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-            >
-              验证码登录
-            </button>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="flex text-[11px] font-bold text-slate-700 mb-1.5">
-                <span className="text-red-500 mr-0.5">*</span>
-                手机号
-              </label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                  <User size={16} />
-                </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="请输入手机号（演示环境任意输入）"
-                  className="w-full h-[42px] pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded text-sm font-medium text-slate-800 focus:outline-none focus:border-[#2a68ff] focus:ring-1 focus:ring-[#2a68ff] transition-all"
-                />
-              </div>
-            </div>
-
-            {loginTab === 'password' ? (
-              <div>
-                <label className="flex text-[11px] font-bold text-slate-700 mb-1.5">
-                  <span className="text-red-500 mr-0.5">*</span>
-                  密码
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                    <ShieldCheck size={16} />
-                  </div>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={credential}
-                    onChange={(e) => setCredential(e.target.value)}
-                    placeholder="请输入密码（演示环境任意输入）"
-                    className="w-full h-[42px] pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded text-sm font-medium text-slate-800 focus:outline-none focus:border-[#2a68ff] focus:ring-1 focus:ring-[#2a68ff] transition-all"
-                  />
-                  <PasswordRevealButton
-                    visible={showPassword}
-                    onToggle={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    size={16}
-                    hideLabel="点击隐藏密码"
-                    revealLabel="点击显示密码"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="flex text-[11px] font-bold text-slate-700 mb-1.5">
-                  <span className="text-red-500 mr-0.5">*</span>
-                  验证码
-                </label>
-                <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                    <ShieldCheck size={16} />
-                  </div>
-                  <input
-                    type="text"
-                    value={credential}
-                    onChange={(e) => setCredential(e.target.value)}
-                    placeholder="请输入验证码（演示验证码：123456）"
-                    className="w-full h-[42px] pl-9 pr-24 py-2.5 bg-white border border-slate-200 rounded text-sm font-medium text-slate-800 focus:outline-none focus:border-[#2a68ff] focus:ring-1 focus:ring-[#2a68ff] transition-all"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-bold text-[#2a68ff] bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors"
-                  >
-                    获取验证码
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="h-4 flex items-center">
-              {loginError && <span className="text-red-500 text-[11px] font-bold animate-in slide-in-from-top-1">{loginError}</span>}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-[40px] bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded font-bold text-sm shadow-md shadow-indigo-500/20 active:scale-[0.98] transition-all flex justify-center items-center gap-2 mt-2"
-            >
-              {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : '立即登录'}
-            </button>
-
-            <div className="flex justify-end pt-1">
-              <button type="button" className="text-[11px] font-bold text-[#2a68ff] hover:underline">
-                忘记密码？
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
 
   const today = new Date();
   const dateStr = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 星期${['日', '一', '二', '三', '四', '五', '六'][today.getDay()]}`;

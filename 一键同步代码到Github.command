@@ -219,6 +219,7 @@ cat > "$TMP_SERVER_FILE" <<'EOF_SERVER'
 import http from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve } from 'node:path';
+import { createSchoolPcDemoScanHandler } from './schoolPcDemoScan.mjs';
 
 const port = Number(process.env.PORT || 9001);
 const root = resolve(process.env.WEB_ROOT || join(process.cwd(), 'dist'));
@@ -244,7 +245,9 @@ function safePath(urlPath) {
   return resolve(join(root, cleaned));
 }
 
+const handleSchoolPcDemoScan = createSchoolPcDemoScanHandler();
 const server = http.createServer((req, res) => {
+  if (handleSchoolPcDemoScan(req, res)) return;
   try {
     const requested = safePath(req.url || '/');
     let filePath = requested.startsWith(root) ? requested : join(root, 'index.html');
@@ -252,7 +255,8 @@ const server = http.createServer((req, res) => {
       filePath = join(root, 'index.html');
     }
     const type = mime[extname(filePath)] || 'application/octet-stream';
-    const cache = filePath.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable';
+    const isEntryPage = filePath.endsWith('index.html') || filePath === join(root, 'demos', 'school-pc-scan-confirm.html');
+    const cache = isEntryPage ? 'no-cache' : 'public, max-age=31536000, immutable';
     const stream = createReadStream(filePath);
     stream.on('error', (error) => {
       console.error(`Failed to read static file: ${filePath}`, error);
@@ -274,6 +278,7 @@ server.listen(port, '0.0.0.0', () => {
 });
 EOF_SERVER
 
+rsync_with_password "services/schoolPcDemoScan.mjs" "$DEPLOY_APP_DIR/schoolPcDemoScan.mjs"
 rsync_with_password "$TMP_SERVER_FILE" "$DEPLOY_APP_DIR/server.mjs"
 rm -f "$TMP_SERVER_FILE" "$TMP_REMOTE_DEPLOY_FILE"
 

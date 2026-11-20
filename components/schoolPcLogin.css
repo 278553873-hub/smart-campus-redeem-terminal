@@ -1,0 +1,491 @@
+@font-face {
+  font-family: "Noto Sans SC Login";
+  src: url('/assets/school-pc-login/noto-sans-sc-900-title.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  unicode-range: U+0041, U+0049, U+4E50, U+53F0, U+5E73, U+6167, U+6559, U+667A, U+7406, U+7BA1, U+80B2, U+9014;
+}
+
+.school-pc-login {
+  --login-background: #dbe7fc;
+  --login-surface: #fff;
+  --login-ink: #13254e;
+  --login-muted: #53647a;
+  --login-line: #c4cedb;
+  --login-danger: #b42318;
+  --primary-5: 29, 81, 213;
+  --primary-6: 42, 104, 255;
+  --primary-7: 24, 65, 174;
+
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--login-background) url('./schoolPcLoginBackground.svg') center / 100% 100% no-repeat;
+  color: var(--login-ink);
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+}
+
+.school-pc-login__viewport {
+  display: grid;
+  width: min(100%, 1920px);
+  min-height: 100%;
+  margin-inline: auto;
+  padding: 32px clamp(24px, 3.5vw, 64px) 40px;
+}
+
+.school-pc-login__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 29%);
+  align-items: center;
+  gap: clamp(40px, 7vw, 120px);
+  width: min(100%, 1512px);
+  margin-inline: auto;
+  padding-block: 24px;
+}
+
+.school-pc-login__hero {
+  text-align: center;
+}
+
+.school-pc-login__hero-title {
+  margin: 0;
+  color: var(--login-ink);
+  font-family: "Noto Sans SC Login", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: clamp(32px, 4vw, 58px);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.school-pc-login__hero-title span {
+  display: inline-block;
+  color: #254fcb;
+}
+
+@supports (background-clip: text) {
+  .school-pc-login__hero-title span {
+    background: linear-gradient(90deg, #2e65f0, #4843f1 50%, #7632ec);
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.school-pc-login__hero-slogan {
+  margin: clamp(12px, 1.6vh, 20px) 0 0;
+  color: #354a73;
+  font-size: clamp(15px, 1.3vw, 19px);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.school-pc-login__hero picture {
+  display: block;
+  margin-top: clamp(16px, 2.8vh, 32px);
+}
+
+.school-pc-login__hero img {
+  display: block;
+  width: min(92%, 660px, 92vh);
+  height: auto;
+  margin-inline: auto;
+  /* 透明画布右侧留白较少，按可见主体与标题对齐。 */
+  translate: -1.8%;
+}
+
+.school-pc-login__panel {
+  position: relative;
+  display: grid;
+  min-height: 520px;
+  align-content: start;
+  justify-items: center;
+  padding: clamp(28px, 3vw, 48px);
+  padding-block-start: 64px;
+  border: 1px solid rgb(255 255 255 / 92%);
+  border-radius: 20px;
+  background: #f2f8ff;
+  box-shadow: inset 0 1px 0 #fff, 0 12px 36px rgb(39 79 155 / 12%);
+}
+
+@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .school-pc-login__panel {
+    background: linear-gradient(155deg, rgb(255 255 255 / 52%), rgb(239 249 255 / 75%) 60%, rgb(239 250 255 / 86%));
+    -webkit-backdrop-filter: blur(12px) saturate(115%);
+    backdrop-filter: blur(12px) saturate(115%);
+  }
+}
+
+.school-pc-login__content {
+  display: grid;
+  width: min(100%, 360px);
+  min-width: 0;
+}
+
+.school-pc-login__pane {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.school-pc-login__pane[inert] {
+  visibility: hidden;
+}
+
+.school-pc-login__content h1 {
+  margin: 0 0 28px;
+  color: var(--login-ink);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.school-pc-login__content h1.school-pc-login__verify-title {
+  margin-bottom: 8px;
+  font-size: clamp(22px, 2vw, 28px);
+}
+
+.school-pc-login__verify-description {
+  text-align: center;
+  text-wrap: balance;
+}
+
+.school-pc-login__panel .school-pc-login__scan-toggle.arco-btn {
+  position: absolute;
+  inset: 10px 12px auto auto;
+  display: flex;
+  height: 46px;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border-radius: 6px;
+  color: #111827;
+  background: transparent;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.school-pc-login__panel .school-pc-login__scan-toggle.arco-btn.arco-btn-text:is(:hover, :active) {
+  color: #111827;
+  background: transparent;
+}
+
+.school-pc-login__scan-corner {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.school-pc-login__scan-corner[data-scan-return='true'] {
+  clip-path: none;
+}
+
+.school-pc-login__scan-hint {
+  --scan-hint-background: #e6efff;
+  position: relative;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: var(--scan-hint-background);
+  color: #2558c2;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: nowrap;
+  animation: school-pc-scan-hint 2.2s ease-in-out 2;
+}
+
+.school-pc-login__scan-hint::after {
+  position: absolute;
+  inset: 50% auto auto 100%;
+  border: 5px solid transparent;
+  border-left-color: var(--scan-hint-background);
+  transform: translateY(-50%);
+  content: '';
+}
+
+@keyframes school-pc-scan-hint {
+  50% { transform: translateY(-4px); }
+}
+
+.school-pc-login__scan-toggle:focus-visible {
+  outline: 2px solid rgb(var(--primary-6));
+  outline-offset: -2px;
+}
+
+.school-pc-login__scan-body {
+  padding-block-start: 32px;
+}
+
+.school-pc-login__scan-image {
+  position: relative;
+  display: grid;
+  width: min(100%, 224px);
+  aspect-ratio: 1;
+  place-items: center;
+  margin-inline: auto;
+  border-radius: 12px;
+  background: var(--login-surface);
+  color: var(--login-muted);
+  font-size: 14px;
+}
+
+.school-pc-login__scan-image img {
+  width: 100%;
+  height: auto;
+  border-radius: inherit;
+}
+
+.school-pc-login__scan-countdown,
+.school-pc-login__message {
+  color: var(--login-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.school-pc-login__scan-countdown {
+  margin: 12px 0 0;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.school-pc-login__methods.arco-radio-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 24px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #e4edf8;
+}
+
+.school-pc-login__methods.arco-radio-group::before {
+  position: absolute;
+  inset: 4px auto 4px 4px;
+  width: calc(50% - 4px);
+  border: 1px solid #d5dfed;
+  border-radius: 7px;
+  background: var(--login-surface);
+  pointer-events: none;
+  transition: transform 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  content: '';
+}
+
+.school-pc-login__methods[data-method='code']::before {
+  transform: translateX(100%);
+}
+
+.school-pc-login__methods.arco-radio-group .arco-radio-button {
+  margin: 0;
+  border-radius: 7px;
+  color: var(--login-muted);
+  text-align: center;
+  transition: color 160ms ease;
+}
+
+.school-pc-login__methods.arco-radio-group .arco-radio-button-inner {
+  padding: 10px 4px;
+  line-height: 22px;
+}
+
+.school-pc-login__methods.arco-radio-group .arco-radio-button::before,
+.school-pc-login__methods.arco-radio-group .arco-radio-button::after {
+  content: none;
+}
+
+.school-pc-login__methods.arco-radio-group .arco-radio-button.arco-radio-checked {
+  background: transparent;
+  color: #1745b5;
+  font-weight: 600;
+}
+
+.school-pc-login__methods.arco-radio-group .arco-radio-button:not(.arco-radio-disabled):hover {
+  background: transparent;
+  color: #1745b5;
+}
+
+.school-pc-login__form {
+  display: grid;
+  gap: 20px;
+}
+
+.school-pc-login__field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.school-pc-login__field label {
+  color: var(--login-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.school-pc-login__field .arco-input-inner-wrapper {
+  min-height: 48px;
+  padding-inline: 12px;
+  border-color: var(--login-line);
+  border-radius: 8px;
+  background: var(--login-surface);
+}
+
+.school-pc-login__field .arco-input-group-prefix {
+  display: flex;
+  align-items: center;
+  color: var(--login-muted);
+}
+
+.school-pc-login__field .arco-input-inner-wrapper .arco-input {
+  padding-block: 12px;
+  color: var(--login-ink);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.school-pc-login__field .arco-input::placeholder {
+  color: var(--login-muted);
+}
+
+.school-pc-login__field .arco-input-inner-wrapper-error {
+  border-color: var(--login-danger);
+}
+
+.school-pc-login__field .arco-input-inner-wrapper-focus {
+  border-color: rgb(var(--primary-6));
+  box-shadow: 0 0 0 2px rgba(var(--primary-6), 0.18);
+}
+
+.school-pc-login__field .arco-input-inner-wrapper-error.arco-input-inner-wrapper-focus {
+  border-color: var(--login-danger);
+}
+
+.school-pc-login__credential {
+  position: relative;
+  min-width: 0;
+}
+
+.school-pc-login__credential[data-method='code'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.school-pc-login__credential .school-pc-login__get-code.arco-btn {
+  height: auto;
+  min-width: 96px;
+  min-height: 48px;
+  padding-inline: 12px;
+  border: 1px solid var(--login-line);
+  border-radius: 8px;
+  background-color: #f6faff;
+  color: #1745b5;
+  font-weight: 600;
+}
+
+.school-pc-login__credential .school-pc-login__get-code.arco-btn:hover:not(:disabled) {
+  background-color: #e9f2ff;
+}
+
+.school-pc-login__credential .school-pc-login__password .arco-input-inner-wrapper {
+  padding-inline-end: 48px;
+}
+
+.school-pc-login__reveal {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 2px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 6px;
+  color: var(--login-muted);
+  cursor: pointer;
+}
+
+.school-pc-login__reveal:hover {
+  background: #f0f4fb;
+  color: #1745b5;
+}
+
+.school-pc-login__message {
+  margin: 0;
+}
+
+.school-pc-login__message[data-error='true'] {
+  color: var(--login-danger);
+}
+
+.school-pc-login__demo-code {
+  display: block;
+  margin-top: 4px;
+  color: #1745b5;
+  font-weight: 600;
+}
+
+.school-pc-login__form .school-pc-login__submit.arco-btn {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.school-pc-login__reveal:focus-visible,
+.school-pc-login__form .school-pc-login__submit:focus-visible {
+  outline: 2px solid rgb(var(--primary-6));
+  outline-offset: 2px;
+}
+
+@media (max-width: 840px) {
+  .school-pc-login {
+    background-size: auto 100%;
+  }
+
+  .school-pc-login__viewport {
+    padding: 24px;
+  }
+
+  .school-pc-login__layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: 16px;
+    width: min(100%, 480px);
+  }
+
+  .school-pc-login__hero-title {
+    font-size: 24px;
+  }
+
+  .school-pc-login__hero picture {
+    display: none;
+  }
+
+  .school-pc-login__panel {
+    padding: 64px 24px 32px;
+  }
+
+  .school-pc-login__content h1 {
+    font-size: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .school-pc-login__scan-hint {
+    animation: none;
+  }
+
+  .school-pc-login__methods.arco-radio-group::before,
+  .school-pc-login__methods.arco-radio-group .arco-radio-button,
+  .school-pc-login__field .arco-input-inner-wrapper,
+  .school-pc-login__form .school-pc-login__submit.arco-btn {
+    transition: none;
+  }
+}

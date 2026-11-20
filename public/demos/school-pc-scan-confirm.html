@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title>确认学校后台登录</title>
+  <style>
+    body {
+      display: grid;
+      min-height: 100dvh;
+      margin: 0;
+      place-items: center;
+      color: #13254e;
+      background: #e1ebff;
+      font-family: system-ui, sans-serif;
+    }
+    main {
+      box-sizing: border-box;
+      width: min(calc(100% - 48px), 380px);
+      padding: 32px 24px;
+      border-radius: 20px;
+      background: #fff;
+      text-align: center;
+    }
+    h1 { margin: 0 0 16px; font-size: 24px; }
+    p { margin: 0; color: #53647a; line-height: 1.5; }
+    button {
+      min-height: 48px;
+      margin-top: 24px;
+      padding: 8px 24px;
+      border: 0;
+      border-radius: 8px;
+      background: #2a68ff;
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .65; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>确认学校后台登录</h1>
+    <p id="instruction" role="status">请扫描电脑登录页上的验证二维码。</p>
+    <button id="confirmation" type="button" hidden>确认登录</button>
+  </main>
+  <script>
+    const token = location.hash.slice(1);
+    if (/^[A-Za-z0-9_-]{22}$/.test(token)) {
+      const instruction = document.getElementById('instruction');
+      const confirmation = document.getElementById('confirmation');
+      instruction.textContent = '确认后，电脑将进入学校后台演示工作台。';
+      confirmation.hidden = false;
+      confirmation.addEventListener('click', async () => {
+        confirmation.disabled = true;
+        try {
+          const response = await fetch('../api/school-pc-demo-scan/confirm', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.status === 204) {
+            instruction.textContent = '已确认，请返回电脑。';
+            confirmation.hidden = true;
+            return;
+          }
+          if (response.status === 410) {
+            instruction.textContent = '这次扫码验证已结束，请重新扫码。';
+            confirmation.hidden = true;
+            return;
+          }
+          throw new Error('Failed to confirm demo login');
+        } catch {
+          instruction.textContent = '确认失败，请重试。';
+          confirmation.disabled = false;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

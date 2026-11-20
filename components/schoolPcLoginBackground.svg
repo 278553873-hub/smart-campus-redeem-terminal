@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="sky" x2="84%" y2="97%">
+      <stop stop-color="#aac7f1"/>
+      <stop offset=".49" stop-color="#e3edfc"/>
+      <stop offset="1" stop-color="#b8cef3"/>
+    </linearGradient>
+    <radialGradient id="daylight" cx="94%" cy="35%" r="65%">
+      <stop stop-color="#f8fcff"/>
+      <stop offset=".58" stop-color="#eef6ff" stop-opacity=".75"/>
+      <stop offset="1" stop-color="#eef6ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="distant-water" x1="0" y1="475" x2="44" y2="941" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a2c1f3" stop-opacity=".19"/>
+      <stop offset=".45" stop-color="#b2dffb" stop-opacity=".67"/>
+      <stop offset="1" stop-color="#b2dffb" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="blue-water" x1="42" y1="530" x2="96" y2="1015" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#caeeff" stop-opacity=".36"/>
+      <stop offset=".19" stop-color="#8fcdf9" stop-opacity=".78"/>
+      <stop offset=".47" stop-color="#5b99f1" stop-opacity=".84"/>
+      <stop offset=".69" stop-color="#5794ec" stop-opacity=".57"/>
+      <stop offset="1" stop-color="#d4e7ff" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="blue-depth" cx="0" cy="0" r="1" gradientTransform="translate(521 747) scale(1015 177)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#477fe6" stop-opacity=".68"/>
+      <stop offset=".62" stop-color="#5d9cee" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#81c4ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="586" x2="32" y2="963" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#eefaff" stop-opacity=".8"/>
+      <stop offset=".44" stop-color="#84bffc" stop-opacity=".54"/>
+      <stop offset=".73" stop-color="#e1eaff" stop-opacity=".69"/>
+      <stop offset="1" stop-color="#f3fbff" stop-opacity=".96"/>
+    </linearGradient>
+    <linearGradient id="glint">
+      <stop stop-color="#ecfbff" stop-opacity=".36"/>
+      <stop offset=".27" stop-color="#f4fdff" stop-opacity=".92"/>
+      <stop offset=".58" stop-color="#fff"/>
+      <stop offset=".85" stop-color="#e7f8ff" stop-opacity=".65"/>
+      <stop offset="1" stop-color="#eefbff" stop-opacity=".18"/>
+    </linearGradient>
+    <linearGradient id="haze" x2="0" y2="100%">
+      <stop stop-color="#e9f6ff" stop-opacity=".52"/>
+      <stop offset="1" stop-color="#e9f6ff" stop-opacity="0"/>
+    </linearGradient>
+    <path id="crest" d="M-60 633 C180 563 365 575 566 625 C773 676 858 705 1051 671 C1286 630 1412 526 1635 536 C1760 541 1889 585 1980 609"/>
+    <path id="glass-top" d="M-60 691 C202 752 384 851 639 860 C878 868 1049 777 1258 692 C1496 595 1727 553 1980 615"/>
+    <path id="glass-bottom" d="M-60 740 C195 802 364 911 633 934 C902 957 1079 858 1290 758 C1541 639 1736 589 1980 639"/>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <rect width="1920" height="1080" fill="url(#daylight)"/>
+
+  <g transform="translate(0 88)">
+    <path d="M-60 516 C234 550 381 655 675 645 C930 637 1096 512 1361 478 C1619 446 1741 504 1980 463 V979 H-60 Z" fill="url(#distant-water)"/>
+    <path d="M-60 516 C234 550 381 655 675 645 C930 637 1096 512 1361 478 C1619 446 1741 504 1980 463" fill="none" stroke="url(#glint)" stroke-width="2" opacity=".63"/>
+    <path d="M-60 633 C180 563 365 575 566 625 C773 676 858 705 1051 671 C1286 630 1412 526 1635 536 C1760 541 1889 585 1980 609 V1080 H-60 Z" fill="url(#blue-water)"/>
+    <path d="M-60 660 C180 596 367 594 577 649 C799 708 876 726 1055 695 C1285 654 1412 555 1641 562 C1780 566 1904 618 1980 629 V1080 H-60 Z" fill="url(#blue-depth)"/>
+    <use href="#crest" fill="none" stroke="#d6f3ff" stroke-width="9" opacity=".24"/>
+    <use href="#crest" fill="none" stroke="url(#glint)" stroke-width="2.6" opacity=".87"/>
+
+    <path d="M-60 691 C202 752 384 851 639 860 C878 868 1049 777 1258 692 C1496 595 1727 553 1980 615 L1980 639 C1736 589 1541 639 1290 758 C1079 858 902 957 633 934 C364 911 195 802 -60 740 Z" fill="url(#glass)"/>
+    <use href="#glass-top" fill="none" stroke="#e5f6ff" stroke-width="10" opacity=".22"/>
+    <use href="#glass-top" fill="none" stroke="url(#glint)" stroke-width="3.6"/>
+    <use href="#glass-bottom" fill="none" stroke="url(#glint)" stroke-width="2.3" opacity=".87"/>
+
+    <path d="M-60 872 C223 887 360 995 661 976 C923 960 1122 880 1365 801 C1587 728 1768 712 1980 739 V1080 H-60 Z" fill="url(#haze)"/>
+    <path d="M-60 872 C223 887 360 995 661 976 C923 960 1122 880 1365 801 C1587 728 1768 712 1980 739" fill="none" stroke="url(#glint)" stroke-width="1.5" opacity=".52"/>
+  </g>
+</svg>
