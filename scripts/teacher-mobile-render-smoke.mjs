@@ -74,6 +74,17 @@ const writeResults = () => {
 // 服务端渲染会在动态文本之间插入 <!-- --> 占位注释，比对可见文案前先去掉。
 const plainText = html => html.split('<!-- -->').join('');
 
+const verifyFormActionBar = (html, label, type = 'button') => {
+  const footer = html.match(/<footer\b[^>]*>[\s\S]*?<\/footer>/)?.[0];
+  const button = footer?.match(/<button\b[^>]*>[\s\S]*?<\/button>/)?.[0];
+  if (!footer?.includes('bg-[var(--tm-bg-surface)]') || !footer.includes('--mini-program-bottom-safe-area')) {
+    throw new Error(label + '应使用覆盖底部安全区的白色底栏');
+  }
+  if (!button?.includes('h-[var(--tm-form-action-height)]') || !button.includes('type="' + type + '"') || !plainText(button).includes('>' + label + '</button>')) {
+    throw new Error(label + '应使用统一高度的表单主按钮');
+  }
+};
+
 const renderPage = async (name, load, props, verify, { minimumLength = 400 } = {}) => {
   try {
     const module = await load();
@@ -379,6 +390,7 @@ for (const scenario of [
     onSave: noop,
   }, html => {
     const text = plainText(html);
+    verifyFormActionBar(html, '保存');
     if (scenario.mode === 'score') {
       if (text.includes('阳光保底比例') || text.includes('发放门槛')) throw new Error('加分就发不应展示定期发放参数');
       if (text.includes('加分后，币立即到账，扣分不扣币。') || !text.includes('1分=')) throw new Error('发放数量文案不正确');
@@ -573,7 +585,7 @@ for (const allowHomeroomTeacherCustomization of [true, false]) {
     initialConfig: { ...DEFAULT_SCHOOL_PARENT_EVALUATION_CONFIG, allowHomeroomTeacherCustomization },
     onSave: noop,
     onBack: noop,
-  });
+  }, html => verifyFormActionBar(html, '保存'));
 }
 for (const draft of [
   { name: '空白', text: '', images: [] },
@@ -584,7 +596,7 @@ for (const draft of [
   }), {
     text: draft.text, images: draft.images,
     onTextChange: noop, onAddImage: noop, onRemoveImage: noop, onSubmit: noop,
-  });
+  }, html => verifyFormActionBar(html, '提交'));
 }
 
 const loadFeatureView = name => async () => ({ default: (await import('../mobile-app/views/MeFeatureViews'))[name] });
@@ -597,11 +609,11 @@ for (const empty of [false, true]) {
     subjects: empty ? [] : [{ id: 'subject-1', name: '语文' }, { id: 'subject-2', name: '数学' }],
     draggingSubjectId: null, onAdd: noop, onEdit: noop, onDelete: noop,
     onDragStart: noop, onDragOver: noop, onDragEnd: noop,
-  });
+  }, html => verifyFormActionBar(html, '新增科目'));
   await renderPage('部门管理（' + (empty ? '空列表' : '有部门') + '）', loadFeatureView('DepartmentManagementView'), {
     departments: empty ? [] : [{ id: 'department-1', name: '教务处' }, { id: 'department-2', name: '学生发展中心' }],
     onAdd: noop, onEdit: noop, onDelete: noop,
-  });
+  }, html => verifyFormActionBar(html, '新增部门'));
 }
 await renderPage('科目及部门名称编辑', loadFeatureView('TextEditSheet'), {
   title: '修改科目', value: '语文', placeholder: '请输入科目名称', onChange: noop, onCancel: noop, onConfirm: noop,
@@ -859,7 +871,7 @@ await renderPage('添加学生', () => import('../mobile-app/views/AddStudentVie
 for (const students of [rosterStudents, []]) {
   await renderPage('批量修改学生（' + (students.length ? '有学生' : '空列表') + '）', () => import('../mobile-app/views/StudentBatchEditView'), {
     students, onBack: noop, onSave: noop,
-  });
+  }, html => verifyFormActionBar(html, '保存修改'));
 }
 await renderPage('学生基本资料', () => import('../mobile-app/views/StudentBasicEditView'), {
   student: rosterStudents[0], classes: MOCK_CLASSES,
@@ -900,7 +912,7 @@ const teamStyleProps = {
 for (const mode of ['create', 'add']) {
   await renderPage('团队创建流程（' + mode + '）', () => import('../mobile-app/views/student-team/StudentTeamCreateView'), {
     ...teamStyleProps, mode, initialTeam: mode === 'add' ? teamStyleFixture : undefined,
-  });
+  }, html => verifyFormActionBar(html, mode === 'add' ? '添加（0人）' : '选择学生'));
 }
 await renderPage('团队添加学生（无班级）', () => import('../mobile-app/views/student-team/StudentTeamCreateView'), {
   ...teamStyleProps, mode: 'add', classes: [], getStudentsForClass: () => [], initialTeam: teamStyleFixture,
@@ -909,7 +921,7 @@ await renderPage('团队添加学生（无班级）', () => import('../mobile-ap
 for (const mode of ['members']) {
   await renderPage('团队编辑初始页（' + mode + '）', () => import('../mobile-app/views/student-team/StudentTeamEditorView'), {
     ...teamStyleProps, open: true, mode, team: teamStyleFixture,
-  });
+  }, html => verifyFormActionBar(html, '保存修改'));
 }
 for (const scenario of [
   { label: '普通列表', students: rosterStudents, isSelectionMode: false },
@@ -1499,13 +1511,34 @@ await renderPage('教师手机端登录页', () => import('../mobile-app/views/T
   onLogin: noop,
 });
 
+await renderPage('教师手机端演示登录浮层', () => import('../mobile-app/components/ui/MobileGlassActionDialog'), {
+  title: '模拟用户场景',
+  returnFocusRef: { current: null },
+  onClose: noop,
+  actions: [
+    { label: '已加入学校版', onSelect: noop },
+    { label: '未加入学校版', onSelect: noop },
+  ],
+}, html => {
+  if (!html.includes('role="dialog"') || !html.includes('aria-modal="true"') || !html.includes('aria-labelledby=')) {
+    throw new Error('演示登录浮层缺少可访问的弹窗名称');
+  }
+  if ((html.match(/<button\b/g) ?? []).length !== 2) {
+    throw new Error('演示登录浮层只应显示两条分支操作');
+  }
+  const text = plainText(html);
+  for (const copy of ['模拟用户场景', '已加入学校版', '未加入学校版']) {
+    if (!text.includes(copy)) throw new Error('演示登录浮层缺少文案：' + copy);
+  }
+});
+
 await renderPage('教师手机端未关联学校引导页', () => import('../mobile-app/views/TeacherSchoolAccessView'), {
   phone: '15200001332',
   onEnterPersonal: noop,
   onReturnToLogin: noop,
 }, html => {
   const text = plainText(html);
-  for (const copy of ['暂未关联学校', '请联系学校负责人添加账号，避免重新建班、导入学生。', '个人版与学校版有什么不同？', 'AI助理不限额度', '自定义评价指标', '问卷采集', '档案设计', '个人版（试用）', '学校版（登录）']) {
+  for (const copy of ['暂未关联学校', '请联系学校负责人添加账号，避免重新建班、导入学生。', '个人版与学校版有什么不同？', 'AI助理不限额度', '自定义评价指标', '问卷采集', '档案设计', '个人版（免费试用）', '学校版（登录）']) {
     if (!text.includes(copy)) throw new Error('学校关联引导缺少必要信息：' + copy);
   }
   if (text.includes('15200001332')) throw new Error('学校关联页不应展示完整手机号');
@@ -1519,6 +1552,24 @@ await renderPage('教师手机端未关联学校引导页', () => import('../mob
   for (const copy of ['内置常用评价标准', '汇总学期评价记录', '日常管理更轻松', '辅助班级管理与育人']) {
     if (!text.includes(copy)) throw new Error('个人版能力缺少对应说明：' + copy);
   }
+});
+
+await renderPage('教师手机端个人版完善信息页', () => import('../mobile-app/views/TeacherProfileSetupView'), {
+  onBack: noop,
+  onSubmit: noop,
+}, html => {
+  const text = plainText(html);
+  for (const copy of ['完善信息', '姓名', '学校', '请输入姓名', '请输入学校名称', '填写学校后，可更快找到同校老师创建的班级', '进入体验']) {
+    if (!text.includes(copy)) throw new Error('个人版完善信息页缺少必要信息：' + copy);
+  }
+  const header = html.match(/<header\b[^>]*>/)?.[0];
+  if (!header?.includes('bg-[var(--tm-page-plain-header-bg)]') || header.includes('border-b')) {
+    throw new Error('完善信息页应使用白色无分隔线的标题栏');
+  }
+  verifyFormActionBar(html, '进入体验', 'submit');
+  if (!html.includes('disabled')) throw new Error('姓名和学校为空时进入体验按钮应不可用');
+  if (!html.includes('arco-autocomplete')) throw new Error('学校名称输入应复用 Arco 自动完成组件');
+  if (html.includes('arco-select-option')) throw new Error('未输入学校时不应展示匹配列表');
 });
 
 // 班主任助理三种能力组合都要能打开：少挂一个能力分支就会出现打开即白屏。

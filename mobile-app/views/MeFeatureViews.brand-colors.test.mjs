@@ -121,10 +121,10 @@ if ((featureSource.match(/imageClassName="w-\[72%\] min-w-\[188px\] max-w-\[236p
 }
 
 for (const required of [
-  '<Plus className="h-4 w-4" />',
-  '新增科目',
-  '新增部门',
-  "${footer ? 'pb-28' : 'pb-8'}",
+  'icon={<Plus className="h-4 w-4" aria-hidden="true" />}',
+  '<MobileFormActionBar type="button" label="新增科目"',
+  '<MobileFormActionBar type="button" label="新增部门"',
+  "const scrollBottomPadding = footer ? 'pb-4' : 'pb-8';",
 ]) {
   requireText(source, required, `科目与部门页缺少固定底部新增交互：${required}`);
 }

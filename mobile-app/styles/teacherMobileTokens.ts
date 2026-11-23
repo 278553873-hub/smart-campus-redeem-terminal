@@ -949,6 +949,7 @@ export const teacherBrandCssVariables = {
   // 表单组件别名复用同一形态；使用范围与迁移记录见教师手机端规范2.2节。
   '--tm-form-card-radius': 'var(--tm-radius-card-compact)',
   '--tm-form-control-radius': 'var(--tm-radius-control-compact)',
+  '--tm-form-action-height': '48px',
   '--tm-form-section-gap': 'var(--tm-layout-card-gap)',
   '--tm-form-option-gap': 'var(--tm-layout-list-gap-compact)',
   '--tm-form-segment-compact-active-radius': 'calc(var(--tm-form-control-radius) - var(--tm-selection-segment-compact-inset))',

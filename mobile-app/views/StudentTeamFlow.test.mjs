@@ -59,13 +59,13 @@ requireText(createSource, '完成（${selectedIds.size}人）', '创建页面底
 requireText(createSource, '<MobileClassPickerSheet', '创建页面的班级筛选应复用公共班级选择弹窗。');
 requireText(createSource, 'commitMode="immediate"', '创建页面的班级单选应即时提交并关闭公共选择弹窗。');
 requireText(createSource, 'focus:border-[var(--tm-input-focus-border)] focus:ring-2 focus:ring-[var(--tm-input-focus-ring)]', '新建团队名称输入框必须使用统一的输入聚焦 Token。');
-requireText(createSource, 'bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))]', '创建页底部主操作区必须使用公共玻璃表面和安全区 Token。');
-requireText(createSource, 'min-h-[52px] w-full', '创建页底部主按钮必须满足统一的触控高度。');
+requireText(createSource, '<MobileFormActionBar type="button" label={primaryLabel}', '创建页底部主操作必须复用统一的白色底栏和按钮高度。');
 requireText(createSource, 'sticky top-0 z-30 bg-[var(--tm-bg-surface)]', '创建页选人工具栏必须高于滚动中的学生卡片。');
 assert.ok(!createSource.includes('已选 {selectedIds.size} 人'), '创建页面不应在顶部重复展示已选人数。');
 assert.ok(!editorSource.includes('已选 {selectedIds.size} 人'), '调整学生弹窗不应在顶部重复展示已选人数。');
-requireText(createSource.slice(0, createSource.indexOf('<footer')), '<StudentTeamSelectedList', '已选人数摘要应位于完成按钮板块上方。');
-assert.ok(!createSource.slice(createSource.indexOf('<footer')).includes('<StudentTeamSelectedList'), '完成按钮板块高度应固定，不随已选人数变化。');
+const createFooterIndex = createSource.indexOf('<MobileFormActionBar');
+requireText(createSource.slice(0, createFooterIndex), '<StudentTeamSelectedList', '已选人数摘要应位于完成按钮板块上方。');
+assert.ok(!createSource.slice(createFooterIndex).includes('<StudentTeamSelectedList'), '完成按钮板块高度应固定，不随已选人数变化。');
 requireText(createSource, 'h-9 bg-[var(--tm-bg-surface)]', '已选人数摘要应为36像素高的白色长条。');
 requireText(selectedListSource, 'src={student.avatar}', '已选名单应渲染学生真实头像图片。');
 requireText(selectedListSource, '<StudentRosterNumber studentNo={student.studentNo} ariaHidden variant="student-card" />', '已选名单学号应与班级学生卡片一致的11像素、800字重班内号。');

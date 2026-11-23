@@ -122,6 +122,7 @@
 | 独立卡片、同级内容分组 | 间距12像素 | `--tm-layout-card-gap` |
 | 紧凑成员行、设置条目、组内选项 | 间距8像素 | `--tm-layout-list-gap-compact` |
 | 配置表单卡片、控件 | 复用12 / 8像素 | `--tm-form-card-radius` / `--tm-form-control-radius` |
+| 表单页底部主按钮 | 高48像素，白色底栏上下各留16像素，底部叠加安全区 | `--tm-form-action-height` / `--tm-space-4` |
 | 表单分组、组内选项 | 复用12 / 8像素 | `--tm-form-section-gap` / `--tm-form-option-gap` |
 | 普通分段选中块 | 轨道8减内距4，圆角4像素 | `--tm-form-segment-active-radius` |
 | 紧凑分段选中块 | 轨道8减内距2，圆角6像素 | `--tm-form-segment-compact-active-radius` |
@@ -130,6 +131,7 @@
 
 - 圆角和间距分别控制，缩小圆角不缩小触控区域；普通控件触控高度至少44像素。卡片内边距、页面边距、字号、图标、阴影及业务行为沿用已有规则。
 - 新增及已迁移的管理、配置、资料与报表页引用上表；独立卡片使用12像素间距，密集条目保留8像素。花名册网格列距、表格行高、图表绘图区与卡内信息间距按其专用组件规则，不做全局替换。
+- 「完善信息」「成长币发放」「家长端展示」「建议反馈」「科目管理」「部门管理」「批量修改学生信息」及社团与团队的创建、调整学生页面，统一使用 `MobileFormActionBar`。白色底栏固定在滚动内容下方，浏览器安全区和演示手机安全区取较大值计入一次。
 - `MobileCard`、`MobileRadioOptionCard`、`StudentHorizontalCard`、`StudentRosterCard`（含添加卡）及 `CompactSegmentedControl` 通过 `shape="subtle"` 显式接入；配置专用 `FeaturePanel` 使用 `variant="form"`，`FeaturePageBody` 使用 `spacing="compact"`。基础组件只管理通用形态，不引入业务权限或页面判断。
 - 旧 `--tm-radius-card / inner / control` 的20 / 16 / 12像素暂保留兼容，公共组件默认形态暂不改变；新页面不得以兼容值作为默认选型。已迁移页面统一引用新令牌，禁止另建同值的页面专属圆角或在页面覆盖主题变量。
 - 头像、开关、滑块、状态圆点及已有圆形图标按钮保持圆形；搜索胶囊和紧凑选人网格沿用公共组件形态。公共弹层外壳仍由 `--tm-radius-sheet` 管理，已有特殊弹层按原规范执行，不随内容卡一起缩小。

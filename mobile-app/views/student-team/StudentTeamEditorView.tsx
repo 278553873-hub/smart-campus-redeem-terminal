@@ -5,6 +5,7 @@ import { BackIcon, CloseIcon } from '../../components/Icons';
 import StudentCompactSelectGrid from '../../components/student/StudentCompactSelectGrid';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
+import MobileFormActionBar from '../../components/ui/MobileFormActionBar';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl';
 import type { MobileClassCascadeGroup } from '../../components/ui/MobileClassCascadePicker';
@@ -296,11 +297,7 @@ const StudentTeamEditorView: React.FC<StudentTeamEditorViewProps> = ({
           <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pb-[var(--tm-space-4)] pt-[var(--tm-space-2)]">
             {adjustmentRoster}
           </main>
-          <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
-            <button type="button" disabled={!hasMemberChanges} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)]">
-              保存修改
-            </button>
-          </footer>
+          <MobileFormActionBar type="button" label="保存修改" disabled={!hasMemberChanges} onClick={handlePrimaryAction} />
         </div>
       ) : (
       <MobileBottomSheet

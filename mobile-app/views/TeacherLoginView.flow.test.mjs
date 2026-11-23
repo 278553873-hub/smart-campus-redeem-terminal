@@ -20,7 +20,7 @@ assert.match(appSource, /screenBackground=\{gradientPreview[\s\S]*?<TeacherMobil
 assert.match(appSource, /gradientPreview \? 'bg-transparent' : 'bg-\[var\(--tm-bg-surface\)\]'/, '正常登录页承载层应保留教师端基础表面色，预览时允许透出渐变。');
 
 assert.match(loginSource, /showWechatLogin = true/, '手机端默认保留一键登录。');
-assert.match(loginSource, /onClick=\{\(\) => openSheet\('wechat'\)\}[\s\S]*?一键登录[\s\S]*?<\/button>/, '一键登录应打开授权弹窗。');
+assert.match(loginSource, /onClick=\{\(\) => openSheet\('wechat'\)\}[\s\S]*?一键登录[\s\S]*?<\/button>/, '一键登录应调用微信登录入口。');
 assert.match(loginSource, />最近登录<[\s\S]*>190\*\*\*\*0000</, '登录页应在最近登录文案下方展示较小字号的脱敏手机号。');
 assert.match(loginSource, /const \[agreed, setAgreed\] = useState\(true\)/, '教师端 Demo 登录页应默认勾选隐私保护指引。');
 assert.match(loginSource, /loginWithRecentAccount[\s\S]*请先阅读并同意隐私保护指引[\s\S]*completeLogin\(\)/, '最近登录应校验协议后直接登录。');
@@ -74,5 +74,7 @@ assert.match(tokenSource, /'--tm-platform-wechat': teacherPlatformSemantic\.wech
 assert.match(assetSource, /TEACHER_LOGIN_ICON: teacherLoginIconImg/, '登录 Icon 应通过统一资源表暴露。');
 assert.equal(existsSync(loginIconPath), true, '登录 Icon 资源应存在。');
 assert.ok(statSync(loginIconPath).size < 300 * 1024, '登录 Icon 资源应控制在 300KB 内。');
+
+assert.match(loginSource, /<MobileGlassActionDialog\s+title="模拟用户场景"/, '演示分支应复用公共磨砂操作弹窗。');
 
 console.log('teacher login flow assertions passed');

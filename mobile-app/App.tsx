@@ -43,6 +43,7 @@ import HomeworkEntryView from './views/HomeworkEntryView';
 import HomeworkBatchImportView from './views/HomeworkBatchImportView';
 import StudentBatchEditView from './views/StudentBatchEditView';
 import TeacherProfileEditView from './views/TeacherProfileEditView';
+import TeacherProfileSetupView from './views/TeacherProfileSetupView';
 import StudentBasicEditView from './views/StudentBasicEditView';
 import StudentCollectionRecordDetailView from './views/student-collection/StudentCollectionRecordDetailView';
 import StudentBodyMeasurementsView from './views/student-growth/StudentBodyMeasurementsView';
@@ -418,6 +419,7 @@ const PLAIN_BACKGROUND_VIEWS: ViewState[] = [
 interface MobileAppProps {
     edition?: TeacherAppEdition;
     onGradientPreviewVisibilityChange?: (visible: boolean) => void;
+    onProfileSetupVisibilityChange?: (visible: boolean) => void;
     onMePreviewVisibilityChange?: (visible: boolean) => void;
     onAirecPreviewVisibilityChange?: (visible: boolean) => void;
     classListLoadingPreview?: import('../shared/classListLoadingPreview').ClassListLoadingPreview;
@@ -455,6 +457,7 @@ const App: React.FC<MobileAppProps> = ({
     classReportOutline,
     onClassReportViewChange,
     onGradientPreviewVisibilityChange,
+    onProfileSetupVisibilityChange,
     onMePreviewVisibilityChange,
     onAirecPreviewVisibilityChange,
     showPhoneShell = true,
@@ -478,6 +481,8 @@ const App: React.FC<MobileAppProps> = ({
     const features = teacherAppFeatures[edition];
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loginAccount, setLoginAccount] = useState<TeacherLoginAccount | null>(null);
+    // 个人版首次进入先补充姓名与学校，完成后再进入个人空间。
+    const [personalProfileSetup, setPersonalProfileSetup] = useState(false);
     // Default view is now the Log (Stream)
     const [currentView, setCurrentView] = useState<ViewState>('home_log');
     const [reportDetailNavigation, setReportDetailNavigation] = useState<{ title: string; onBack: () => void } | null>(null);
@@ -569,10 +574,15 @@ const App: React.FC<MobileAppProps> = ({
     const [isClassGroupingEditorOpen, setIsClassGroupingEditorOpen] = useState(false);
     const [teacherProfilesBySpace, setTeacherProfilesBySpace] = useState<Record<string, TeacherProfile>>(INITIAL_TEACHER_PROFILES_BY_SPACE);
     useEffect(() => {
-        const visible = isAuthenticated && ['home_log', 'class_list', 'me'].includes(currentView) && !(currentView === 'class_list' && isStudentTeamFullPageOpen);
+        const visible = isAuthenticated && !personalProfileSetup && ['home_log', 'class_list', 'me'].includes(currentView) && !(currentView === 'class_list' && isStudentTeamFullPageOpen);
         onGradientPreviewVisibilityChange?.(visible);
         return () => onGradientPreviewVisibilityChange?.(false);
-    }, [currentView, isAuthenticated, isStudentTeamFullPageOpen, onGradientPreviewVisibilityChange]);
+    }, [currentView, isAuthenticated, personalProfileSetup, isStudentTeamFullPageOpen, onGradientPreviewVisibilityChange]);
+
+    useEffect(() => {
+        onProfileSetupVisibilityChange?.(isAuthenticated && personalProfileSetup);
+        return () => onProfileSetupVisibilityChange?.(false);
+    }, [isAuthenticated, personalProfileSetup, onProfileSetupVisibilityChange]);
 
     useEffect(() => {
         onMePreviewVisibilityChange?.(isAuthenticated && currentView === 'me');
@@ -1017,6 +1027,7 @@ const App: React.FC<MobileAppProps> = ({
         resetAuthenticatedNavigation();
         setIsAuthenticated(false);
         setLoginAccount(null);
+        setPersonalProfileSetup(false);
     };
 
     const handleTeacherLogin = (session?: TeacherLoginSession) => {
@@ -1026,7 +1037,19 @@ const App: React.FC<MobileAppProps> = ({
             setCurrentTeacherSpaceId(session.spaceId);
             setActiveLogTab('student');
         }
+        setPersonalProfileSetup(session?.spaceId === 'personal');
         setIsAuthenticated(true);
+    };
+
+    const handlePersonalProfileSubmit = ({ name, schoolName }: { name: string; schoolName: string }) => {
+        setTeacherProfilesBySpace(current => {
+            const personalProfile = current.personal ?? INITIAL_TEACHER_PROFILES_BY_SPACE.personal;
+            return {
+                ...current,
+                personal: { ...personalProfile, name, schoolName },
+            };
+        });
+        setPersonalProfileSetup(false);
     };
 
     const handleSelectClass = (classId: string) => {
@@ -2012,6 +2035,33 @@ const App: React.FC<MobileAppProps> = ({
                 >
                     <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${gradientPreview ? 'bg-transparent' : 'bg-[var(--tm-bg-surface)]'}`}>
                         <TeacherLoginView onLogin={handleTeacherLogin} showWechatLogin={features.wechatLogin} enableSchoolOnboarding={edition === 'full'} previewSchoolAccess={edition === 'full'} />
+                    </div>
+                </PhoneMockup>
+            </div>
+        );
+    }
+
+    if (personalProfileSetup) {
+        return (
+            <div
+                className={`teacher-mobile-app flex h-[100dvh] w-screen items-center justify-center bg-[var(--tm-bg-page)] p-4 ${previewDevice === 'tablet' ? 'min-[901px]:pr-[320px]' : ''}`}
+                style={teacherBrandCssVariables as React.CSSProperties}
+            >
+                <PhoneMockup
+                    screenRef={screenRef}
+                    showDeviceFrame={showPhoneShell}
+                    deviceType={previewDevice}
+                    onDeviceBoundsChange={onPreviewDeviceBoundsChange}
+                    hideCapsule={!features.miniProgramCapsule}
+                    contentTopInsetMode="status-bar"
+                    screenOverlayRootId="teacher-mobile-overlay-root"
+                    screenBackground={<TeacherMobileScreenBackground variant="plain" />}
+                >
+                    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                        <TeacherProfileSetupView
+                            onBack={handleTeacherLogout}
+                            onSubmit={handlePersonalProfileSubmit}
+                        />
                     </div>
                 </PhoneMockup>
             </div>

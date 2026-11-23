@@ -22,6 +22,7 @@ import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileCardTabBar from '../components/ui/MobileCardTabBar';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import MobileFormActionBar from '../components/ui/MobileFormActionBar';
 import MobileRadioOptionCard from '../components/ui/MobileRadioOptionCard';
 import type { CoinIssuanceConfig } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
@@ -93,6 +94,7 @@ export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: Rea
     const contentRef = React.useRef<HTMLDivElement>(null);
     const scrollTopRef = React.useRef(0);
     const spacingClass = spacing === 'compact' ? 'space-y-[var(--tm-layout-card-gap)]' : 'space-y-4';
+    const scrollBottomPadding = footer ? 'pb-4' : 'pb-8';
     const retainScrollRange = () => {
         const scroll = scrollRef.current;
         const content = contentRef.current;
@@ -110,10 +112,10 @@ export const FeaturePageBody: React.FC<{ children: React.ReactNode; footer?: Rea
     return (
         <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)]">
             <div ref={scrollRef} onScroll={preserveScrollPosition ? event => { scrollTopRef.current = event.currentTarget.scrollTop; retainScrollRange(); } : undefined}
-                className={`min-h-0 flex-1 ${preserveScrollPosition ? '[overflow-anchor:none]' : spacingClass} overflow-y-auto px-5 py-4 no-scrollbar ${footer ? 'pb-28' : 'pb-8'} ${contentClassName}`}>
+                className={`min-h-0 flex-1 ${preserveScrollPosition ? '[overflow-anchor:none]' : spacingClass} overflow-y-auto px-5 py-4 no-scrollbar ${scrollBottomPadding} ${contentClassName}`}>
                 {preserveScrollPosition ? <div ref={contentRef} className={spacingClass}>{children}</div> : children}
             </div>
-            {footer && <div className="absolute inset-x-0 bottom-0 z-20 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-5 py-4 shadow-[0_-10px_28px_-24px_var(--tm-shadow-neutral-color)] backdrop-blur-xl">{footer}</div>}
+            {footer}
         </div>
     );
 };
@@ -283,10 +285,7 @@ export const SubjectManagementView: React.FC<SubjectManagementViewProps> = ({ su
         spacing="compact"
         contentClassName={subjects.length === 0 ? 'flex min-h-0 flex-col' : ''}
         footer={(
-            <button type="button" onClick={onAdd} className={featureFormPrimaryButtonClass}>
-                <Plus className="h-4 w-4" />
-                新增科目
-            </button>
+            <MobileFormActionBar type="button" label="新增科目" icon={<Plus className="h-4 w-4" aria-hidden="true" />} onClick={onAdd} />
         )}
     >
         {subjects.length > 0 ? (
@@ -331,10 +330,7 @@ export const DepartmentManagementView: React.FC<DepartmentManagementViewProps> =
         spacing="compact"
         contentClassName={departments.length === 0 ? 'flex min-h-0 flex-col' : ''}
         footer={(
-            <button type="button" onClick={onAdd} className={featureFormPrimaryButtonClass}>
-                <Plus className="h-4 w-4" />
-                新增部门
-            </button>
+            <MobileFormActionBar type="button" label="新增部门" icon={<Plus className="h-4 w-4" aria-hidden="true" />} onClick={onAdd} />
         )}
     >
         {departments.length > 0 ? (
@@ -464,9 +460,7 @@ export const CoinIssuanceView: React.FC<CoinIssuanceViewProps> = ({ config: save
             spacing="compact"
             preserveScrollPosition={config.enabled && activeTab === 'rules' && mode === 'score'}
             footer={(!config.enabled || activeTab === 'rules') && (
-                <button type="button" onClick={handleSave} disabled={brandingEditor.busy} className={`${featureFormPrimaryButtonClass} disabled:opacity-50`}>
-                    保存
-                </button>
+                <MobileFormActionBar type="button" label="保存" onClick={handleSave} disabled={brandingEditor.busy} />
             )}
         >
             <FeaturePanel variant="form" className="relative z-10 px-4 py-2" allowOverflow>
@@ -724,9 +718,7 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
         <FeaturePageBody
             spacing="compact"
             footer={(
-                <button type="button" disabled={!canSubmit} onClick={onSubmit} className={`h-12 w-full rounded-[var(--tm-form-control-radius)] text-[14px] font-bold transition-colors ${canSubmit ? 'bg-[var(--tm-brand-primary)] text-white shadow-[0_16px_30px_-24px_var(--tm-shadow-brand-color)]' : 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-disabled)]'}`}>
-                    提交
-                </button>
+                <MobileFormActionBar type="button" label="提交" onClick={onSubmit} disabled={!canSubmit} />
             )}
         >
             <FeaturePanel variant="form" className="p-4">

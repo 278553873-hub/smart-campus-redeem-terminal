@@ -33,7 +33,7 @@ const TeacherSchoolAccessView: React.FC<TeacherSchoolAccessViewProps> = ({ phone
 
         <div className="mx-[var(--tm-space-4)] mt-[var(--tm-space-6)]">
           <button type="button" onClick={onEnterPersonal} className="flex min-h-12 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-card-title)] font-semibold text-[var(--tm-text-inverse)] transition-colors [transition-duration:var(--tm-duration-fast)] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 motion-reduce:transition-none">
-            个人版（试用）
+            个人版（免费试用）
           </button>
           <button type="button" onClick={() => setSchoolLoginOpen(true)} aria-haspopup="dialog" className="mt-[var(--tm-space-2)] flex min-h-11 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-medium text-[var(--tm-brand-primary)] transition-colors [transition-duration:var(--tm-duration-fast)] active:bg-[var(--tm-brand-primary-soft-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none">
             学校版（登录）

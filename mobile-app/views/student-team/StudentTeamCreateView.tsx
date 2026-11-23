@@ -8,6 +8,7 @@ import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl
 import MobileClassPickerSheet from '../../components/ui/MobileClassPickerSheet';
 import type { MobileClassCascadeGroup } from '../../components/ui/MobileClassCascadePicker';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
+import MobileFormActionBar from '../../components/ui/MobileFormActionBar';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
 import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
@@ -349,11 +350,7 @@ const StudentTeamCreateView: React.FC<StudentTeamCreateViewProps> = ({
         </div>
       )}
 
-      <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
-        <button type="button" disabled={primaryDisabled} onClick={handlePrimaryAction} className="flex min-h-[52px] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-5)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-control)] transition-[background-color,transform] [transition-duration:var(--tm-duration-fast)] active:scale-[0.98] active:bg-[var(--tm-brand-primary-pressed)] disabled:cursor-not-allowed disabled:bg-[var(--tm-input-disabled-bg)] disabled:text-[var(--tm-input-disabled-text)] disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-brand-primary)] focus-visible:ring-offset-2">
-          {primaryLabel}
-        </button>
-      </footer>
+      <MobileFormActionBar type="button" label={primaryLabel} disabled={primaryDisabled} onClick={handlePrimaryAction} />
 
       <StudentTeamPhotoRecognitionFlow
         open={recognitionOpen}

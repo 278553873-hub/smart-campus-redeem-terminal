@@ -3,11 +3,11 @@ import { CircleHelp } from 'lucide-react';
 import ParentEvaluationVisibilitySettings, {
   ParentEvaluationVisibilityPreview,
 } from '../components/class/ParentEvaluationVisibilitySettings';
+import MobileFormActionBar from '../components/ui/MobileFormActionBar';
 import {
   FeaturePageBody,
   FeaturePanel,
   SwitchControl,
-  featureFormPrimaryButtonClass,
 } from './MeFeatureViews';
 import type {
   ParentEvaluationVisibilitySettings as VisibilitySettings,
@@ -54,11 +54,7 @@ export const ParentEvaluationVisibilityManagementView: React.FC<ParentEvaluation
   return (
     <FeaturePageBody
       spacing="compact"
-      footer={(
-        <button type="button" onClick={handleSave} className={featureFormPrimaryButtonClass}>
-          保存
-        </button>
-      )}
+      footer={<MobileFormActionBar type="button" label="保存" onClick={handleSave} />}
     >
       {/* 1. 最上方单独的开关卡片，参考“货币发放”配置结构 */}
       <FeaturePanel variant="form" className="relative z-10 px-4 py-2" allowOverflow>

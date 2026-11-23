@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Info,
-} from 'lucide-react';
+import { Info } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import { PasswordRevealButton } from '../components/ui/PasswordRevealButton';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileGlassActionDialog from '../components/ui/MobileGlassActionDialog';
 import MobileToast from '../components/ui/MobileToast';
 import TeacherSchoolAccessView from './TeacherSchoolAccessView';
 import { RECENT_TEACHER_LOGIN_PHONE, WECHAT_TEACHER_LOGIN_PHONES, resolveDemoTeacherLoginAccount } from '../data/teacherLoginAccounts';
@@ -20,6 +19,7 @@ interface TeacherLoginViewProps {
 
 type LoginSheet = 'wechat' | 'phone' | null;
 type PhoneLoginMode = 'sms' | 'password';
+type DemoLogin = { entry: 'wechat' } | { entry: 'phone'; phone: string };
 
 const phoneNumberPattern = /^1\d{10}$/;
 
@@ -44,8 +44,12 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
   const [toastMessage, setToastMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [unlinkedAccount, setUnlinkedAccount] = useState<TeacherLoginAccount | null>(null);
+  const [demoLogin, setDemoLogin] = useState<DemoLogin | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const loginTimerRef = useRef<number | null>(null);
+  const wechatLoginRef = useRef<HTMLButtonElement>(null);
+  const phoneLoginLinkRef = useRef<HTMLButtonElement>(null);
+  const showDemoBranches = previewSchoolAccess && enableSchoolOnboarding;
 
   useEffect(() => {
     if (countdown <= 0) return undefined;
@@ -75,14 +79,12 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
   };
 
   const openSheet = (sheet: Exclude<LoginSheet, null>) => {
-    // 仅一键登录和手机号登录/注册用于预览；最近登录始终按账号学校关系进入。
-    if (previewSchoolAccess && enableSchoolOnboarding) {
-      setActiveSheet(null);
-      setUnlinkedAccount(resolveAccount(WECHAT_TEACHER_LOGIN_PHONES[0]));
-      return;
-    }
     if (!agreed) {
       showToast('请先阅读并同意隐私保护指引');
+      return;
+    }
+    if (sheet === 'wechat' && showDemoBranches) {
+      setDemoLogin({ entry: 'wechat' });
       return;
     }
     setFormMessage('');
@@ -155,6 +157,21 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
     );
   }
 
+  const finishDemoLogin = (choice: DemoLogin, joinedSchool: boolean) => {
+    setDemoLogin(null);
+    const loginPhone = choice.entry === 'phone' ? choice.phone : WECHAT_TEACHER_LOGIN_PHONES[joinedSchool ? 1 : 0];
+    if (!joinedSchool) {
+      setUnlinkedAccount({ phone: loginPhone, schoolSpaceIds: [], collaborationSpaceIds: [] });
+      return;
+    }
+
+    const account = resolveAccount(loginPhone);
+    const schoolAccount = account.schoolSpaceIds.length > 0
+      ? account
+      : { ...resolveDemoTeacherLoginAccount(RECENT_TEACHER_LOGIN_PHONE), phone: loginPhone };
+    onLogin({ account: schoolAccount, spaceId: schoolAccount.schoolSpaceIds[0] });
+  };
+
   const requestVerificationCode = () => {
     if (!phoneNumberPattern.test(phone.trim())) {
       setFormMessage('请输入正确的手机号');
@@ -179,12 +196,17 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
       return;
     }
     setFormMessage('');
+    if (showDemoBranches) {
+      setActiveSheet(null);
+      setDemoLogin({ entry: 'phone', phone: phone.trim() });
+      return;
+    }
     completeLogin(phone.trim());
   };
 
   return (
     <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] antialiased">
-      <main className="flex min-h-0 flex-1 flex-col px-[var(--tm-space-6)] pb-[calc(var(--tm-space-5)+env(safe-area-inset-bottom))] pt-[calc(var(--tm-space-8)*4)]">
+      <main inert={Boolean(demoLogin)} className="flex min-h-0 flex-1 flex-col px-[var(--tm-space-6)] pb-[calc(var(--tm-space-5)+env(safe-area-inset-bottom))] pt-[calc(var(--tm-space-8)*4)]">
         <div className="flex flex-col items-center text-center">
           <div className="h-[84px] w-[84px] overflow-hidden rounded-full [box-shadow:var(--tm-shadow-card)]">
             <img
@@ -203,11 +225,11 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
             <span className="mt-0.5 text-[length:var(--tm-font-size-meta)] font-medium leading-4 opacity-80">190****0000</span>
           </button>
           {showWechatLogin && (
-            <button type="button" onClick={() => openSheet('wechat')} disabled={submitting} className={`${wechatLoginButtonClass} mt-[var(--tm-space-3)]`}>
+            <button ref={wechatLoginRef} type="button" onClick={() => openSheet('wechat')} disabled={submitting} className={`${wechatLoginButtonClass} mt-[var(--tm-space-3)]`}>
               一键登录
             </button>
           )}
-          <button type="button" onClick={() => openSheet('phone')} className={phoneLoginLinkClass}>
+          <button ref={phoneLoginLinkRef} type="button" onClick={() => openSheet('phone')} className={phoneLoginLinkClass}>
             手机号登录/注册
           </button>
         </div>
@@ -393,6 +415,18 @@ const TeacherLoginView: React.FC<TeacherLoginViewProps> = ({ onLogin, showWechat
           </button>
         </div>
       </MobileBottomSheet>
+
+      {demoLogin && (
+        <MobileGlassActionDialog
+          title="模拟用户场景"
+          returnFocusRef={demoLogin.entry === 'wechat' ? wechatLoginRef : phoneLoginLinkRef}
+          onClose={() => setDemoLogin(null)}
+          actions={[
+            { label: '已加入学校版', onSelect: () => finishDemoLogin(demoLogin, true) },
+            { label: '未加入学校版', onSelect: () => finishDemoLogin(demoLogin, false) },
+          ]}
+        />
+      )}
 
       <MobileToast message={toastMessage} />
     </div>

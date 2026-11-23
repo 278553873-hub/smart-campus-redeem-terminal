@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Check, ChevronLeft } from 'lucide-react';
+import MobileFormActionBar from '../components/ui/MobileFormActionBar';
 import { phoneText } from '../styles/teacherMobileTokens';
 import type { Student } from '../types';
 
@@ -39,7 +40,7 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, o
         <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>批量修改学生信息</h1>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] pb-[calc(var(--tm-space-8)+var(--tm-size-touch))] pt-[var(--tm-space-4)] no-scrollbar">
+      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] py-[var(--tm-space-4)] no-scrollbar">
         <div className="space-y-[var(--tm-space-3)]">
           {drafts.map(student => (
             <div
@@ -85,17 +86,13 @@ const StudentBatchEditView: React.FC<StudentBatchEditViewProps> = ({ students, o
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)]">
-        <button
-          type="button"
-          disabled={!canSave}
-          onClick={handleSave}
-          className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]"
-        >
-          {showSaved && <Check className="h-[18px] w-[18px]" />}
-          {showSaved ? '已保存' : '保存修改'}
-        </button>
-      </footer>
+      <MobileFormActionBar
+        type="button"
+        label={showSaved ? '已保存' : '保存修改'}
+        icon={showSaved && <Check className="h-[18px] w-[18px]" aria-hidden="true" />}
+        disabled={!canSave}
+        onClick={handleSave}
+      />
     </div>
   );
 };

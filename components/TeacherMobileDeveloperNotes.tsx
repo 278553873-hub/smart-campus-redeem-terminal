@@ -1,6 +1,7 @@
 import React from 'react';
-import { Code2, Search } from 'lucide-react';
+import { Code2 } from 'lucide-react';
 import { STUDENT_TEAM_EXACT_SEARCH_DEMO } from '../mobile-app/data/studentTeamDemo';
+import TeacherDemoSearchExample from './TeacherDemoSearchExample';
 
 export type TeacherMobileDeveloperNotesContext = 'student-picker-grid' | 'student-team-other-search';
 
@@ -32,14 +33,12 @@ const TeacherMobileDeveloperNotes: React.FC<TeacherMobileDeveloperNotesProps> = 
   return (
     <div className="flex w-full flex-col items-end gap-2">
       {isExactSearch && (
-        <aside aria-label="其他班级学生搜索演示案例" className="w-full rounded-2xl border border-slate-200/80 bg-white/95 p-4 text-slate-700 shadow-[0_18px_48px_-24px_rgba(15,23,42,0.45)] backdrop-blur-xl">
-          <div className="flex items-center gap-2 text-slate-900">
-            <Search className="h-4 w-4 text-slate-500" aria-hidden="true" />
-            <h2 className="text-[13px] font-black">演示搜索案例</h2>
-          </div>
-          <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-500">在输入框填写完整姓名并点击“查找”</p>
-          <div className="mt-3 rounded-xl bg-slate-100 px-3 py-2.5 text-center text-[15px] font-black text-slate-900">{STUDENT_TEAM_EXACT_SEARCH_DEMO.name}</div>
-        </aside>
+        <TeacherDemoSearchExample
+          label="其他班级学生搜索演示案例"
+          title="演示搜索案例"
+          instruction="在输入框填写完整姓名并点击“查找”"
+          example={STUDENT_TEAM_EXACT_SEARCH_DEMO.name}
+        />
       )}
 
       <button

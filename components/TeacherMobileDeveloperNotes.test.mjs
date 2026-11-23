@@ -12,7 +12,7 @@ assert.match(rootApp, /querySelector\('\[data-teacher-demo-context="student-team
 assert.match(rootApp, /\{teacherDeveloperNotesContext && \(\s*<TeacherMobileDeveloperNotes/, '开发标注开关只能在对应页面状态中出现。');
 assert.match(rootApp, /teacherDeveloperNotesContextRef\.current !== nextContext/, '离开或切换对应页面状态后应同时收起开发标注面板。');
 assert.match(notes, /\{open && \(/, '规则面板只应在开关开启时渲染。');
-assert.match(notes, /演示搜索案例/, '其他班级搜索状态应在手机壳右侧显示演示案例。');
+assert.match(notes, /<TeacherDemoSearchExample\s+label="其他班级学生搜索演示案例"\s+title="演示搜索案例"/, '其他班级搜索状态应在手机壳右侧显示通用演示案例卡片。');
 assert.match(notes, /STUDENT_TEAM_EXACT_SEARCH_DEMO\.name/, '演示备注与演示学生必须复用同一份演示数据。');
 assert.match(notes, /< 480px：4列；≥ 480px：5列/, '开发标注应说明四列与五列的响应式规则。');
 assert.match(notes, /按选择内容区宽度，不按浏览器窗口/, '开发标注应避免开发误用外层浏览器宽度。');
