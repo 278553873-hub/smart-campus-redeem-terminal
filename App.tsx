@@ -54,8 +54,7 @@ import ScreenPanoramaHost from './components/screen-navigation/ScreenPanoramaHos
 import { SchoolCockpitEntry, StudentHonorEntry } from './components/SchoolScreenEntries';
 import StudentHonorScreen from './components/student-honor-screen/StudentHonorScreen';
 import TeacherDemoSearchExample from './components/TeacherDemoSearchExample';
-import TeacherAccountSwitchPreviewControls from './components/TeacherAccountSwitchPreviewControls';
-import type { DemoTeacherAccount } from './shared/demoTeacherAccounts';
+import TeacherAccountSwitchPreviewControls, { TeacherSupportRegistrationPreviewControls } from './components/TeacherAccountSwitchPreviewControls';
 import TeacherMobileDeveloperNotes, { type TeacherMobileDeveloperNotesContext } from './components/TeacherMobileDeveloperNotes';
 import letoAiLogo from './assets/letoai-logo.png';
 import Loader from './components/Loader';
@@ -1538,8 +1537,31 @@ const AppSwitcher: React.FC = () => {
   const [classExchangePreviewHasCabinet, setClassExchangePreviewHasCabinet] = useState(true);
   const [showUnreleasedClassTools, setShowUnreleasedClassTools] = useState(false);
   const [showTeacherMePreview, setShowTeacherMePreview] = useState(false);
-  const [teacherAccountSwitchPreview, setTeacherAccountSwitchPreview] = useState<DemoTeacherAccount | null>(null);
-  const [teacherAccountSwitchDockPosition, setTeacherAccountSwitchDockPosition] = useState<{ left: number; top: number } | null>(null);
+  const [teacherSupportDialogOpen, setTeacherSupportDialogOpen] = useState(false);
+  const [teacherSupportRegistrationIsRegistered, setTeacherSupportRegistrationIsRegistered] = useState(true);
+  const [teacherSupportCodeEntered, setTeacherSupportCodeEntered] = useState<boolean>();
+  const [teacherRecentAccountsPreview, setTeacherRecentAccountsPreview] = useState<boolean>();
+  const [showTeacherAccountPreviewControls, setShowTeacherAccountPreviewControls] = useState(false);
+  const [teacherSupportAccessPreview, setTeacherSupportAccessPreview] = useState<{ enabled: boolean; simulated: boolean; verified: boolean; hasMultipleAccounts: boolean; onChange: (enabled: boolean) => void } | null>(null);
+  const supportRegistrationPreview = currentApp === 'admin' && showTeacherAccountPreviewControls && teacherSupportDialogOpen
+    ? teacherSupportRegistrationIsRegistered : undefined;
+  const supportDialogPreview = supportRegistrationPreview === undefined ? undefined : {
+    registered: supportRegistrationPreview,
+    codeEntered: supportRegistrationPreview ? teacherSupportCodeEntered : undefined,
+  };
+  const supportCodeEntered = teacherSupportCodeEntered ?? (teacherSupportAccessPreview?.verified || (teacherSupportAccessPreview?.simulated ? false : undefined));
+  const handleTeacherSupportDialogOpenChange = useCallback((open: boolean) => {
+    setTeacherSupportDialogOpen(open);
+    if (!open) setTeacherSupportCodeEntered(undefined);
+  }, []);
+  const teacherPhonePreviewDockClass = 'fixed left-1/2 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0';
+  useEffect(() => {
+    const viewport = window.matchMedia('(min-width: 800px)');
+    const update = () => setShowTeacherAccountPreviewControls(viewport.matches);
+    update();
+    viewport.addEventListener('change', update);
+    return () => viewport.removeEventListener('change', update);
+  }, []);
   const [showTeacherUnreleasedTools, setShowTeacherUnreleasedTools] = useState(false);
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [studentTeamInvitePreview, setStudentTeamInvitePreview] = useState(false);
@@ -1651,13 +1673,6 @@ const AppSwitcher: React.FC = () => {
     const maxLeft = Math.max(16, window.innerWidth - 272 - 16);
     const position = { left: Math.min(bounds.right + 24, maxLeft), top: Math.max(16, bounds.top) };
     setTeacherTabletPreviewDockPosition(previous => (
-      previous?.left === position.left && previous.top === position.top ? previous : position
-    ));
-  }, []);
-
-  const handleTeacherAccountSwitchBoundsChange = useCallback((bounds: DevicePreviewBounds) => {
-    const position = { left: bounds.right + 24, top: bounds.screenBottom };
-    setTeacherAccountSwitchDockPosition(previous => (
       previous?.left === position.left && previous.top === position.top ? previous : position
     ));
   }, []);
@@ -1966,12 +1981,15 @@ const AppSwitcher: React.FC = () => {
             showUnreleasedTools={showTeacherUnreleasedTools}
             showPhoneShell={showTeacherDeviceFrame}
             previewDevice={isTeacherTabletPreview ? 'tablet' : 'phone'}
-            onPreviewDeviceBoundsChange={teacherAccountSwitchPreview ? handleTeacherAccountSwitchBoundsChange : isTeacherTabletPreview ? handleTeacherPreviewDeviceBoundsChange : undefined}
+            onPreviewDeviceBoundsChange={isTeacherTabletPreview ? handleTeacherPreviewDeviceBoundsChange : undefined}
             screenRef={teacherPhoneScreenRef}
             onGradientPreviewVisibilityChange={setShowTeacherColorPreview}
             onProfileSetupVisibilityChange={setShowTeacherProfileSetupPreview}
             onMePreviewVisibilityChange={setShowTeacherMePreview}
-            onDemoAccountSwitchPreviewChange={setTeacherAccountSwitchPreview}
+            onSupportDialogOpenChange={handleTeacherSupportDialogOpenChange}
+            supportDialogPreview={supportDialogPreview}
+            recentAccountsPreview={currentApp === 'admin' && showTeacherAccountPreviewControls ? teacherRecentAccountsPreview : undefined}
+            onSupportAccessPreviewChange={currentApp === 'admin' && showTeacherAccountPreviewControls ? setTeacherSupportAccessPreview : undefined}
             onAirecPreviewVisibilityChange={setShowAirecDevicePreview}
             showUnreleasedClassTools={showUnreleasedClassTools}
             onClassActionsPreviewVisibilityChange={setShowClassActionsPreview}
@@ -2096,7 +2114,7 @@ const AppSwitcher: React.FC = () => {
       {(currentApp === 'admin' || currentApp === 'teacher-mobile-lite') && (
         <div className={isTeacherTabletPreview
           ? 'fixed right-4 top-4 z-[9998]'
-          : 'fixed left-1/2 top-4 z-[9998] ml-[230px] max-[900px]:right-4 max-[900px]:left-auto max-[900px]:ml-0'}
+          : `${teacherPhonePreviewDockClass} top-4`}
           style={isTeacherTabletPreview && teacherTabletPreviewDockPosition
             ? { ...teacherTabletPreviewDockPosition, right: 'auto' }
             : undefined}>
@@ -2165,10 +2183,13 @@ const AppSwitcher: React.FC = () => {
               <ClassExchangePreviewControls hasCabinet={classExchangePreviewHasCabinet} onChange={setClassExchangePreviewHasCabinet} />
             </div>}
 
-            {currentApp === 'admin' && teacherAccountSwitchPreview && teacherAccountSwitchDockPosition && (
-              <div className="fixed right-4 max-w-[232px] -translate-y-full max-[800px]:hidden" style={teacherAccountSwitchDockPosition}>
-                <TeacherAccountSwitchPreviewControls account={teacherAccountSwitchPreview} />
-              </div>
+            {currentApp === 'admin' && showTeacherAccountPreviewControls && teacherSupportAccessPreview && (
+              <TeacherAccountSwitchPreviewControls
+                enabled={teacherSupportAccessPreview.enabled}
+                onChange={teacherSupportAccessPreview.onChange}
+                multipleAccounts={teacherRecentAccountsPreview ?? teacherSupportAccessPreview.hasMultipleAccounts}
+                onMultipleAccountsChange={setTeacherRecentAccountsPreview}
+              />
             )}
 
             {currentApp === 'admin' && showTeacherMePreview && <section className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-3" aria-label="未上线功能预览配置">
@@ -2313,6 +2334,17 @@ const AppSwitcher: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {supportRegistrationPreview !== undefined && teacherSupportAccessPreview?.enabled && (
+        <div className={`${teacherPhonePreviewDockClass} bottom-4 w-[232px] max-[900px]:w-[172px]`}>
+          <TeacherSupportRegistrationPreviewControls
+            registered={supportRegistrationPreview}
+            onChange={setTeacherSupportRegistrationIsRegistered}
+            codeEntered={supportCodeEntered}
+            onCodeEnteredChange={setTeacherSupportCodeEntered}
+          />
         </div>
       )}
 

@@ -621,13 +621,46 @@ for (const draft of [
 const loadFeatureView = name => async () => ({ default: (await import('../mobile-app/views/MeFeatureViews'))[name] });
 const { defaultTeacherGradientPreview } = await import('../mobile-app/styles/teacherGradientPreview');
 for (const authorized of [false, true]) {
+  const recentLogins = (authorized ? [['19000000000', '刘飞'], ['19900008610', '陈雨']] : [['19000000000', '刘飞']]).map(([phone, name]) => ({
+    account: { phone, schoolSpaceIds: ['school-star'], collaborationSpaceIds: [] },
+    name, schoolName: '星河实验学校', spaceId: 'school-star',
+  }));
   await renderPage(authorized ? '设置页（获排查授权）' : '设置页', loadFeatureView('MineSettingsView'), {
     onLogout: noop, loginPhone: '19000000000', onSwitchDemoAccount: authorized ? noop : undefined,
+    recentLogins, onSwitchRecentAccount: noop,
     gradientPreview: defaultTeacherGradientPreview, onGradientPreviewChange: noop,
   }, html => {
     if (!html.includes('190****0000') || html.includes('19000000000')) throw new Error('设置页应展示当前登录账号的脱敏手机号');
     if (html.includes('打开问题排查') !== authorized) throw new Error('登录账号行只对已授权人员提供排查触发');
     if (html.includes('切换并登录')) throw new Error('进入设置页时，排查弹窗应保持关闭');
+    if (html.includes('切换账号') !== (recentLogins.length > 1)) throw new Error('仅登录过多个账号时展示切换入口');
+    if (recentLogins.length > 1 && html.indexOf('切换账号') > html.indexOf('退出登录')) throw new Error('切换账号应位于退出登录上方');
+  });
+}
+for (const recentAccountsPreview of [true, false]) {
+  await renderPage(`设置页（多账号预览${recentAccountsPreview ? '是' : '否'}）`, loadFeatureView('MineSettingsView'), {
+    onLogout: noop, loginPhone: '19000000000', recentAccountsPreview,
+    gradientPreview: defaultTeacherGradientPreview, onGradientPreviewChange: noop,
+  }, html => {
+    if (html.includes('切换账号') !== recentAccountsPreview) throw new Error('多账号预览开关应直接控制切换入口');
+  });
+}
+await renderPage('教师手机端账号顶部预览卡片', () => import('../components/TeacherAccountSwitchPreviewControls'), {
+  enabled: true, multipleAccounts: true, onChange: noop, onMultipleAccountsChange: noop,
+}, html => {
+  const role = html.indexOf('当前账号是排查人员');
+  const accounts = html.indexOf('当前设备已登录多个账号');
+  if (role < 0 || accounts <= role) throw new Error('多账号预览卡片应位于排查身份卡片下方');
+  if (html.includes('输入的手机号是否注册')) throw new Error('注册状态卡片需独立渲染于右侧底部');
+  if (html.includes('Preview2026')) throw new Error('身份卡片不得展示预览安全码');
+});
+for (const { registered, codeEntered } of [{ registered: false, codeEntered: false }, { registered: true }, { registered: true, codeEntered: true }, { registered: true, codeEntered: false }]) {
+  await renderPage(`教师手机端注册状态底部预览（已注册${String(registered)}，已输入安全码${String(codeEntered)}）`, async () => ({
+    default: (await import('../components/TeacherAccountSwitchPreviewControls')).TeacherSupportRegistrationPreviewControls,
+  }), { registered, codeEntered, onChange: noop, onCodeEnteredChange: noop }, html => {
+    if (!html.includes('输入的手机号是否注册') || html.includes('<svg') || /1[0-9]{10}/.test(html)) throw new Error('注册状态卡片不应展示图标或指定手机号');
+    if (html.includes('是否输入过安全码') !== registered) throw new Error('仅注册状态为是时提供安全码预览选项');
+    if (html.includes('预览安全码：Preview2026') !== (registered && codeEntered === false)) throw new Error('仅选择未输入过安全码时展示预览安全码');
   });
 }
 for (const empty of [false, true]) {

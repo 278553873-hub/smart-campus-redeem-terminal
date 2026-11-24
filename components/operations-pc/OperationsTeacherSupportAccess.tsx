@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Descriptions, Empty, Form, Input, Message, Modal, Table, type TableColumnProps } from '@arco-design/web-react';
 import { Plus, Search } from 'lucide-react';
 import { DEMO_TEACHER_ACCOUNTS, DEMO_TEACHER_SCHOOL_NAMES, findDemoTeacherAccount, isDemoTeacherPhone, type DemoTeacherAccount } from '../../shared/demoTeacherAccounts';
-import { addDemoTeacherSupportAccount, hasDemoTeacherSupportAccess, readDemoTeacherSupportAccounts, removeDemoTeacherSupportAccount, subscribeToDemoTeacherSupportAccess } from '../../shared/demoTeacherSupportAccess';
+import { addDemoTeacherSupportAccount, isTeacherSupportSecurityCode, readDemoTeacherSupportAccounts, removeDemoTeacherSupportAccount, resetDemoTeacherSupportSecurityCode, subscribeToDemoTeacherSupportAccess, TEACHER_SUPPORT_SECURITY_CODE_HINT } from '../../shared/demoTeacherSupportAccess';
 import { confirmRemoveTeacherSupportAccess } from './operationsDialogs';
 
 const [demoOperator, , demoTarget] = DEMO_TEACHER_ACCOUNTS;
@@ -15,10 +15,13 @@ export default function OperationsTeacherSupportAccess() {
   const [accounts, setAccounts] = useState(readDemoTeacherSupportAccounts);
   const [keyword, setKeyword] = useState('');
   const [query, setQuery] = useState('');
-  const [adding, setAdding] = useState(false);
+  const [mode, setMode] = useState<'add' | 'reset' | null>(null);
   const [phone, setPhone] = useState('');
   const [result, setResult] = useState<DemoTeacherAccount>();
   const [error, setError] = useState('');
+  const [securityCode, setSecurityCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const syncAccounts = () => setAccounts(readDemoTeacherSupportAccounts());
@@ -29,16 +32,31 @@ export default function OperationsTeacherSupportAccess() {
 
   const isAuthorized = Boolean(result && accounts.some(account => account.id === result.id));
   const rows = accounts.filter(account => account.name.includes(query) || account.phone.includes(query));
+  const showCodeField = Boolean(result && (mode === 'reset' || !isAuthorized));
 
   const updatePhone = (value: string) => {
     setPhone(value.replace(/\D/g, '').slice(0, 11));
     setResult(undefined);
     setError('');
+    setSecurityCode('');
+    setCodeError('');
   };
 
   const openAdd = () => {
     updatePhone('');
-    setAdding(true);
+    setMode('add');
+  };
+
+  const openReset = (account: DemoTeacherAccount) => {
+    updatePhone(account.phone);
+    setResult(account);
+    setMode('reset');
+  };
+
+  const closeModal = () => {
+    if (saving) return;
+    setMode(null);
+    updatePhone('');
   };
 
   const searchPhone = () => {
@@ -51,18 +69,30 @@ export default function OperationsTeacherSupportAccess() {
     setError(account ? '' : '未找到该手机号对应的教师账号');
   };
 
-  const confirm = () => {
-    if (!result || hasDemoTeacherSupportAccess(result.phone)) return;
-    try {
-      addDemoTeacherSupportAccount(result.phone);
-    } catch {
-      setError('保存失败，请检查浏览器存储后重试');
+  const confirm = async () => {
+    if (!mode || !result || !showCodeField || saving) return;
+    if (!isTeacherSupportSecurityCode(securityCode)) {
+      setCodeError(TEACHER_SUPPORT_SECURITY_CODE_HINT);
       return;
     }
-    setKeyword('');
-    setQuery('');
-    setAdding(false);
-    Message.success('已添加授权人员');
+    setSaving(true);
+    setCodeError('');
+    try {
+      if (mode === 'add') await addDemoTeacherSupportAccount(result.phone, securityCode);
+      else await resetDemoTeacherSupportSecurityCode(result.phone, securityCode);
+    } catch (failure) {
+      setCodeError(failure instanceof Error && !(failure instanceof DOMException) ? failure.message : '保存失败，请检查浏览器存储后重试');
+      return;
+    } finally {
+      setSaving(false);
+    }
+    if (mode === 'add') {
+      setKeyword('');
+      setQuery('');
+    }
+    setMode(null);
+    updatePhone('');
+    Message.success(mode === 'add' ? '已添加授权人员' : '已重置安全码');
   };
 
   const requestRemoval = (account: DemoTeacherAccount) => {
@@ -82,11 +112,12 @@ export default function OperationsTeacherSupportAccess() {
     { title: '手机号', dataIndex: 'phone', width: 168 },
     { title: '关联学校', render: (_, account) => showSchools(account) },
     {
-      title: '操作', width: 96, fixed: 'right',
+      title: '操作', width: 168, fixed: 'right',
       render: (_, account) => (
-        <Button type="text" size="small" status="danger" aria-label={`移除${account.name}的排查授权`} onClick={() => requestRemoval(account)}>
-          移除
-        </Button>
+        <div className="ops-actions">
+          <Button type="text" size="small" aria-label={`重置${account.name}的安全码`} onClick={() => openReset(account)}>重置安全码</Button>
+          <Button type="text" size="small" status="danger" aria-label={`移除${account.name}的排查授权`} onClick={() => requestRemoval(account)}>移除</Button>
+        </div>
       ),
     },
   ];
@@ -113,52 +144,58 @@ export default function OperationsTeacherSupportAccess() {
         columns={columns}
         data={rows}
         border={false}
-        scroll={{ x: 600 }}
+        scroll={{ x: 672 }}
         pagination={false}
         noDataElement={<Empty description={query ? '未找到匹配的授权人员' : '暂无授权人员'} />}
       />
       <Modal
         wrapClassName="operations-pc-overlay"
-        className="ops-support-add"
-        title="新增授权人员"
-        visible={adding}
-        okText="确认"
-        okButtonProps={{ disabled: !result || isAuthorized }}
+        className={mode === 'add' ? 'ops-support-add' : 'ops-support-reset'}
+        title={mode === 'reset' ? '重置安全码' : '新增授权人员'}
+        visible={mode !== null}
+        okText={mode === 'reset' ? '确认重置' : '确认'}
+        confirmLoading={saving}
+        okButtonProps={{ disabled: !showCodeField || !securityCode }}
+        cancelButtonProps={{ disabled: saving }}
+        maskClosable={!saving}
         onOk={confirm}
-        onCancel={() => setAdding(false)}
+        onCancel={closeModal}
       >
         <Form layout="vertical">
-          <Form.Item label="手机号" validateStatus={error ? 'error' : undefined} help={error && <span role="alert">{error}</span>}>
-            <Input.Search
-              value={phone}
-              onChange={updatePhone}
-              onSearch={searchPhone}
-              searchButton="检索"
-              inputMode="numeric"
-              maxLength={11}
-              placeholder="请输入教师手机号"
-              aria-label="检索教师手机号"
-            />
-          </Form.Item>
-        </Form>
-        <div aria-live="polite">
-          {result && (
-            <Descriptions className="ops-support-result" column={1} colon="" data={[
-              { label: '教师姓名', value: <strong>{result.name}</strong> },
-              { label: '手机号', value: <span className="ops-support-phone">{result.phone}</span> },
-              { label: '关联学校', value: showSchools(result) },
-              ...(isAuthorized ? [{ label: '授权状态', value: '已授权' }] : []),
-            ]} />
+          {mode === 'add' && (
+            <Form.Item label="手机号" validateStatus={error ? 'error' : undefined} help={error && <span role="alert">{error}</span>}>
+              <Input.Search value={phone} onChange={updatePhone} onSearch={searchPhone} searchButton="检索" inputMode="numeric"
+                maxLength={11} disabled={saving} placeholder="请输入教师手机号" aria-label="检索教师手机号" />
+            </Form.Item>
           )}
-        </div>
-        <aside className="ops-support-demo" aria-labelledby="ops-support-demo-title">
+          <div aria-live="polite">
+            {result && (
+              <Descriptions className="ops-support-result" column={1} colon="" data={[
+                { label: '教师姓名', value: <strong>{result.name}</strong> },
+                { label: '手机号', value: <span className="ops-support-phone">{result.phone}</span> },
+                { label: '关联学校', value: showSchools(result) },
+                ...(mode === 'add' && isAuthorized ? [{ label: '授权状态', value: '已授权' }] : []),
+              ]} />
+            )}
+          </div>
+          {showCodeField && (
+            <Form.Item required label={mode === 'reset' ? '新安全码' : '安全码'} validateStatus={codeError ? 'error' : undefined}
+              help={codeError ? <span role="alert">{codeError}</span> : TEACHER_SUPPORT_SECURITY_CODE_HINT}>
+              <Input.Password aria-label={mode === 'reset' ? '新安全码' : '安全码'} autoComplete="new-password" value={securityCode}
+                disabled={saving} onChange={value => { setSecurityCode(value); setCodeError(''); }} onPressEnter={confirm}
+                placeholder={mode === 'reset' ? '请输入新安全码' : '请设置安全码'} />
+            </Form.Item>
+          )}
+          {mode === 'reset' && <p className="ops-secondary">重置后，该教师下次使用问题排查时须验证新安全码。</p>}
+        </Form>
+        {mode === 'add' && <aside className="ops-support-demo" aria-labelledby="ops-support-demo-title">
           <h2 id="ops-support-demo-title">演示账号</h2>
           <ol>
-            <li>输入{demoOperator.name}的手机号 <span className="ops-support-phone">{demoOperator.phone}</span>，检索并确认授权。</li>
+            <li>检索{demoOperator.name}的手机号 <span className="ops-support-phone">{demoOperator.phone}</span>，设置安全码并确认授权。</li>
             <li>在同一浏览器打开「教师-手机端」，用最近账号一键登录。</li>
-            <li>打开「我的 → 设置 → 账号安全」，按住「登录账号」1 秒，输入 <span className="ops-support-phone">{demoTarget.phone}</span>，切换到{demoTarget.name}。</li>
+            <li>在设置页按住「登录账号」1 秒，输入 <span className="ops-support-phone">{demoTarget.phone}</span>，首次验证安全码后切换到{demoTarget.name}。</li>
           </ol>
-        </aside>
+        </aside>}
       </Modal>
     </div>
   );

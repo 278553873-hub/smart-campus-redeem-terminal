@@ -53,9 +53,10 @@ import StudentBodyMeasurementsView from './views/student-growth/StudentBodyMeasu
 import type { StudentEvaluationRecord } from './views/student-evaluation/types';
 import TeacherLoginView from './views/TeacherLoginView';
 import type { TeacherLoginAccount, TeacherLoginSession } from './domain/teacherLoginAccess';
-import { RECENT_TEACHER_LOGIN_PHONE, resolveDemoTeacherSwitch } from './data/teacherLoginAccounts';
-import { findDemoTeacherAccount, type DemoTeacherAccount } from '../shared/demoTeacherAccounts';
-import { hasDemoTeacherSupportAccess, subscribeToDemoTeacherSupportAccess } from '../shared/demoTeacherSupportAccess';
+import { RECENT_TEACHER_LOGIN_PHONE, resolveDemoTeacherSwitch, type DemoTeacherSwitchHandler, type TeacherSupportDialogPreview } from './data/teacherLoginAccounts';
+import { getAvailableRecentTeacherLogins, getRecentTeacherLoginDestination, readRecentTeacherLogins, RECENT_TEACHER_LOGINS_STORAGE_KEY, rememberRecentTeacherLogin, rememberRecentTeacherLoginSpace, type RecentTeacherLogin } from './data/recentTeacherLogins';
+import { findDemoTeacherAccount } from '../shared/demoTeacherAccounts';
+import { getVerifiedDemoTeacherSupportMode, hasDemoTeacherSupportAccess, subscribeToDemoTeacherSupportAccess } from '../shared/demoTeacherSupportAccess';
 import AiHeadteacherAssistantV2View from './views/AiHeadteacherAssistantV2View';
 import WeeklyActionAdviceView from './views/WeeklyActionAdviceView';
 import WeeklyActionAdviceHistoryView from './views/WeeklyActionAdviceHistoryView';
@@ -430,7 +431,10 @@ interface MobileAppProps {
     onGradientPreviewVisibilityChange?: (visible: boolean) => void;
     onProfileSetupVisibilityChange?: (visible: boolean) => void;
     onMePreviewVisibilityChange?: (visible: boolean) => void;
-    onDemoAccountSwitchPreviewChange?: (account: DemoTeacherAccount | null) => void;
+    onSupportDialogOpenChange?: (open: boolean) => void;
+    supportDialogPreview?: TeacherSupportDialogPreview;
+    recentAccountsPreview?: boolean;
+    onSupportAccessPreviewChange?: (preview: { enabled: boolean; simulated: boolean; verified: boolean; hasMultipleAccounts: boolean; onChange: (enabled: boolean) => void } | null) => void;
     onAirecPreviewVisibilityChange?: (visible: boolean) => void;
     classListLoadingPreview?: import('../shared/classListLoadingPreview').ClassListLoadingPreview;
     classReportOutline?: ClassReportOutlineItem[];
@@ -471,7 +475,10 @@ const App: React.FC<MobileAppProps> = ({
     onGradientPreviewVisibilityChange,
     onProfileSetupVisibilityChange,
     onMePreviewVisibilityChange,
-    onDemoAccountSwitchPreviewChange,
+    onSupportDialogOpenChange,
+    supportDialogPreview,
+    recentAccountsPreview,
+    onSupportAccessPreviewChange,
     onAirecPreviewVisibilityChange,
     showPhoneShell = true,
     previewDevice = 'phone',
@@ -496,10 +503,27 @@ const App: React.FC<MobileAppProps> = ({
     const features = teacherAppFeatures[edition];
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loginAccount, setLoginAccount] = useState<TeacherLoginAccount | null>(null);
-    const canSwitchDemoAccount = useSyncExternalStore(
+    const [recentTeacherLogins, setRecentTeacherLogins] = useState(() => edition === 'full' ? readRecentTeacherLogins() : []);
+    const [supportAccessPreviewOverrides, setSupportAccessPreviewOverrides] = useState<Record<string, boolean>>({});
+    const loginPhone = loginAccount?.phone;
+    const canPreviewAccountAccess = Boolean(onSupportAccessPreviewChange);
+    const supportAccessPreviewOverride = loginPhone && canPreviewAccountAccess ? supportAccessPreviewOverrides[loginPhone] : undefined;
+    const updateSupportAccessPreview = useCallback((enabled: boolean) => {
+        if (loginPhone) setSupportAccessPreviewOverrides(current => ({ ...current, [loginPhone]: enabled }));
+    }, [loginPhone]);
+    const hasSupportAccess = useSyncExternalStore(
         subscribeToDemoTeacherSupportAccess,
         () => edition === 'full' && isAuthenticated && hasDemoTeacherSupportAccess(loginAccount?.phone),
         () => false,
+    );
+    const canSwitchDemoAccount = edition === 'full' && isAuthenticated && Boolean(loginAccount?.phone)
+        && (supportAccessPreviewOverride ?? hasSupportAccess);
+    const simulatesSupportAccess = canSwitchDemoAccount && !hasSupportAccess;
+    const verifiedSupport = useSyncExternalStore<'granted' | 'preview' | null>(
+        subscribeToDemoTeacherSupportAccess,
+        // 账号历史读取已验证的授权，与长按入口的身份预览分开。
+        () => edition === 'full' && isAuthenticated ? getVerifiedDemoTeacherSupportMode(loginPhone, canPreviewAccountAccess) : null,
+        () => null,
     );
     // 个人版首次进入先补充姓名与学校，完成后再进入个人空间。
     const [personalProfileSetup, setPersonalProfileSetup] = useState(false);
@@ -610,6 +634,15 @@ const App: React.FC<MobileAppProps> = ({
     }, [currentView, isAuthenticated, onMePreviewVisibilityChange]);
 
     useEffect(() => {
+        if (edition !== 'full') return;
+        const refreshRecentLogins = (event: StorageEvent) => {
+            if (event.key === RECENT_TEACHER_LOGINS_STORAGE_KEY || event.key === null) setRecentTeacherLogins(readRecentTeacherLogins());
+        };
+        window.addEventListener('storage', refreshRecentLogins);
+        return () => window.removeEventListener('storage', refreshRecentLogins);
+    }, [edition]);
+
+    useEffect(() => {
         onAirecPreviewVisibilityChange?.(isAuthenticated && features.bluetoothDevices && currentView === 'airec_devices');
         return () => onAirecPreviewVisibilityChange?.(false);
     }, [currentView, isAuthenticated, features.bluetoothDevices, onAirecPreviewVisibilityChange]);
@@ -682,13 +715,32 @@ const App: React.FC<MobileAppProps> = ({
     }, [studentTeamInvitePreview]);
     const canRecordClassForActiveSpace = canTeacherSpaceRecordClass(activeTeacherSpace);
     const profilePhone = loginAccount?.phone ?? RECENT_TEACHER_LOGIN_PHONE;
-    const demoTeacher = findDemoTeacherAccount(profilePhone);
-    const baseTeacherProfile = INITIAL_TEACHER_PROFILES_BY_SPACE[activeTeacherSpace.id] ?? DEFAULT_TEACHER_PROFILE;
-    const teacherProfile = teacherProfileEdits[profilePhone]?.[activeTeacherSpace.id] ?? (
-        demoTeacher && demoTeacher.id !== baseTeacherProfile.id
-            ? { ...baseTeacherProfile, id: demoTeacher.id, name: demoTeacher.name }
-            : baseTeacherProfile
-    );
+    const getTeacherProfile = (phone: string, spaceId: string): TeacherProfile => {
+        const edited = teacherProfileEdits[phone]?.[spaceId];
+        if (edited) return edited;
+        const demoTeacher = findDemoTeacherAccount(phone);
+        const base = INITIAL_TEACHER_PROFILES_BY_SPACE[spaceId] ?? DEFAULT_TEACHER_PROFILE;
+        const saved = spaceId === 'personal' ? recentTeacherLogins.find(entry => entry.account.phone === phone && entry.spaceId === spaceId) : undefined;
+        if (!saved && (!demoTeacher || demoTeacher.id === base.id)) return base;
+        return {
+            ...base,
+            id: demoTeacher?.id ?? base.id,
+            name: saved?.name ?? (demoTeacher && demoTeacher.id !== base.id ? demoTeacher.name : base.name),
+            schoolName: saved?.schoolName ?? base.schoolName,
+        };
+    };
+    const teacherProfile = getTeacherProfile(profilePhone, activeTeacherSpace.id);
+    const availableRecentLogins = getAvailableRecentTeacherLogins(recentTeacherLogins, loginAccount ? {
+        account: loginAccount, spaceId: activeTeacherSpace.id, name: teacherProfile.name, schoolName: teacherProfile.schoolName || '个人空间',
+    } : undefined, verifiedSupport);
+    const hasMultipleAccounts = availableRecentLogins.length > 1;
+    useEffect(() => {
+        const visible = edition === 'full' && isAuthenticated && !personalProfileSetup && currentView === 'mine_settings';
+        onSupportAccessPreviewChange?.(visible
+            ? { enabled: canSwitchDemoAccount, simulated: simulatesSupportAccess, verified: verifiedSupport !== null, hasMultipleAccounts, onChange: updateSupportAccessPreview }
+            : null);
+    }, [edition, isAuthenticated, personalProfileSetup, currentView, canSwitchDemoAccount, simulatesSupportAccess, verifiedSupport, hasMultipleAccounts, onSupportAccessPreviewChange, updateSupportAccessPreview]);
+    useEffect(() => () => onSupportAccessPreviewChange?.(null), [onSupportAccessPreviewChange]);
     const saveTeacherProfile = (spaceId: string, nextProfile: TeacherProfile) => {
         setTeacherProfileEdits(current => ({
             ...current,
@@ -868,6 +920,9 @@ const App: React.FC<MobileAppProps> = ({
         const nextRecordScopes = resolveTeacherAppRecordScopes(edition, nextSpace);
         const nextRecordScope = nextRecordScopes.includes(activeLogTab) ? activeLogTab : nextRecordScopes[0] ?? 'student';
         setCurrentTeacherSpaceId(spaceId);
+        if (edition === 'full' && loginPhone && nextSpace.type !== 'collaboration') {
+            setRecentTeacherLogins(rememberRecentTeacherLoginSpace(recentTeacherLogins, loginPhone, spaceId));
+        }
         setClassListTab('class');
         if (nextRecordScope !== activeLogTab) {
             setActiveLogTab(nextRecordScope);
@@ -1085,32 +1140,71 @@ const App: React.FC<MobileAppProps> = ({
         resetAuthenticatedNavigation();
         setIsAuthenticated(false);
         setLoginAccount(null);
+        setSupportAccessPreviewOverrides({});
         setPersonalProfileSetup(false);
     };
 
-    const handleTeacherLogin = (session?: TeacherLoginSession, promptPersonalProfile = true) => {
+    const rememberTeacherSession = (session: TeacherLoginSession, profile: TeacherProfile, support?: RecentTeacherLogin['support']) => {
+        if (edition !== 'full') return;
+        setRecentTeacherLogins(rememberRecentTeacherLogin(recentTeacherLogins, {
+            ...session, name: profile.name, schoolName: profile.schoolName || '个人空间', support,
+        }));
+    };
+
+    const enterTeacherSession = (session: TeacherLoginSession | undefined, mode: 'login' | 'recent' | 'support' | 'preview', support?: RecentTeacherLogin['support']) => {
         resetAuthenticatedNavigation();
+        setRecordContextToast('');
+        onHeadteacherAssistantScopePreviewChange?.(null);
+        const needsProfile = mode === 'login' && session?.spaceId === 'personal';
         if (session) {
             setLoginAccount(session.account);
             setCurrentTeacherSpaceId(session.spaceId);
-            setActiveLogTab('student');
+            const nextSpace = TEACHER_SPACE_OPTIONS.find(space => space.id === session.spaceId);
+            const scopes = nextSpace ? resolveTeacherAppRecordScopes(edition, nextSpace) : [];
+            setActiveLogTab(scopes.includes('student') ? 'student' : scopes[0] ?? 'student');
+            if (!needsProfile && mode !== 'preview') {
+                rememberTeacherSession(session, getTeacherProfile(session.account.phone, session.spaceId), support);
+            }
         }
-        setPersonalProfileSetup(promptPersonalProfile && session?.spaceId === 'personal');
+        setPersonalProfileSetup(needsProfile);
         setIsAuthenticated(true);
     };
 
-    const handleSwitchDemoAccount = (phone: string) => {
-        if (edition !== 'full' || !isAuthenticated) return '当前账号未获排查授权';
-        const result = resolveDemoTeacherSwitch(loginAccount?.phone, phone);
-        if (!result.session) return result.error;
+    const handleTeacherLogin = (session?: TeacherLoginSession) => enterTeacherSession(session, 'login');
 
-        setRecordContextToast('');
-        onHeadteacherAssistantScopePreviewChange?.(null);
-        handleTeacherLogin(result.session, false);
+    const handleSwitchDemoAccount: DemoTeacherSwitchHandler = async (phone, code, signal, dialogPreview) => {
+        const operatorPhone = loginAccount?.phone;
+        if (!canSwitchDemoAccount || !operatorPhone) return { error: '当前账号未获排查授权' };
+        const result = await resolveDemoTeacherSwitch(operatorPhone, phone, code, simulatesSupportAccess, signal, dialogPreview);
+        if (!signal.aborted && 'session' in result) {
+            if (dialogPreview?.codeEntered !== undefined) enterTeacherSession(result.session, 'preview');
+            else enterTeacherSession(result.session, 'support', { operatorPhone, preview: simulatesSupportAccess });
+        }
+        return result;
+    };
+
+    const handleSwitchRecentAccount = async (phone: string, signal: AbortSignal): Promise<string | undefined> => {
+        const login = availableRecentLogins.find(entry => entry.account.phone === phone);
+        if (!login || !isAuthenticated || phone === loginAccount?.phone || signal.aborted) return '该账号暂时无法切换，请重新登录';
+        if (login.support) {
+            const result = await resolveDemoTeacherSwitch(loginPhone, phone, undefined, login.support.preview, signal);
+            if ('error' in result) return result.error;
+            if ('needsSecurityCode' in result) return '请先在「问题排查」中验证安全码';
+            if (!signal.aborted) {
+                const { account } = result.session;
+                const { spaceId } = getRecentTeacherLoginDestination(login, account);
+                enterTeacherSession({ account, spaceId }, 'support', login.support);
+            }
+        } else {
+            const { spaceId } = getRecentTeacherLoginDestination(login);
+            enterTeacherSession({ account: login.account, spaceId }, 'recent');
+        }
     };
 
     const handlePersonalProfileSubmit = ({ name, schoolName }: { name: string; schoolName: string }) => {
-        saveTeacherProfile('personal', { ...teacherProfile, name, schoolName });
+        const profile = { ...teacherProfile, name, schoolName };
+        saveTeacherProfile('personal', profile);
+        if (loginAccount) rememberTeacherSession({ account: loginAccount, spaceId: 'personal' }, profile);
         setPersonalProfileSetup(false);
     };
 
@@ -2852,7 +2946,15 @@ const App: React.FC<MobileAppProps> = ({
                                     onLogout={handleTeacherLogout}
                                     loginPhone={loginAccount?.phone}
                                     onSwitchDemoAccount={canSwitchDemoAccount ? handleSwitchDemoAccount : undefined}
-                                    onDemoAccountSwitchPreviewChange={onDemoAccountSwitchPreviewChange}
+                                    onSupportDialogOpenChange={onSupportDialogOpenChange}
+                                    supportDialogPreview={supportDialogPreview}
+                                    recentAccountsPreview={recentAccountsPreview}
+                                    recentLogins={edition === 'full' ? availableRecentLogins.map(entry => {
+                                        const { spaceId } = getRecentTeacherLoginDestination(entry);
+                                        const profile = teacherProfileEdits[entry.account.phone]?.[spaceId];
+                                        return profile ? { ...entry, name: profile.name } : entry;
+                                    }) : undefined}
+                                    onSwitchRecentAccount={handleSwitchRecentAccount}
                                     gradientPreview={gradientPreview ?? { schemeId: 'scheme-6', styleId: 'diffuse' }}
                                     onGradientPreviewChange={config => onGradientPreviewChange?.(config)}
                                 />

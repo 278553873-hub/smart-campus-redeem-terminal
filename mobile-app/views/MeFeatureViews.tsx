@@ -19,7 +19,10 @@ import {
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
 import TeacherDemoAccountSwitch from '../components/me/TeacherDemoAccountSwitch';
-import type { DemoTeacherAccount } from '../../shared/demoTeacherAccounts';
+import RecentTeacherAccounts from '../components/me/RecentTeacherAccounts';
+import type { RecentTeacherLogin } from '../data/recentTeacherLogins';
+import { PREVIEW_RECENT_TEACHER_LOGINS } from '../data/recentTeacherLoginPreview';
+import type { DemoTeacherSwitchHandler, TeacherSupportDialogPreview } from '../data/teacherLoginAccounts';
 import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileCardTabBar from '../components/ui/MobileCardTabBar';
@@ -54,8 +57,12 @@ export interface SchoolDepartmentItem {
 interface SettingsViewProps {
     onLogout: () => void;
     loginPhone?: string;
-    onSwitchDemoAccount?: (phone: string) => string | undefined;
-    onDemoAccountSwitchPreviewChange?: (account: DemoTeacherAccount | null) => void;
+    onSwitchDemoAccount?: DemoTeacherSwitchHandler;
+    onSupportDialogOpenChange?: (open: boolean) => void;
+    supportDialogPreview?: TeacherSupportDialogPreview;
+    recentLogins?: RecentTeacherLogin[];
+    recentAccountsPreview?: boolean;
+    onSwitchRecentAccount?: (phone: string, signal: AbortSignal) => Promise<string | undefined>;
     gradientPreview: TeacherGradientPreviewConfig;
     onGradientPreviewChange: (config: TeacherGradientPreviewConfig) => void;
 }
@@ -176,7 +183,7 @@ const TEACHER_DIFFUSE_STYLE_OPTIONS: ReadonlyArray<{
     { schemeId: 'scheme-6', label: '清新校园' },
 ];
 
-const LoginAccountRow: React.FC<Pick<SettingsViewProps, 'loginPhone' | 'onSwitchDemoAccount' | 'onDemoAccountSwitchPreviewChange'>> = ({ loginPhone, onSwitchDemoAccount, onDemoAccountSwitchPreviewChange }) => {
+const LoginAccountRow: React.FC<Pick<SettingsViewProps, 'loginPhone' | 'onSwitchDemoAccount' | 'onSupportDialogOpenChange' | 'supportDialogPreview'>> = ({ loginPhone, onSwitchDemoAccount, onSupportDialogOpenChange, supportDialogPreview }) => {
     const className = `${featureListRowClass} w-full justify-between gap-3`;
     const accountContent = (
         <>
@@ -189,7 +196,7 @@ const LoginAccountRow: React.FC<Pick<SettingsViewProps, 'loginPhone' | 'onSwitch
     );
 
     return onSwitchDemoAccount
-        ? <TeacherDemoAccountSwitch className={className} loginPhone={loginPhone} onSwitch={onSwitchDemoAccount} onPreviewChange={onDemoAccountSwitchPreviewChange}>{accountContent}</TeacherDemoAccountSwitch>
+        ? <TeacherDemoAccountSwitch className={className} onSwitch={onSwitchDemoAccount} onOpenChange={onSupportDialogOpenChange} dialogPreview={supportDialogPreview}>{accountContent}</TeacherDemoAccountSwitch>
         : <div className={className}>{accountContent}</div>;
 };
 
@@ -249,16 +256,21 @@ const TeacherStyleSheet: React.FC<TeacherStyleSheetProps> = ({ open, value, onCl
     </MobileBottomSheet>
 );
 
-export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, loginPhone, onSwitchDemoAccount, onDemoAccountSwitchPreviewChange, gradientPreview, onGradientPreviewChange }) => {
+export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, loginPhone, onSwitchDemoAccount, onSupportDialogOpenChange, supportDialogPreview, recentLogins, recentAccountsPreview, onSwitchRecentAccount, gradientPreview, onGradientPreviewChange }) => {
     const [showTeacherStyleSheet, setShowTeacherStyleSheet] = React.useState(false);
+    const [previewLoginPhone, setPreviewLoginPhone] = React.useState(PREVIEW_RECENT_TEACHER_LOGINS[0].account.phone);
     const selectedStyle = TEACHER_DIFFUSE_STYLE_OPTIONS.find(option => option.schemeId === gradientPreview.schemeId);
+    const visibleRecentLogins = recentAccountsPreview === true ? PREVIEW_RECENT_TEACHER_LOGINS : recentLogins;
+    const switchAccount = recentAccountsPreview === true
+        ? async (phone: string, signal: AbortSignal) => { if (!signal.aborted) setPreviewLoginPhone(phone); return undefined; }
+        : onSwitchRecentAccount;
 
     return (
         <>
             <FeaturePageBody spacing="compact">
                 <section className="space-y-2">
                     <h3 className="px-1 text-[14px] font-bold text-[var(--tm-text-primary)]">账号安全</h3>
-                    <LoginAccountRow loginPhone={loginPhone} onSwitchDemoAccount={onSwitchDemoAccount} onDemoAccountSwitchPreviewChange={onDemoAccountSwitchPreviewChange} />
+                    <LoginAccountRow loginPhone={loginPhone} onSwitchDemoAccount={onSwitchDemoAccount} onSupportDialogOpenChange={onSupportDialogOpenChange} supportDialogPreview={supportDialogPreview} />
                     <ActionRow icon={KeyRound} title="修改密码" />
                 </section>
 
@@ -278,9 +290,19 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, loginP
                     <ActionRow icon={BookOpen} title="用户协议" />
                 </section>
 
-                <button type="button" onClick={onLogout} className="flex min-h-[60px] w-full items-center justify-center rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface)] px-3 text-[14px] font-semibold text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-control)]">
-                    退出登录
-                </button>
+                <div className="space-y-2">
+                    {recentAccountsPreview !== false && visibleRecentLogins && visibleRecentLogins.length > 1 && switchAccount && (
+                        <RecentTeacherAccounts
+                            key={recentAccountsPreview === true ? 'preview' : 'recent'}
+                            accounts={visibleRecentLogins}
+                            loginPhone={recentAccountsPreview === true ? previewLoginPhone : loginPhone}
+                            onSwitch={switchAccount}
+                        />
+                    )}
+                    <button type="button" onClick={onLogout} className="flex min-h-[60px] w-full items-center justify-center rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface)] px-3 text-[14px] font-semibold text-[var(--tm-status-negative)] [box-shadow:var(--tm-shadow-control)]">
+                        退出登录
+                    </button>
+                </div>
             </FeaturePageBody>
 
             <TeacherStyleSheet

@@ -100,7 +100,7 @@
 .ops-actions,
 .ops-row-actions { display: flex; align-items: center; gap: var(--ops-space-2); }
 .ops-row-actions { gap: var(--ops-space-4); }
-.ops-support-add { max-width: calc(100vw - var(--ops-space-6)); }
+.ops-support-add, .ops-support-reset { max-width: calc(100vw - var(--ops-space-6)); }
 .ops-support-demo {
   margin-top: var(--ops-space-4);
   padding: var(--ops-space-3) var(--ops-space-4);
@@ -113,7 +113,13 @@
 .ops-support-demo ol { margin: 0; padding-inline-start: var(--ops-space-4); list-style: decimal; color: var(--ops-color-text-secondary); }
 .ops-support-demo li + li { margin-top: var(--ops-space-2); }
 .ops-support-phone { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.ops-support-result { padding-top: var(--ops-space-4); border-top: 1px solid var(--ops-color-divider); }
+.ops-support-result {
+  padding: var(--ops-space-4);
+  margin-bottom: var(--ops-space-4);
+  border: 1px solid var(--ops-color-border);
+  border-radius: var(--ops-radius);
+  background: var(--ops-color-surface);
+}
 .ops-support-result .arco-descriptions-item-label,
 .ops-support-result .arco-descriptions-item-value { vertical-align: top; padding-bottom: var(--ops-space-3); }
 .ops-support-result .arco-descriptions-item-label { padding-inline-end: var(--ops-space-5); }

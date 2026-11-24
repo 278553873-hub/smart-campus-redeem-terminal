@@ -96,7 +96,7 @@ const OperationsPcAdmin: React.FC = () => {
             <div className="operations-pc-page-heading">
               <h1 id="operations-pc-page-title">{title}</h1>
               {page.key === 'teacher-support-access' && (
-                <p className="operations-pc-page-description">获授权人员登录教师小程序后，可在「我的 → 设置 → 账号安全」长按「登录账号」，输入目标手机号切换账号排查问题，无需输入密码或验证码。</p>
+                <p className="operations-pc-page-description">获授权人员可在教师小程序的「我的 → 设置 → 账号安全」长按「登录账号」，输入目标手机号切换账号。首次使用或重置后需验证安全码。</p>
               )}
             </div>
             <CurrentPage onDirtyChange={setCustomerDirty} onTitleChange={setCustomerTitle} />
