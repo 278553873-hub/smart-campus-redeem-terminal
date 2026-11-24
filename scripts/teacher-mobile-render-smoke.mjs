@@ -123,6 +123,7 @@ for (const recordMode of [
       if (!hasMultipleScopes && />记录(?:学生|班级)</.test(html)) throw new Error('单对象不应展示替代标题');
       if (showFirstRecordGuide) {
         if (!text.includes('试试通过语音描述一下内容：')) throw new Error('初次记录应展示语音示例');
+        if (!html.includes('teacher-record-onboarding-arrow')) throw new Error('空草稿应展示首次录入箭头');
         if (text.includes('AI 智能解读')) throw new Error('引导态不应同时展示历史识别结果');
       } else if (!text.includes('AI 智能解读') || !text.includes('总分')) {
         throw new Error('记录列表应完整展示识别结果与分数');
@@ -131,12 +132,22 @@ for (const recordMode of [
   }
 }
 
+await renderPage('记录首页（有草稿时隐藏引导箭头）', () => import('../mobile-app/views/ClassRecordLogView'), {
+  activeTab: 'student', isMainView: true, showFirstRecordGuide: true, showFirstRecordGuideArrow: false,
+  onBack: noop, onTabChange: noop, onViewIndicators: noop,
+}, html => {
+  if (html.includes('teacher-record-onboarding-arrow') || !plainText(html).includes('试试通过语音描述一下内容：')) {
+    throw new Error('有草稿时应隐藏箭头并保留首次录入示例');
+  }
+});
+
 const inputBarProps = {
   showKeyboard: false, showTabBar: true, inputText: '', hasSelectionTarget: true,
   emptySelectionPrompt: '请选择学生', isMultiSelectMode: false, selectedTargetCount: 0, selectedTargetUnit: '人',
   voicePressState: 'idle', onCloseKeyboard: noop, onCameraClick: noop, onVoicePointerDown: noop,
   onKeyboardClick: noop, onVoiceKeyboardActivate: noop,
 };
+const recordDraftPhotos = Array.from({ length: 8 }, (_, index) => ({ id: String(index), url: '/record-photo.jpg' }));
 for (const scenario of [
   { label: '玻璃待录音', props: {}, text: '按住说话' },
   { label: '无底部导航', props: { showTabBar: false }, text: '按住说话' },
@@ -146,13 +157,21 @@ for (const scenario of [
   { label: '多选对象', props: { isMultiSelectMode: true, selectedTargetCount: 12 }, text: '按住说话 · 12人' },
   { label: '键盘空内容', props: { showKeyboard: true }, text: '请输入' },
   { label: '键盘草稿', props: { showKeyboard: true, inputText: '全班同学积极参与劳动。' }, text: '全班同学积极参与劳动。' },
+  { label: '有照片时占位在底部导航上方', props: { attachments: recordDraftPhotos, onRemoveAttachment: noop }, text: '按住说话' },
+  { label: '无底部导航的照片面板', props: { showTabBar: false, showKeyboard: true, attachments: recordDraftPhotos, onRemoveAttachment: noop }, text: '请输入' },
 ]) {
   await renderPage('悬浮录入条（' + scenario.label + '）', () => import('../mobile-app/components/TeacherRecordInputBar'), {
     ...inputBarProps, ...scenario.props,
   }, html => {
     if (!plainText(html).includes(scenario.text)) throw new Error('录入状态文案缺失：' + scenario.text);
     if (scenario.props.hasSelectionTarget === false && (html.match(/disabled=""/g) ?? []).length !== 2) throw new Error('没有选择对象时禁用拍照与语音提交，允许保留文字草稿');
-    if (scenario.props.showKeyboard && !html.includes(scenario.props.inputText ? 'aria-label="发送记录"' : 'aria-label="切换到语音输入"')) throw new Error('文字形态应按草稿内容提供发送或语音入口');
+    if (scenario.props.showKeyboard && !html.includes((scenario.props.inputText || scenario.props.attachments?.length) ? 'aria-label="发送记录"' : 'aria-label="切换到语音输入"')) throw new Error('文字形态应按草稿内容提供发送或语音入口');
+    if (scenario.props.attachments?.length) {
+      if (!html.includes('data-placement="docked"') || !html.includes('mobile-input-composer-panel') || !html.includes('预览待发送照片 8')) throw new Error('有照片时应以同一面板展示缩略图和录入控件');
+      if (!html.includes(scenario.props.showTabBar === false ? 'mb-4' : 'mb-[82px]')) throw new Error('照片面板应在对应的底部位置占位');
+    } else if (!html.includes('data-placement="floating"') || html.includes('mobile-input-composer-panel')) {
+      throw new Error('无照片时应展示单行悬浮录入条');
+    }
   });
 }
 for (const scenario of [
@@ -358,8 +377,8 @@ await renderPage('极速版平板登录预览', () => import('../mobile-app/App'
 const previousAppSearch = window.location.search;
 window.location.search = '?app=teacher-mobile-lite';
 try {
-  await renderPage('极速版演示入口', () => import('../App'), {}, html => {
-    if (!html.includes('aria-label="教师-手机端(极速版)"')) throw new Error('缺少极速版环境入口');
+  await renderPage('极速版直达链接', () => import('../App'), {}, html => {
+    if (html.includes('aria-label="教师-手机端(极速版)"')) throw new Error('默认环境导航应隐藏极速版入口');
     if (html.includes('>教师-pad端<')) throw new Error('教师 Pad 入口仍在环境面板中展示');
     if (!html.includes('>一键登录<') || !html.includes('手机号登录/注册')) throw new Error('极速版须同时支持微信一键登录和手机号登录');
     if (!html.includes('role="switch" aria-checked="true" aria-label="模拟真机"')) throw new Error('应提供统一的模拟真机开关');
@@ -601,9 +620,16 @@ for (const draft of [
 
 const loadFeatureView = name => async () => ({ default: (await import('../mobile-app/views/MeFeatureViews'))[name] });
 const { defaultTeacherGradientPreview } = await import('../mobile-app/styles/teacherGradientPreview');
-await renderPage('设置页', loadFeatureView('MineSettingsView'), {
-  onLogout: noop, gradientPreview: defaultTeacherGradientPreview, onGradientPreviewChange: noop,
-});
+for (const authorized of [false, true]) {
+  await renderPage(authorized ? '设置页（获排查授权）' : '设置页', loadFeatureView('MineSettingsView'), {
+    onLogout: noop, loginPhone: '19000000000', onSwitchDemoAccount: authorized ? noop : undefined,
+    gradientPreview: defaultTeacherGradientPreview, onGradientPreviewChange: noop,
+  }, html => {
+    if (!html.includes('190****0000') || html.includes('19000000000')) throw new Error('设置页应展示当前登录账号的脱敏手机号');
+    if (html.includes('打开问题排查') !== authorized) throw new Error('登录账号行只对已授权人员提供排查触发');
+    if (html.includes('切换并登录')) throw new Error('进入设置页时，排查弹窗应保持关闭');
+  });
+}
 for (const empty of [false, true]) {
   await renderPage('科目管理（' + (empty ? '空列表' : '有科目') + '）', loadFeatureView('SubjectManagementView'), {
     subjects: empty ? [] : [{ id: 'subject-1', name: '语文' }, { id: 'subject-2', name: '数学' }],
@@ -946,11 +972,14 @@ await renderPage('兑换核销页', () => import('../mobile-app/views/reward-ver
   onRecordCoinClear: noop,
 });
 
-await renderPage('成长币记录页', () => import('../mobile-app/views/ClassExchangeRecordView'), {
+await renderPage('兑换记录（无货柜机）', () => import('../mobile-app/views/ClassExchangeRecordView'), {
   students: demoStudents,
   entries: ledgerEntries,
   onRevokeEntry: noop,
   onBack: noop,
+}, html => {
+  if (html.includes('role="tablist"') || html.includes('role="tabpanel"')) throw new Error('无货柜机时应直接显示班级列表');
+  if (!html.includes('aria-label="选择日期，') || !plainText(html).includes('兑换记录')) throw new Error('班级兑换记录与日期筛选应仍可见');
 });
 
 await renderPage('学生成长币明细页', () => import('../mobile-app/views/StudentCoinDetailView'), {
@@ -1325,6 +1354,45 @@ for (const scenario of [
     classInfo: rosterClass, students: scenario.students, onBack: noop,
   });
 }
+const { createDefaultSchoolMedalSettings, getManuallyIssuableMedals } = await import('../mobile-app/domain/schoolMedals');
+const defaultSchoolMedals = createDefaultSchoolMedalSettings();
+const configuredSchoolMedals = {
+  ...defaultSchoolMedals,
+  availableMedalIds: ['school-reading-star'],
+  customMedals: [{ id: 'school-reading-star', name: '悦读之星', scope: 'school', icon: 'book', quantity: 1 }],
+};
+for (const { label, settings, expected, excludes } of [
+  { label: '默认奖章', settings: defaultSchoolMedals, expected: ['移除', '进步之星', '三好学生', '五育之星'], excludes: ['悦读之星'] },
+  { label: '学校自选', settings: configuredSchoolMedals, expected: ['移除', '悦读之星'], excludes: ['进步之星'] },
+  { label: '全量移除', settings: { ...defaultSchoolMedals, availableMedalIds: [] }, expected: ['暂无可颁发的奖章'], excludes: ['移除', '进步之星'] },
+]) {
+  await renderPage('奖章设置（' + label + '）', () => import('../mobile-app/views/SchoolMedalSettingsView'), {
+    settings, onBack: noop, onSave: async () => {},
+  }, html => {
+    const surfaces = ['bg-[var(--tm-page-plain-header-bg)]', 'bg-[var(--tm-page-plain-content-bg)]'];
+    const gallery = settings.availableMedalIds.length
+      ? ['bg-[var(--tm-bg-surface)]', 'grid-cols-3', 'max-w-[var(--tm-medal-settings-icon-size)]']
+      : [];
+    for (const text of ['奖章库', ...surfaces, ...gallery, ...expected]) {
+      if (!html.includes(text)) throw new Error('奖章设置缺少：' + text);
+    }
+    const navigationActions = html.match(/<div[^>]+aria-label="奖章操作">[^]*?<\/div>/)?.[0] ?? '';
+    if (!navigationActions.includes(surfaces[0]) || !navigationActions.includes('text-[var(--tm-text-action)]') || navigationActions.includes('text-[var(--tm-brand-primary-strong)]')) {
+      throw new Error('奖章设置浏览入口应使用同一白色标题区和次级操作文字色');
+    }
+    for (const text of ['role="switch"', '班主任可颁发', '已启用', '合成规则', ...excludes]) {
+      if (html.includes(text)) throw new Error('奖章设置出现多余内容：' + text);
+    }
+  });
+}
+await renderPage('颁发奖章（仅学校已启用的奖章）', () => import('../mobile-app/views/MedalIssuanceView'), {
+  classInfo: rosterClass, students: rosterStudents, onBack: noop,
+  schoolMedals: getManuallyIssuableMedals(configuredSchoolMedals),
+  onIssueSchoolMedals: async () => '颁发成功',
+}, html => {
+  if (!html.includes('悦读之星')) throw new Error('应展示学校启用的自定义奖章');
+  if (['进步之星', '新增奖章', '班级奖章'].some(label => html.includes(label))) throw new Error('学校发放页应只展示学校配置开放的奖章');
+});
 await renderPage('设置兑换密码（空班）', () => import('../mobile-app/views/bank-password/BankPasswordView'), {
   classInfo: rosterClass, currentSpace: profileSpace, students: [], onBack: noop,
 });
@@ -1398,7 +1466,7 @@ await renderPage('学生详情（成长报告目录）', () => import('../mobile
   onUpdateEvaluationRecord: noop, onViewCollectionRecord: noop, onOpenStudentArchive: noop,
 }, html => {
   if (!html.includes('学生初成像（2026年10月30日）')) throw new Error('成长报告缺少学生初成像入口');
-  if (!html.includes('吴浩 · 示例报告')) throw new Error('初成像入口应说明示例所属学生');
+  if (html.includes('吴浩 · 示例报告')) throw new Error('初成像入口不应显示示例报告副标题');
 });
 await renderPage('学生初成像（嵌入可编辑H5）', () => import('../mobile-app/views/StudentInitialImagingReportView'), {
   spaceId: profileSpace.id, studentId: rosterStudents[0].id, onBack: noop,
@@ -1610,9 +1678,12 @@ for (const combination of [
   );
 }
 
-const { CLASS_EVALUATION_WEEKS: assistantEvaluationWeeks } = await import('../mobile-app/data/classEvaluationAssistantV2');
+const {
+  CLASS_EVALUATION_WEEKS: assistantEvaluationWeeks,
+  getClassEvaluationRecords: getAssistantEvaluationRecords,
+} = await import('../mobile-app/data/classEvaluationAssistantV2');
 for (const week of assistantEvaluationWeeks) {
-  await renderPage(`班主任助理评价明细（${week.label}，加分与扣分）`, async () => ({
+  await renderPage(`班主任助理周数据（${week.label}，加分与扣分）`, async () => ({
     default: (await import('../mobile-app/views/AiHeadteacherAssistantV2View')).WeekDataDetailPage,
   }), {
     weekId: week.id, classId: 'c_2025_4', initialDimension: '健体班级', activeClass: assistantClasses[0],
@@ -1621,13 +1692,13 @@ for (const week of assistantEvaluationWeeks) {
     const recordsHtml = html.slice(html.indexOf('id="week-records-title"'));
     const text = plainText(recordsHtml);
     if (!text.includes('评价明细') || text.includes('待改进明细')) throw new Error('明细标题应统一为评价明细');
-    if (!text.includes('+0.2分') || !/-[0-9]+\.[0-9]分/.test(text)) throw new Error('同一指标下的加分、扣分应同时展示，保留正确符号');
+    if (!text.includes('>+0.2</div>') || !/>-[0-9]+\.[0-9]<\/div>/.test(text)) throw new Error('同一指标下的加分、扣分应同时展示，保留符号并省略分值单位');
     if (!recordsHtml.includes('--tm-record-positive-text') || !recordsHtml.includes('--tm-score-negative')) throw new Error('加减分应复用已有正负分值颜色');
-    if (!text.includes('健体班级 /') || !text.includes('原文')) throw new Error('评价明细应保留完整指标路径与评价原文');
+    if (!text.includes('健体班级 /') || text.includes('>原文<')) throw new Error('评价明细应保留完整指标路径并省略原文标签');
     if (week.id === assistantEvaluationWeeks[0].id && (!recordsHtml.includes('评价图片') || !recordsHtml.includes('morning-exercise-queue.jpg'))) throw new Error('评价记录有配图时应展示图片缩略图');
   });
 }
-await renderPage('班主任助理评价明细（其他班级无记录）', async () => ({
+await renderPage('班主任助理周数据（其他班级无记录）', async () => ({
   default: (await import('../mobile-app/views/AiHeadteacherAssistantV2View')).WeekDataDetailPage,
 }), {
   weekId: assistantEvaluationWeeks[0].id, classId: 'c_2025_1', activeClass: assistantClasses[1],
@@ -1635,6 +1706,40 @@ await renderPage('班主任助理评价明细（其他班级无记录）', async
 }, html => {
   if (!plainText(html).includes('该周此指标暂无评价记录')) throw new Error('无评价时应显示统一空态');
   if (html.includes('<article')) throw new Error('其他班级不得看到示范班级的加减分记录');
+});
+
+const loadAssistantEvaluationDetails = async () => ({
+  default: (await import('../mobile-app/views/AiHeadteacherAssistantV2View')).ClassEvaluationDetailsPage,
+});
+await renderPage('班主任助理独立评价明细', loadAssistantEvaluationDetails, {
+  classId: 'c_2025_4', onBack: noop,
+}, html => {
+  const text = plainText(html);
+  const week = assistantEvaluationWeeks[0];
+  const records = getAssistantEvaluationRecords('c_2025_4', week.id);
+  if (!text.includes('>评价明细</h1>') || !text.includes(week.label)) throw new Error('独立明细应展示标题并默认打开最新评价周');
+  if (!html.includes('aria-label="查看上一周"') || !html.includes('aria-label="查看下一周"')) throw new Error('独立明细应支持切换日期');
+  for (const copy of ['周数据概览', '本周总分', '年级排名', '分类数据', 'aria-label="一级指标"', '>原文<']) {
+    if (text.includes(copy)) throw new Error('独立明细出现额外内容：' + copy);
+  }
+  const recordArticles = text.match(/<article\b.*?<\/article>/gs) ?? [];
+  if (recordArticles.length !== records.length) throw new Error('独立明细应展示当前班级本周所有指标的记录');
+  for (const [index, record] of records.entries()) {
+    const article = recordArticles[index];
+    const findingIndex = article.indexOf(record.finding);
+    const pathIndex = article.indexOf(record.indicatorPath.join(' / '));
+    if (findingIndex < 0 || pathIndex <= findingIndex) throw new Error('明细应按日期倒序展示正文及其下方的指标');
+    for (const image of record.images ?? []) {
+      const imageIndex = article.indexOf(image);
+      if (imageIndex <= findingIndex || imageIndex >= pathIndex) throw new Error('配图应位于正文之后、指标之前');
+    }
+  }
+  if (!text.includes('>+0.2</div>') || !text.includes('>-0.4</div>')) throw new Error('独立明细应显示带符号且无单位的分值');
+});
+await renderPage('班主任助理独立评价明细（无记录）', loadAssistantEvaluationDetails, {
+  classId: 'c_2025_1', onBack: noop,
+}, html => {
+  if (!html.includes('该周暂无评价记录') || html.includes('<article')) throw new Error('无记录的班级应显示空状态');
 });
 
 for (const replying of [false, true]) {
@@ -2360,6 +2465,15 @@ await renderPage('极速版不开放货柜管理', () => import('../mobile-app/v
 }, html => {
   if (html.includes('aria-label="货柜管理"')) throw new Error('极速版泄露货柜入口');
 });
+for (const role of ['administrator', 'leader', 'teacher', 'owner']) {
+  await renderPage('更多工具奖章设置入口（' + role + '）', () => import('../mobile-app/views/MeView'), {
+    ...meStyleActions, onOpenMedalSettings: noop, teacherProfile: rosterTeacher,
+    isSpaceSheetOpen: false, pendingCollectionCount: 0,
+    currentSpace: { ...profileSpace, type: role === 'owner' ? 'personal' : 'school', role },
+  }, html => {
+    if (html.includes('aria-label="奖章设置"') !== ['administrator', 'leader'].includes(role)) throw new Error('奖章设置入口权限不正确');
+  });
+}
 
 // 渲染结束后主动退出：个别模块会留下常驻定时器。
 process.exit(0);

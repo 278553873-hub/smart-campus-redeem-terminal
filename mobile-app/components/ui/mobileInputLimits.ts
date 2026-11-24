@@ -1,0 +1,1 @@
+export const DEFAULT_MOBILE_PHOTO_LIMIT = 10;

@@ -4,7 +4,6 @@ export const STUDENT_INITIAL_IMAGING_REPORT = {
   title: '学生初成像（2026年10月30日）',
   date: '2026-10-30',
   studentName: '吴浩',
-  exampleLabel: '吴浩 · 示例报告',
 } as const;
 
 export function initialImagingReportScope(spaceId: string, studentId: string) {

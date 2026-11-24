@@ -9,6 +9,7 @@ const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.me
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 
 assert.match(classListSource, /label: '颁发奖章'/, '班级更多操作应提供颁发奖章入口。');
+assert.match(classListSource, /canIssueMedalsInClass\?\.\(activeActionClass\.id\)/, '学校班级入口应检查当前老师的发放权限。');
 assert.match(classListSource, /onViewMedalIssuance/, '班级更多操作应将奖章发放交给路由层。');
 assert.match(appSource, /'medal_issuance'/, '教师端应注册奖章发放页面路由。');
 assert.doesNotMatch(viewSource, /公共奖章（校级）|自定义奖章（班级）/, '奖章选择界面不应展示旧版范围文案。');
@@ -20,13 +21,11 @@ assert.match(viewSource, /平台奖章/, '奖章分类应提供平台奖章。')
 assert.match(viewSource, /学校奖章/, '奖章分类应提供学校奖章。');
 assert.match(viewSource, /班级奖章/, '奖章分类应提供班级奖章。');
 for (const categoryName of ['日常激励', '活动特长', '综合荣誉', '五育之星']) {
-  assert.match(viewSource, new RegExp(`label: '${categoryName}'`), `平台奖章应显示${categoryName}分类。`);
+  assert.match(medalDomainSource, new RegExp(`label: '${categoryName}'`), `平台奖章应定义${categoryName}分类。`);
 }
-assert.ok(viewSource.indexOf("label: '日常激励'") < viewSource.indexOf("label: '活动特长'"), '日常激励应排在活动特长之前。');
-assert.ok(viewSource.indexOf("label: '活动特长'") < viewSource.indexOf("label: '综合荣誉'"), '活动特长应排在综合荣誉之前。');
-assert.ok(viewSource.indexOf("label: '综合荣誉'") < viewSource.indexOf("label: '五育之星'"), '五育之星应作为最高价值分类放在最后。');
+assert.match(medalDomainSource, /label: '日常激励'[\s\S]*label: '活动特长'[\s\S]*label: '综合荣誉'[\s\S]*label: '五育之星'/, '平台奖章应按共享分类顺序展示。');
 assert.doesNotMatch(viewSource, /学期称号/, '平台奖章不应继续使用不易理解的“学期称号”。');
-assert.ok(viewSource.includes('const schoolMedals = DEFAULT_SCHOOL_MEDALS;'), '学校奖章默认应为空。');
+assert.match(viewSource, /const customMedals = schoolMedals\?\.filter/, '学校自定义奖章应读取学校配置。');
 assert.match(medalDomainSource, /DEFAULT_SCHOOL_MEDALS: MedalDefinition\[\] = \[\]/, '学校奖章数据定义默认应为空。');
 assert.match(viewSource, /请联系学校管理员添加/, '学校奖章为空时应提示联系学校管理员添加。');
 assert.match(viewSource, /<MobileEmptyState/, '学校奖章为空时应使用统一缺省组件。');
@@ -68,12 +67,11 @@ assert.match(viewSource, /aria-pressed=\{selected\}/, '奖章卡应暴露选中�
 assert.match(viewSource, /min-h-\[var\(--tm-medal-grid-item-min-height\)\]/, '奖章网格项应使用稳定的触控高度 Token。');
 assert.match(viewSource, /h-\[var\(--tm-medal-grid-icon-size\)\]/, '奖章网格项应使用独立的图标尺寸 Token。');
 assert.match(viewSource, /grid-cols-4/, '奖章网格应优先一排展示四个奖章。');
-assert.equal((viewSource.match(/grid grid-flow-row grid-cols-4 gap-x-\[var\(--tm-space-2\)\] gap-y-\[var\(--tm-space-3\)\]/g) ?? []).length, 2, '平台奖章与班级奖章均应使用8像素横向、12像素纵向间距。');
+assert.match(viewSource, /grid grid-flow-row grid-cols-4 gap-x-\[var\(--tm-space-2\)\] gap-y-\[var\(--tm-space-3\)\]/, '奖章网格应使用8像素横向、12像素纵向间距。');
 assert.match(viewSource, /border border-transparent/, '奖章网格项应保持稳定占位，但不使用红色选中边框。');
-assert.equal((viewSource.match(/medalCardClassName = \[[\s\S]{0,400}?bg-\[var\(--tm-bg-surface\)\]/g) ?? []).length, 2, '平台奖章与班级奖章均应使用 Token 化白色圆角底。');
-assert.equal((viewSource.match(/medalCardClassName = \[[\s\S]{0,300}?rounded-\[var\(--tm-radius-card-compact\)\]/g) ?? []).length, 2, '平台奖章与班级奖章应复用12像素内容卡片圆角。');
+assert.match(viewSource, /const renderMedal[\s\S]*?rounded-\[var\(--tm-radius-card-compact\)\][^"\n]*bg-\[var\(--tm-bg-surface\)\]/, '奖章应共用白色圆角卡片。');
 assert.doesNotMatch(viewSource, /selected \? 'border-\[var\(--tm-brand-primary\)\]'/, '奖章选中态不应使用整张卡片红色边框。');
-assert.equal((viewSource.match(/MobileSelectionIndicator selected=\{selected\} showUnselected=\{false\} className="absolute -right-1 -top-1 z-20"/g) ?? []).length, 2, '平台奖章与班级奖章的选中标记均应定位在整张卡片右上角。');
+assert.match(viewSource, /MobileSelectionIndicator selected=\{selected\} showUnselected=\{false\} className="absolute -right-1 -top-1 z-20"/, '奖章选中标记应定位在整张卡片右上角。');
 assert.doesNotMatch(viewSource, /<MedalIconView[^>]+\/><MobileSelectionIndicator/, '奖章选中标记不应继续以图标容器为定位参照。');
 assert.doesNotMatch(viewSource, /text-transparent/, '奖章未选中时不应保留透明的空复选标记。');
 assert.doesNotMatch(viewSource, /const medalCardClassName[\s\S]{0,500}selected \? 'bg-\[var\(--tm-brand-reward-soft\)\]/, '奖章选中态不应铺设浅色底。');

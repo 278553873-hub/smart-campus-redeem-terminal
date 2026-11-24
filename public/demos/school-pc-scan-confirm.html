@@ -43,40 +43,53 @@
 </head>
 <body>
   <main>
-    <h1>确认学校后台登录</h1>
-    <p id="instruction" role="status">请扫描电脑登录页上的验证二维码。</p>
+    <h1 id="title">确认学校后台登录</h1>
+    <p id="instruction" role="status">请扫描电脑登录页上的二维码。</p>
     <button id="confirmation" type="button" hidden>确认登录</button>
   </main>
   <script>
     const token = location.hash.slice(1);
     if (/^[A-Za-z0-9_-]{22}$/.test(token)) {
+      const directLogin = new URLSearchParams(location.search).get('mode') === 'login';
       const instruction = document.getElementById('instruction');
       const confirmation = document.getElementById('confirmation');
-      instruction.textContent = '确认后，电脑将进入学校后台演示工作台。';
-      confirmation.hidden = false;
-      confirmation.addEventListener('click', async () => {
+      const endpoint = directLogin ? 'login' : 'confirm';
+
+      const complete = async () => {
         confirmation.disabled = true;
         try {
-          const response = await fetch('../api/school-pc-demo-scan/confirm', {
+          const response = await fetch(`../api/school-pc-demo-scan/${endpoint}`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${token}` },
           });
           if (response.status === 204) {
-            instruction.textContent = '已确认，请返回电脑。';
+            instruction.textContent = directLogin ? '登录成功，请返回电脑。' : '已确认，请返回电脑。';
             confirmation.hidden = true;
             return;
           }
-          if (response.status === 410) {
+          if (response.status === 410 || response.status === 403) {
             instruction.textContent = '这次扫码验证已结束，请重新扫码。';
             confirmation.hidden = true;
             return;
           }
           throw new Error('Failed to confirm demo login');
         } catch {
-          instruction.textContent = '确认失败，请重试。';
+          instruction.textContent = directLogin ? '登录失败，请重试。' : '确认失败，请重试。';
           confirmation.disabled = false;
+          confirmation.hidden = false;
         }
-      });
+      };
+
+      confirmation.addEventListener('click', complete);
+      if (directLogin) {
+        document.title = document.getElementById('title').textContent = '学校后台登录';
+        instruction.textContent = '正在登录…';
+        confirmation.textContent = '重试登录';
+        void complete();
+      } else {
+        instruction.textContent = '确认后，电脑将进入学校后台演示工作台。';
+        confirmation.hidden = false;
+      }
     }
   </script>
 </body>

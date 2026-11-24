@@ -359,31 +359,29 @@ const RecordDetailList: React.FC<{
             {preview && <ImagePreview portalRootId="teacher-mobile-overlay-root" images={preview.images} initialIndex={preview.index} label="评价图片预览" onClose={() => setPreview(null)} />}
             {records.map(record => {
                 const scoreChange = getClassEvaluationScoreChange(record);
+                const images = record.images;
                 return (
                     <article key={record.id} className="py-4 first:pt-0">
                         <div className="flex items-center justify-between gap-3">
                             <time className="text-[12px] tabular-nums text-[var(--tm-text-tertiary)]" dateTime={record.date}>{formatRecordDate(record.date)}</time>
-                            <div className={`shrink-0 text-[16px] font-bold tabular-nums ${scoreChange > 0 ? 'text-[var(--tm-record-positive-text)]' : scoreChange < 0 ? 'text-[var(--tm-score-negative)]' : 'text-[var(--tm-text-secondary)]'}`}>{scoreChange > 0 ? '+' : ''}{scoreChange.toFixed(1)}分</div>
+                            <div className={`shrink-0 text-[16px] font-bold tabular-nums ${scoreChange > 0 ? 'text-[var(--tm-record-positive-text)]' : scoreChange < 0 ? 'text-[var(--tm-score-negative)]' : 'text-[var(--tm-text-secondary)]'}`}>{scoreChange > 0 ? '+' : ''}{scoreChange.toFixed(1)}</div>
                         </div>
 
-                        <div className="mt-2 text-[12px] leading-5 text-[var(--tm-text-secondary)]">
+                        <p className="mt-2 whitespace-pre-wrap break-words text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
+
+                        {!!images?.length && (
+                            <ImageGallery
+                                images={images}
+                                label="评价图片"
+                                className="mt-3"
+                                onSelect={index => setPreview({ images, index })}
+                            />
+                        )}
+
+                        <div className="mt-3 break-words text-[12px] leading-5 text-[var(--tm-text-secondary)]">
                             <span className="mr-2 text-[var(--tm-text-tertiary)]">指标</span>
                             <span>{record.indicatorPath?.join(' / ') ?? [record.dimension, record.indicator].join(' / ')}</span>
                         </div>
-
-                        <div className="mt-3">
-                            <div className="text-[11px] font-medium text-[var(--tm-text-tertiary)]">原文</div>
-                            <p className="mt-1 text-[14px] leading-6 text-[var(--tm-text-primary)]">{record.finding}</p>
-                        </div>
-
-                        {!!record.images?.length && (
-                            <ImageGallery
-                                images={record.images}
-                                label="评价图片"
-                                className="mt-3"
-                                onSelect={index => setPreview({ images: record.images!, index })}
-                            />
-                        )}
                     </article>
                 );
             })}
@@ -635,6 +633,70 @@ const ClassContextPanel: React.FC<{
     </section>
 );
 
+const EvaluationWeekSwitcher: React.FC<{
+    weekId: string;
+    onWeekChange: (weekId: string) => void;
+    className?: string;
+}> = ({ weekId, onWeekChange, className = '' }) => {
+    const week = getClassEvaluationWeek(weekId);
+    const weekIndex = CLASS_EVALUATION_WEEKS.findIndex(item => item.id === week.id);
+    const olderWeek = CLASS_EVALUATION_WEEKS[weekIndex + 1];
+    const newerWeek = CLASS_EVALUATION_WEEKS[weekIndex - 1];
+    const buttonClassName = 'flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]';
+
+    return (
+        <section className={`flex items-center justify-between gap-3 pt-2 ${className}`} aria-label="评价日期切换">
+            <button
+                type="button"
+                disabled={!olderWeek}
+                onClick={() => olderWeek && onWeekChange(olderWeek.id)}
+                className={buttonClassName}
+                aria-label="查看上一周"
+            >
+                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <p className="min-w-0 flex-1 text-center text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]" aria-live="polite">{week.label}</p>
+            <button
+                type="button"
+                disabled={!newerWeek}
+                onClick={() => newerWeek && onWeekChange(newerWeek.id)}
+                className={buttonClassName}
+                aria-label="查看下一周"
+            >
+                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+        </section>
+    );
+};
+
+export const ClassEvaluationDetailsPage: React.FC<{
+    classId: string;
+    onBack: () => void;
+}> = ({ classId, onBack }) => {
+    const [weekId, setWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
+    const records = getClassEvaluationRecords(classId, weekId);
+
+    return (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
+            <AssistantSubpageHeader
+                title="评价明细"
+                onBack={onBack}
+                surface="transparent"
+            />
+            <EvaluationWeekSwitcher weekId={weekId} onWeekChange={setWeekId} className="shrink-0 px-4" />
+            <main key={weekId} className="min-h-0 flex-1 overflow-y-auto px-4 pt-[var(--tm-layout-card-gap)] pb-[calc(24px+env(safe-area-inset-bottom))] no-scrollbar" aria-label="评价记录">
+                {records.length > 0 ? (
+                    <div className="assistant-agent-glass rounded-[var(--tm-radius-card-compact)] px-4 pt-4">
+                        <RecordDetailList records={records} />
+                    </div>
+                ) : (
+                    <p className="py-12 text-center text-[13px] text-[var(--tm-text-tertiary)]">该周暂无评价记录</p>
+                )}
+            </main>
+        </div>
+    );
+};
+
 export const WeekDataDetailPage: React.FC<{
     weekId: string;
     classId: string;
@@ -645,12 +707,9 @@ export const WeekDataDetailPage: React.FC<{
     onClassPickerOpen: () => void;
     onWeekChange: (weekId: string) => void;
 }> = ({ weekId, classId, initialDimension, activeClass, getClassLabel, onBack, onClassPickerOpen, onWeekChange }) => {
-    const weekIndex = CLASS_EVALUATION_WEEKS.findIndex(item => item.id === weekId);
     const week = getClassEvaluationWeek(weekId);
     const snapshot = getClassEvaluationSnapshot(classId, weekId);
     const records = getClassEvaluationRecords(classId, weekId);
-    const olderWeek = CLASS_EVALUATION_WEEKS[weekIndex + 1];
-    const newerWeek = CLASS_EVALUATION_WEEKS[weekIndex - 1];
     const defaultDimension = week.dimensionRankings.find(item => records.some(record => record.dimension === item.dimension))?.dimension
         ?? week.dimensionRankings[0]?.dimension
         ?? '';
@@ -672,31 +731,7 @@ export const WeekDataDetailPage: React.FC<{
             />
 
             <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(24px+env(safe-area-inset-bottom))] no-scrollbar">
-                <section className="pt-2" aria-label="周数据切换">
-                    <div className="flex items-center justify-between gap-3">
-                        <button
-                            type="button"
-                            disabled={!olderWeek}
-                            onClick={() => olderWeek && onWeekChange(olderWeek.id)}
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                            aria-label="查看上一周"
-                        >
-                            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                        </button>
-                        <div className="min-w-0 flex-1 text-center">
-                            <h1 className="truncate text-[20px] font-bold tabular-nums text-[var(--tm-text-primary)]">{week.label}</h1>
-                        </div>
-                        <button
-                            type="button"
-                            disabled={!newerWeek}
-                            onClick={() => newerWeek && onWeekChange(newerWeek.id)}
-                            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] disabled:text-[var(--tm-text-disabled)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-assistant-role-primary)]"
-                            aria-label="查看下一周"
-                        >
-                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                        </button>
-                    </div>
-                </section>
+                <EvaluationWeekSwitcher weekId={weekId} onWeekChange={onWeekChange} />
 
                 <section className="assistant-agent-glass mt-[var(--tm-layout-card-gap)] rounded-[var(--tm-radius-card-compact)] px-4 py-4" aria-label="周数据概览">
                     <dl className="grid grid-cols-3 gap-3">
@@ -804,11 +839,12 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
     const [replyingCapability, setReplyingCapability] = useState<HeadteacherAssistantCapability | 'unknown'>('class');
     const [overviewExpanded, setOverviewExpanded] = useState(false);
     const [detailInitialDimension, setDetailInitialDimension] = useState<string | null>(null);
-    const [weekDetailOpen, setWeekDetailOpen] = useState(false);
+    const [classEvaluationSubpage, setClassEvaluationSubpage] = useState<'week' | 'records' | null>(null);
     const [detailWeekId, setDetailWeekId] = useState(DEFAULT_CLASS_EVALUATION_WEEK_ID);
     const [showClassPicker, setShowClassPicker] = useState(false);
+    const evaluationSubpage = showClassEvaluation ? classEvaluationSubpage : null;
     const scrollRef = useRef<HTMLDivElement>(null);
-    const resumeFollowing = useAssistantScrollFollow(scrollRef, messages.length > 0 && !activeReport && !isGenerating && !historyOpen && !weekDetailOpen, resolvedClassId);
+    const resumeFollowing = useAssistantScrollFollow(scrollRef, messages.length > 0 && !activeReport && !isGenerating && !historyOpen && !evaluationSubpage, resolvedClassId);
     const generationTimersRef = useRef<number[]>([]);
     const replyTimerRef = useRef<number | null>(null);
     const previousClassIdRef = useRef(resolvedClassId);
@@ -1006,7 +1042,15 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
         setShowClassPicker(false);
     };
 
-    if (weekDetailOpen) {
+    if (evaluationSubpage === 'records') {
+        return (
+            <div className="ai-assistant-theme-headteacher relative flex min-h-0 flex-1 overflow-hidden text-[var(--tm-text-primary)]">
+                <ClassEvaluationDetailsPage classId={resolvedClassId} onBack={() => setClassEvaluationSubpage(null)} />
+            </div>
+        );
+    }
+
+    if (evaluationSubpage === 'week') {
         return (
             <div className="ai-assistant-theme-headteacher relative flex min-h-0 flex-1 overflow-hidden text-[var(--tm-text-primary)]">
                 <WeekDataDetailPage
@@ -1015,7 +1059,7 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                     initialDimension={detailInitialDimension ?? undefined}
                     activeClass={activeClass}
                     getClassLabel={getClassLabel}
-                    onBack={() => setWeekDetailOpen(false)}
+                    onBack={() => setClassEvaluationSubpage(null)}
                     onClassPickerOpen={() => setShowClassPicker(true)}
                     onWeekChange={setDetailWeekId}
                 />
@@ -1122,21 +1166,13 @@ const AiHeadteacherAssistantV2View: React.FC<AiHeadteacherAssistantV2ViewProps> 
                             onOpenDimensionDetails={(dimension) => {
                                 setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
                                 setDetailInitialDimension(dimension);
-                                setWeekDetailOpen(true);
+                                setClassEvaluationSubpage('week');
                             }}
-                            onOpenDetails={() => {
-                                setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
-                                setDetailInitialDimension(
-                                    currentWeek.dimensionRankings.find(item => records.some(record => record.dimension === item.dimension))?.dimension
-                                    ?? currentWeek.dimensionRankings[0]?.dimension
-                                    ?? null,
-                                );
-                                setWeekDetailOpen(true);
-                            }}
+                            onOpenDetails={() => setClassEvaluationSubpage('records')}
                             onOpenWeekDetail={() => {
                                 setDetailWeekId(DEFAULT_CLASS_EVALUATION_WEEK_ID);
                                 setDetailInitialDimension(null);
-                                setWeekDetailOpen(true);
+                                setClassEvaluationSubpage('week');
                             }}
                             onStudentQuestionSelect={(action) => {
                                 if (action === 'weekly_action_advice') onOpenWeeklyActionAdvice(resolvedClassId);

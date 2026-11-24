@@ -6,6 +6,7 @@ export type HonorSnapshot = Pick<GrowthSnapshot, 'schoolName' | 'grades'> & Para
 
 export const HONOR_RANK_SIZE = 10;
 export interface HonorGradeBoard { id: string; name: string; rows: GrowthRankingRow[] }
+const HONOR_BOARDS_PER_PAGE = 6;
 
 /** 每个年级从完整名册按总分重新排名，不筛选已截取的全校榜单。 */
 export function createHonorGradeBoards(snapshot: HonorSnapshot): HonorGradeBoard[] {
@@ -25,20 +26,36 @@ export function getHonorStudentClassName(student: Pick<GrowthSnapshot['studentSc
   return !grade || className.startsWith(grade) ? className : `${grade}${className}`;
 }
 
+export function createHonorClassBoard(
+  classId: string,
+  className: string,
+  students: readonly { id: string; name: string; avatar?: string; score: number }[],
+): HonorGradeBoard {
+  const studentScores = students.map(({ id, name, avatar, score }) => ({
+    student: { id, displayName: name, avatar, classId, className, gradeId: '', gradeName: '' },
+    total: score,
+    dimensions: {},
+  }));
+  return {
+    id: classId, name: className,
+    rows: selectGrowthRanking({ dimensions: [], studentScores }, 'total', undefined, HONOR_RANK_SIZE),
+  };
+}
+
 export function getHonorGradeGrid(gradeCount: number) {
   const columns = Math.max(1, Math.min(gradeCount, gradeCount > 9 ? 4 : 3));
   return { columns, rows: Math.max(1, Math.ceil(gradeCount / columns)), dense: gradeCount > 6 };
 }
 
+function splitHonorBoards(group: HonorGradeBoard[], stage: 'primary' | 'secondary') {
+  return Array.from({ length: Math.ceil(group.length / HONOR_BOARDS_PER_PAGE) }, (_, index) => ({
+    stage, boards: group.slice(index * HONOR_BOARDS_PER_PAGE, (index + 1) * HONOR_BOARDS_PER_PAGE),
+  }));
+}
+
 export function createHonorStagePages(snapshot: HonorSnapshot) {
   const boards = createHonorGradeBoards(snapshot);
-  const groups = [
-    { stage: 'primary', boards: boards.filter(board => (snapshot.stages?.[board.id] ?? 'primary') === 'primary') },
-    { stage: 'secondary', boards: boards.filter(board => snapshot.stages?.[board.id] === 'middle' || snapshot.stages?.[board.id] === 'high') },
-  ];
-  return groups.flatMap(({ stage, boards: group }) =>
-    Array.from({ length: Math.ceil(group.length / 6) }, (_, index) => ({
-      stage, boards: group.slice(index * 6, index * 6 + 6),
-    })),
-  );
+  const primaryBoards = boards.filter(board => (snapshot.stages?.[board.id] ?? 'primary') === 'primary');
+  const secondaryBoards = boards.filter(board => snapshot.stages?.[board.id] === 'middle' || snapshot.stages?.[board.id] === 'high');
+  return [...splitHonorBoards(primaryBoards, 'primary'), ...splitHonorBoards(secondaryBoards, 'secondary')];
 }

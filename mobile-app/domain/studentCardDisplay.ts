@@ -8,6 +8,7 @@ import {
 export const DEFAULT_STUDENT_CARD_DISPLAY_SETTINGS: StudentCardDisplaySettings = {
   showLevel: true,
   levelForm: 'icon',
+  showFullStudentNo: false,
   ...DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS,
 };
 
@@ -16,6 +17,7 @@ export const getStudentCardDisplaySettings = (
 ): StudentCardDisplaySettings => ({
   showLevel: settings?.showLevel ?? DEFAULT_STUDENT_CARD_DISPLAY_SETTINGS.showLevel,
   levelForm: settings?.levelForm ?? DEFAULT_STUDENT_CARD_DISPLAY_SETTINGS.levelForm,
+  showFullStudentNo: settings?.showFullStudentNo ?? DEFAULT_STUDENT_CARD_DISPLAY_SETTINGS.showFullStudentNo,
   ...getEvaluationCardDisplaySettings(settings),
 });
 

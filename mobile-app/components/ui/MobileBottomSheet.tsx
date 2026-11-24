@@ -16,6 +16,7 @@ interface MobileBottomSheetProps {
   footerLeading?: React.ReactNode;
   footerDivider?: boolean;
   footerSpacing?: 'standard' | 'section';
+  footerSafeArea?: 'viewport' | 'device';
   header?: React.ReactNode;
   titleContent?: React.ReactNode;
   titleSpacing?: MobileSheetTitleSpacing;
@@ -49,6 +50,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
   footerLeading,
   footerDivider = false,
   footerSpacing = 'standard',
+  footerSafeArea = 'viewport',
   header,
   titleContent,
   titleSpacing = 'standard',
@@ -165,6 +167,10 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
 
   if (!rendered || !portalRoot) return null;
 
+  const footerBottomPadding = footerSafeArea === 'device'
+    ? 'pb-[calc(var(--tm-space-4)+max(var(--mini-program-bottom-safe-area,0px),env(safe-area-inset-bottom,0px)))]'
+    : 'pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))]';
+
   return createPortal(
     <div className={`absolute inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] transition-opacity [transition-duration:var(--tm-duration-standard)] ease-out motion-reduce:transition-none ${visible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}>
       <button type="button" className="absolute inset-0" onClick={onClose} aria-label={`关闭${title}`} />
@@ -214,7 +220,7 @@ const MobileBottomSheet: React.FC<MobileBottomSheetProps> = ({
         <div className={`relative z-0 isolate min-h-0 flex-1 ${contentLayout === 'fill' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'} overscroll-contain [clip-path:inset(0)] no-scrollbar ${contentTone === 'plain' ? 'bg-[var(--tm-page-plain-content-bg)]' : 'bg-[var(--tm-bg-surface)]'} ${contentInset === 'none' ? '' : contentInset === 'compact' ? 'px-3' : 'px-[var(--tm-space-4)]'} ${flushContentBottom ? 'pb-0' : footer ? 'pb-[var(--tm-space-4)]' : 'pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))]'}`}>{children}</div>
         {footerLeading && <div className="relative z-20 shrink-0 bg-[var(--tm-bg-surface)]">{footerLeading}</div>}
         {footer && (
-          <footer className={`relative z-20 shrink-0 bg-[var(--tm-bg-surface-glass)] px-4 pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] ${footerSpacing === 'section' ? 'pt-[var(--tm-sheet-section-footer-gap)]' : 'pt-[var(--tm-sheet-footer-gap)]'} ${footerDivider ? 'border-solid border-[var(--tm-border-subtle)] [border-top-width:var(--tm-sheet-footer-divider-width)]' : ''}`}>
+          <footer className={`relative z-20 shrink-0 bg-[var(--tm-bg-surface-glass)] px-[var(--tm-sheet-inline)] ${footerBottomPadding} ${footerSpacing === 'section' ? 'pt-[var(--tm-sheet-section-footer-gap)]' : 'pt-[var(--tm-sheet-footer-gap)]'} ${footerDivider ? 'border-solid border-[var(--tm-border-subtle)] [border-top-width:var(--tm-sheet-footer-divider-width)]' : ''}`}>
             {footer}
           </footer>
         )}

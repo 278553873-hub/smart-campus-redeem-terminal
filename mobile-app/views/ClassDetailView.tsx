@@ -12,6 +12,7 @@ import {
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileSettingsSwitchRow from '../components/ui/MobileSettingsSwitchRow';
 import CardEvaluationDisplaySettings from '../components/student-performance/CardEvaluationDisplaySettings';
 import CardLevelDisplaySettings from '../components/student-performance/CardLevelDisplaySettings';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
@@ -1186,7 +1187,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
     };
 
     const renderStudentGrid = () => (
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-40 pt-3">
+        <div data-record-scroll className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 pb-40 pt-3">
             <div className="student-roster-grid grid shrink-0 gap-x-2.5 gap-y-3">
                 {visibleStudents.map((student, index) => {
                     const isSelected = activeStudentSelectionIds.has(student.id);
@@ -1225,7 +1226,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 />
             )}
 
-            <div className="h-10 shrink-0" aria-hidden="true" />
+            <div data-record-scroll-spacer className="h-10 shrink-0" aria-hidden="true" />
         </div>
     );
 
@@ -1282,7 +1283,7 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                 </ClassDetailTabToolbar>
             )}
 
-            <div className="flex-1 overflow-y-auto px-4 pb-40 pt-3">
+            <div data-record-scroll className="min-h-0 flex-1 overflow-y-auto px-4 pb-40 pt-3">
                 {activeGroupPlan && hasActiveStudentGroups ? (
                     <div className="space-y-3">
                         {activeGroupPlan.groups.map((group, index) => {
@@ -1471,17 +1472,26 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                     <CompactSegmentedControl shape="subtle" value={showPets ? 'pet' : 'student-info'} items={[{ value: 'student-info', label: '学生' }, { value: 'pet', label: '宠物' }]} onChange={changeStudentView} ariaLabel="学生卡片展示内容" semantics="group" variant="settings" sizing="content" />
                                 </div>
                             )}
-                            {!showPets && <>
-                            <CardLevelDisplaySettings
-                                showLevel={studentCardDisplaySettings.showLevel}
-                                levelForm={studentCardDisplaySettings.levelForm}
-                                onChange={({ showLevel, levelForm }) => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showLevel, levelForm })}
-                            />
-                            <CardEvaluationDisplaySettings
-                                settings={studentCardDisplaySettings}
-                                onChange={settings => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, ...settings })}
-                            />
-                            </>}
+                            {!showPets && (
+                                <>
+                                    <CardLevelDisplaySettings
+                                        showLevel={studentCardDisplaySettings.showLevel}
+                                        levelForm={studentCardDisplaySettings.levelForm}
+                                        onChange={({ showLevel, levelForm }) => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showLevel, levelForm })}
+                                    />
+                                    <MobileSettingsSwitchRow
+                                        shape="subtle"
+                                        surface="plain"
+                                        label="显示完整学号"
+                                        checked={studentCardDisplaySettings.showFullStudentNo}
+                                        onChange={showFullStudentNo => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, showFullStudentNo })}
+                                    />
+                                    <CardEvaluationDisplaySettings
+                                        settings={studentCardDisplaySettings}
+                                        onChange={settings => onUpdateStudentCardDisplaySettings({ ...studentCardDisplaySettings, ...settings })}
+                                    />
+                                </>
+                            )}
                         </>
                     ) : cardDisplayTarget === 'group' ? (
                         <>

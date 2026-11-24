@@ -65,7 +65,7 @@ export const formatCoinClearDetail = (share: CampusCoinLedgerShare) => {
 /**
  * 一次兑换或一次清空操作 = 一条成长币记录。
  * 老师多选学生一起兑换同一件商品时，多名学生共享同一条记录，各自扣减金额放在 shares 里，
- * 操作老师与撤回状态都挂在这条记录上，保证可追溯。
+ * 原操作人与撤回人的快照分别记录，便于追溯。
  */
 export interface CampusCoinLedgerEntry {
   id: string;
@@ -79,19 +79,20 @@ export interface CampusCoinLedgerEntry {
   totalAmount: number;
   revoked: boolean;
   revokedAt: string | null;
+  revokedBy?: string;
 }
 
-/** 运行期间产生的记录变更：新增的记录，以及已撤回记录对应的撤回时间。 */
+/** 运行期间产生的记录变更：新增记录及每笔撤回的时间和操作人。 */
 export interface CampusCoinLedgerPatch {
   entries: CampusCoinLedgerEntry[];
-  revokedAtById: Record<string, string>;
+  revocationsById: Record<string, { time: string; operator?: string }>;
 }
 
 export type CampusCoinLedgerFilter =
   | { type: 'month'; month: string }
   | { type: 'range'; start: string; end: string };
 
-export const EMPTY_COIN_LEDGER_PATCH: CampusCoinLedgerPatch = { entries: [], revokedAtById: {} };
+export const EMPTY_COIN_LEDGER_PATCH: CampusCoinLedgerPatch = { entries: [], revocationsById: {} };
 
 const pad = (value: number) => String(value).padStart(2, '0');
 
@@ -157,20 +158,21 @@ export const recordCoinLedgerEntry = (
   patch: CampusCoinLedgerPatch,
   entry: CampusCoinLedgerEntry,
 ): CampusCoinLedgerPatch => ({
+  ...patch,
   entries: [entry, ...patch.entries],
-  revokedAtById: patch.revokedAtById,
 });
 
 export const revokeCoinLedgerEntry = (
   patch: CampusCoinLedgerPatch,
   entryId: string,
   revokedAt: string,
+  revokedBy?: string,
 ): CampusCoinLedgerPatch => {
-  // 同一笔兑换只落一次退还，保留首次撤回时间。
-  if (patch.revokedAtById[entryId]) return patch;
+  // 同一笔兑换只落一次退还，保留首次撤回时间和操作人。
+  if (patch.revocationsById[entryId]) return patch;
   return {
-    entries: patch.entries,
-    revokedAtById: { ...patch.revokedAtById, [entryId]: revokedAt },
+    ...patch,
+    revocationsById: { ...patch.revocationsById, [entryId]: { time: revokedAt, operator: revokedBy } },
   };
 };
 
@@ -180,9 +182,12 @@ export const applyCoinLedgerPatch = (
   patch: CampusCoinLedgerPatch,
 ): CampusCoinLedgerEntry[] => (
   [...patch.entries, ...base]
-    .map(entry => (patch.revokedAtById[entry.id]
-      ? { ...entry, revoked: true, revokedAt: patch.revokedAtById[entry.id] }
-      : entry))
+    .map(entry => {
+      const revocation = patch.revocationsById[entry.id];
+      return revocation
+        ? { ...entry, revoked: true, revokedAt: revocation.time, revokedBy: revocation.operator }
+        : entry;
+    })
     .sort((left, right) => right.time.localeCompare(left.time))
 );
 

@@ -46,7 +46,9 @@ html,body,#root{margin:0;width:100%;height:100%;overflow:hidden;background:#edf0
 .preview-shell{height:100%;height:100dvh;display:flex;flex-direction:column}
 .preview-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;min-height:56px;padding:12px 24px;color:#263e55}
 .preview-header h1{font-size:14px;font-weight:600;margin:0}.preview-header a{font-size:13px;color:#2563a6;text-decoration:none;min-height:44px;display:flex;align-items:center}.preview-header a:focus-visible{outline:2px solid #2563a6;outline-offset:4px}
-.preview-device{flex:1;min-height:0;width:100%;padding-bottom:8px}.report-frame{display:block;flex:1;min-height:0;width:100%;height:100%;border:0;background:white}
+.preview-device{flex:1;min-height:0;width:100%;padding-bottom:8px}
+.preview-page-title{display:grid;place-items:center;flex:none;min-height:var(--tm-size-touch);background:var(--tm-page-plain-header-bg);color:var(--tm-text-primary);font-size:var(--tm-font-size-section-title);font-weight:var(--tm-font-weight-bold)}
+.report-frame{display:block;flex:1;min-height:0;width:100%;border:0;background:var(--tm-page-plain-content-bg)}
 @media(max-width:480px){.preview-header{padding:8px 20px;min-height:48px}.preview-device{padding-bottom:0}}
 `;
 const previewJS = await js('初成像手机预览.tsx');

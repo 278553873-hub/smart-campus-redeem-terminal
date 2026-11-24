@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Award, Check, ChevronLeft, ImagePlus, Plus } from 'lucide-react';
 import type { ClassInfo, Student } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
@@ -8,71 +8,53 @@ import MobileSelectionIndicator from '../components/student/MobileSelectionIndic
 import MedalIconView from '../components/medal/MedalIcon';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import { ASSETS } from '../assets/images';
-import { DEFAULT_ACTIVITY_MEDALS, DEFAULT_CLASS_MEDALS, DEFAULT_DAILY_MEDALS, DEFAULT_PLATFORM_MEDALS, DEFAULT_SEMESTER_MEDALS, DEFAULT_SCHOOL_MEDALS, type MedalIcon, type MedalScope } from '../domain/medal';
+import { resolveMedalIcon } from '../assets/medals';
+import { DEFAULT_CLASS_MEDALS, DEFAULT_PLATFORM_MEDALS, PLATFORM_MEDAL_GROUPS, PLATFORM_MEDALS, type MedalDefinition, type MedalScope } from '../domain/medal';
 
 interface MedalIssuanceViewProps {
   classInfo: ClassInfo;
   students: Student[];
   onBack: () => void;
+  schoolMedals?: MedalDefinition[];
+  onIssueSchoolMedals?: (studentIds: string[], medalIds: string[]) => Promise<string>;
 }
 
 type SheetMode = 'students' | 'confirm' | null;
 
-const PLATFORM_MEDAL_IMAGE_ASSETS: Record<string, string> = {
-  'platform-deyu-star': ASSETS.MEDALS.PLATFORM_DEYU_STAR,
-  'platform-zhiyu-star': ASSETS.MEDALS.PLATFORM_ZHIYU_STAR,
-  'platform-tiyu-star': ASSETS.MEDALS.PLATFORM_TIYU_STAR,
-  'platform-meiyu-star': ASSETS.MEDALS.PLATFORM_MEIYU_STAR,
-  'platform-laoyu-star': ASSETS.MEDALS.PLATFORM_LAOYU_STAR,
-  'platform-three-good-student': ASSETS.MEDALS.SEMESTER_THREE_GOOD,
-  'platform-excellent-cadre': ASSETS.MEDALS.SEMESTER_CADRE,
-  'platform-excellent-young-pioneer': ASSETS.MEDALS.SEMESTER_YOUNG_PIONEER,
-  'platform-excellent-student': ASSETS.MEDALS.SEMESTER_EXCELLENT_STUDENT,
-  'platform-progress-star': ASSETS.MEDALS.DAILY_PROGRESS,
-  'platform-diligent-star': ASSETS.MEDALS.DAILY_DILIGENT,
-  'platform-civilized-star': ASSETS.MEDALS.DAILY_CIVILIZED,
-  'platform-disciplined-star': ASSETS.MEDALS.DAILY_DISCIPLINED,
-  'platform-friendly-star': ASSETS.MEDALS.DAILY_FRIENDLY,
-  'platform-sports-talent': ASSETS.MEDALS.ACTIVITY_SPORTS,
-  'platform-art-talent': ASSETS.MEDALS.ACTIVITY_ART,
-  'platform-tech-talent': ASSETS.MEDALS.ACTIVITY_TECH,
-  'platform-reading-talent': ASSETS.MEDALS.ACTIVITY_READING,
-  'platform-performance-talent': ASSETS.MEDALS.ACTIVITY_PERFORMANCE,
-};
-
-const PLATFORM_MEDALS = [...DEFAULT_PLATFORM_MEDALS, ...DEFAULT_SEMESTER_MEDALS, ...DEFAULT_DAILY_MEDALS, ...DEFAULT_ACTIVITY_MEDALS];
-const PLATFORM_MEDAL_GROUPS = [
-  { id: 'daily', label: '日常激励', medals: DEFAULT_DAILY_MEDALS },
-  { id: 'activity', label: '活动特长', medals: DEFAULT_ACTIVITY_MEDALS },
-  { id: 'honors', label: '综合荣誉', medals: DEFAULT_SEMESTER_MEDALS },
-  { id: 'five-education', label: '五育之星', medals: DEFAULT_PLATFORM_MEDALS },
-] as const;
-
-const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, students, onBack }) => {
-  const [scope, setScope] = useState<MedalScope>('platform');
+const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, students, onBack, schoolMedals, onIssueSchoolMedals }) => {
+  const [selectedScope, setScope] = useState<MedalScope>('platform');
   const [classMedals, setClassMedals] = useState(DEFAULT_CLASS_MEDALS);
   const [selectedMedalIds, setSelectedMedalIds] = useState<Set<string>>(new Set());
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [sheetMode, setSheetMode] = useState<SheetMode>(null);
   const [studentSearch, setStudentSearch] = useState('');
   const [feedback, setFeedback] = useState('');
+  const [issueError, setIssueError] = useState('');
+  const [isIssuing, setIsIssuing] = useState(false);
+  const submitting = useRef(false);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(feedbackTimer.current), []);
   const [showCreateMedal, setShowCreateMedal] = useState(false);
   const [newMedalName, setNewMedalName] = useState('');
-  const [newMedalIconId, setNewMedalIconId] = useState<string | null>(PLATFORM_MEDALS[0].id);
+  const [newMedalIconId, setNewMedalIconId] = useState<string | null>(DEFAULT_PLATFORM_MEDALS[0].id);
   const [newMedalUploadedIcon, setNewMedalUploadedIcon] = useState<string | null>(null);
 
-  const medals = scope === 'class' ? classMedals : [];
-  const schoolMedals = DEFAULT_SCHOOL_MEDALS;
-  const resolveMedalIcon = (medalId: string, icon: MedalIcon): MedalIcon => (
-    PLATFORM_MEDAL_IMAGE_ASSETS[medalId]
-      ? { type: 'image' as const, src: PLATFORM_MEDAL_IMAGE_ASSETS[medalId], alt: '' }
-      : icon
-  );
-  const selectedNewMedal = PLATFORM_MEDALS.find(medal => medal.id === newMedalIconId) ?? PLATFORM_MEDALS[0];
-  const selectedMedals = useMemo(
-    () => [...PLATFORM_MEDALS, ...schoolMedals, ...classMedals].filter(medal => selectedMedalIds.has(medal.id)),
-    [classMedals, selectedMedalIds],
-  );
+  const isSchoolIssuance = schoolMedals !== undefined;
+  const permittedMedals = schoolMedals ?? PLATFORM_MEDALS;
+  const permittedIds = new Set(permittedMedals.map(medal => medal.id));
+  const platformGroups = PLATFORM_MEDAL_GROUPS
+    .map(group => ({ ...group, medals: group.medals.filter(medal => permittedIds.has(medal.id)) }))
+    .filter(group => group.medals.length > 0);
+  const customMedals = schoolMedals?.filter(medal => medal.scope === 'school') ?? [];
+  const scopes: { value: MedalScope; label: string }[] = [
+    ...(!isSchoolIssuance || platformGroups.length ? [{ value: 'platform' as const, label: '平台奖章' }] : []),
+    ...(!isSchoolIssuance || customMedals.length ? [{ value: 'school' as const, label: '学校奖章' }] : []),
+    ...(!isSchoolIssuance ? [{ value: 'class' as const, label: '班级奖章' }] : []),
+  ];
+  const scope = scopes.some(item => item.value === selectedScope) ? selectedScope : scopes[0]?.value;
+  const selectedNewMedal = PLATFORM_MEDALS.find(medal => medal.id === newMedalIconId) ?? DEFAULT_PLATFORM_MEDALS[0];
+  const selectableMedals = isSchoolIssuance ? permittedMedals : [...PLATFORM_MEDALS, ...classMedals];
+  const selectedMedals = selectableMedals.filter(medal => selectedMedalIds.has(medal.id));
   const activeStudents = useMemo(() => students.filter(student => (student.status ?? 'active') === 'active'), [students]);
   const visibleStudents = useMemo(() => {
     const query = studentSearch.trim().toLowerCase();
@@ -115,10 +97,6 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
     });
   };
 
-  const handleScopeChange = (nextScope: MedalScope) => {
-    setScope(nextScope);
-  };
-
   const handleMedalIconUpload = (file: File | undefined) => {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
@@ -143,19 +121,45 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
       quantity: 1,
     }]);
     setNewMedalName('');
-    setNewMedalIconId(PLATFORM_MEDALS[0].id);
+    setNewMedalIconId(DEFAULT_PLATFORM_MEDALS[0].id);
     setNewMedalUploadedIcon(null);
     setShowCreateMedal(false);
   };
 
-  const issueMedals = () => {
-    if (selectedMedals.length === 0 || selectedStudents.length === 0) return;
-    setSelectedStudentIds(new Set());
-    setSelectedMedalIds(new Set());
-    setSheetMode(null);
-    setFeedback('颁发成功');
-    window.setTimeout(() => setFeedback(''), 1800);
+  const issueMedals = async () => {
+    if (submitting.current || selectedMedals.length === 0 || selectedStudents.length === 0) return;
+    submitting.current = true;
+    setIsIssuing(true);
+    setIssueError('');
+    try {
+      if (isSchoolIssuance && !onIssueSchoolMedals) throw new Error('颁发失败，请重试');
+      const result = await onIssueSchoolMedals?.(selectedStudents.map(student => student.id), selectedMedals.map(medal => medal.id));
+      setSelectedStudentIds(new Set());
+      setSelectedMedalIds(new Set());
+      setSheetMode(null);
+      setFeedback(result || '颁发成功');
+      clearTimeout(feedbackTimer.current);
+      feedbackTimer.current = setTimeout(() => setFeedback(''), 3200);
+    } catch (error) {
+      setIssueError(error instanceof Error && error.name === 'Error' ? error.message : '颁发失败，请重试');
+    } finally {
+      submitting.current = false;
+      setIsIssuing(false);
+    }
   };
+
+  const renderMedal = (medal: MedalDefinition) => {
+    const selected = selectedMedalIds.has(medal.id);
+    return (
+      <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected}
+        className="relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-card-compact)] border border-transparent bg-[var(--tm-bg-surface)] py-[var(--tm-space-2)] text-center">
+        <MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1 z-20" />
+        <MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" />
+        <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
+      </button>
+    );
+  };
+  const medalGridClass = 'grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]';
 
   const selectedMedalNames = selectedMedals.map(medal => medal.name).join('、');
   return (
@@ -167,72 +171,41 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
 
       <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(var(--tm-size-touch)+var(--tm-space-8)+var(--tm-space-8)+var(--tm-space-4))] no-scrollbar">
         <div className="sticky top-0 z-30 -mx-[var(--tm-space-4)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] pb-[var(--tm-space-3)] pt-[var(--tm-space-4)]">
-          <CompactSegmentedControl
+          {scope && scopes.length > 1 && <CompactSegmentedControl<MedalScope>
             shape="subtle"
             value={scope}
-            onChange={handleScopeChange}
+            onChange={setScope}
             ariaLabel="奖章分类"
             fullWidth
             motion="sliding"
             semantics="tabs"
             className="w-full"
-            items={[
-              { value: 'platform', label: '平台奖章' },
-              { value: 'school', label: '学校奖章' },
-              { value: 'class', label: '班级奖章' },
-            ]}
-          />
+            items={scopes}
+          />}
         </div>
 
         {scope === 'platform' && (
           <div className="space-y-[var(--tm-layout-card-gap)]" aria-label="平台奖章分类">
-            {PLATFORM_MEDAL_GROUPS.map(group => (
+            {platformGroups.map(group => (
               <section key={group.id} aria-labelledby={`medal-group-${group.id}`}>
                 <h2 id={`medal-group-${group.id}`} className="mb-2 text-[length:var(--tm-font-size-compact)] font-bold text-[var(--tm-text-secondary)]">{group.label}</h2>
-                <div className="grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]" role="list" aria-label={`${group.label}奖章`}>
-                  {group.medals.map(medal => {
-                  const selected = selectedMedalIds.has(medal.id);
-                  const medalCardClassName = [
-                    'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-card-compact)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
-                  ].join(' ');
-                  return (
-                    <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
-                      <MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1 z-20" />
-                      <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /></span>
-                      <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
-                    </button>
-                  );
-                })}
-                </div>
+                <div className={medalGridClass}>{group.medals.map(renderMedal)}</div>
               </section>
             ))}
           </div>
         )}
 
-        {scope === 'school' && (
-          <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" />
-        )}
+        {scope === 'school' && (isSchoolIssuance
+          ? <div className={medalGridClass} aria-label="学校奖章">{customMedals.map(renderMedal)}</div>
+          : <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" />)}
+        {!scope && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="暂无可发放的奖章" className="min-h-[360px]" />}
 
-        {scope === 'class' && <div className="grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]" role="list" aria-label="班级奖章">
-          {medals.map(medal => {
-            const selected = selectedMedalIds.has(medal.id);
-            const medalCardClassName = [
-              'relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center rounded-[var(--tm-radius-card-compact)] border border-transparent bg-[var(--tm-bg-surface)] px-0 py-[var(--tm-space-2)] text-center [gap:var(--tm-space-1)]',
-            ].filter(Boolean).join(' ');
-            return (
-              <button key={medal.id} type="button" onClick={() => toggleMedal(medal.id)} aria-pressed={selected} className={medalCardClassName}>
-                <MobileSelectionIndicator selected={selected} showUnselected={false} className="absolute -right-1 -top-1 z-20" />
-                <span className="relative flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 text-[var(--tm-brand-reward)]" /></span>
-                <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-primary)]">{medal.name}</span>
-              </button>
-            );
-          })}
-          {scope === 'class' && (
-            <button type="button" onClick={() => setShowCreateMedal(true)} className="relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center px-0 py-[var(--tm-space-2)] text-center text-[var(--tm-text-secondary)] [gap:var(--tm-space-1)] transition active:text-[var(--tm-text-primary)]">
-              <span className="flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><Plus className="h-7 w-7" /></span>
-              <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold">新增奖章</span>
-            </button>
-          )}
+        {scope === 'class' && <div className={medalGridClass} aria-label="班级奖章">
+          {classMedals.map(renderMedal)}
+          <button type="button" onClick={() => setShowCreateMedal(true)} className="relative flex min-h-[var(--tm-medal-grid-item-min-height)] min-w-0 flex-col items-center justify-center px-0 py-[var(--tm-space-2)] text-center text-[var(--tm-text-secondary)] [gap:var(--tm-space-1)] transition active:text-[var(--tm-text-primary)]">
+            <span className="flex h-[var(--tm-medal-grid-icon-size)] w-[var(--tm-medal-grid-icon-size)] shrink-0 items-center justify-center"><Plus className="h-7 w-7" /></span>
+            <span className="w-full truncate text-[length:var(--tm-font-size-compact)] font-semibold">新增奖章</span>
+          </button>
         </div>}
       </div>
 
@@ -243,7 +216,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
             <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-[var(--tm-text-secondary)] no-scrollbar">{selectedMedalNames}</span>
           </div>
         )}
-        <button type="button" disabled={selectedMedalIds.size === 0} onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
+        <button type="button" disabled={selectedMedals.length === 0} onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
       </footer>
 
       <MobileStudentPickerSheet
@@ -269,13 +242,14 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         )}
       />
 
-      <MobileBottomSheet open={sheetMode === 'confirm'} title="确认发放" onClose={() => setSheetMode(null)} footer={(
+      <MobileBottomSheet open={sheetMode === 'confirm'} title="确认发放" onClose={() => { if (!isIssuing) setSheetMode(null); }} footer={(
         <div className="grid grid-cols-2 gap-[var(--tm-space-3)]">
-          <button type="button" onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"><ChevronLeft className="h-4 w-4" />返回修改</button>
-          <button type="button" onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)]"><Award className="h-[18px] w-[18px]" />确认发放</button>
+          <button type="button" disabled={isIssuing} onClick={() => { setIssueError(''); setSheetMode('students'); }} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"><ChevronLeft className="h-4 w-4" />返回修改</button>
+          <button type="button" disabled={isIssuing || !selectedMedals.length || !selectedStudents.length} onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:opacity-50"><Award className="h-[18px] w-[18px]" />{isIssuing ? '发放中…' : '确认发放'}</button>
         </div>
       )}>
         <div className="space-y-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
+          {issueError && <p role="alert" className="text-[length:var(--tm-font-size-compact)] text-[var(--tm-status-negative)]">{issueError}</p>}
           <section aria-labelledby="confirm-medals-title">
             <div className="flex items-center justify-between gap-[var(--tm-space-3)]">
               <h3 id="confirm-medals-title" className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">发放奖章</h3>

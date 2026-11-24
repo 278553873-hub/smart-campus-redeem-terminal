@@ -8,3 +8,13 @@ export const confirmDiscardOperationsDraft = (onDiscard: () => void) => Modal.co
   cancelText: '继续编辑',
   onOk: onDiscard,
 });
+
+export const confirmRemoveTeacherSupportAccess = (teacherName: string, onRemove: () => Promise<void>) => Modal.confirm({
+  wrapClassName: 'operations-pc-overlay',
+  title: '移除排查授权？',
+  content: `移除后，${teacherName}将无法通过「问题排查」切换登录账号。`,
+  okText: '确认移除',
+  cancelText: '取消',
+  okButtonProps: { status: 'danger' },
+  onOk: onRemove,
+});

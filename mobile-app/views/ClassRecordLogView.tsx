@@ -1,6 +1,7 @@
 import { buildClassRecordDemoAnalysis } from '../domain/classRecordDemoAnalysis';
 import MobileDatePickerSheet from '../components/ui/MobileDatePickerSheet';
 import React, { useState, useEffect, useRef } from 'react';
+import { ImageGallery, ImagePreview } from '../../components/media/ImageGallery';
 import {
     BackIcon, VolumeIcon, ActivityIcon,
     SwapIcon, FileIcon, DeleteIcon, RetryIcon, ChevronRightIcon,
@@ -35,8 +36,9 @@ interface ClassRecordLogViewProps {
     onBack: () => void;
     onStartRecord?: () => void;
     isMainView?: boolean;
-    newRecordData?: any;
+    newRecordData?: TeacherRecordSubmission;
     onClearNewRecord?: () => void;
+    logsState?: readonly [TeacherRecordLog[], React.Dispatch<React.SetStateAction<TeacherRecordLog[]>>];
     onToggleModal?: (isOpen: boolean) => void;
     addDemoTopBreathingSpace?: boolean;
     activeTab: 'student' | 'class';
@@ -44,6 +46,7 @@ interface ClassRecordLogViewProps {
     canRecordClass?: boolean;
     availableRecordScopes?: readonly ('student' | 'class')[];
     showFirstRecordGuide?: boolean;
+    showFirstRecordGuideArrow?: boolean;
     onViewIndicators: () => void;
     classes?: ClassInfo[];
     currentSpace?: TeacherSpaceOption;
@@ -53,14 +56,25 @@ interface ClassRecordLogViewProps {
 type LogStatus = 'processing' | 'done';
 type LogType = 'file' | 'voice' | 'camera' | 'text';
 
+export interface TeacherRecordSubmission {
+    requestId?: string;
+    type?: LogType;
+    text?: string;
+    scope?: 'student' | 'class';
+    mockStudents?: string[];
+    photos?: File[];
+    photoTargets?: TeacherRecordLog['students'];
+}
+
 const recordSheetBackdropClass = 'fixed inset-0 z-[1000] flex items-end justify-center bg-[var(--tm-mask)] backdrop-blur-sm animate-in fade-in [animation-duration:var(--tm-duration-standard)]';
 const recordSheetSurfaceClass = 'flex w-full max-w-md flex-col rounded-t-[var(--tm-radius-sheet)] bg-[var(--tm-bg-surface)] [box-shadow:var(--tm-shadow-sheet)] animate-in slide-in-from-bottom [animation-duration:var(--tm-duration-panel)]';
-interface LogItem {
+export interface TeacherRecordLog {
     id: string;
     type: LogType;
     status: LogStatus;
     time: string;
     content: string; // User input or file name
+    photos?: File[];
     // AI Analysis Data
     aiSummary?: string;
     students?: { id: string, name: string }[];
@@ -73,8 +87,8 @@ interface LogItem {
     scope: 'student' | 'class';
 }
 
-const INITIAL_LOGS: LogItem[] = [
-    ...MOCK_CLASS_RECORD_LOGS as LogItem[],
+export const INITIAL_LOGS: TeacherRecordLog[] = [
+    ...MOCK_CLASS_RECORD_LOGS as TeacherRecordLog[],
     {
         id: 'rec_s1',
         type: 'voice',
@@ -158,15 +172,40 @@ const INITIAL_LOGS: LogItem[] = [
     },
 ];
 
+function TeacherRecordPhotoGallery({ photos }: { photos: File[] }) {
+    const [images, setImages] = useState<string[]>([]);
+    const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+    useEffect(() => {
+        const urls = photos.map(photo => URL.createObjectURL(photo));
+        setImages(urls);
+        return () => urls.forEach(url => URL.revokeObjectURL(url));
+    }, [photos]);
+
+    return <>
+        <ImageGallery images={images} label="记录照片" className="mb-3" onSelect={setPreviewIndex} />
+        {previewIndex !== null && (
+            <ImagePreview
+                images={images}
+                initialIndex={previewIndex}
+                label="记录照片预览"
+                portalRootId="teacher-mobile-overlay-root"
+                topInset="max(var(--mini-program-status-bar-height, 0px), env(safe-area-inset-top, 0px))"
+                onClose={() => setPreviewIndex(null)}
+            />
+        )}
+    </>;
+}
+
 const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
-    classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal,
+    classNameStr, onBack, onStartRecord, isMainView = false, newRecordData, onClearNewRecord, onToggleModal, logsState,
     addDemoTopBreathingSpace = false, activeTab, onTabChange, canRecordClass = false, availableRecordScopes = ['student', 'class'], showFirstRecordGuide = false,
-    onViewIndicators, classes = [], currentSpace, onStudentEvaluationChange, headerRightAccessory
+    showFirstRecordGuideArrow = true, onViewIndicators, classes = [], currentSpace, onStudentEvaluationChange, headerRightAccessory
 }) => {
     const recordScopes = availableRecordScopes.filter(scope => scope !== 'class' || canRecordClass);
     const showRecordScopeSwitch = recordScopes.length > 1;
     // State
-    const [logs, setLogs] = useState<LogItem[]>(INITIAL_LOGS);
+    const localLogsState = useState<TeacherRecordLog[]>(INITIAL_LOGS);
+    const [logs, setLogs] = logsState ?? localLogsState;
     const processedRecordIdsRef = useRef<Set<string>>(new Set());
 
     // UI Interaction State
@@ -175,7 +214,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
     const [showStudentListModal, setShowStudentListModal] = useState(false);
     const [editingDateId, setEditingDateId] = useState<string | null>(null);
     const [editingStudentId, setEditingStudentId] = useState<string | null>(null);
-    const [editingLog, setEditingLog] = useState<LogItem | null>(null);
+    const [editingLog, setEditingLog] = useState<TeacherRecordLog | null>(null);
     const [showClassSelect, setShowClassSelect] = useState(false);
     const [showScoreEdit, setShowScoreEdit] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -220,19 +259,24 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             const newId = `new_${recordRequestId}`;
             const now = new Date();
             const timeString = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const scope = newRecordData.scope ?? activeTab;
+            const hasPhotos = Boolean(newRecordData.photos?.length);
+            const photoOnly = hasPhotos && !newRecordData.text?.trim();
 
-            // 1. Add Processing Card
-            const processingLog: LogItem = {
+            const incomingLog: TeacherRecordLog = {
                 id: newId,
                 type: newRecordData.type || 'voice',
-                status: 'processing',
+                status: photoOnly ? 'done' : 'processing',
                 time: timeString,
-                content: newRecordData.text || '录音处理中...',
-                scope: activeTab
+                content: photoOnly ? '' : newRecordData.text || '录音处理中...',
+                photos: newRecordData.photos,
+                students: newRecordData.photoTargets,
+                scope
             };
 
-            setLogs(prev => [processingLog, ...prev]);
+            setLogs(prev => [incomingLog, ...prev]);
             if (onClearNewRecord) onClearNewRecord();
+            if (photoOnly) return;
 
             // 2. Simulate AI Processing (using service if possible, or simulated with real-like data)
             const analyze = async () => {
@@ -242,7 +286,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                 // For this demo, we simulate a very realistic response based on the prompt's logic
                 setTimeout(() => {
                     const targetIds: string[] = newRecordData.mockStudents?.length ? newRecordData.mockStudents : ['s1'];
-                    if (activeTab === 'student') onStudentEvaluationChange?.({ id: newId, studentIds: targetIds, score: 2, recordedAt: now.toISOString() });
+                    if (scope === 'student') onStudentEvaluationChange?.({ id: newId, studentIds: targetIds, score: 2, recordedAt: now.toISOString() });
                     setLogs(prev => prev.map(log => {
                         if (log.id === newId) {
                             return {
@@ -250,13 +294,13 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 status: 'done',
                                 aiSummary: '在课堂上表现非常主动，能够积极举手回答问题，展现了良好的学习热情。',
                                 theme: 'positive',
-                                students: targetIds.map(id => ({ id, name: MOCK_STUDENTS_CLASS_1.find(student => student.id === id)?.name ?? id })),
+                                students: newRecordData.photoTargets?.length ? newRecordData.photoTargets : targetIds.map(id => ({ id, name: MOCK_STUDENTS_CLASS_1.find(student => student.id === id)?.name ?? id })),
                                 score: { label: '智育-专注有序-课堂专注', value: 2 },
                                 scores: [{ label: '智育-专注有序-课堂专注', value: 2 }],
-                                ...(activeTab === 'class' ? buildClassRecordDemoAnalysis(newRecordData.text ?? '', classes) : {}),
+                                ...(scope === 'class' ? buildClassRecordDemoAnalysis(newRecordData.text ?? '', classes) : {}),
                                 audioDuration: '8s',
                                 rawDate: now.toISOString().split('T')[0],
-                                scope: activeTab,
+                                scope,
                                 recordedAt: now.toISOString()
                             };
                         }
@@ -279,7 +323,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         setShowClassSelect(false);
     };
 
-    const notifyPetEvaluation = (log: LogItem, score: number, remove = false) => {
+    const notifyPetEvaluation = (log: TeacherRecordLog, score: number, remove = false) => {
         if (log.scope !== 'student' || !log.recordedAt) return;
         onStudentEvaluationChange?.({ id: log.id, studentIds: (log.students ?? []).map(student => student.id), score, recordedAt: log.recordedAt }, remove);
     };
@@ -292,7 +336,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
     // --- Components ---
 
-    const TeacherRecordHeader = ({ id, time }: { id: string, time: string }) => (
+    const TeacherRecordHeader = ({ id, time, canReanalyze = true }: { id: string; time: string; canReanalyze?: boolean }) => (
         <div className="relative z-20 mb-3 flex items-center justify-between">
             <span className="text-[13px] font-medium text-[var(--tm-text-disabled)]">{time}</span>
             <button
@@ -308,10 +352,12 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
             {activeCardMenu === id && (
                 <div className="absolute right-0 top-11 z-30 w-32 origin-top-right animate-in rounded-[var(--tm-radius-card-compact)] bg-white p-1 [box-shadow:var(--tm-shadow-floating)] ring-1 ring-[var(--tm-border-subtle)] fade-in zoom-in duration-200">
-                    <button className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-xs font-medium text-[var(--tm-text-primary)]" onClick={() => setActiveCardMenu(null)}>
-                        <RetryIcon className="w-3.5 h-3.5" /> 重新识别
-                    </button>
-                    <div className="mx-2 h-px bg-[var(--tm-bg-surface-muted)]"></div>
+                    {canReanalyze && <>
+                        <button className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-xs font-medium text-[var(--tm-text-primary)]" onClick={() => setActiveCardMenu(null)}>
+                            <RetryIcon className="w-3.5 h-3.5" /> 重新识别
+                        </button>
+                        <div className="mx-2 h-px bg-[var(--tm-bg-surface-muted)]"></div>
+                    </>}
                     <button className="flex min-h-11 w-full items-center gap-2 rounded-[var(--tm-radius-control-compact)] px-2 text-left text-xs font-medium text-[var(--tm-status-negative)]" onClick={() => { const log = logs.find(item => item.id === id); if (log) notifyPetEvaluation(log, 0, true); setLogs(l => l.filter(i => i.id !== id)); setActiveCardMenu(null); }}>
                         <DeleteIcon className="w-3.5 h-3.5" /> 删除记录
                     </button>
@@ -356,7 +402,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
     // --- Render Log Item Logic ---
     // --- Render Log Item Logic ---
-    const renderLogItem = (log: LogItem) => {
+    const renderLogItem = (log: TeacherRecordLog) => {
         const displayContent = formatClassReferences(log.content);
         // 1. PROCESSING STATE
         if (log.status === 'processing') {
@@ -402,6 +448,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
         const isNegative = log.theme === 'negative' || (log.score?.value ?? 0) < 0;
         const isClass = log.scope === 'class';
         const scoreItems = log.scores && log.scores.length > 0 ? log.scores : (log.score ? [log.score] : []);
+        const hasAnalysis = !log.photos?.length || Boolean(log.aiSummary) || scoreItems.length > 0;
         const totalScore = scoreItems.reduce((sum, item) => sum + item.value, 0);
         const scoreTone = isNegative ? 'negative' : 'positive';
         const resultSurfaceClass = isNegative
@@ -416,15 +463,19 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
 
         return (
             <div key={log.id} className="relative overflow-hidden rounded-[var(--tm-radius-card-compact)] bg-white p-4 [box-shadow:var(--tm-shadow-card)] animate-in fade-in duration-500">
-                <TeacherRecordHeader id={log.id} time={log.time} />
+                <TeacherRecordHeader id={log.id} time={log.time} canReanalyze={hasAnalysis} />
 
                 {log.type === 'voice' && <VoicePlayback active={log.scope} duration={log.audioDuration} />}
 
-                <p className="mb-3.5 text-[14px] font-medium leading-[1.55] text-[var(--tm-text-primary)]">
-                    {displayContent}
-                </p>
+                {log.photos && log.photos.length > 0 && <TeacherRecordPhotoGallery photos={log.photos} />}
+                {!hasAnalysis && log.students && log.students.length > 0 && (
+                    <p className="text-[13px] font-medium text-[var(--tm-text-secondary)]" aria-label="记录对象">
+                        {log.students.map(student => student.name).join('、')}
+                    </p>
+                )}
+                {displayContent && <p className="mb-3.5 text-[14px] font-medium leading-[1.55] text-[var(--tm-text-primary)]">{displayContent}</p>}
 
-                <button
+                {hasAnalysis && <button
                     type="button"
                     onClick={() => { setEditingLog(log); setShowScoreEdit(true); }}
                     className={`block w-full rounded-[var(--tm-radius-card-compact)] border p-3.5 text-left ${resultSurfaceClass}`}
@@ -482,7 +533,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                             {log.aiSummary}
                         </div>
                     )}
-                </button>
+                </button>}
             </div>
         );
     };
@@ -553,7 +604,7 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
             </div>
 
             {/* List Content */}
-            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
+            <div data-record-scroll className="relative z-10 min-h-0 flex-1 overflow-y-auto px-5 pb-44 pt-0 no-scrollbar">
                 {!showFirstRecordGuide && visibleLogs.length > 0 ? (
                     <div className="space-y-[var(--tm-layout-card-gap)]">
                         {visibleLogs.map(log => renderLogItem(log))}
@@ -585,12 +636,12 @@ const ClassRecordLogView: React.FC<ClassRecordLogViewProps> = ({
                                 </ol>
                             </section>
                         )}
-                        <img
+                        {showFirstRecordGuideArrow && <img
                             src={voiceOnboardingArrow}
                             alt=""
                             aria-hidden="true"
                             className="teacher-record-onboarding-arrow absolute bottom-[-14px] left-1/2 h-[72px] w-[64px]"
-                        />
+                        />}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 opacity-40">

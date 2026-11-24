@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+    Award,
     BookOpen,
     Bluetooth,
     PawPrint,
@@ -56,6 +57,7 @@ interface MeViewProps {
     onOpenParentRecordingSettings?: () => void;
     onOpenParentEvaluationVisibility?: () => void;
     onOpenClassPetSettings?: () => void;
+    onOpenMedalSettings?: () => void;
     onOpenHomeworkBatchImport?: () => void;
     onOpenSettings: () => void;
     onOpenSubjectManagement?: () => void;
@@ -141,6 +143,7 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenParentRecordingSettings,
     onOpenParentEvaluationVisibility,
     onOpenClassPetSettings,
+    onOpenMedalSettings,
     onOpenHomeworkBatchImport,
     onOpenSettings,
     onOpenSubjectManagement,
@@ -250,6 +253,12 @@ const MeView: React.FC<MeViewProps> = ({
             title: '家长记录设置',
             icon: UsersRound,
             onClick: onOpenParentRecordingSettings,
+        },
+        {
+            id: 'medalSettings',
+            title: '奖章设置',
+            icon: Award,
+            onClick: onOpenMedalSettings,
         },
         {
             id: 'parentEvaluationVisibility',

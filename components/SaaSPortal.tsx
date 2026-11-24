@@ -19,14 +19,14 @@ import {
 } from 'lucide-react';
 import PlatformBrandMark from './PlatformBrandMark';
 import SchoolPcLogin from './SchoolPcLogin';
-
-export type PcPortalApp = 'teacher' | 'all-in-one' | 'smart-big-screen';
+import type { PcPortalApp } from './schoolPcMemberships';
 
 interface SaaSPortalProps {
   isLoggedIn: boolean;
   teacherProfile: { name: string; role: string; school: string; };
+  availableApps: readonly PcPortalApp[];
+  enrolledStudentCount?: number;
   onLoginSuccess: (profile: { name: string; role: string; school: string; }) => void;
-  onLogout: () => void;
   onNavigate: (app: PcPortalApp) => void;
 }
 
@@ -52,7 +52,7 @@ const PortalSectionHeader: React.FC<PortalSectionHeaderProps> = ({ title, icon: 
   </div>
 );
 
-const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onLoginSuccess, onNavigate }) => {
+const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, availableApps, enrolledStudentCount, onLoginSuccess, onNavigate }) => {
   if (!isLoggedIn) {
     return (
       <SchoolPcLogin
@@ -66,10 +66,10 @@ const SaaSPortal: React.FC<SaaSPortalProps> = ({ isLoggedIn, teacherProfile, onL
     );
   }
 
-  return <SaaSPortalHome teacherProfile={teacherProfile} onNavigate={onNavigate} />;
+  return <SaaSPortalHome teacherProfile={teacherProfile} availableApps={availableApps} enrolledStudentCount={enrolledStudentCount} onNavigate={onNavigate} />;
 };
 
-const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavigate'>> = ({ teacherProfile, onNavigate }) => {
+const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'availableApps' | 'enrolledStudentCount' | 'onNavigate'>> = ({ teacherProfile, availableApps, enrolledStudentCount, onNavigate }) => {
   const [storyWorkshopOpen, setStoryWorkshopOpen] = useState(false);
 
   const activeApps = [
@@ -86,7 +86,7 @@ const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavig
       arrowClass: 'border-blue-200/80 bg-white text-blue-500 shadow-[0_12px_24px_rgba(59,130,246,0.16)]',
       target: 'teacher' as const,
       meta: '有效期至：2027-09-01',
-      studentsCount: '开通学生：2530',
+      studentsCount: enrolledStudentCount != null ? `开通学生：${enrolledStudentCount}` : undefined,
     },
     {
       id: 'smart-big-screen',
@@ -102,7 +102,7 @@ const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavig
       target: 'smart-big-screen' as const,
       meta: '有效期至：2027-09-01',
     },
-  ];
+  ].filter(app => availableApps.includes(app.target));
 
   const favoriteApps = [
     {
@@ -199,7 +199,7 @@ const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavig
       tone: 'emerald',
       qrCode: '/assets/compass_qr_latest.jpg',
     },
-  ];
+  ].filter(card => card.id !== 'point-bank' || availableApps.includes('all-in-one'));
 
   const emotionalMessages = [
     '辛苦你继续照亮课堂，很多成长都在你看不见的地方发生。',
@@ -285,6 +285,7 @@ const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavig
               <section className="rounded-lg border border-slate-100 bg-white p-4 shadow-sm">
                 <PortalSectionHeader title="我的应用" icon={Settings} tone="blue" />
 
+                {activeApps.length === 0 && <p className="text-sm text-slate-500">当前学校暂无可用应用</p>}
                 <div className="grid grid-cols-2 gap-4">
                   {activeApps.map((app) => (
                     <button
@@ -307,8 +308,8 @@ const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavig
                         </div>
                         <div className="mt-auto flex items-end justify-between gap-3 pt-3">
                           <div className="flex flex-col gap-0.5">
-                            {(app as any).studentsCount && (
-                              <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{(app as any).studentsCount}</span>
+                            {app.studentsCount && (
+                              <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{app.studentsCount}</span>
                             )}
                             <span className="text-[13px] font-semibold tracking-[0.01em] text-slate-400">{app.meta}</span>
                           </div>
@@ -383,8 +384,7 @@ const SaaSPortalHome: React.FC<Pick<SaaSPortalProps, 'teacherProfile' | 'onNavig
                 </div>
               </section>
 
-              {/* 卡片组：右栏三列排列，卡片内部保持图标/二维码在上、文字在下。 */}
-              <div className="grid flex-1 grid-cols-3 gap-5">
+              <div className={`grid flex-1 gap-5 ${promoCards.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
                 {promoCards.map((card) => {
                   const theme = card.tone === 'blue'
                     ? {

@@ -1,0 +1,10 @@
+.classroom-honor-dialog .arco-modal-content { max-height:calc(100vh - 142px); max-height:calc(100dvh - 142px); overflow:auto }
+.classroom-honor-dialog .arco-modal-footer .arco-btn { min-height:44px }
+.classroom-honor-panel {
+  --grade-font:19px; --face:60px; --row-font:18px;
+  padding:2px; border-radius:24px; background:linear-gradient(145deg,#4d98df,#c9faff);
+  color:#101d25; font:700 18px/1.2 'PingFang SC','Microsoft YaHei',sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+.classroom-honor-panel .honor-grade-card { height:510px; border-radius:22px }
+.classroom-honor-empty { padding:24px 0; color:#475569; text-align:center }

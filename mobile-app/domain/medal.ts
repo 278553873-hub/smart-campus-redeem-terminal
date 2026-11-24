@@ -81,6 +81,15 @@ export const DEFAULT_ACTIVITY_MEDALS: MedalDefinition[] = [
   { id: 'platform-performance-talent', name: '表演达人', scope: 'platform', icon: 'star', quantity: 1 },
 ];
 
+export const PLATFORM_MEDAL_GROUPS = [
+  { id: 'daily', label: '日常激励', medals: DEFAULT_DAILY_MEDALS },
+  { id: 'activity', label: '活动特长', medals: DEFAULT_ACTIVITY_MEDALS },
+  { id: 'honors', label: '综合荣誉', medals: DEFAULT_SEMESTER_MEDALS },
+  { id: 'five-education', label: '五育之星', medals: DEFAULT_PLATFORM_MEDALS },
+] as const;
+
+export const PLATFORM_MEDALS = PLATFORM_MEDAL_GROUPS.flatMap(group => group.medals);
+
 export const DEFAULT_SCHOOL_MEDALS: MedalDefinition[] = [];
 
 export const DEFAULT_CLASS_MEDALS: MedalDefinition[] = [

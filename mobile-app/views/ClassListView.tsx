@@ -86,6 +86,7 @@ interface ClassListViewProps {
     onViewLeaderboard: () => void;
     onViewRewardVerification: (classId: string) => void;
     onViewMedalIssuance: (classId: string) => void;
+    canIssueMedalsInClass?: (classId: string) => boolean;
     onBatchEditStudents: (classId: string) => void;
     onViewFaceUpdate: (classId: string) => void;
     onViewBankPassword: (classId: string) => void;
@@ -300,6 +301,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
     onViewLeaderboard,
     onViewRewardVerification,
     onViewMedalIssuance,
+    canIssueMedalsInClass,
     onBatchEditStudents,
     onViewFaceUpdate,
     onViewBankPassword,
@@ -515,11 +517,11 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     icon: GiftIcon,
                     onClick: () => runClassAction(onViewRewardVerification),
                 },
-                {
+                ...((canIssueMedalsInClass?.(activeActionClass.id) ?? !isSchoolSpace) ? [{
                     label: '颁发奖章',
                     icon: AwardIcon,
                     onClick: () => runClassAction(onViewMedalIssuance),
-                },
+                }] : []),
             ],
         } : null,
         activeActionPolicy.canUpdateStudents || activeActionPolicy.canMaintainClass ? {

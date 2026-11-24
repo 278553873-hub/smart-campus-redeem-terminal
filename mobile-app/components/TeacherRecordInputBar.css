@@ -1,0 +1,7 @@
+[data-record-photo-panel='true'] [data-record-scroll] {
+    padding-block-end: var(--tm-space-4, 16px);
+}
+
+[data-record-photo-panel='true'] [data-record-scroll-spacer] {
+    display: none;
+}

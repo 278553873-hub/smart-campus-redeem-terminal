@@ -36,6 +36,7 @@ import {
   MoreHorizontal,
   Eye,
   UserPlus,
+  Trophy,
 } from 'lucide-react';
 import { getSystemStudentAvatar } from '../mobile-app/assets/studentAvatarCatalog';
 import MobileEmptyState from '../mobile-app/components/ui/MobileEmptyState';
@@ -82,6 +83,8 @@ import ClassroomStudentCard from './classroom/ClassroomStudentCard';
 import ClassroomPetCard from './classroom/ClassroomPetCard';
 import StudentPetEvaluationDialog from './classroom/StudentPetEvaluationDialog';
 import ClassroomEvaluationOptions from './classroom/ClassroomEvaluationOptions';
+import ClassroomHonorDialog from './classroom/ClassroomHonorDialog';
+import { createHonorClassBoard } from './student-honor-screen/studentHonorModel';
 import { getClassroomPetCardLayout } from './classroom/classroomPetCardLayout';
 import ClassroomStudentSelectCard from './classroom/ClassroomStudentSelectCard';
 import { resolveStudentsBySpokenNumbers } from './classroom/classroomVoiceTargets.mjs';
@@ -170,11 +173,12 @@ interface GroupEditorStudentSection {
 
 interface SmartBigScreenProps {
   onBack: () => void;
+  backLabel?: string;
   embedded?: boolean;
   schoolId?: string;
+  classNames?: readonly string[];
 }
 
-const CLASSES = CLASSROOM_DEMO_CLASSES;
 const CLASSROOM_ASSISTANT_ICON = '/assets/classroom/quick-action-giraffe.png';
 const CLASSROOM_SECONDARY_ICON = '/assets/classroom/open-app-icon.png';
 const CURRENT_TEACHER_NAME = '郭老师';
@@ -430,8 +434,10 @@ const GroupDrawerBody: React.FC<{ children: React.ReactNode; layout?: ClassroomD
 );
 
 
-const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = false, schoolId = 'school-star' }) => {
-  const [currentClass, setCurrentClass] = useState(CLASSES[0]);
+const SmartBigScreen: React.FC<SmartBigScreenProps> = ({
+  onBack, backLabel = '返回管理后台', embedded = false, schoolId = 'school-star', classNames = CLASSROOM_DEMO_CLASSES,
+}) => {
+  const [currentClass, setCurrentClass] = useState(classNames[0]);
   const [viewMode, setViewMode] = useState<'student' | 'group'>('student');
   const classId = getClassroomDemoClassId(currentClass);
   const [petSyncVersion, setPetSyncVersion] = useState(0);
@@ -545,6 +551,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   const [feedbackEffect, setFeedbackEffect] = useState<{ id: string, type: 'positive' | 'negative', time: number } | null>(null);
   const [isGlobalRaining, setIsGlobalRaining] = useState(false);
   const [randomModalOpen, setRandomModalOpen] = useState(false);
+  const [classHonorOpen, setClassHonorOpen] = useState(false);
+  const classHonorTrigger = useRef<HTMLButtonElement>(null);
   const [randomStudents, setRandomStudents] = useState<StudentData[]>([]);
   const [randomGroups, setRandomGroups] = useState<GroupData[]>([]);
   const [isRolling, setIsRolling] = useState(false);
@@ -633,6 +641,11 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
 
     return getStudentLevelNetScore(demoRecords, 'term', CURRENT_CLASSROOM_TERM) + liveTermDelta;
   };
+
+  const classHonorBoard = classHonorOpen ? createHonorClassBoard(classId, currentClass, students.map(student => ({
+    id: student.id, name: student.name, avatar: student.avatar,
+    score: getStudentLevelScore(student, getBaseStudentPerformance(student)),
+  }))) : null;
 
   const getBaseGroupPerformance = (groupId: string) => performanceByGroupId[groupId]
     ?? createDemoGroupPerformanceSummary(groupId);
@@ -1670,10 +1683,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
   };
 
   useEffect(() => {
-    if ((evaluationModalOpen || groupDrawerMode || randomModalOpen) && isVoiceListening) {
+    if ((evaluationModalOpen || groupDrawerMode || randomModalOpen || classHonorOpen) && isVoiceListening) {
       stopVoiceCapture(false);
     }
-  }, [evaluationModalOpen, groupDrawerMode, randomModalOpen, isVoiceListening]);
+  }, [evaluationModalOpen, groupDrawerMode, randomModalOpen, classHonorOpen, isVoiceListening]);
 
   const handleCloseEvaluation = () => {
     stopVoiceCapture(false);
@@ -1851,7 +1864,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         <>
           <div className="fixed inset-0 z-[60]" onClick={() => setIsClassMenuOpen(false)} />
           <div className="classroom-control-panel absolute left-0 z-[70] border border-slate-100 bg-white p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.15)] animate-in slide-in-from-top-2 duration-200" style={{ top: 'calc(100% + 8px)', width: pageControls.shell.classMenuWidth }}>
-            {CLASSES.map(cls => (
+            {classNames.map(cls => (
               <button
                 key={cls}
                 onClick={() => {
@@ -2070,7 +2083,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
     </div>
   ) : null;
 
-  const showPageVoiceButton = !evaluationModalOpen && !groupDrawerMode && !randomModalOpen && !historyOpen;
+  const showPageVoiceButton = !evaluationModalOpen && !groupDrawerMode && !randomModalOpen && !historyOpen && !classHonorOpen;
   return (
     <div className={`${embedded ? 'w-full h-full' : 'fixed inset-0'} relative bg-[#f0f3f6] font-sans text-slate-800 overflow-hidden flex flex-col`}>
       {isGlobalRaining && (
@@ -2089,7 +2102,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             {classSwitcher}
           </div>
           <div className="flex items-center gap-4" style={{ fontSize: shell.headerFontSize }}>
-            <button onClick={onBack} className="classroom-control flex items-center gap-2 bg-[#2563eb] px-4 font-bold text-white shadow-sm hover:bg-[#1d4ed8] active:scale-95 transition-all" style={{ height: shell.classSwitcherHeight, fontSize: shell.headerFontSize }}><ArrowLeft size={shell.headerIconSize} /><span>返回管理后台</span></button>
+            <button onClick={onBack} className="classroom-control flex items-center gap-2 bg-[#2563eb] px-4 font-bold text-white shadow-sm hover:bg-[#1d4ed8] active:scale-95 transition-all" style={{ height: shell.classSwitcherHeight, fontSize: shell.headerFontSize }}><ArrowLeft size={shell.headerIconSize} /><span>{backLabel}</span></button>
             <div className="h-6 w-px bg-slate-200 mx-1" />
             <span className="text-slate-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[280px]">管理员 [成都七中初中附属小学]</span>
             <div className="bg-[#4c8bf5] rounded-full flex items-center justify-center text-white shrink-0" style={{ width: shell.classSwitcherHeight - 8, height: shell.classSwitcherHeight - 8 }}><User size={shell.headerIconSize} strokeWidth={3} /></div>
@@ -3103,6 +3116,8 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
         </div>
       )}
 
+      <ClassroomHonorDialog board={classHonorBoard} onClose={() => setClassHonorOpen(false)} afterClose={() => classHonorTrigger.current?.focus()} />
+
       <footer className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-t border-slate-100 bg-white px-6 z-50 lg:px-10" style={{ paddingTop: pageControls.layout.footerPadding, paddingBottom: pageControls.layout.footerPadding }}>
         <div className="min-w-0 justify-self-start">
           {!isMultiSelect && !isRecountSelection && displayModeControl}
@@ -3188,10 +3203,10 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
             </div>
           </div>
         ) : (
-          <div className="flex min-w-0 items-center justify-self-center gap-4">
+          <div className="flex min-w-0 items-center justify-self-center gap-2 xl:gap-4">
               <button
                 onClick={() => { setIsMultiSelect(true); setSelectedIds([]); }}
-                className="classroom-control flex items-center gap-2.5 px-8 py-2 bg-white border-2 border-slate-100 text-slate-600 font-black hover:text-blue-600 hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95"
+                className="classroom-control flex items-center gap-2.5 px-3 lg:px-5 xl:px-8 py-2 bg-white border-2 border-slate-100 text-slate-600 font-black whitespace-nowrap hover:text-blue-600 hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95"
                 style={{ minHeight: pageControls.toolbar.height, fontSize: pageControls.toolbar.fontSize }}
               >
                 <CheckSquare size={pageControls.toolbar.iconSize} />
@@ -3236,7 +3251,7 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 onClick={() => handleRandomCall(randomCount)}
                 onFocus={() => setIsRandomPickerOpen(true)}
                 disabled={maxRandomSelectableCount === 0}
-                className={`classroom-control flex items-center gap-2.5 px-8 py-2 font-black border-2 transition-all focus:outline-none ${isRandomPickerOpen ? 'bg-amber-50 border-amber-300 text-amber-600 shadow-xl -translate-y-0.5' : maxRandomSelectableCount > 0 ? 'bg-white border-slate-100 text-slate-600 hover:text-amber-500 hover:border-amber-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95' : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
+                className={`classroom-control flex items-center gap-2.5 px-3 lg:px-5 xl:px-8 py-2 font-black whitespace-nowrap border-2 transition-all focus:outline-none ${isRandomPickerOpen ? 'bg-amber-50 border-amber-300 text-amber-600 shadow-xl -translate-y-0.5' : maxRandomSelectableCount > 0 ? 'bg-white border-slate-100 text-slate-600 hover:text-amber-500 hover:border-amber-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95' : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'}`}
                 style={{ minHeight: pageControls.toolbar.height, fontSize: pageControls.toolbar.fontSize }}
               >
                 <Dices size={pageControls.toolbar.iconSize} />
@@ -3246,6 +3261,17 @@ const SmartBigScreen: React.FC<SmartBigScreenProps> = ({ onBack, embedded = fals
                 </span>
               </button>
             </div>
+            <button
+              ref={classHonorTrigger}
+              type="button"
+              aria-haspopup="dialog"
+              onClick={() => { setIsRandomPickerOpen(false); setClassHonorOpen(true); }}
+              className="classroom-control flex items-center gap-2.5 px-3 lg:px-5 xl:px-8 py-2 bg-white border-2 border-slate-100 text-slate-600 font-black whitespace-nowrap hover:text-blue-600 hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all active:scale-95"
+              style={{ minHeight: pageControls.toolbar.height, fontSize: pageControls.toolbar.fontSize }}
+            >
+              <Trophy size={pageControls.toolbar.iconSize} aria-hidden="true" />
+              成长荣誉榜
+            </button>
           </div>
         )}
 

@@ -3,6 +3,7 @@ import PreviewToggle from './PreviewToggle';
 import React, { useState } from 'react';
 import PhoneMockup from './PhoneMockup';
 import MobileInputComposer from '../mobile-app/components/ui/MobileInputComposer';
+import { DEFAULT_MOBILE_PHOTO_LIMIT } from '../mobile-app/components/ui/mobileInputLimits';
 import TeacherMobileScreenBackground from '../mobile-app/components/TeacherMobileScreenBackground';
 import { useHoldToTalk } from '../mobile-app/hooks/useHoldToTalk';
 
@@ -11,7 +12,7 @@ const parameters = [
   ['value / onChange', 'string / 回调', '文字草稿及更新回调。'],
   ['onSubmit', '回调', '提交有效文字；业务处理由调用方负责。'],
   ['onCameraClick', '可选回调', '传入时显示拍照入口，不传则隐藏。'],
-  ['attachments / onRemoveAttachment', '照片列表 / 删除回调', '录入条上方展示待发送照片；有照片时最右侧显示发送。最多 9 张由采集层控制。'],
+  ['attachments / onRemoveAttachment', '照片列表 / 删除回调', `录入条上方展示待发送照片；有照片时最右侧显示发送。默认最多 ${DEFAULT_MOBILE_PHOTO_LIMIT} 张。`],
   ['shadow', "'subtle' | 'floating'", '默认轻阴影；记录页用 floating，两个助理用 subtle。'],
   ['voice', 'VoiceController（语音控制器）', '通过 useHoldToTalk 接入语音会话、音量及取消能力。'],
   ['disabled', 'boolean', '禁用拍照、语音和发送；保留文字草稿及模式切换。'],
@@ -48,15 +49,15 @@ export default function PublicInputComposerDemo() {
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
             <header className="flex h-11 shrink-0 items-center px-5 text-[17px] font-semibold text-[var(--tm-text-primary)]">录入控件</header>
             <div className="min-h-0 flex-1 overflow-y-auto p-4">{sent.length > 0 && <div className="grid grid-cols-3 gap-2" aria-label="已发送照片">{sent.map(photo => <img key={photo.id} src={photo.url} alt="已发送的照片" className="aspect-square w-full rounded-lg object-cover" />)}</div>}</div>
-            {cameraOpen && <MobilePhotoCapture remaining={9 - photos.length} thumbnail={photos.at(-1)?.url} onClose={() => setCameraOpen(false)} onSelect={files => {
-              const additions = files.slice(0, 9 - photos.length).map(file => { const url = URL.createObjectURL(file); urls.current.add(url); return { id: url, url }; });
-              setPhotos(items => [...items, ...additions].slice(0, 9)); setCameraOpen(false);
+            {cameraOpen && <MobilePhotoCapture remaining={DEFAULT_MOBILE_PHOTO_LIMIT - photos.length} thumbnail={photos.at(-1)?.url} onClose={() => setCameraOpen(false)} onSelect={files => {
+              const additions = files.slice(0, DEFAULT_MOBILE_PHOTO_LIMIT - photos.length).map(file => { const url = URL.createObjectURL(file); urls.current.add(url); return { id: url, url }; });
+              setPhotos(items => [...items, ...additions].slice(0, DEFAULT_MOBILE_PHOTO_LIMIT)); setCameraOpen(false);
             }} />}
             <div className="absolute inset-x-3 bottom-6">
               <MobileInputComposer mode={mode} value={draft} shadow={shadow} voice={voice} attachments={photos} onRemoveAttachment={removePhoto} sendLabel="发送记录"
                 placeholder={fallback ? '当前环境暂不支持语音，请输入文字' : '请输入'}
                 onModeChange={next => { setMode(next); setFallback(false); }} onChange={setDraft} onSubmit={() => submit(draft)}
-                onCameraClick={camera ? () => { voice.cancel(); if (photos.length < 9) setCameraOpen(true); } : undefined} />
+                onCameraClick={camera ? () => { voice.cancel(); if (photos.length < DEFAULT_MOBILE_PHOTO_LIMIT) setCameraOpen(true); } : undefined} />
             </div>
           </div>
         </PhoneMockup>

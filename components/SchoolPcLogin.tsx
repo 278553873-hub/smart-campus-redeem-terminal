@@ -34,7 +34,7 @@ export default function SchoolPcLogin({ isSchoolAdministrator, onLogin }: School
   const messageId = `${id}-credential-message`;
   const scanToggleLabel = showScan ? '切换为账号登录' : '微信扫码更便捷';
   const titleId = `${id}-${view}-title`;
-  const completeVerification = () => onLogin(username);
+  const completeScan = () => onLogin(isVerifying ? username : '');
 
   useEffect(() => () => {
     if (loginTimer.current !== null) window.clearTimeout(loginTimer.current);
@@ -129,7 +129,7 @@ export default function SchoolPcLogin({ isSchoolAdministrator, onLogin }: School
                       账号密码校验通过，为保障系统安全，请扫码完成二次验证
                     </p>
                   )}
-                  <SchoolPcScanLogin key={view} onVerified={isVerifying ? completeVerification : undefined} />
+                  <SchoolPcScanLogin key={view} mode={isVerifying ? 'verify' : 'login'} onComplete={completeScan} />
                 </section>
               )}
               <section className="school-pc-login__pane" inert={showScan}>

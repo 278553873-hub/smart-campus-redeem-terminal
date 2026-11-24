@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import { ArrowUp, Camera, Keyboard, Mic, X } from 'lucide-react';
+import { ArrowUp, Camera, Keyboard, Mic } from 'lucide-react';
+import { ImagePreview } from '../../../components/media/ImageGallery';
+import MobilePhotoThumbnail from './MobilePhotoThumbnail';
 import MobileVoiceFeedback from './MobileVoiceFeedback';
+import { DEFAULT_MOBILE_PHOTO_LIMIT } from './mobileInputLimits';
 import './MobileInputComposer.css';
 
 export type VoicePressState = 'idle' | 'listening' | 'canceling';
@@ -17,6 +20,7 @@ export interface MobileInputComposerProps {
     attachments?: readonly { id: string; url: string }[];
     maxAttachments?: number;
     onRemoveAttachment?: (id: string) => void;
+    attachmentLayout?: 'strip' | 'panel';
     shadow?: 'subtle' | 'floating';
     mode: 'voice' | 'text';
     value: string;
@@ -37,7 +41,7 @@ export interface MobileInputComposerProps {
 
 /** 三处共用的输入面板；只接收能力与输入回调，不处理评价、助理权限或提交业务。 */
 export default function MobileInputComposer({
-    attachments = [], maxAttachments = 9, onRemoveAttachment,
+    attachments = [], maxAttachments = DEFAULT_MOBILE_PHOTO_LIMIT, onRemoveAttachment, attachmentLayout = 'strip',
     shadow = 'subtle',
     mode, value, placeholder = '请输入', disabled = false, voiceLabel = '按住说话',
     sendLabel = '发送问题', voice, voiceState = 'idle', onModeChange, onChange, onSubmit,
@@ -51,8 +55,11 @@ export default function MobileInputComposer({
     const latestVoice = useRef(voice);
     latestVoice.current = voice;
     const zeroLevel = useRef(0);
+    const [previewPhoto, setPreviewPhoto] = useState<{ id: string; url: string } | null>(null);
+    const previewIndex = previewPhoto ? attachments.findIndex(photo => photo.id === previewPhoto.id && photo.url === previewPhoto.url) : -1;
     const state = voice?.state ?? voiceState;
     const holding = state !== 'idle';
+    const hasAttachmentPanel = attachmentLayout === 'panel' && attachments.length > 0;
     const cancel = () => { pointer.current = null; keyboard.current = false; voice?.cancel(); };
     const switchMode = (next: 'voice' | 'text') => {
         cancel();
@@ -64,14 +71,23 @@ export default function MobileInputComposer({
         if (disabled) latestVoice.current?.cancel();
     }, [disabled]);
     useEffect(() => () => latestVoice.current?.cancel(), []);
+    useEffect(() => {
+        if (previewIndex < 0) setPreviewPhoto(null);
+    }, [previewIndex]);
     // 保持按住按钮挂载以保留指针捕获；语音反馈由手机公共浮层承载。
 
-    return <div ref={anchor} className="relative">
-        {attachments.length > 0 && <div className="mobile-input-composer__attachments" role="group" aria-label={`待发送照片，共 ${attachments.length} 张，最多 ${maxAttachments} 张`}>
-            {attachments.map((photo, index) => <div key={photo.id} className="mobile-input-composer__attachment">
-                <img src={photo.url} alt={`待发送照片 ${index + 1}`} />
-                {onRemoveAttachment && <button type="button" disabled={disabled} onClick={() => onRemoveAttachment(photo.id)} aria-label={`删除照片 ${index + 1}`}><X size={14} aria-hidden="true" /></button>}
-            </div>)}
+    return <div ref={anchor} className={`relative ${hasAttachmentPanel ? 'mobile-input-composer-panel' : ''}`} data-shadow={hasAttachmentPanel ? shadow : undefined}>
+        {attachments.length > 0 && <div className="mobile-photo-thumbnail-strip mobile-input-composer__attachments" role="group" aria-label={`待发送照片，共 ${attachments.length} 张，最多 ${maxAttachments} 张`}>
+            {attachments.map((photo, index) => (
+                <MobilePhotoThumbnail
+                    key={photo.id}
+                    src={photo.url}
+                    label={`待发送照片 ${index + 1}`}
+                    disabled={disabled}
+                    onPreview={() => { cancel(); setPreviewPhoto(photo); }}
+                    onRemove={onRemoveAttachment && (() => onRemoveAttachment(photo.id))}
+                />
+            ))}
         </div>}
         <MobileVoiceFeedback state={state} levelRef={voice?.levelRef ?? zeroLevel} anchorRef={anchor} />
         <div data-shadow={shadow} className={`mobile-input-composer relative grid h-[var(--tm-composer-height)] items-center rounded-[var(--tm-composer-panel-radius)] p-1 ${onCameraClick ? 'grid-cols-[44px_minmax(0,1fr)_44px]' : 'grid-cols-[minmax(0,1fr)_44px]'}`}
@@ -133,5 +149,15 @@ export default function MobileInputComposer({
                 <Mic className="h-5 w-5" strokeWidth={2.3} aria-hidden="true" />
             </button>}
         </div>
+        {previewIndex >= 0 && (
+            <ImagePreview
+                portalRootId="teacher-mobile-overlay-root"
+                images={attachments.map(photo => photo.url)}
+                initialIndex={previewIndex}
+                label="待发送照片预览"
+                topInset="max(var(--mini-program-status-bar-height, 0px), env(safe-area-inset-top, 0px))"
+                onClose={() => setPreviewPhoto(null)}
+            />
+        )}
     </div>;
 }

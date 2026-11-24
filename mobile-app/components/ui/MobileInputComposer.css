@@ -1,9 +1,11 @@
 /* 统一使用班主任助理的轻玻璃表面；无模糊支持时回退白色。 */
-.mobile-input-composer {
+.mobile-input-composer,
+.mobile-input-composer-panel {
     background: var(--tm-bg-surface);
     box-shadow: var(--tm-composer-shadow-subtle);
 }
-.mobile-input-composer[data-shadow='floating'] { box-shadow: var(--tm-composer-shadow-floating); }
+.mobile-input-composer[data-shadow='floating'],
+.mobile-input-composer-panel[data-shadow='floating'] { box-shadow: var(--tm-composer-shadow-floating); }
 .mobile-input-composer__icon {
     display: flex;
     height: var(--tm-size-touch);
@@ -43,9 +45,16 @@
         backdrop-filter: none;
     }
 }
-.mobile-input-composer__attachments { display:flex; gap:8px; overflow-x:auto; padding:8px 0 12px; }
-.mobile-input-composer__attachment { position:relative; flex:0 0 72px; height:72px; }
-.mobile-input-composer__attachment img { width:100%; height:100%; object-fit:cover; border-radius:var(--tm-radius-control-compact); }
-.mobile-input-composer__attachment button { position:absolute; top:-8px; right:-8px; display:flex; width:44px; height:44px; align-items:center; justify-content:center; color:var(--tm-camera-text); }
-.mobile-input-composer__attachment button svg { box-sizing:content-box; padding:3px; border-radius:50%; background:var(--tm-text-primary); }
-.mobile-input-composer__attachment button:focus-visible { outline:2px solid var(--tm-focus-ring); }
+.mobile-input-composer__attachments {
+    padding-block: var(--tm-space-2, 8px);
+}
+.mobile-input-composer-panel {
+    border-radius: var(--tm-composer-panel-radius, 20px);
+    padding-inline: var(--tm-space-2, 8px);
+}
+.mobile-input-composer-panel .mobile-input-composer {
+    background: transparent;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}

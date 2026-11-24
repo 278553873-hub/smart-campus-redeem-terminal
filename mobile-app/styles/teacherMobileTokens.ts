@@ -984,6 +984,7 @@ export const teacherBrandCssVariables = {
   '--tm-size-floating-action': '52px',
   '--tm-medal-grid-icon-size': '64px',
   '--tm-medal-grid-item-min-height': '112px',
+  '--tm-medal-settings-icon-size': '104px',
   '--tm-indicator-canvas-root-width': `${teacherIndicatorCanvasMetrics.rootWidth}px`,
   '--tm-indicator-canvas-root-height': `${teacherIndicatorCanvasMetrics.rootHeight}px`,
   '--tm-indicator-canvas-level-one-width': `${teacherIndicatorCanvasMetrics.levelOneWidth}px`,

@@ -39,18 +39,18 @@ assert.deepEqual(policyFor('collaboration', 'collaborator'), {
 for (const role of ['administrator', 'leader']) {
   assert.deepEqual(policyFor('school', role), {
     managementTools: ['schoolReport', 'moralEducationCockpit', 'termReport', 'headteacherAssistant', 'principalAssistant'],
-    moreTools: ['coinIssuance', 'questionnaire', 'weeklyDutySchedule', 'parentEvaluationVisibility', 'reportManagement', 'archiveDesign', 'subjectManagement', 'departmentManagement', 'suggestionFeedback'],
+    moreTools: ['coinIssuance', 'vendingExchange', 'questionnaire', 'weeklyDutySchedule', 'parentEvaluationVisibility', 'parentRecordingSettings', 'classPetSettings', 'reportManagement', 'archiveDesign', 'subjectManagement', 'departmentManagement', 'suggestionFeedback', 'medalSettings'],
   });
 }
 
 assert.deepEqual(policyFor('school', 'homeroomTeacher'), {
   managementTools: ['headteacherAssistant'],
-  moreTools: ['suggestionFeedback', 'questionnaire'],
+  moreTools: ['vendingExchange', 'suggestionFeedback', 'questionnaire'],
 });
 
 assert.deepEqual(policyFor('school', 'teacher'), {
   managementTools: [],
-  moreTools: ['suggestionFeedback', 'questionnaire'],
+  moreTools: ['vendingExchange', 'suggestionFeedback', 'questionnaire'],
 });
 
 const schoolWithTools = (enabledManagementTools) => getTeacherSpaceMenuPolicy({
@@ -63,15 +63,15 @@ const schoolWithTools = (enabledManagementTools) => getTeacherSpaceMenuPolicy({
 
 assert.deepEqual(schoolWithTools(['headteacherAssistant']), {
   managementTools: ['headteacherAssistant'],
-  moreTools: ['suggestionFeedback', 'questionnaire'],
+  moreTools: ['vendingExchange', 'suggestionFeedback', 'questionnaire'],
 });
 assert.deepEqual(schoolWithTools(['headteacherAssistantV2']), {
   managementTools: ['headteacherAssistant'],
-  moreTools: ['suggestionFeedback', 'questionnaire'],
+  moreTools: ['vendingExchange', 'suggestionFeedback', 'questionnaire'],
 });
 assert.deepEqual(schoolWithTools(['headteacherAssistant', 'headteacherAssistantV2']), {
   managementTools: ['headteacherAssistant'],
-  moreTools: ['suggestionFeedback', 'questionnaire'],
+  moreTools: ['vendingExchange', 'suggestionFeedback', 'questionnaire'],
 });
 
 const assistantScopesFor = (enabledManagementTools) => getHeadteacherAssistantScopes({

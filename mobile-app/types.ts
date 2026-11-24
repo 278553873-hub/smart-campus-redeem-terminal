@@ -162,6 +162,7 @@ export interface EvaluationCardDisplaySettings {
 export interface StudentCardDisplaySettings extends EvaluationCardDisplaySettings {
   showLevel: boolean;
   levelForm: StudentLevelForm;
+  showFullStudentNo: boolean;
 }
 
 export interface GroupCardDisplaySettings extends EvaluationCardDisplaySettings {

@@ -19,8 +19,12 @@ test('仅开放生成值，封面只开放姓名与日期，固定字段均锁�
     assert.ok(!paths.has(path));
     assert.throws(() => writeField(initial, path.split('.'), '不应写入'), /固定字段/);
   }
-  assert.equal(editorGroups(initial, 'observations:3')[0].fields.length, 4);
-  assert.ok(editorGroups(initial, 'observations:3')[0].fields.every(f => f.path.slice(0, 3).join('.') === 'data.matrix.3'));
+  const observations = editorGroups(initial, 'observations');
+  assert.equal(observations.length, 5);
+  assert.ok(observations.every((group, i) =>
+    group.fields.length === 4 && group.fields.every(f => f.path.slice(0, 3).join('.') === `data.matrix.${i}`)
+  ));
+  assert.deepEqual(editorGroups(initial, 'card').map(group => group.title), Object.values(initial.labels.quotes));
   assert.equal(readField(initial, ['data', 'matrix', 3, 'child']), '');
   assert.match(initial.data.light.parent, /学活.*乐健/);
   assert.equal(initial.data.date, '2026年10月30日');
@@ -67,14 +71,20 @@ test('内嵌报告数据可安全携带中文、换行及 HTML 字符', () => {
   assert.deepEqual(JSON.parse(encoded), modified);
 });
 
-test('实际渲染报告组件，确认子板块编辑入口、成像卡纯文本及寄语下划线', async () => {
+test('实际渲染报告组件，确认每张卡只有一个编辑入口，保留成像卡正文及寄语下划线', async () => {
   const entry = fileURLToPath(new URL('./初成像手机稿.tsx', import.meta.url));
   const mobile = fileURLToPath(new URL('./吴浩_工具四_初始成像_手机阅读版.html', import.meta.url));
   const result = await build({ stdin: { contents: `import React from 'react'; import {renderToStaticMarkup} from 'react-dom/server'; import {readFileSync} from 'node:fs'; import {App} from ${JSON.stringify(entry)}; const html=readFileSync(${JSON.stringify(mobile)},'utf8'); const data=JSON.parse(html.match(/<script id="report-data" type="application\\/json">([\\s\\S]*?)<\\/script>/)[1]); process.stdout.write(renderToStaticMarkup(React.createElement(App,{source:data})));`, resolveDir: process.cwd(), loader: 'tsx' }, bundle: true, platform: 'node', format: 'cjs', write: false, loader: { '.css': 'empty', '.png': 'dataurl', '.jpg': 'dataurl', '.webp': 'dataurl', '.svg': 'dataurl' }, jsx: 'automatic', define: { 'process.env.NODE_ENV': '"production"' }, logLevel: 'silent' });
   const run = spawnSync(process.execPath, [], { input: result.outputFiles[0].text, encoding: 'utf8', maxBuffer: 5 * 1024 * 1024 });
   assert.equal(run.status, 0, run.stderr);
-  assert.equal((run.stdout.match(/class="report-section /g) || []).length, 7);
-  assert.equal((run.stdout.match(/class="edit-button"/g) || []).length, 26);
+  assert.equal((run.stdout.match(/class="report-section"/g) || []).length, 7);
+  assert.equal((run.stdout.match(/\breport-card"/g) || []).length, 7);
+  assert.equal((run.stdout.match(/class="edit-button"/g) || []).length, 8);
+  for (const card of run.stdout.matchAll(/<section\b[^>]*>(.*?)<\/section>/gs)) {
+    assert.equal((card[1].match(/class="edit-button"/g) || []).length, 1);
+  }
+  assert.match(run.stdout, /data-page-texture="paper"/);
+  assert.match(run.stdout, /id="light"[^>]*data-card-tone="gold"/);
   assert.equal((run.stdout.match(/class="filled-answer"/g) || []).length, 5);
   assert.match(run.stdout, /文明习惯与交往方式/);
   assert.match(run.stdout, /2026年10月30日/);

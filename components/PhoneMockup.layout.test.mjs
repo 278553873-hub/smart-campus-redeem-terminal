@@ -110,6 +110,7 @@ function checkFirstPaint(deviceType) {
   assert.ok(frame.bounds, '首次绘制前就应提供机身位置，不能延迟两帧定位控件');
   assert.ok(Math.abs(frame.bounds.right - (16 + container.clientWidth / 2 + (frame.width / 2 + bezel) * frame.scale)) < 0.001, '控件收到的右边界必须与首帧机身一致');
   assert.ok(Math.abs(frame.bounds.top - (16 + container.clientHeight / 2 - (frame.height / 2 + bezel) * frame.scale)) < 0.001, '控件收到的顶部必须与首帧机身一致');
+  assert.ok(Math.abs(frame.bounds.screenBottom - (16 + container.clientHeight / 2 + frame.height / 2 * frame.scale)) < 0.001, '预览卡的对齐位置应以屏幕底边为准');
 }
 
 for (let round = 0; round < 4; round++) {

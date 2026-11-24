@@ -43,10 +43,11 @@ interface ImagePreviewProps {
   onClose: () => void;
   label?: string;
   topInset?: React.CSSProperties['paddingTop'];
+  confirmation?: { cancelLabel: string; onConfirm: () => void };
 }
 
 /** 挂在手机容器根部，避免随记录列表滚动或被卡片裁切。 */
-export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex, onClose, label = '图片预览', topInset, portalRootId }) => {
+export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex, onClose, label = '图片预览', topInset, portalRootId, confirmation }) => {
   const [index, setIndex] = useState(() => Math.max(0, Math.min(initialIndex, images.length - 1)));
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -63,6 +64,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex
   useEffect(() => { if (portalRootId) setPortalRoot(document.getElementById(portalRootId) ?? document.body); }, [portalRootId]);
   if (!images.length) return null;
   const controlClass = 'flex h-11 min-w-11 items-center justify-center rounded-full bg-white/10 px-3 text-white active:bg-white/20 disabled:opacity-30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
+  const confirmationButtonClass = 'h-12 min-w-[72px] rounded-[var(--tm-radius-control-compact,8px)] px-4 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white';
   const content = (
     <div ref={dialogRef} style={{ paddingTop: topInset }} role="dialog" aria-modal="true" aria-label={label} className="absolute inset-0 z-[150] pointer-events-auto flex flex-col overscroll-contain bg-neutral-950 text-white" onKeyDown={event => {
       if (event.key === 'Escape') { event.preventDefault(); onClose(); }
@@ -76,10 +78,12 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
       }
     }}>
-      <header className="flex shrink-0 items-center justify-between gap-3 p-3">
-        <span className="px-2 text-sm tabular-nums" aria-live="polite" aria-atomic="true">{currentIndex + 1} / {images.length}</span>
-        <button ref={closeRef} type="button" onClick={onClose} className={controlClass} aria-label="关闭图片预览"><X className="h-5 w-5" /></button>
-      </header>
+      {!confirmation && (
+        <header className="flex shrink-0 items-center justify-between gap-3 p-3">
+          <span className="px-2 text-sm tabular-nums" aria-live="polite" aria-atomic="true">{currentIndex + 1} / {images.length}</span>
+          <button ref={closeRef} type="button" onClick={onClose} className={controlClass} aria-label="关闭图片预览"><X className="h-5 w-5" /></button>
+        </header>
+      )}
       <div className="min-h-0 flex-1 touch-pan-y overflow-hidden" onTouchStart={event => {
         touchStart.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
       }} onTouchCancel={() => { touchStart.current = null; }} onTouchEnd={event => {
@@ -92,7 +96,12 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, initialIndex
       }}>
         <GalleryImage key={`${currentIndex}-${images[currentIndex]}`} src={images[currentIndex]} alt={`${label}第 ${currentIndex + 1} 张`} preview />
       </div>
-      {images.length > 1 && <footer className="flex shrink-0 justify-center gap-8 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
+      {confirmation ? (
+        <footer className="flex shrink-0 justify-between gap-4 px-6 pb-[calc(16px+max(var(--mini-program-bottom-safe-area,0px),env(safe-area-inset-bottom,0px)))] pt-4">
+          <button ref={closeRef} type="button" className={`${confirmationButtonClass} bg-white/10 text-white`} onClick={onClose}>{confirmation.cancelLabel}</button>
+          <button type="button" className={`${confirmationButtonClass} bg-white text-neutral-950`} onClick={confirmation.onConfirm}>确定</button>
+        </footer>
+      ) : images.length > 1 && <footer className="flex shrink-0 justify-center gap-8 px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
         <button type="button" className={controlClass} disabled={currentIndex === 0} onClick={() => move(-1)} aria-label="上一张图片"><ChevronLeft className="h-5 w-5" /></button>
         <button type="button" className={controlClass} disabled={currentIndex === images.length - 1} onClick={() => move(1)} aria-label="下一张图片"><ChevronRight className="h-5 w-5" /></button>
       </footer>}

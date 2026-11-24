@@ -2,76 +2,119 @@
 .honor-screen {
   position:absolute; inset:0 auto auto 0; display:grid; grid-template-rows:88px minmax(0,1fr); gap:14px;
   padding:0 36px 22px; box-sizing:border-box; color:#101d25;
-  background:radial-gradient(ellipse 62% 55% at 0% 0%,#c6eef1b0,transparent 78%),
-    radial-gradient(ellipse 60% 70% at 100% 72%,#cbdcf4a0,transparent 78%),
-    linear-gradient(145deg,#f6fcfb,#e8f5f8 62%,#eef8f6);
+  background:
+    conic-gradient(from 246deg at 51% 34%,#d1faff00 0deg 39deg,#66d8ff38 39deg 76deg,#d1faff00 76deg 118deg,#115cff30 118deg 150deg,#d1faff00 150deg 183deg,#6ae5ff40 183deg 220deg,#d1faff00 220deg),
+    linear-gradient(172deg,#1466ed 0%,#279ff2 15%,#78e2f6 36%,#c3f8fa 67%,#e9fcff 100%);
   font:700 22px/1.2 'PingFang SC','Microsoft YaHei',sans-serif; font-variant-numeric:tabular-nums;
 }
-.honor-screen *, .honor-screen *::before, .honor-screen *::after { box-sizing:border-box }
-.honor-screen :where(h1,h2,h3,p,ol) { margin:0 }
-.honor-screen ol { padding:0; list-style:none }
+.honor-screen *, .honor-screen *::before, .honor-screen *::after,
+.honor-grade-card, .honor-grade-card *, .honor-grade-card *::before, .honor-grade-card *::after { box-sizing:border-box }
+.honor-screen :where(h1,h2,h3,p,ol), .honor-grade-card :where(h2,h3,p,ol) { margin:0 }
 .honor-screen button { font:inherit; cursor:pointer; touch-action:manipulation }
 .honor-screen button:focus-visible { outline:3px solid #086981; outline-offset:4px }
 .honor-header { position:relative; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:24px }
 .honor-school { display:flex; align-items:center; gap:12px; min-width:0; font-size:22px }
 .honor-school img { width:auto; max-width:84px; height:48px; object-fit:contain }
-.honor-fullscreen, .honor-loading button { display:flex; align-items:center; justify-content:center; gap:10px; min-height:var(--honor-touch-target); padding:0 22px; border:1px solid #fff; border-radius:20px; background:#ffffffc9; color:inherit }
-.honor-fullscreen { justify-self:end }
-.honor-fullscreen:hover, .honor-loading button:hover { background:#fff }
+.honor-loading button { display:flex; align-items:center; justify-content:center; gap:10px; min-height:var(--honor-touch-target); padding:0 22px; border:1px solid #fff; border-radius:20px; background:#ffffffc9; color:inherit }
+.honor-loading button:hover { background:#fff }
 .honor-notice { position:absolute; right:0; top:100%; z-index:5; padding:12px 20px; border-radius:14px; background:#fff }
 .honor-grade-grid {
-  --grade-font:19px; --row-font:18px; --face:69px; --podium-rank:88px;
+  --grade-font:19px; --row-font:18px; --face:60px;
   display:grid; grid-template-columns:repeat(var(--honor-grade-columns),minmax(0,1fr));
   grid-template-rows:repeat(var(--honor-grade-rows),minmax(0,1fr)); gap:14px; min-height:0;
 }
-.honor-grade-grid[data-density=dense] { --grade-font:16px; --row-font:15px; --face:45px; --podium-rank:58px; gap:10px }
+.honor-grade-grid[data-density=dense] { --grade-font:16px; --row-font:15px; --face:45px; gap:10px }
 /* 沿用驾驶舱浅色面板的透白渐变、边缘高光与磨砂参数。 */
 .honor-grade-card {
-  position:relative; display:flex; min-width:0; min-height:0; padding:12px 22px; border-radius:28px;
+  position:relative; overflow:hidden; display:flex; min-width:0; min-height:0; padding:12px 22px 8px; border-radius:28px;
   border:1px solid #ffffffe0; background:linear-gradient(135deg,#ffffffa8 0%,#ffffff70 60%,#ffffff52 100%);
   backdrop-filter:blur(16px) saturate(120%); -webkit-backdrop-filter:blur(16px) saturate(120%);
   box-shadow:inset 0 1px 0 #fffffff2,inset 0 -1px 0 #ffffff66,0 8px 24px #775b3212,0 0 0 1px #a58e6a1a;
 }
 .honor-grade-grid[data-density=dense] .honor-grade-card { padding:8px 13px; border-radius:22px }
-.honor-grade-heading { position:absolute; top:9px; left:13px; z-index:1 }
-.honor-grade-heading h2 { width:max-content; padding-left:12px; border-left:3px solid #263341; color:#263341; font-size:calc(var(--grade-font) * 1.3); font-weight:800; line-height:1.2; white-space:nowrap }
-.honor-grade-heading em { font-style:normal }
-.honor-grade-body { display:grid; grid-template-rows:minmax(0,1.07fr) minmax(0,1fr); gap:5px; flex:1; min-width:0; min-height:0 }
+.honor-grade-heading { position:absolute; top:18px; left:22px; z-index:1; padding-left:15px }
+.honor-grade-heading::before {
+  content:""; position:absolute; inset:0 auto 0 0; width:3px;
+  background:#fff; box-shadow:0 1px 2px #123b80;
+}
+.honor-grade-heading h2 {
+  font-size:22px; font-weight:700; line-height:1.2; white-space:nowrap;
+}
+.honor-grade-grid[data-density=dense] .honor-grade-heading { top:12px; left:14px }
+.honor-grade-body {
+  --honor-podium-info-gap:2px;
+  display:grid; grid-template-rows:minmax(0,.86fr) minmax(0,1.14fr);
+  gap:calc(var(--honor-podium-info-gap) * 1.2); flex:1; min-width:0; min-height:0;
+}
 .honor-podium-section { display:grid; min-width:0; min-height:0; padding:24px 4% 0 }
 .honor-grade-grid[data-density=dense] .honor-podium-section { padding-top:17px }
 .honor-podium-stage { display:grid; grid-template-columns:1fr 1fr .93fr; align-items:end; min-width:0; min-height:0 }
 .honor-finalist {
-  --tone:#7ee8f2; --ring:#159ed7; position:relative; isolation:isolate; display:flex; flex-direction:column;
-  align-items:center; justify-content:end; min-width:0; height:var(--honor-podium-height); padding:0 4px 3px;
-  text-align:center; font-size:var(--grade-font); line-height:1.12;
+  --ring:#62c7ed;
+  --honor-frame-size:calc(var(--face) * 1.5); --honor-frame-scale:1;
+  --honor-badge-inset:.08; --honor-jelly-top-inset:.04;
+  --honor-jelly-height:calc(var(--face) * 4 * var(--honor-podium-height-ratio));
+  position:relative; isolation:isolate; display:grid; min-width:0; min-height:0; align-self:stretch;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:max-content max-content var(--honor-podium-lift);
+  align-content:end; justify-items:center; padding:0 8px;
+  text-align:center; font-size:var(--grade-font); line-height:1.16;
 }
-.honor-place-0 { grid-column:2; grid-row:1; --tone:#ffe75b; --ring:#eea30c }
+.honor-place-0 { grid-column:2; grid-row:1 }
 .honor-place-1 { grid-column:1; grid-row:1 }
-.honor-place-2 { grid-column:3; grid-row:1; --tone:#ffb777; --ring:#f4803c }
-.honor-finalist::before { content:""; position:absolute; inset:12% 0 0; z-index:-1; border-radius:68% 23% 0 0 / 30% 14% 0 0 }
-.honor-finalist::before { background:linear-gradient(var(--tone),transparent 98%) }
+.honor-place-2 { grid-column:3; grid-row:1 }
+/* 图层从头像所在行的下缘定位，并扣除头像框底部和柱顶素材的透明边距。 */
+.honor-finalist::before {
+  content:""; position:absolute; z-index:-1; grid-row:2 / 3;
+  inset-inline:0; block-size:var(--honor-jelly-height);
+  inset-block-start:calc(-1 * (
+    var(--honor-frame-size) * var(--honor-frame-scale) * var(--honor-badge-inset)
+    + var(--honor-jelly-height) * var(--honor-jelly-top-inset)
+  ));
+  background:var(--honor-jelly-image,url('/assets/student-honor/jelly-podium.png')) center / 100% 100% no-repeat;
+  mask-image:linear-gradient(#000 38%,#000d 63%,transparent 100%);
+}
+.honor-finalist[data-rank="1"] {
+  --ring:#edc45b; --honor-jelly-image:url('/assets/student-honor/jelly-podium-gold.png');
+  --honor-frame-scale:1.166; --honor-badge-inset:.062; --honor-jelly-top-inset:.027;
+}
+.honor-finalist[data-rank="3"] {
+  --ring:#f09987; --honor-jelly-image:url('/assets/student-honor/jelly-podium-peach.png');
+  --honor-frame-scale:1.035; --honor-badge-inset:.104; --honor-jelly-top-inset:.032;
+}
 .honor-avatar { position:relative; display:inline-grid; place-items:center; flex:none; overflow:hidden; width:var(--face); height:var(--face); border:3px solid var(--ring,#eba52e); border-radius:50%; background:#fff4cd; color:#753d10 }
 .honor-avatar img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
-.honor-podium-face { position:relative; flex:none; line-height:0; margin-bottom:3px }
-.honor-crown { position:absolute; top:-23%; left:-15%; width:48%; transform:rotate(-24deg); pointer-events:none }
-.honor-place-1 .honor-crown-accent { filter:hue-rotate(150deg) }
-.honor-place-2 .honor-crown-accent { filter:hue-rotate(-24deg) }
-.honor-podium-rank { position:absolute; inset:17% 0 auto; z-index:-1; color:#123744; opacity:.16; font-size:var(--podium-rank); font-style:italic; font-weight:950; line-height:1; pointer-events:none }
-.honor-student-name, .honor-student-class { min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:inherit; font-weight:inherit }
-.honor-student-score { color:#a84000; font-weight:850 }
-.honor-total { white-space:nowrap }
-.honor-ranking-table { display:flex; flex-direction:column; min-width:0; min-height:0 }
-.honor-ranking-list { height:100%; display:grid; grid-template-rows:repeat(7,minmax(0,1fr)); gap:2px }
-.honor-ranking-list li {
-  display:grid; grid-template-columns:12% 9% 28% minmax(0,1fr) auto; align-items:center; isolation:isolate; position:relative;
-  min-width:0; min-height:0; overflow:hidden; padding-right:4%; background:#ffffffee; border-radius:11px; font-size:var(--row-font);
+.honor-podium-face {
+  --portrait-size:59%; --portrait-y:51%;
+  position:relative; margin-top:calc(var(--face) * -.42); line-height:0;
+  width:var(--honor-frame-size); aspect-ratio:1;
+  transform:scale(var(--honor-frame-scale)); transform-origin:center bottom;
 }
-.honor-ranking-list li::before { content:""; position:absolute; inset:0 auto 0 0; width:24%; z-index:-1; background:linear-gradient(90deg,#ffe273,#fff2b5 67%,transparent) }
-.honor-ranking-list .honor-avatar { width:calc(var(--row-font) * 1.38); height:calc(var(--row-font) * 1.38); border-width:1.5px; font-size:10px }
-.honor-list-rank { position:relative; isolation:isolate; color:#743400; text-align:center; font-style:italic; font-weight:950 }
-.honor-list-rank::before { content:""; position:absolute; inset:50% auto auto 50%; width:1.8em; height:1.45em; transform:translate(-50%,-50%) rotate(-12deg); background:#fff4bf; z-index:-1; clip-path:polygon(50% 0%,65% 28%,100% 35%,78% 60%,81% 96%,50% 81%,19% 96%,22% 60%,0 35%,35% 28%) }
+.honor-finalist[data-rank="1"] .honor-podium-face { --portrait-size:62% }
+.honor-finalist[data-rank="3"] .honor-podium-face { --portrait-size:56% }
+.honor-podium-face .honor-avatar {
+  position:absolute; left:50%; top:var(--portrait-y); transform:translate(-50%,-50%);
+  width:var(--portrait-size); height:auto; aspect-ratio:1; border:0;
+}
+.honor-avatar-frame { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none }
+.honor-student-name, .honor-student-class { min-width:0; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:inherit; font-weight:inherit }
+.honor-total { display:inline-flex; align-items:baseline; justify-content:flex-end; gap:.3em; white-space:nowrap }
+.honor-score-unit { color:#426180; font-size:.72em; font-weight:500 }
+.honor-ranking-table {
+  position:relative; z-index:1; display:flex; flex-direction:column; min-width:0; min-height:0;
+  border:1px solid #ffffffec; border-radius:20px;
+  background:linear-gradient(155deg,#ffffff70,#eff9ffc0 60%,#effaffdb);
+  backdrop-filter:blur(5px) saturate(115%);
+  box-shadow:inset 0 1px 0 #fff,0 4px 18px #62578a18;
+}
+.honor-grade-card .honor-ranking-list { height:100%; display:grid; grid-template-rows:repeat(7,minmax(0,1fr)); padding:3px 10px; list-style:none }
+.honor-ranking-list li {
+  display:grid; grid-template-columns:10% 9% 28% minmax(0,1fr) auto; align-items:center;
+  min-width:0; min-height:0; overflow:hidden; padding-right:3%; font-size:var(--row-font);
+}
+.honor-ranking-list li + li { border-top:1px solid #52709216 }
+.honor-ranking-list .honor-avatar { width:calc(var(--row-font) * 1.38); height:calc(var(--row-font) * 1.38); border:1px solid #b8bfd6; font-size:10px }
 .honor-empty, .honor-loading { display:grid; place-content:center; gap:20px; flex:1; min-height:0; color:#3b5962; text-align:center }
-.honor-grade-grid[data-density=dense] .honor-grade-body { grid-template-rows:minmax(0,1.12fr) minmax(0,1fr) }
 .honor-grade-grid[data-density=dense] .honor-ranking-list .honor-avatar { width:18px; height:18px }
 .honor-header { grid-template-columns:minmax(0,1fr) minmax(0,3.6fr) minmax(0,1fr); padding-bottom:12px; isolation:isolate }
 .honor-header .screen-panorama-header-art {
@@ -79,38 +122,42 @@
   overflow:visible; pointer-events:none; opacity:.55;
 }
 .honor-header-right { display:flex; justify-content:flex-end; align-items:center; gap:14px }
-.honor-header-right time { display:grid; gap:4px; text-align:right; white-space:nowrap; font-size:22px; color:#174b61 }
-.honor-header-right time span:last-child { font-size:17px; color:#426675 }
-.honor-header-right .honor-fullscreen { flex:none; min-width:var(--honor-touch-target); padding:0; color:#1c5f70 }
+.honor-header-right time { display:grid; gap:4px; text-align:right; white-space:nowrap; font-size:22px }
+.honor-grade-heading h2, .honor-header-right time { color:#fff; text-shadow:0 1px 2px #123b80 }
+.honor-header-right time span:last-child { font-size:17px; color:#e1f6ff }
+.honor-fullscreen {
+  display:grid; place-items:center; flex:none; width:var(--honor-touch-target); height:var(--honor-touch-target);
+  padding:0; border:0; border-radius:12px; background:transparent; color:#edfaff;
+}
+.honor-fullscreen svg { box-sizing:content-box; padding:5px; border-radius:8px; background:#ffffff22 }
+.honor-fullscreen:hover svg, .honor-fullscreen:focus-visible svg { background:#ffffff44 }
 .honor-school img { height:56px; max-width:120px }
 .honor-title { min-width:0; text-align:center }
 .honor-title h1 {
   display:flex; align-items:baseline; justify-content:center; min-width:0;
-  font:700 48px/1.15 'PingFang SC','Microsoft YaHei',sans-serif; letter-spacing:.08em; white-space:nowrap;
-  filter:drop-shadow(0 1px 0 #ffffffcc) drop-shadow(0 2px 2px #195b6918);
+  font:900 50px/1.15 'PingFang SC','Microsoft YaHei',sans-serif; letter-spacing:.08em; white-space:nowrap;
+  filter:drop-shadow(0 2px 0 #1255ad) drop-shadow(0 3px 5px #08368065);
 }
-.honor-title h1 > span { display:block; flex:none; color:#155568 }
+.honor-title h1 > span { display:block; flex:none; color:#f4fdff }
 .honor-title h1 > .honor-school-name { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis }
 @supports ((background-clip:text) or (-webkit-background-clip:text)) {
   .honor-title h1 > span {
-    background-image:linear-gradient(180deg,#18536c 0%,#297e87 38%,#196b73 66%,#164859 100%);
-    background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+    background-image:linear-gradient(180deg,#fff 12%,#edfaff 52%,#aeeaff 100%);
+    background-clip:text; -webkit-background-clip:text; color:transparent; -webkit-text-fill-color:transparent; -webkit-text-stroke:1px #d8f9ff;
   }
   @media (forced-colors:active) {
-    .honor-title h1 > span { background:none; color:CanvasText; -webkit-text-fill-color:CanvasText }
+    .honor-title h1 > span { background:none; color:CanvasText; -webkit-text-fill-color:CanvasText; -webkit-text-stroke:0 }
   }
 }
-.honor-fullscreen { white-space:nowrap }
 .honor-podium-section { padding-top:42px }
 .honor-podium-stage { align-items:end; grid-template-rows:minmax(0,1fr) }
-.honor-finalist { display:grid; grid-template-rows:minmax(min-content,1fr) auto auto auto; align-content:stretch; justify-content:stretch; justify-items:center; gap:2px; padding-inline:8px; line-height:1.16 }
-.honor-finalist .honor-student-class { white-space:normal; overflow-wrap:anywhere; overflow:visible; font-size:.91em; color:#244853 }
-.honor-finalist .honor-student-name { white-space:normal; overflow-wrap:anywhere; overflow:visible; font-size:1.07em }
-.honor-podium-face { align-self:start; margin-bottom:0 }
+.honor-podium-info { display:grid; justify-items:center; gap:var(--honor-podium-info-gap); max-width:100%; margin-top:1px }
+.honor-podium-info > * { line-height:calc(1em + 2px) }
+.honor-finalist .honor-student-class, .honor-finalist .honor-student-name { white-space:normal; overflow-wrap:anywhere; overflow:visible }
 .honor-grade-grid[data-density=dense] .honor-podium-section { padding-top:34px }
-.honor-grade-grid[data-grade-count="3"] { --grade-font:26px; --row-font:25px; --face:112px; --podium-rank:120px }
-.honor-grade-grid[data-grade-count="3"] .honor-grade-body { grid-template-rows:minmax(0,.85fr) minmax(0,1fr); gap:16px }
-.honor-grade-grid[data-grade-count="3"] .honor-ranking-list { gap:7px }
+.honor-grade-grid[data-grade-count="3"] { --grade-font:26px; --row-font:25px; --face:112px }
+.honor-grade-grid[data-grade-count="3"] .honor-grade-body { grid-template-rows:minmax(0,.72fr) minmax(0,1.13fr) }
+.honor-grade-grid[data-grade-count="3"] .honor-ranking-list { gap:0 }
 
 .honor-board { display:grid; grid-template-rows:minmax(0,1fr); min-width:0; min-height:0 }
 .honor-grade-grid[data-swipe] { touch-action:pan-y pinch-zoom }
@@ -123,3 +170,9 @@
 .honor-page-nav button:hover span { background:#567d8b }
 .honor-page-nav button[aria-current=page] span { background:#18647950 }
 .honor-page-nav button:focus-visible { outline-offset:-4px }
+
+.honor-finalist .honor-student-name { color:#102c49; font-size:1.02em; font-weight:800 }
+.honor-finalist .honor-student-class { color:#193e58; font-size:.79em; font-weight:600 }
+.honor-student-score { color:#104673; font-family:system-ui,sans-serif; font-weight:600; letter-spacing:.025em }
+.honor-finalist .honor-student-score { color:#083c63; font-size:1.42em; font-weight:700 }
+.honor-list-rank { color:#426180; text-align:center; font-family:system-ui,sans-serif; font-size:1.1em; font-style:normal; font-weight:600 }

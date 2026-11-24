@@ -43,9 +43,19 @@
   border-right: 1px solid var(--ops-color-border);
   background: var(--ops-color-surface);
 }
-.operations-pc-sidebar.is-collapsed { width: var(--ops-sidebar-collapsed-width); }
-.operations-pc-navigation { flex: 1; min-height: 0; padding-top: var(--ops-space-2); overflow-y: auto; }
-.operations-pc-sidebar-footer { padding: var(--ops-space-2); border-top: 1px solid var(--ops-color-divider); }
+.operations-pc-navigation {
+  --ops-navigation-scroll-thumb: transparent;
+  flex: 1;
+  min-height: 0;
+  padding-top: var(--ops-space-2);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ops-navigation-scroll-thumb) transparent;
+}
+.operations-pc-navigation.is-scrolling { --ops-navigation-scroll-thumb: var(--ops-color-text-muted); }
+.operations-pc-navigation::-webkit-scrollbar { width: var(--ops-space-1); }
+.operations-pc-navigation::-webkit-scrollbar-thumb { border-radius: var(--ops-radius); background: var(--ops-navigation-scroll-thumb); }
+.operations-pc-navigation::-webkit-scrollbar-track { background: transparent; }
 .operations-pc-nav-icon { display: inline-block; vertical-align: -4px; }
 
 /* 仅运营侧栏：对齐学校后台的蓝色选中态，不修改其他页面的 Arco Menu。 */
@@ -54,12 +64,14 @@
   color: var(--ops-color-primary);
   font-weight: var(--ops-weight-semibold);
 }
-.operations-pc-navigation .arco-menu-selected .operations-pc-nav-icon { color: currentColor; }
+.operations-pc-navigation .arco-menu-light .arco-menu-item-disabled { color: var(--ops-color-text-muted); }
+.operations-pc-navigation :is(.arco-menu-selected, .arco-menu-item-disabled) .operations-pc-nav-icon { color: currentColor; }
 .operations-pc-main { flex: 1; min-width: 0; padding: var(--ops-space-4) var(--ops-page-inset) var(--ops-page-inset); overflow-y: auto; }
 .operations-pc-breadcrumb { margin-bottom: var(--ops-space-4); }
 .operations-pc-page { min-height: 480px; border-radius: var(--ops-radius); background: var(--ops-color-surface); }
 .operations-pc-page-heading { padding: var(--ops-space-5) var(--ops-page-inset) var(--ops-space-4); }
 .operations-pc-page-heading h1 { margin: 0; font-size: var(--ops-font-section); font-weight: var(--ops-weight-semibold); line-height: 1.5; }
+.operations-pc-page-description { margin: var(--ops-space-2) 0 0; color: var(--ops-color-text-secondary); }
 .operations-pc-list-content { padding: 0 var(--ops-page-inset) var(--ops-page-inset); }
 /* 仅学校列表：页签标题与面板共用左右留白，筛选区由真实页签面板承载。 */
 .ops-customer-tabs > .arco-tabs-header-nav { margin-inline: var(--ops-page-inset); }
@@ -71,9 +83,15 @@
 .operations-pc-filters .arco-input-inner-wrapper,
 .operations-pc-filters .arco-select { width: var(--ops-filter-width); max-width: 100%; }
 .operations-pc-table-empty { padding: var(--ops-space-7) 0; }
-.operations-pc-page-empty { display: flex; align-items: center; justify-content: center; min-height: 360px; padding: var(--ops-space-5); }
-.operations-pc :focus-visible,
-.operations-pc-overlay :focus-visible { outline: 2px solid var(--ops-color-primary); outline-offset: 2px; }
+/* Arco 表单控件由自身或外层容器显示焦点，避免在内部输入上再叠一圈。 */
+:is(.operations-pc, .operations-pc-overlay) :focus-visible:not(:where(
+  .arco-input,
+  .arco-input-inner-wrapper,
+  .arco-textarea,
+  .arco-select-view,
+  .arco-cascader-view,
+  :is(.arco-select-view, .arco-cascader-view, .arco-picker, .arco-input-tag) input
+)) { outline: 2px solid var(--ops-color-primary); outline-offset: 2px; }
 
 .operations-pc-overlay { color: var(--ops-color-text); font-family: var(--ops-font-family); font-size: var(--ops-font-body); }
 .ops-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--ops-space-4); margin-bottom: var(--ops-space-4); }
@@ -82,6 +100,25 @@
 .ops-actions,
 .ops-row-actions { display: flex; align-items: center; gap: var(--ops-space-2); }
 .ops-row-actions { gap: var(--ops-space-4); }
+.ops-support-add { max-width: calc(100vw - var(--ops-space-6)); }
+.ops-support-demo {
+  margin-top: var(--ops-space-4);
+  padding: var(--ops-space-3) var(--ops-space-4);
+  border: 1px solid var(--ops-color-border);
+  border-radius: var(--ops-radius);
+  background: var(--ops-color-surface);
+  font-size: var(--ops-font-caption);
+}
+.ops-support-demo h2 { margin: 0 0 var(--ops-space-2); color: var(--ops-color-text); font-size: inherit; font-weight: var(--ops-weight-semibold); }
+.ops-support-demo ol { margin: 0; padding-inline-start: var(--ops-space-4); list-style: decimal; color: var(--ops-color-text-secondary); }
+.ops-support-demo li + li { margin-top: var(--ops-space-2); }
+.ops-support-phone { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ops-support-result { padding-top: var(--ops-space-4); border-top: 1px solid var(--ops-color-divider); }
+.ops-support-result .arco-descriptions-item-label,
+.ops-support-result .arco-descriptions-item-value { vertical-align: top; padding-bottom: var(--ops-space-3); }
+.ops-support-result .arco-descriptions-item-label { padding-inline-end: var(--ops-space-5); }
+.ops-support-result tr:last-child td { padding-bottom: 0; }
+.ops-support-result ul { display: grid; gap: var(--ops-space-1); margin: 0; padding: 0; list-style: none; }
 .ops-secondary { color: var(--ops-color-text-secondary); font-size: var(--ops-font-caption); }
 .ops-statistic-value { font-weight: var(--ops-weight-medium); font-variant-numeric: tabular-nums; }
 .ops-related-links { display: grid; justify-items: start; }
@@ -108,19 +145,34 @@
 .ops-school-names { display: flex; flex-wrap: wrap; gap: var(--ops-space-2); }
 .ops-setup-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--ops-space-4); padding: var(--ops-space-4) var(--ops-page-inset); border-top: 1px solid var(--ops-color-divider); }
 
+@media (min-width: 880px) {
+  .ops-support-add {
+    --ops-support-demo-width: 280px;
+    inset-inline-start: calc((var(--ops-support-demo-width) + var(--ops-space-4)) / -2);
+  }
+  .ops-support-add .arco-modal-content { position: static; }
+  .ops-support-demo {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: calc(100% + var(--ops-space-4));
+    width: var(--ops-support-demo-width);
+    margin: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .operations-pc *, .operations-pc-overlay * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
 @media (max-width: 1024px) {
-  .operations-pc-sidebar:not(.is-collapsed) { width: 224px; }
+  .operations-pc-sidebar { width: 224px; }
   .operations-pc-main { padding: 16px; }
   .operations-pc-header { gap: 16px; padding-right: 16px; }
 }
 @media (max-width: 760px) {
   .operations-pc-brand-name { font-size: var(--ops-font-body); }
   .operations-pc-account > span:last-child { display: none; }
-  .operations-pc-sidebar:not(.is-collapsed) { width: 200px; }
+  .operations-pc-sidebar { width: 200px; }
   .operations-pc-main { padding: 16px 12px; }
   .operations-pc-page-heading { padding-inline: 16px; }
   .operations-pc-list-content { padding-inline: 16px; }

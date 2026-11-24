@@ -310,6 +310,7 @@ try {
       const entryHtml=render(<><SchoolCockpitEntry /><StudentHonorEntry /></>);
       assert.equal((entryHtml.match(/target="_blank"/g)||[]).length,2,'两个PC入口均在新窗口打开');
       assert.ok(entryHtml.includes('?app=data-screen') && entryHtml.includes('?app=student-honor-screen') && entryHtml.includes('学生荣誉榜'));
+      assert.ok(entryHtml.includes('打开学生荣誉榜大屏（新窗口）') && !entryHtml.includes('>大屏</span>'));
       assert.ok(!entryHtml.includes('德育管理全景'),'学校PC不再提供额外的德育独立入口');
       console.log('德育管理全景检查通过：评价次数独立计数、各年级问题前三项、近期问题条数变化、差异班数与数据守恒、自动换组、八板块渲染及空态。');
     ` },

@@ -28,34 +28,32 @@ export function restoreSaved(initial, raw) {
   } catch { return initial; }
 }
 
-export function editorGroups(report, section) {
-  const [sectionId, itemId] = section.split(':');
+export function editorGroups(report, sectionId) {
   const f = (label, path, type = 'textarea') => ({ label, path, type });
   const group = (title, fields) => ({ title, fields });
   const sourceKeys = ['parent', 'child', 'teacher'];
-  const item = (groups) => itemId === undefined ? groups : groups.filter((_, i) => i === Number(itemId));
   if (sectionId === 'cover') return [group('学生信息', [
     f('学生姓名', ['meta', 'name'], 'text'), f('成像日期', ['data', 'date'], 'date'),
   ])];
-  if (sectionId === 'observations') return item(report.data.matrix.map((row, i) => group(row.dim, [
+  if (sectionId === 'observations') return report.data.matrix.map((row, i) => group(row.dim, [
     ...sourceKeys.map((key) => f(report.labels.sources[key], ['data', 'matrix', i, key])),
     f('初步判断', ['data', 'matrix', i, 'insight']),
-  ])));
-  if (sectionId === 'card') return sourceKeys.filter((key) => itemId === undefined || itemId === key).map((key) => group(report.labels.quotes[key], [
+  ]));
+  if (sectionId === 'card') return sourceKeys.map((key) => group(report.labels.quotes[key], [
     ...report.data.quotes[key].flatMap((item, i) => typeof item === 'string'
       ? [f(`原话 ${i + 1}`, ['data', 'quotes', key, i])]
       : [f(`场景 ${i + 1}`, ['data', 'quotes', key, i, 'context'], 'text'), f(`观察原话 ${i + 1}`, ['data', 'quotes', key, i, 'quote'])]),
   ]));
-  if (sectionId === 'five' || sectionId === 'three') return item(report.data[sectionId].map(([label], i) => group(label, [
+  if (sectionId === 'five' || sectionId === 'three') return report.data[sectionId].map(([label], i) => group(label, [
     f('观察与分析', ['data', sectionId, i, 1]),
-  ])));
+  ]));
   if (sectionId === 'light') return [
-    ...['want', 'strong', 'parent', 'teacher'].filter((key) => itemId === undefined || itemId === key).map((key) => group(report.labels.light[key], [f('方向与补充', ['data', 'light', key])])),
-    ...(itemId === undefined || itemId === 'synthesis' ? [group('交汇建议', [f('交汇建议', ['data', 'light', 'synthesis'])])] : []),
+    ...['want', 'strong', 'parent', 'teacher'].map((key) => group(report.labels.light[key].replace(/：$/, ''), [f('方向与补充', ['data', 'light', key])])),
+    group(report.labels.synthesis.replace(/：$/, ''), [f('交汇建议', ['data', 'light', 'synthesis'])]),
   ];
-  if (sectionId === 'watch') return item(report.data.watch.map((item, i) => group(item.title, [
+  if (sectionId === 'watch') return report.data.watch.map((item, i) => group(item.title, [
     f('观察主题', ['data', 'watch', i, 'title'], 'text'), f('观察内容', ['data', 'watch', i, 'text']),
-  ])));
+  ]));
   if (sectionId === 'message') return [group('三个特质', report.data.message.traits.map((_, i) => f(`特质 ${i + 1}`, ['data', 'message', 'traits', i], 'text'))),
     group('理解与陪伴', [f('最需要被理解的是', ['data', 'message', 'need']), f('想先从哪里开始留意', ['data', 'message', 'begin'])])];
   return [];

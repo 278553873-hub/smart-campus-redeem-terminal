@@ -148,7 +148,7 @@ const StudentTeamDetailView: React.FC<StudentTeamDetailViewProps> = ({
         </div>
       </div>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-3 pb-40 pt-3 no-scrollbar">
+      <main data-record-scroll className="min-h-0 flex-1 overflow-y-auto px-3 pb-40 pt-3 no-scrollbar">
         {shouldGroupByClass ? (
           <div className="space-y-[var(--tm-layout-card-gap)]">
             {visibleClassSections.map((section, index) => (

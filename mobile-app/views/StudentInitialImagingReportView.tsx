@@ -19,7 +19,7 @@ const StudentInitialImagingReportView: React.FC<StudentInitialImagingReportViewP
   const source = url.href;
   return <div className="flex min-h-0 flex-1 flex-col bg-[var(--tm-page-plain-content-bg)]" data-student-initial-imaging-report>
     <MobilePageHeader title="学生初成像" onBack={onBack} />
-    <iframe key={source} src={source} onLoad={() => setLoaded(true)} title="吴浩的学生初成像示例报告，可编辑生成内容" className="min-h-0 w-full flex-1 border-0 bg-white" aria-busy={!loaded} />
+    <iframe key={source} src={source} onLoad={() => setLoaded(true)} title="学生初成像报告正文" className="min-h-0 w-full flex-1 border-0" aria-busy={!loaded} />
   </div>;
 };
 

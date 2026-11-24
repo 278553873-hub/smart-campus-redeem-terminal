@@ -41,15 +41,24 @@ const getAvatarStyle = (index: number) => {
   return avatarTones[index % avatarTones.length];
 };
 
-const getStudentRosterCardHeightClass = (displaySettings: StudentCardDisplaySettings) => {
+const getStudentRosterCardHeightClass = (displaySettings: StudentCardDisplaySettings, hasContext = false) => {
   const showPerformanceValues = displaySettings.showEvaluation
     && (displaySettings.showPraise || displaySettings.showCriticism);
   const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceValues);
-  return visiblePerformanceRowCount === 2
-    ? 'h-[var(--tm-student-card-height-full)]'
+  const baseHeightClass = visiblePerformanceRowCount === 2
+    ? '[--tm-student-card-base-height:var(--tm-student-card-height-full)]'
     : visiblePerformanceRowCount === 1
-      ? 'h-[var(--tm-student-card-height-compact)]'
-      : 'h-[var(--tm-student-card-height-minimal)]';
+      ? '[--tm-student-card-base-height:var(--tm-student-card-height-compact)]'
+      : '[--tm-student-card-base-height:var(--tm-student-card-height-minimal)]';
+
+  if (displaySettings.showFullStudentNo) {
+    return `${baseHeightClass} min-h-[calc(var(--tm-student-card-base-height)+var(--tm-student-card-identity-height))] self-stretch`;
+  }
+
+  const heightClass = hasContext
+    ? 'h-[calc(var(--tm-student-card-base-height)+18px)]'
+    : 'h-[var(--tm-student-card-base-height)]';
+  return `${baseHeightClass} ${heightClass}`;
 };
 
 const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
@@ -67,7 +76,8 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
   onClick,
 }) => {
   const [bgClass, textClass, borderClass] = getAvatarStyle(index);
-  const studentNo = student.studentNo || student.id;
+  const fullStudentNo = student.studentNo?.trim();
+  const studentNo = fullStudentNo || student.id;
   const shownLevelNetScore = levelNetScore ?? performance.netScore;
   const level = getStudentPerformanceLevel(shownLevelNetScore);
   const shownTotalScore = getStudentCardTotalScore(shownLevelNetScore, displaySettings.levelForm, student.baseScore ?? DEMO_STUDENT_BASE_SCORE);
@@ -76,13 +86,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
   const showPraise = displaySettings.showEvaluation && displaySettings.showPraise;
   const showCriticism = displaySettings.showEvaluation && displaySettings.showCriticism;
   const showPerformanceValues = showPraise || showCriticism;
-  const visiblePerformanceRowCount = Number(displaySettings.showLevel) + Number(showPerformanceValues);
-  const baseHeightClass = getStudentRosterCardHeightClass(displaySettings);
-  const contextHeightClass = visiblePerformanceRowCount === 2
-    ? 'h-[calc(var(--tm-student-card-height-full)+18px)]'
-    : visiblePerformanceRowCount === 1
-      ? 'h-[calc(var(--tm-student-card-height-compact)+18px)]'
-      : 'h-[calc(var(--tm-student-card-height-minimal)+18px)]';
+  const heightClass = getStudentRosterCardHeightClass(displaySettings, Boolean(contextLabel));
   const accessibilityDetails = [
     `${student.name}，学号${studentNo}`,
     student.gender === 'male' ? '男生' : '女生',
@@ -105,7 +109,7 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       onClick={onClick}
       aria-pressed={showSelection ? selected : undefined}
       aria-label={accessibilityDetails}
-      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface)] py-[3px] text-center [box-shadow:var(--tm-shadow-card)] ${contextLabel ? contextHeightClass : baseHeightClass}`}
+      className={`relative flex w-full min-w-0 select-none flex-col items-center overflow-visible ${shape === 'subtle' ? 'rounded-[var(--tm-radius-card-compact)]' : 'rounded-[var(--tm-radius-inner)]'} bg-[var(--tm-bg-surface)] py-[3px] text-center [box-shadow:var(--tm-shadow-card)] ${heightClass}`}
     >
       {showSelection && (
         <span className={`absolute -right-1 -top-1 z-20 flex h-[18px] w-[18px] items-center justify-center rounded-full animate-in fade-in zoom-in duration-200 ${selected ? 'bg-[var(--tm-brand-primary)]' : 'bg-white'}`}>
@@ -122,6 +126,11 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
       <span className="flex min-h-0 w-full flex-1 flex-col items-center justify-start gap-[3px]">
         {showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
         {showLevelScore && <StudentPerformanceLevelScore netScore={shownTotalScore} className="mt-[2px]" />}
+        {displaySettings.showFullStudentNo && (
+          <span aria-hidden="true" className="min-h-[var(--tm-student-card-identity-height)] w-full shrink-0 px-[var(--tm-space-1)] font-[NumberFont] text-[length:var(--tm-student-card-name-font-size)] leading-[var(--tm-student-card-identity-height)] tabular-nums text-[var(--tm-text-secondary)] [overflow-wrap:anywhere]">
+            {fullStudentNo}
+          </span>
+        )}
         <span className={`relative flex h-[58px] w-[58px] shrink-0 items-center justify-center ${showLevelScore ? '-mt-[2px]' : ''}`}>
           <StudentPerformanceAvatar
             compact

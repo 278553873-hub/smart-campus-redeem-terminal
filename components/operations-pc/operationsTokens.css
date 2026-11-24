@@ -34,7 +34,6 @@
   --ops-radius: var(--border-radius-medium);
   --ops-header-height: 56px;
   --ops-sidebar-width: 256px;
-  --ops-sidebar-collapsed-width: 64px;
 }
 
 @media (max-width: 1024px) {

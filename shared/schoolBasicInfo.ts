@@ -7,6 +7,7 @@ export interface SchoolBasicInfo {
 export type SchoolBasicInfoErrors = Partial<Record<keyof SchoolBasicInfo, string>>;
 export const SCHOOL_DISPLAY_NAME_MAX_LENGTH = 40;
 export const SCHOOL_FEATURES_MAX_LENGTH = 2000;
+export const SCHOOL_LOGO_MAX_SIZE_MB = 5;
 
 export const createSchoolBasicInfo = (schoolName: string): SchoolBasicInfo => ({ displayName: schoolName, logoUrl: '', features: '' });
 

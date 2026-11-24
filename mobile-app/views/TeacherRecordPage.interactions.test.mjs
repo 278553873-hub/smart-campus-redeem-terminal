@@ -74,7 +74,11 @@ forbidText(appSource, 'mainBottomReserveClass', '悬浮录入条不应永久压�
 requireText(recordSource, 'pb-44', '记录列表应通过尾部滚动留白保证最后一条可完整阅读。');
 requireText(classDetailSource, 'pb-40', '班级详情列表应通过尾部滚动留白保证末行可完整阅读。');
 forbidText(appSource, '<VirtualKeyboard', '记录页应使用公共输入的原生键盘。');
-requireText(appSource, 'if (!inputText.trim()) return;', '空文本不应触发解析。');
+requireText(appSource, 'if (!inputText.trim() && !recordPhotoDraft.photos.length) return;', '只有文字和照片都为空时才拦截记录发送。');
+requireText(appSource, '<MobilePhotoCapture', '教师手机端拍照入口应接入公共照片采集。');
+requireText(appSource, 'onSelect={recordPhotoDraft.addPhotos}', '确认照片应先返回录入草稿。');
+requireText(inputBarSource, 'attachments={attachments} onRemoveAttachment={onRemoveAttachment}', '公共录入条应展示可移除的待发送照片。');
+forbidText(appSource, "handleStartRecord(targetIds, 'camera')", '悬浮录入条不应打开旧拍照页。');
 requireText(appSource, 'voice={recordVoice}', '记录页应向公共输入传入演示评价会话。');
 requireText(appSource, 'createSession: callbacks =>', '评价演示的业务回调由会话适配器注入。');
 forbidText(appSource, "handleStartRecord(targetIds, 'voice')", '教师记录页的语音主按钮不得再跳转到全屏录音页。');

@@ -39,6 +39,8 @@ assert.match(screenSource, /<footer[\s\S]*displayModeControl/, '展示档位应�
 assert.match(screenSource, /<footer className="grid[\s\S]*grid-cols-\[minmax\(0,1fr\)_auto_minmax\(0,1fr\)\]/, '底部操作区应使用左右等宽、中间自适应的三列布局');
 assert.match(screenSource, /min-w-0 justify-self-start[\s\S]*displayModeControl/, '正常状态下展示档位应固定在底部左侧');
 assert.match(screenSource, /min-w-0 items-center justify-self-center[\s\S]*批量评价[\s\S]*随机点/, '批量评价和随机点名应位于底部中央主操作区');
+assert.match(screenSource, /min-w-0 items-center justify-self-center[\s\S]*批量评价[\s\S]*随机点[\s\S]*成长荣誉榜/, '成长荣誉榜应位于底部中央主操作区');
+assert.match(screenSource, /createHonorClassBoard\(classId, currentClass, students\.map[\s\S]*getStudentLevelScore\(student, getBaseStudentPerformance\(student\)\)/, '成长荣誉榜使用当前班级完整名册和本学期总分');
 assert.match(screenSource, /min-w-0 justify-self-end[\s\S]*setHistoryOpen\(true\)/, '点评记录应固定在底部右侧');
 assert.match(screenSource, /!isMultiSelect && !isRecountSelection && displayModeControl/, '进入选择态后应隐藏左侧展示档位，保持任务聚焦');
 assert.doesNotMatch(screenSource, /当前：\{classroomDisplay\.label\}/, '展示档位的选中态已表达当前设置，不应重复显示当前档位文案');

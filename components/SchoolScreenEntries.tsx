@@ -1,28 +1,27 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 import { Button } from '@arco-design/web-react';
 import { Monitor, Trophy } from 'lucide-react';
 
-/** 两个顶部入口分别导出，供宿主按各自功能权限控制展示。 */
-export function SchoolCockpitEntry() {
+function SchoolScreenEntry({ href, label, icon }: { href: string; label: string; icon: ReactNode }) {
   return (
     <Button
       type="text"
-      href="?app=data-screen"
+      className="shrink-0 shadow-none"
+      href={href}
       target="_blank"
-      anchorProps={{ rel: 'noopener noreferrer', title: '打开学校驾驶舱（新窗口）' }}
-      icon={<Monitor size={16} aria-hidden="true" />}
-    >学校驾驶舱</Button>
+      anchorProps={{ rel: 'noopener noreferrer', title: `打开${label}大屏（新窗口）` }}
+      icon={icon}
+    >
+      <span className="whitespace-nowrap font-bold">{label}</span>
+    </Button>
   );
 }
 
+/** 两个顶部入口分别导出，供宿主按各自功能权限控制展示。 */
+export function SchoolCockpitEntry() {
+  return <SchoolScreenEntry href="?app=data-screen" label="学校驾驶舱" icon={<Monitor size={16} aria-hidden="true" />} />;
+}
+
 export function StudentHonorEntry() {
-  return (
-    <Button
-      type="text"
-      href="?app=student-honor-screen"
-      target="_blank"
-      anchorProps={{ rel: 'noopener noreferrer', title: '打开学生荣誉榜（新窗口）' }}
-      icon={<Trophy size={16} aria-hidden="true" />}
-    >学生荣誉榜</Button>
-  );
+  return <SchoolScreenEntry href="?app=student-honor-screen" label="学生荣誉榜" icon={<Trophy size={16} aria-hidden="true" />} />;
 }

@@ -59,6 +59,20 @@ export async function loadStudentHonor(): Promise<HonorSnapshot> {
       }
     }
   }
+  // 固定小学前三个年级的并列演示，按完整年级分数选出前三人。
+  const tiePatterns = [
+    { gradeId: '一年级', offsets: [2, 2, 0] },
+    { gradeId: '二年级', offsets: [2, 0, 0] },
+    { gradeId: '三年级', offsets: [0, 0, 0] },
+  ];
+  for (const { gradeId, offsets } of tiePatterns) {
+    const leaders = studentScores.filter(item => item.student.gradeId === gradeId)
+      .sort((a, b) => b.total - a.total || a.student.id.localeCompare(b.student.id)).slice(0, 3);
+    if (leaders.length !== 3) continue;
+    const base = leaders[0].total + 1;
+    leaders.forEach((item, index) => { item.total = base + offsets[index]; });
+  }
+
   return {
     stages,
     schoolName: TEACHER_SPACE_OPTIONS.find(space => space.id === 'school-star')?.title ?? '星河实验学校',

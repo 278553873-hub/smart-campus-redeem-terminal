@@ -131,6 +131,7 @@ export type TeacherMoreToolId =
     | 'parentRecordingSettings'
     | 'parentEvaluationVisibility'
     | 'classPetSettings'
+    | 'medalSettings'
     | 'reportManagement'
     | 'archiveDesign'
     | 'subjectManagement'
@@ -233,6 +234,7 @@ export const getTeacherSpaceMenuPolicy = (space: TeacherSpaceOption): TeacherSpa
     }
 
     const moreTools = [...policy.moreTools];
+    if (canManageSchoolMedals(space)) moreTools.push('medalSettings');
     // 货柜兑换是学校内的只读查询工具，个人和协作空间不开放。
     if (space.type === 'school' && ['administrator', 'leader', 'homeroomTeacher', 'teacher'].includes(space.role)) {
         const coinIndex = moreTools.indexOf('coinIssuance');
@@ -252,6 +254,10 @@ export const getTeacherSpaceMenuPolicy = (space: TeacherSpaceOption): TeacherSpa
         moreTools,
     };
 };
+
+export const canManageSchoolMedals = (space: TeacherSpaceOption): boolean => (
+    space.type === 'school' && (space.role === 'administrator' || space.role === 'leader')
+);
 
 export const getHeadteacherAssistantScopes = (
     space: TeacherSpaceOption,

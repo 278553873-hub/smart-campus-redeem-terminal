@@ -459,11 +459,11 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 {onViewInitialImagingReport && isInitialImagingReportInPeriod(selectedTermOption.startDate, selectedTermOption.endDate) && <button
                     type="button"
                     onClick={onViewInitialImagingReport}
-                    className="flex min-h-[76px] w-full items-center justify-between gap-3 border-b border-[var(--tm-border-subtle)] px-4 py-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
+                    className="flex min-h-[60px] w-full items-center justify-between gap-3 border-b border-[var(--tm-border-subtle)] px-4 py-3 text-left text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <span className="flex min-w-0 items-center gap-3">
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]"><ClipboardList size={18} aria-hidden="true" /></span>
-                        <span className="min-w-0"><span className="block text-sm font-semibold leading-6 text-[var(--tm-text-primary)]">{STUDENT_INITIAL_IMAGING_REPORT.title}</span><span className="mt-0.5 block text-xs text-[var(--tm-text-secondary)]">{STUDENT_INITIAL_IMAGING_REPORT.exampleLabel}</span></span>
+                        <span>{STUDENT_INITIAL_IMAGING_REPORT.title}</span>
                     </span>
                     <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
                 </button>}

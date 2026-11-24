@@ -26,7 +26,7 @@ has(panelSource, '<GrowthCoinIcon', '手动退币确认弹窗的成长币应使�
 has(classViewSource, '<GrowthCoinIcon', '撤回本次兑换确认弹窗的成长币应使用金币图标。');
 has(classViewSource, 'showFilterAction={false}', '班级兑换记录中的货柜记录隐藏右侧筛选入口。');
 has(panelSource, 'showFilterAction && (', '记录面板应支持隐藏右侧筛选入口。');
-has(panelSource, '<MobileDatePickerSheet', '班级兑换记录的货柜页签必须保留日期入口。');
+has(panelSource, '<ExchangeRecordDateFilter', '班级兑换记录的货柜页签必须保留日期入口。');
 has(cardSource, 'h-14 w-14', '货柜商品图应使用正方形媒体区，不套用班级头像的宽扁区域。');
 has(cardSource, 'width={56} height={56}', '货柜商品图应按56像素正方形输出。');
 has(panelSource, 'border-t border-[var(--tm-border-subtle)]', '跨月记录应使用同色分隔线而不是明显间距。');
@@ -37,6 +37,8 @@ has(classViewSource, '<span className="sr-only">{GROWTH_COIN_TERMS.name}</span>'
 has(panelSource, 'onRefundRecord', '记录面板应把退币动作交给上层写入。');
 has(panelSource, "detail.status === 'completed' && detail.refundStatus === 'none'", '只有成功且未退币的货柜记录可手动退币。');
 has(panelSource, '确认未出货并退币', '手动退币必须先二次确认。');
+const confirmRefundBody = panelSource.match(/const confirmRefund = \(\) => \{([\s\S]*?)\n  \};/)?.[1] ?? '';
+assert.match(confirmRefundBody, /setShowRefundConfirm\(false\);\s+setDetailId\(null\);/, '确认退币后应同时关闭确认弹窗和兑换详情。');
 has(panelSource, '已退回', '退币成功后应给出结果反馈。');
 has(appSource, 'handleRefundVendingRecord', 'App 应统一处理货柜手动退币。');
 has(appSource, 'manualRefunds={manualVendingRefundsForSpace}', '货柜管理与班级兑换记录应共用同一份手动退币结果。');

@@ -204,9 +204,11 @@ assert.ok(!viewSource.includes('<TeacherReportScoreProgressChart'), '分类数�
 assert.ok(!viewSource.includes('grid grid-cols-2 divide-x divide-[var(--tm-border-subtle)] border-y'), '本周核心数据不应继续依赖重复分隔线建立层级。');
 assert.ok(!viewSource.includes(' transition '), 'V2 页面交互不得使用会监听所有属性的笼统过渡。');
 requireText(viewSource, '查看评价明细', '评价分类下方应提供居中的查看评价明细入口。');
-requireText(viewSource, 'records.some(record => record.dimension === item.dimension)', '查看评价明细应默认打开本周期首个有评价记录的指标，包含只有加分的指标。');
+requireText(viewSource, "onOpenDetails={() => setClassEvaluationSubpage('records')}", '查看评价明细应进入独立记录页。');
+requireText(viewSource, '<ClassEvaluationDetailsPage classId={resolvedClassId}', '独立记录页应读取当前带班班级。');
+requireText(viewSource, 'records.some(record => record.dimension === item.dimension)', '周数据页应默认定位本周期首个有评价记录的指标，包含只有加分的指标。');
 requireText(viewSource, 'initialDimension={detailInitialDimension ?? undefined}', '分类明细应在子页定位到当前一级指标。');
-requireText(viewSource, 'setWeekDetailOpen(true)', '点击分类行或查看评价明细应进入周数据子页。');
+requireText(viewSource, "setClassEvaluationSubpage('week')", '点击日期或分类行应进入周数据子页。');
 assert.ok(!viewSource.includes('DimensionDetailSheetHeader'), '分类明细不应再使用底部弹窗。');
 requireText(viewSource, 'role="tablist" aria-label="一级指标"', '周数据子页应提供一级指标切换。');
 assert.ok(!viewSource.includes('expandedDimension'), '分类数据不应继续在主卡片内展开扣分记录。');
@@ -221,8 +223,9 @@ assert.ok(!viewSource.includes('<span className="text-[11px] tabular-nums text-[
 requireText(viewSource, 'selectedDimension={selectedRanking?.dimension}', '周数据页分类表应突出当前选择的一级指标。');
 requireText(viewSource, 'selectedRecords = records.filter', '周数据页评价明细应跟随一级指标筛选。');
 requireText(viewSource, "record.indicatorPath?.join(' / ')", '每笔扣分明细应展示一、二、三级完整指标路径。');
-requireText(viewSource, '>原文</div>', '每笔扣分明细应展示评价原文。');
-requireText(viewSource, 'record.images?.length', '评价明细应在记录有配图时展示图片区域。');
+requireText(viewSource, '{record.finding}</p>', '评价明细应直接展示评价原文。');
+assert.ok(!viewSource.includes('>原文</div>'), '评价明细不应显示“原文”标签。');
+requireText(viewSource, '!!images?.length', '评价明细应在记录有配图时展示图片区域。');
 requireText(viewSource, '<ImageGallery', '评价明细的配图应复用通用图片网格。');
 requireText(viewSource, 'label="评价图片"', '评价明细的配图应提供完整可访问名称。');
 assert.ok(!viewSource.includes('selectedDeduction'), '多笔扣分明细不应汇总扣分合计。');

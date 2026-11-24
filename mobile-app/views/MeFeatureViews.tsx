@@ -18,6 +18,8 @@ import {
     Trash2,
 } from 'lucide-react';
 import { ASSETS } from '../assets/images';
+import TeacherDemoAccountSwitch from '../components/me/TeacherDemoAccountSwitch';
+import type { DemoTeacherAccount } from '../../shared/demoTeacherAccounts';
 import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileCardTabBar from '../components/ui/MobileCardTabBar';
@@ -28,6 +30,7 @@ import type { CoinIssuanceConfig } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileToast from '../components/ui/MobileToast';
 import MobileSelectField from '../components/ui/MobileSelectField';
+import { maskTeacherLoginPhone } from '../domain/teacherLoginAccess';
 import {
     getTeacherGradientPreviewVisual,
     type TeacherGradientPreviewConfig,
@@ -50,6 +53,9 @@ export interface SchoolDepartmentItem {
 
 interface SettingsViewProps {
     onLogout: () => void;
+    loginPhone?: string;
+    onSwitchDemoAccount?: (phone: string) => string | undefined;
+    onDemoAccountSwitchPreviewChange?: (account: DemoTeacherAccount | null) => void;
     gradientPreview: TeacherGradientPreviewConfig;
     onGradientPreviewChange: (config: TeacherGradientPreviewConfig) => void;
 }
@@ -170,15 +176,22 @@ const TEACHER_DIFFUSE_STYLE_OPTIONS: ReadonlyArray<{
     { schemeId: 'scheme-6', label: '清新校园' },
 ];
 
-const StaticRow: React.FC<{ icon?: React.ElementType; title: string; value?: string }> = ({ icon: Icon, title, value }) => (
-    <div className={`${featureListRowClass} w-full justify-between gap-3`}>
-        <span className="flex min-w-0 items-center gap-3 text-[14px] font-semibold text-[var(--tm-text-primary)]">
-            {Icon && <Icon className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-secondary)]" strokeWidth={2.1} />}
-            <span className="truncate">{title}</span>
-        </span>
-        {value && <span className="shrink-0 text-[13px] font-medium text-[var(--tm-text-tertiary)]">{value}</span>}
-    </div>
-);
+const LoginAccountRow: React.FC<Pick<SettingsViewProps, 'loginPhone' | 'onSwitchDemoAccount' | 'onDemoAccountSwitchPreviewChange'>> = ({ loginPhone, onSwitchDemoAccount, onDemoAccountSwitchPreviewChange }) => {
+    const className = `${featureListRowClass} w-full justify-between gap-3`;
+    const accountContent = (
+        <>
+            <span className="flex min-w-0 items-center gap-3 text-[14px] font-semibold text-[var(--tm-text-primary)]">
+                <Shield className="h-4.5 w-4.5 shrink-0 text-[var(--tm-text-secondary)]" strokeWidth={2.1} aria-hidden="true" />
+                <span className="truncate">登录账号</span>
+            </span>
+            <span className="shrink-0 text-[13px] font-medium text-[var(--tm-text-tertiary)]">{loginPhone ? maskTeacherLoginPhone(loginPhone) : '139****0121'}</span>
+        </>
+    );
+
+    return onSwitchDemoAccount
+        ? <TeacherDemoAccountSwitch className={className} loginPhone={loginPhone} onSwitch={onSwitchDemoAccount} onPreviewChange={onDemoAccountSwitchPreviewChange}>{accountContent}</TeacherDemoAccountSwitch>
+        : <div className={className}>{accountContent}</div>;
+};
 
 interface TeacherStyleSheetProps {
     open: boolean;
@@ -236,7 +249,7 @@ const TeacherStyleSheet: React.FC<TeacherStyleSheetProps> = ({ open, value, onCl
     </MobileBottomSheet>
 );
 
-export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, gradientPreview, onGradientPreviewChange }) => {
+export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, loginPhone, onSwitchDemoAccount, onDemoAccountSwitchPreviewChange, gradientPreview, onGradientPreviewChange }) => {
     const [showTeacherStyleSheet, setShowTeacherStyleSheet] = React.useState(false);
     const selectedStyle = TEACHER_DIFFUSE_STYLE_OPTIONS.find(option => option.schemeId === gradientPreview.schemeId);
 
@@ -245,7 +258,7 @@ export const MineSettingsView: React.FC<SettingsViewProps> = ({ onLogout, gradie
             <FeaturePageBody spacing="compact">
                 <section className="space-y-2">
                     <h3 className="px-1 text-[14px] font-bold text-[var(--tm-text-primary)]">账号安全</h3>
-                    <StaticRow icon={Shield} title="登录账号" value="139****0121" />
+                    <LoginAccountRow loginPhone={loginPhone} onSwitchDemoAccount={onSwitchDemoAccount} onDemoAccountSwitchPreviewChange={onDemoAccountSwitchPreviewChange} />
                     <ActionRow icon={KeyRound} title="修改密码" />
                 </section>
 

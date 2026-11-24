@@ -1,6 +1,7 @@
 import TeacherPadPreview from './components/teacher-pad/TeacherPadPreview';
 import AirecDevicePreviewControls from './components/AirecDevicePreviewControls';
 import TeacherDevicePreviewControls from './components/TeacherDevicePreviewControls';
+import ClassExchangePreviewControls from './components/ClassExchangePreviewControls';
 import type { DevicePreviewBounds } from './components/PhoneMockup';
 import { parentGrowthSchemeOptions, type ParentGrowthScheme } from './components/parent-app/parentGrowthTheme';
 import CoinFlowReviewNotes from './components/CoinFlowReviewNotes';
@@ -11,9 +12,10 @@ import ClassReportOutlinePreviewControls from './components/ClassReportOutlinePr
 import ClassListLoadingPreviewControls from './components/ClassListLoadingPreviewControls';
 import { defaultClassListLoadingPreview } from './shared/classListLoadingPreview';
 import { createDefaultClassReportOutline, normalizeClassReportOutline } from './shared/classReportOutline';
-import { GrowthCoinIcon, GrowthCoinName, useGrowthCoinTerms } from './components/GrowthCoinBranding';
+import { GrowthCoinIcon, GrowthCoinName, GrowthCoinScope, useGrowthCoinTerms } from './components/GrowthCoinBranding';
 
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { Button, Empty, Message, Modal } from '@arco-design/web-react';
 import { ViewState, Student, Product, BankAccount, Deposit } from './types';
 import { EXCHANGE_RATE, BANK_CONFIG, MOCK_PRODUCTS } from './constants';
 import FaceScanner from './components/FaceScanner';
@@ -39,7 +41,10 @@ import TerminalLoginMethodPreviewControls, { type StudentLoginPreviewMode } from
 import TerminalShopLayoutPreviewControls from './components/TerminalShopLayoutPreviewControls';
 import TeacherCMobileLowFi from './components/TeacherCMobileLowFi';
 import VendingAdmin from './components/VendingAdmin';
-import SaaSPortal, { type PcPortalApp } from './components/SaaSPortal';
+import SaaSPortal from './components/SaaSPortal';
+import SchoolPcAccountMenu from './components/SchoolPcAccountMenu';
+import SchoolPcTeachingDashboard from './components/SchoolPcTeachingDashboard';
+import { getDemoSchoolPcMemberships, type PcPortalApp } from './components/schoolPcMemberships';
 import RegionalPcAdmin from './components/RegionalPcAdmin';
 import OperationsPcAdmin from './components/operations-pc/OperationsPcAdmin';
 import UiRenovationDemo from './components/UiRenovationDemo';
@@ -49,8 +54,10 @@ import ScreenPanoramaHost from './components/screen-navigation/ScreenPanoramaHos
 import { SchoolCockpitEntry, StudentHonorEntry } from './components/SchoolScreenEntries';
 import StudentHonorScreen from './components/student-honor-screen/StudentHonorScreen';
 import TeacherDemoSearchExample from './components/TeacherDemoSearchExample';
+import TeacherAccountSwitchPreviewControls from './components/TeacherAccountSwitchPreviewControls';
+import type { DemoTeacherAccount } from './shared/demoTeacherAccounts';
 import TeacherMobileDeveloperNotes, { type TeacherMobileDeveloperNotesContext } from './components/TeacherMobileDeveloperNotes';
-import PlatformBrandMark from './components/PlatformBrandMark';
+import letoAiLogo from './assets/letoai-logo.png';
 import Loader from './components/Loader';
 import { DeviceWrapper } from './components/DeviceWrapper';
 import { ASSETS as MOBILE_ASSETS } from './mobile-app/assets/images';
@@ -1286,12 +1293,19 @@ const TerminalApp: React.FC<{
 };
 
 type PcWorkspaceTab = 'home' | PcPortalApp;
+const SCHOOL_PC_WORKSPACES = getDemoSchoolPcMemberships();
+const DEFAULT_PC_WORKSPACE = SCHOOL_PC_WORKSPACES[0];
 
 const PcWorkspace: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [openTabs, setOpenTabs] = useState<PcWorkspaceTab[]>(['home']);
   const [activeTab, setActiveTab] = useState<PcWorkspaceTab>('home');
   const [teacherProfile, setTeacherProfile] = useState<TeacherProfile>(DEMO_TEACHER_PROFILES[0]);
+  const [workspace, setWorkspace] = useState(DEFAULT_PC_WORKSPACE);
+  const schoolBasicInfoEditState = useRef<{ dirty: boolean; busy: boolean } | null>(null);
+  const updateSchoolBasicInfoEditState = useCallback((state: typeof schoolBasicInfoEditState.current) => {
+    schoolBasicInfoEditState.current = state;
+  }, []);
 
   const tabMeta: Record<PcWorkspaceTab, { label: string; icon: React.ReactNode }> = {
     home: { label: '首页', icon: <LayoutGrid size={15} /> },
@@ -1301,6 +1315,7 @@ const PcWorkspace: React.FC = () => {
   };
 
   const openTab = (tab: PcPortalApp) => {
+    if (!workspace.availableApps.includes(tab)) return;
     setOpenTabs((prev) => (prev.includes(tab) ? prev : [...prev, tab]));
     setActiveTab(tab);
   };
@@ -1316,8 +1331,41 @@ const PcWorkspace: React.FC = () => {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setWorkspace(DEFAULT_PC_WORKSPACE);
     setOpenTabs(['home']);
     setActiveTab('home');
+  };
+
+  const changeWorkspace = (workspaceId: string) => {
+    const nextWorkspace = SCHOOL_PC_WORKSPACES.find(item => item.id === workspaceId);
+    if (!nextWorkspace || nextWorkspace.id === workspace.id) return;
+
+    const switchWorkspace = () => {
+      setOpenTabs(['home']);
+      setActiveTab('home');
+      setWorkspace(nextWorkspace);
+    };
+    const editState = activeTab === 'teacher' ? schoolBasicInfoEditState.current : null;
+    if (editState?.busy) {
+      Message.info('学校标志正在处理，请稍候');
+      return;
+    }
+    if (editState?.dirty) {
+      Modal.confirm({
+        title: '学校基本信息有未保存的修改',
+        content: `切换到${nextWorkspace.name}后，本次未保存的修改将丢失。`,
+        okText: '放弃修改并切换',
+        cancelText: '继续编辑',
+        onOk: switchWorkspace,
+      });
+      return;
+    }
+    switchWorkspace();
+  };
+
+  const handleLoginSuccess = (profile: TeacherProfile) => {
+    setTeacherProfile(profile);
+    setIsLoggedIn(true);
   };
 
   const renderContent = () => {
@@ -1326,23 +1374,30 @@ const PcWorkspace: React.FC = () => {
         return (
           <SaaSPortal
             isLoggedIn
-            teacherProfile={teacherProfile}
-            onLoginSuccess={(profile) => {
-              setTeacherProfile(profile);
-              setIsLoggedIn(true);
-            }}
-            onLogout={handleLogout}
+            teacherProfile={{ ...teacherProfile, school: workspace.name, role: workspace.role }}
+            availableApps={workspace.availableApps}
+            enrolledStudentCount={workspace.enrolledStudentCount}
+            onLoginSuccess={handleLoginSuccess}
             onNavigate={openTab}
           />
         );
       case 'teacher':
-        return <TeacherDashboard embedded onNavigateBigScreen={() => openTab('smart-big-screen')} />;
+        return workspace.canManageSchool
+          ? <TeacherDashboard embedded schoolId={workspace.id} schoolName={workspace.name}
+              onSchoolBasicInfoEditStateChange={updateSchoolBasicInfoEditState} onNavigateBigScreen={() => openTab('smart-big-screen')} />
+          : <SchoolPcTeachingDashboard classNames={workspace.classroomClassNames} />;
       case 'all-in-one':
         return <TerminalApp mode="all-in-one" embedded />;
       case 'smart-big-screen':
+        if (!workspace.classroomClassNames.length) {
+          return <div className="grid h-full place-items-center"><Empty description="暂无可用班级" /></div>;
+        }
         return (
           <SmartBigScreen
             embedded
+            schoolId={workspace.id}
+            classNames={workspace.classroomClassNames}
+            backLabel={openTabs.includes('teacher') ? '返回管理后台' : '返回首页'}
             onBack={() => setActiveTab(openTabs.includes('teacher') ? 'teacher' : 'home')}
           />
         );
@@ -1356,11 +1411,8 @@ const PcWorkspace: React.FC = () => {
       <SaaSPortal
         isLoggedIn={false}
         teacherProfile={teacherProfile}
-        onLoginSuccess={(profile) => {
-          setTeacherProfile(profile);
-          setIsLoggedIn(true);
-        }}
-        onLogout={handleLogout}
+        availableApps={workspace.availableApps}
+        onLoginSuccess={handleLoginSuccess}
         onNavigate={openTab}
       />
     );
@@ -1370,9 +1422,13 @@ const PcWorkspace: React.FC = () => {
     <div className="w-screen h-[100dvh] bg-[#edf3f8] flex flex-col overflow-hidden">
       <header className="h-14 bg-white border-b border-slate-200 flex items-center shrink-0 shadow-sm">
         <div className="flex items-center gap-3 min-w-0 pl-5 shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-[#2a68ff] text-white flex items-center justify-center shadow-md shadow-blue-200 shrink-0">
-            <PlatformBrandMark size={20} />
-          </div>
+          <img
+            src={letoAiLogo}
+            alt=""
+            width={112}
+            height={32}
+            className="h-8 w-28 shrink-0 object-cover object-[center_48%]"
+          />
           <div
             className="min-w-0 text-[18px] font-black text-slate-800 tracking-[0.01em] leading-none"
             style={{ fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif' }}
@@ -1381,8 +1437,8 @@ const PcWorkspace: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 min-w-0 px-5">
-          <div className="flex items-center gap-2 min-w-max overflow-x-auto scrollbar-hide">
+        <div className="flex-1 min-w-0 px-3 lg:px-5">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
             {openTabs.map((tab) => {
               const active = activeTab === tab;
               return (
@@ -1415,26 +1471,32 @@ const PcWorkspace: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0 pr-5">
-          <SchoolCockpitEntry />
-          <StudentHonorEntry />
-          <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-              <span className="text-[13px] font-black">{teacherProfile.name.slice(0, 1)}</span>
-            </div>
-            <div className="hidden md:block text-[13px] font-bold text-slate-700 leading-none">{teacherProfile.name}</div>
-            <button
-              onClick={handleLogout}
-              className="h-9 px-3 rounded-xl text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 active:scale-95"
-              title="退出登录"
-            >
-              <LogOut size={16} />
-              <span className="text-sm font-bold">退出</span>
-            </button>
+          {workspace.canManageSchool && <SchoolCockpitEntry />}
+          {workspace.canManageSchool && <StudentHonorEntry />}
+          <div className="border-l border-slate-200 pl-2">
+            <SchoolPcAccountMenu
+              teacherName={teacherProfile.name}
+              avatar={teacherProfile.avatar}
+              current={workspace}
+              workspaces={SCHOOL_PC_WORKSPACES}
+              onWorkspaceChange={changeWorkspace}
+            />
           </div>
+          <Button
+            type="text"
+            size="large"
+            icon={<LogOut size={16} aria-hidden="true" />}
+            aria-label="退出登录"
+            className="shrink-0 !font-medium !text-slate-600 hover:!bg-transparent hover:!text-red-600 active:!bg-transparent"
+            onClick={handleLogout}
+          >退出</Button>
+          <span className="sr-only" role="status">当前为{workspace.name}</span>
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 overflow-hidden">{renderContent()}</main>
+      <main className="flex-1 min-h-0 overflow-hidden">
+        <GrowthCoinScope key={workspace.id} schoolId={workspace.id}>{renderContent()}</GrowthCoinScope>
+      </main>
     </div>
   );
 };
@@ -1472,8 +1534,12 @@ const AppSwitcher: React.FC = () => {
   const [showTeacherProfileSetupPreview, setShowTeacherProfileSetupPreview] = useState(false);
   const [showAirecDevicePreview, setShowAirecDevicePreview] = useState(false);
   const [showClassActionsPreview, setShowClassActionsPreview] = useState(false);
+  const [showClassExchangePreview, setShowClassExchangePreview] = useState(false);
+  const [classExchangePreviewHasCabinet, setClassExchangePreviewHasCabinet] = useState(true);
   const [showUnreleasedClassTools, setShowUnreleasedClassTools] = useState(false);
   const [showTeacherMePreview, setShowTeacherMePreview] = useState(false);
+  const [teacherAccountSwitchPreview, setTeacherAccountSwitchPreview] = useState<DemoTeacherAccount | null>(null);
+  const [teacherAccountSwitchDockPosition, setTeacherAccountSwitchDockPosition] = useState<{ left: number; top: number } | null>(null);
   const [showTeacherUnreleasedTools, setShowTeacherUnreleasedTools] = useState(false);
   const [isTeacherGradientControlsOpen, setIsTeacherGradientControlsOpen] = useState(false);
   const [studentTeamInvitePreview, setStudentTeamInvitePreview] = useState(false);
@@ -1585,6 +1651,13 @@ const AppSwitcher: React.FC = () => {
     const maxLeft = Math.max(16, window.innerWidth - 272 - 16);
     const position = { left: Math.min(bounds.right + 24, maxLeft), top: Math.max(16, bounds.top) };
     setTeacherTabletPreviewDockPosition(previous => (
+      previous?.left === position.left && previous.top === position.top ? previous : position
+    ));
+  }, []);
+
+  const handleTeacherAccountSwitchBoundsChange = useCallback((bounds: DevicePreviewBounds) => {
+    const position = { left: bounds.right + 24, top: bounds.screenBottom };
+    setTeacherAccountSwitchDockPosition(previous => (
       previous?.left === position.left && previous.top === position.top ? previous : position
     ));
   }, []);
@@ -1893,14 +1966,17 @@ const AppSwitcher: React.FC = () => {
             showUnreleasedTools={showTeacherUnreleasedTools}
             showPhoneShell={showTeacherDeviceFrame}
             previewDevice={isTeacherTabletPreview ? 'tablet' : 'phone'}
-            onPreviewDeviceBoundsChange={isTeacherTabletPreview ? handleTeacherPreviewDeviceBoundsChange : undefined}
+            onPreviewDeviceBoundsChange={teacherAccountSwitchPreview ? handleTeacherAccountSwitchBoundsChange : isTeacherTabletPreview ? handleTeacherPreviewDeviceBoundsChange : undefined}
             screenRef={teacherPhoneScreenRef}
             onGradientPreviewVisibilityChange={setShowTeacherColorPreview}
             onProfileSetupVisibilityChange={setShowTeacherProfileSetupPreview}
             onMePreviewVisibilityChange={setShowTeacherMePreview}
+            onDemoAccountSwitchPreviewChange={setTeacherAccountSwitchPreview}
             onAirecPreviewVisibilityChange={setShowAirecDevicePreview}
             showUnreleasedClassTools={showUnreleasedClassTools}
             onClassActionsPreviewVisibilityChange={setShowClassActionsPreview}
+            classExchangePreviewHasCabinet={classExchangePreviewHasCabinet}
+            onClassExchangePreviewVisibilityChange={setShowClassExchangePreview}
             campaignPreviewEveryEntry
             headteacherAssistantScopePreview={headteacherAssistantScopePreviewMode ?? undefined}
             onHeadteacherAssistantScopePreviewDefaultChange={setHeadteacherAssistantScopePreviewDefault}
@@ -2083,6 +2159,16 @@ const AppSwitcher: React.FC = () => {
 
             {currentApp === 'teacher-mobile-lite' && showTeacherDeviceFrame && (
               <TeacherDevicePreviewControls value={teacherPreviewDevice} onChange={setTeacherPreviewDevice} />
+            )}
+
+            {showClassExchangePreview && <div className="w-[272px] max-w-[calc(50vw-246px)] self-start max-[900px]:hidden">
+              <ClassExchangePreviewControls hasCabinet={classExchangePreviewHasCabinet} onChange={setClassExchangePreviewHasCabinet} />
+            </div>}
+
+            {currentApp === 'admin' && teacherAccountSwitchPreview && teacherAccountSwitchDockPosition && (
+              <div className="fixed right-4 max-w-[232px] -translate-y-full max-[800px]:hidden" style={teacherAccountSwitchDockPosition}>
+                <TeacherAccountSwitchPreviewControls account={teacherAccountSwitchPreview} />
+              </div>
             )}
 
             {currentApp === 'admin' && showTeacherMePreview && <section className="w-full rounded-2xl border border-slate-200/80 bg-white/90 p-3" aria-label="未上线功能预览配置">
@@ -2275,16 +2361,6 @@ const AppSwitcher: React.FC = () => {
               <span className="text-[9px] font-bold leading-tight">教师-手机端</span>
             </button>
             <button
-              type="button"
-              onClick={() => setCurrentApp('teacher-mobile-lite')}
-              className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-mobile-lite' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
-              title="教师-手机端(极速版)"
-              aria-label="教师-手机端(极速版)"
-            >
-              <Smartphone size={22} className="mb-1" aria-hidden="true" />
-              <span className="text-[9px] font-bold leading-tight">教师-手机端<span className="block">(极速版)</span></span>
-            </button>
-            <button
               onClick={() => setCurrentApp('terminal')}
               className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'terminal' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
               title="货柜机 - 学生端"
@@ -2328,6 +2404,16 @@ const AppSwitcher: React.FC = () => {
             </button>
             {showAdvancedApps && (
               <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentApp('teacher-mobile-lite')}
+                  className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-mobile-lite' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}
+                  title="教师-手机端(极速版)"
+                  aria-label="教师-手机端(极速版)"
+                >
+                  <Smartphone size={22} className="mb-1" aria-hidden="true" />
+                  <span className="text-[9px] font-bold leading-tight">教师-手机端<span className="block">(极速版)</span></span>
+                </button>
                 <button
                   onClick={() => setCurrentApp('teacher-evaluation')}
                   className={`w-14 h-14 flex flex-col items-center justify-center rounded-xl transition-all ${currentApp === 'teacher-evaluation' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 active:bg-slate-100'}`}

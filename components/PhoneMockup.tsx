@@ -5,6 +5,7 @@ import SimulatedMiniProgramChrome from './SimulatedMiniProgramChrome';
 export interface DevicePreviewBounds {
   right: number;
   top: number;
+  screenBottom: number;
 }
 
 interface PhoneMockupProps {
@@ -63,6 +64,7 @@ const PhoneMockup: React.FC<PhoneMockupProps> = ({
         onDeviceBoundsChange({
           right: bounds.left + (width / 2 + (screenWidth / 2 + bezel) * nextScale) * bounds.width / width,
           top: bounds.top + (height / 2 - (screenHeight / 2 + bezel) * nextScale) * bounds.height / height,
+          screenBottom: bounds.top + (height / 2 + screenHeight / 2 * nextScale) * bounds.height / height,
         });
       }
     };

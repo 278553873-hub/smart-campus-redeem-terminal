@@ -8,6 +8,9 @@ const demoSource = fs.readFileSync(new URL('../data/campusCoinLedger.ts', import
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const rewardSource = fs.readFileSync(new URL('./reward-verification/RewardVerificationView.tsx', import.meta.url), 'utf8');
 const cabinetDemoSource = fs.readFileSync(new URL('./class-exchange-records/ClassExchangeRecordsDemoView.tsx', import.meta.url), 'utf8');
+const dateFilterSource = fs.readFileSync(new URL('./exchange-records/ExchangeRecordDateFilter.tsx', import.meta.url), 'utf8');
+const vendingPanelSource = fs.readFileSync(new URL('./vending-exchange/VendingExchangeRecordsPanel.tsx', import.meta.url), 'utf8');
+const previewSource = fs.readFileSync(new URL('../../components/ClassExchangePreviewControls.tsx', import.meta.url), 'utf8');
 const studentCoinSource = fs.readFileSync(new URL('./StudentCoinDetailView.tsx', import.meta.url), 'utf8');
 const coinFlowSource = fs.readFileSync(new URL('../../shared/growthCoinFlow.ts', import.meta.url), 'utf8');
 const dangerSheetSource = fs.readFileSync(new URL('../components/ui/MobileDangerConfirmSheet.tsx', import.meta.url), 'utf8');
@@ -18,7 +21,7 @@ const headerStart = viewSource.indexOf('<header');
 const headerTag = headerStart >= 0 ? viewSource.slice(headerStart, viewSource.indexOf('>', headerStart) + 1) : '';
 assert.ok(headerTag.length > 0, '兑换记录页应自绘标题栏。');
 has(headerTag, 'bg-[var(--tm-page-plain-header-bg)]', '兑换记录页标题栏应使用白色表面。');
-has(appSource, "const hasPlainPageOwnHeader = currentView === 'class_exchange_records'", '兑换记录页应由页面自绘标题栏。');
+assert.match(appSource, /const hasPlainPageOwnHeader = [^\n]*currentView === 'class_exchange_records'/, '兑换记录页应由页面自绘标题栏。');
 has(appSource, '!hasPlainPageOwnHeader && (', '全局标题栏应跳过兑换记录页。');
 has(appSource, 'hasPlainBackground && !hasStudentDetailBackground && !hasPlainPageOwnHeader', 'plain 页面顶部色带应跳过兑换记录页。');
 
@@ -31,9 +34,16 @@ has(viewSource, 'ariaLabel="兑换记录分类"', '兑换记录页签应有明�
 has(viewSource, '<VendingExchangeRecordsPanel', '货柜兑换记录应复用货柜管理的记录面板。');
 has(viewSource, 'onRefundRecord={onRefundRecord}', '货柜兑换记录应把老师手动退币动作交给上层。');
 has(viewSource, 'viewedMonth', '兑换记录页应记录当前浏览月份。');
-has(viewSource, '<MobileDatePickerSheet', '时间筛选应使用公共日期选择器。');
-has(viewSource, 'mode="month"', '兑换记录只提供月份选择。');
-assert.ok(!viewSource.includes('draftRange'), '兑换记录不应保留时间段筛选。');
+for (const panel of [viewSource, vendingPanelSource]) {
+  has(panel, '<ExchangeRecordDateFilter', '班级和货柜记录应使用同一个日期筛选入口。');
+}
+has(dateFilterSource, '<MobileDatePickerSheet', '时间筛选应使用公共日期选择器。');
+has(dateFilterSource, 'mode="range"', '兑换记录应支持选择月份和时间段。');
+has(dateFilterSource, 'showPresets={false}', '日期选择器应与货柜筛选一致，隐藏快捷日期。');
+has(viewSource, "filterCoinLedgerEntries(entries, { type: 'range', ...dateRange })", '班级列表只应展示日期命中的记录。');
+has(viewSource, 'hasCabinet ? selectedTab :', '切换到无货柜机时立即回到班级记录。');
+has(cabinetDemoSource, "space.type !== 'school' || !hasCabinet", '无货柜机的学校与个人空间只展示班级记录。');
+has(previewSource, '<PreviewSegmentTrack', '货柜机状态应沿用桌面预览分段控件。');
 
 has(viewSource, 'className="divide-y divide-[var(--tm-border-subtle)]"', '成长币记录应使用通栏分隔列表。');
 has(viewSource, 'bg-[var(--tm-bg-surface)]', '成长币记录列表应使用连续白底。');
@@ -103,7 +113,10 @@ has(viewSource, 'share.bankAmount', '记录详情应按学生展示被扣的已�
 
 has(viewSource, '兑换详情', '点击记录应打开详情抽屉。');
 has(viewSource, '涉及学生（', '详情抽屉应按学生展示扣减明细。');
-has(viewSource, '操作老师', '详情抽屉应展示操作老师。');
+has(viewSource, '兑换人', '详情应展示原兑换人。');
+has(viewSource, '撤回人', '详情应单独展示撤回人。');
+has(viewSource, "detailEntry.revokedBy?.trim() || '—'", '历史记录缺少撤回人时应展示占位。');
+has(appSource, 'const revokedBy = teacherProfile.name', '撤回时应记录当前操作人的姓名。');
 has(viewSource, '撤回本次兑换', '可撤回的兑换记录应提供撤回入口。');
 has(viewSource, 'isCoinLedgerEntryRevocable(detailEntry)', '撤回入口应复用规则，不传入当天日期。');
 has(viewSource, '<MobileConfirmSheet', '撤回应先经过二次确认。');

@@ -64,6 +64,9 @@ import { useShopCatalog } from './useShopCatalog';
 interface TeacherDashboardProps {
     onNavigateBigScreen?: () => void;
     embedded?: boolean;
+    schoolId?: string;
+    schoolName?: string;
+    onSchoolBasicInfoEditStateChange?: (state: { dirty: boolean; busy: boolean } | null) => void;
 }
 
 const TEACHER_CAMPAIGN_IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/apng';
@@ -195,7 +198,13 @@ interface HomeworkRecordRow {
     students: HomeworkStudentRow[];
 }
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen, embedded = false }) => {
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
+    onNavigateBigScreen,
+    embedded = false,
+    schoolId = 'school-star',
+    schoolName = TEACHER_SPACE_OPTIONS.find(space => space.id === schoolId)?.title ?? '星河实验学校',
+    onSchoolBasicInfoEditStateChange,
+}) => {
     const coinTerms = useGrowthCoinTerms();
     // 侧边栏菜单展开状态控制
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({
@@ -208,6 +217,11 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
     const [activeMenu, setActiveMenu] = useState('货柜超市');
     const [schoolBasicInfoDirty, setSchoolBasicInfoDirty] = useState(false);
     const [schoolBasicInfoBusy, setSchoolBasicInfoBusy] = useState(false);
+    useEffect(() => {
+        if (activeMenu !== '学校基本信息' || !onSchoolBasicInfoEditStateChange) return;
+        onSchoolBasicInfoEditStateChange({ dirty: schoolBasicInfoDirty, busy: schoolBasicInfoBusy });
+        return () => onSchoolBasicInfoEditStateChange(null);
+    }, [activeMenu, schoolBasicInfoDirty, schoolBasicInfoBusy, onSchoolBasicInfoEditStateChange]);
 
     const selectMenu = (menu: string) => {
         if (menu === activeMenu) return;
@@ -4873,9 +4887,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onNavigateBigScreen
                         </div>
                     )}
 
-                    {activeMenu === '学校基本信息' && <SchoolBasicInfoSettings schoolId="school-star" schoolName={TEACHER_SPACE_OPTIONS.find(space => space.id === 'school-star')?.title ?? '星河实验学校'} onDirtyChange={setSchoolBasicInfoDirty} onBusyChange={setSchoolBasicInfoBusy} />}
-                    {activeMenu === '成长数据设置' && <GrowthDataSettingsView spaceId="school-star" />}
-                    {activeMenu === '成长数据导入' && <HealthDataImportView spaceId="school-star" />}
+                    {activeMenu === '学校基本信息' && <SchoolBasicInfoSettings schoolId={schoolId} schoolName={schoolName} onDirtyChange={setSchoolBasicInfoDirty} onBusyChange={setSchoolBasicInfoBusy} />}
+                    {activeMenu === '成长数据设置' && <GrowthDataSettingsView spaceId={schoolId} />}
+                    {activeMenu === '成长数据导入' && <HealthDataImportView spaceId={schoolId} />}
 
                     {/* 考试等级管理 */}
                     {activeMenu === '考试等级管理' && (

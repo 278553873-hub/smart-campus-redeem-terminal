@@ -17,7 +17,7 @@ try {
         import React from 'react';
         import { renderToStaticMarkup } from 'react-dom/server';
         import SchoolBasicInfoSettings from './components/SchoolBasicInfoSettings';
-        import { createSchoolBasicInfo, validateSchoolBasicInfo } from './shared/schoolBasicInfo';
+        import { createSchoolBasicInfo, validateSchoolBasicInfo, SCHOOL_LOGO_MAX_SIZE_MB } from './shared/schoolBasicInfo';
         import { readSchoolBasicInfo, saveSchoolBasicInfo, schoolBasicInfoKey, SCHOOL_BASIC_INFO_CHANGED } from './shared/schoolBasicInfoStore';
         import { readImageUpload, IMAGE_UPLOAD_MAX_BYTES } from './shared/imageUpload';
 
@@ -33,6 +33,12 @@ try {
         events.addEventListener(SCHOOL_BASIC_INFO_CHANGED, event => { changed++; assert.equal(event.detail.schoolId, 'school-a'); });
         const initial = createSchoolBasicInfo('学校原名称');
         assert.deepEqual(readSchoolBasicInfo('school-a', '学校原名称'), initial);
+        const renderSettings = (schoolId, schoolName) => renderToStaticMarkup(React.createElement(SchoolBasicInfoSettings, { schoolId, schoolName }));
+        const initialHtml = renderSettings('school-a', '学校原名称');
+        assert.ok(initialHtml.includes('value="学校原名称"'), '未设置过的展示名称默认使用后台校名');
+        assert.ok(!initialHtml.includes('学校编号') && !initialHtml.includes('默认使用后台创建时的学校名称'));
+        assert.ok(initialHtml.includes('arco-form-item-symbol') && initialHtml.includes('aria-required="true"'), '名称保留可见和可读的必填标记');
+        assert.ok(initialHtml.includes('校训：自强不息，知行合一') && initialHtml.includes('校风：文明尚礼，求真拓新'), '输入框提供校训和校风的填写示例');
         assert.ok(validateSchoolBasicInfo({ ...initial, displayName: '  ' }).displayName);
         assert.ok(validateSchoolBasicInfo({ ...initial, displayName: '校'.repeat(41) }).displayName);
         assert.ok(validateSchoolBasicInfo({ ...initial, displayName: '学校\\n名称' }).displayName);
@@ -46,11 +52,17 @@ try {
         assert.equal(saved.features, '校训：求真\\n校风：笃行\\n育人理念：全面成长');
         assert.equal(changed, 1);
         assert.deepEqual(readSchoolBasicInfo('school-a', '学校原名称'), saved, '保存后重新读取能完整恢复');
+        assert.deepEqual(readSchoolBasicInfo('school-a', '后台新名称'), saved, '已设置的展示名称独立于后台校名');
         assert.deepEqual(readSchoolBasicInfo('school-b', '另一所学校'), createSchoolBasicInfo('另一所学校'), '学校配置互相隔离');
-        const html = renderToStaticMarkup(React.createElement(SchoolBasicInfoSettings, { schoolId: 'school-a', schoolName: '学校原名称' }));
-        for (const text of ['学校基本信息', '学校对外展示名称', '学校Logo', '学校特色信息', '更换Logo', '移除', '保存', '取消', '学校展示名称', '学校Logo预览']) assert.ok(html.includes(text), text);
+        const html = renderSettings('school-a', '学校原名称');
+        for (const text of ['学校基本信息', '更换Logo', '移除', '保存', '学校展示名称', '学校Logo预览']) assert.ok(html.includes(text), text);
+        const labelText = Array.from(html.matchAll(/<label[^>]*>(.*?)<\\/label>/g), ([, content]) => content.replace(/<[^>]+>/g, '').replace(/:$/, '').trim());
+        assert.deepEqual(labelText.filter(Boolean), ['对外展示名称', 'LOGO', '特色信息']);
+        assert.ok(!html.includes('放弃修改'), '没有待保存的修改时隐藏放弃操作');
         assert.ok(html.includes('<textarea') && html.includes('校训：求真'));
+        assert.ok(html.includes('aria-describedby="school-features-hint"') && html.includes('人工智能分析育人成效'));
         assert.ok(html.includes(logo));
+        assert.ok(html.includes('不超过5MB'));
         assert.ok(!html.includes('示例') && !html.includes('localStorage') && !html.includes('服务端'));
 
         failSave = true;
@@ -72,10 +84,12 @@ try {
         globalThis.Image = class { naturalWidth = 1200; naturalHeight = 600; async decode() {} };
         const canvas = { width: 0, height: 0, getContext: () => ({ drawImage: (...args) => { draw = args; } }), toDataURL: () => logo };
         globalThis.document = { createElement: () => canvas };
-        assert.equal(await readImageUpload({ type: 'image/png', size: 1024 }), logo);
+        const logoLimit = 5 * 1024 * 1024;
+        assert.equal(await readImageUpload({ type: 'image/png', size: logoLimit }, 512, SCHOOL_LOGO_MAX_SIZE_MB), logo);
         assert.deepEqual([canvas.width, canvas.height], [512, 256], '等比缩小，不裁切、不拉伸');
         assert.equal(draw.length, 5);
         assert.equal(revoked, 1);
+        await assert.rejects(readImageUpload({ type: 'image/png', size: logoLimit + 1 }, 512, SCHOOL_LOGO_MAX_SIZE_MB), /不能超过 5MB/);
         await assert.rejects(readImageUpload({ type: 'image/png', size: IMAGE_UPLOAD_MAX_BYTES + 1 }), /不能超过/);
         await assert.rejects(readImageUpload({ type: 'application/pdf', size: 1024 }), /PNG/);
         globalThis.Image = class { async decode() { throw new Error('decode'); } };

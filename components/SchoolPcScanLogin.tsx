@@ -2,22 +2,16 @@ import React, { useEffect, useEffectEvent, useState } from 'react';
 import { Button } from '@arco-design/web-react';
 import QRCode from 'qrcode';
 
-const scanSeconds = 300;
 const sessionPath = 'api/school-pc-demo-scan';
-const miniProgramCode = '/assets/school-pc-login/wechat-mini-program-code.png';
 
 interface ScanCode {
   image: string;
   expiresAt: number;
 }
 
-export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => void }) {
-  const isVerification = Boolean(onVerified);
-  const completeVerification = useEffectEvent(() => onVerified?.());
-  const [code, setCode] = useState<ScanCode | null>(() => isVerification ? null : {
-    image: miniProgramCode,
-    expiresAt: Date.now() + scanSeconds * 1_000,
-  });
+export default function SchoolPcScanLogin({ mode, onComplete }: { mode: 'login' | 'verify'; onComplete: () => void }) {
+  const completeScan = useEffectEvent(() => onComplete());
+  const [code, setCode] = useState<ScanCode | null>(null);
   const [currentTime, setCurrentTime] = useState(Date.now);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -35,11 +29,11 @@ export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => v
   }, [expiresAt]);
 
   useEffect(() => {
-    if (!isVerification) return;
-
     const controller = new AbortController();
     const { signal } = controller;
     const endpoint = new URL(sessionPath, document.baseURI);
+    const startUrl = new URL(endpoint);
+    startUrl.searchParams.set('mode', mode);
     let timer: number | undefined;
     let pollToken: string | undefined;
 
@@ -56,7 +50,7 @@ export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => v
           return;
         }
         if (response.ok && (await response.json()).confirmed) {
-          if (!signal.aborted) completeVerification();
+          if (!signal.aborted) completeScan();
           return;
         }
       } catch {
@@ -65,15 +59,16 @@ export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => v
       if (!signal.aborted) timer = window.setTimeout(() => void checkStatus(token), 1_000);
     };
 
-    const startVerification = async () => {
+    const startScan = async () => {
       try {
-        const response = await fetch(endpoint, { method: 'POST', signal });
-        if (response.status !== 201) throw new Error('Failed to start demo verification');
+        const response = await fetch(startUrl, { method: 'POST', signal });
+        if (response.status !== 201) throw new Error('Failed to start demo login session');
         const session = await response.json();
         pollToken = session.pollToken;
         const now = Date.now();
         const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname);
         const phonePage = new URL('demos/school-pc-scan-confirm.html', isLocal && session.networkUrl ? session.networkUrl : document.baseURI);
+        if (mode === 'login') phonePage.searchParams.set('mode', mode);
         phonePage.hash = session.scanToken;
         const image = await QRCode.toDataURL(phonePage.href, { width: 448, margin: 4, errorCorrectionLevel: 'M' });
         if (signal.aborted) return;
@@ -85,7 +80,7 @@ export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => v
       }
     };
 
-    void startVerification();
+    void startScan();
     return () => {
       controller.abort();
       window.clearTimeout(timer);
@@ -93,14 +88,12 @@ export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => v
         void fetch(endpoint, { method: 'DELETE', headers: { Authorization: `Bearer ${pollToken}` } }).catch(() => {});
       }
     };
-  }, [attempt, isVerification]);
+  }, [attempt, mode]);
 
   const refresh = () => {
-    const now = Date.now();
-    setCurrentTime(now);
     setError('');
-    setCode(isVerification ? null : { image: miniProgramCode, expiresAt: now + scanSeconds * 1_000 });
-    if (isVerification) setAttempt(current => current + 1);
+    setCode(null);
+    setAttempt(current => current + 1);
   };
 
   return (
@@ -111,9 +104,9 @@ export default function SchoolPcScanLogin({ onVerified }: { onVerified?: () => v
         ) : code ? (
           <img
             src={code.image}
-            width={430}
-            height={430}
-            alt={isVerification ? '管理员验证二维码' : '微信小程序码'}
+            width={448}
+            height={448}
+            alt={mode === 'verify' ? '管理员验证二维码' : '微信扫码登录二维码'}
           />
         ) : (
           <span role="status">正在生成二维码…</span>

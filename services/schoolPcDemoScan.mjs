@@ -1,6 +1,9 @@
 import { randomBytes } from 'node:crypto';
 
 const path = '/api/school-pc-demo-scan';
+const loginPath = `${path}/login`;
+const confirmPath = `${path}/confirm`;
+const statusPath = `${path}/status`;
 const lifetimeSeconds = 300;
 const tokenPattern = /^Bearer ([A-Za-z0-9_-]{22})$/;
 
@@ -21,8 +24,8 @@ export function createSchoolPcDemoScanHandler(getNetworkUrl = () => undefined) {
   }
 
   return (request, response) => {
-    const requestPath = request.url?.split('?', 1)[0];
-    if (requestPath !== path && requestPath !== `${path}/status` && requestPath !== `${path}/confirm`) return false;
+    const [requestPath, query] = (request.url ?? '').split('?', 2);
+    if (requestPath !== path && requestPath !== statusPath && requestPath !== confirmPath && requestPath !== loginPath) return false;
 
     if (requestPath === path && request.method === 'POST') {
       const now = Date.now();
@@ -36,30 +39,36 @@ export function createSchoolPcDemoScanHandler(getNetworkUrl = () => undefined) {
 
       const scanToken = randomBytes(16).toString('base64url');
       const pollToken = randomBytes(16).toString('base64url');
-      const session = { scanToken, pollToken, expiresAt: now + lifetimeSeconds * 1_000, confirmed: false };
+      const mode = new URLSearchParams(query).get('mode') === 'login' ? 'login' : 'verify';
+      const session = { scanToken, pollToken, mode, expiresAt: now + lifetimeSeconds * 1_000, confirmed: false };
       byScanToken.set(scanToken, session);
       byPollToken.set(pollToken, session);
       respond(response, 201, { scanToken, pollToken, lifetimeSeconds, networkUrl: getNetworkUrl() });
       return true;
     }
 
-    const confirming = requestPath === `${path}/confirm` && request.method === 'POST';
-    const checking = requestPath === `${path}/status` && request.method === 'GET';
+    const completing = (requestPath === confirmPath || requestPath === loginPath) && request.method === 'POST';
+    const checking = requestPath === statusPath && request.method === 'GET';
     const cancelling = requestPath === path && request.method === 'DELETE';
-    if (!confirming && !checking && !cancelling) {
+    if (!completing && !checking && !cancelling) {
       respond(response, 405);
       return true;
     }
 
     const token = tokenPattern.exec(request.headers.authorization || '')?.[1];
-    const session = (confirming ? byScanToken : byPollToken).get(token);
+    const session = (completing ? byScanToken : byPollToken).get(token);
     if (!session || session.expiresAt <= Date.now()) {
       if (session) remove(session);
       respond(response, 410);
       return true;
     }
 
-    if (confirming) {
+    if (completing) {
+      const expectedPath = session.mode === 'login' ? loginPath : confirmPath;
+      if (requestPath !== expectedPath) {
+        respond(response, 403);
+        return true;
+      }
       session.confirmed = true;
       byScanToken.delete(token);
       respond(response, 204);

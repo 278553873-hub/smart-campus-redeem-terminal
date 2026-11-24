@@ -1,4 +1,5 @@
 
+import '@arco-design/web-react/es/_util/react-19-adapter';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
