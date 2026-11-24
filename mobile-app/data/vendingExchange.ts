@@ -52,7 +52,7 @@ export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudent
       const quantity = index === 7 ? 2 : 1;
       const chargedAmount = Number((quantity * product.price).toFixed(2));
       const date = shiftDate(today, -offset);
-      const time = `${date} ${String(10 + index % 7).padStart(2, '0')}:${String((classIndex * 3 + index * 7) % 60).padStart(2, '0')}:00`;
+      const minute = `${date} ${String(10 + index % 7).padStart(2, '0')}:${String((classIndex * 3 + index * 7) % 60).padStart(2, '0')}`;
       return {
         id: `${schoolId}-${classInfo.id}-vending-${index}`,
         orderNo: `HG${date.replaceAll('-', '')}${String(classIndex + 1).padStart(3, '0')}${String(index + 1).padStart(3, '0')}`,
@@ -63,10 +63,11 @@ export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudent
         quantity, unitPrice: product.price, chargedAmount,
         terminalDeviceId: terminal.id, terminalDeviceName: terminal.name,
         channelName: `${String(index % 7 + 1).padStart(2, '0')}${String(classIndex % 7 + 1).padStart(2, '0')}`,
-        time, status,
+        time: `${minute}:00`, status,
         refundStatus: status === 'failed' ? 'refunded' : 'none',
         refundedAmount: status === 'failed' ? chargedAmount : 0,
         refundReason: status === 'failed' ? 'not_dispensed' : undefined,
+        refundedAt: status === 'failed' ? `${minute}:03` : undefined,
       };
     });
   });

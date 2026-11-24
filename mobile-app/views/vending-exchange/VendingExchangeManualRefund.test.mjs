@@ -1,4 +1,9 @@
 import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { transform } from 'esbuild';
 
 const detailSource = fs.readFileSync(new URL('./VendingExchangeDetailSheet.tsx', import.meta.url), 'utf8');
 const panelSource = fs.readFileSync(new URL('./VendingExchangeRecordsPanel.tsx', import.meta.url), 'utf8');
@@ -16,8 +21,6 @@ const has = (source, needle, message) => {
 };
 
 has(detailSource, '未出货，退币', '兑换详情应提供老师手动退币入口。');
-has(detailSource, "record?.refundReason === 'exchange_revoked'", '手动退币应按撤回兑换展示审计信息。');
-has(detailSource, '老师手动撤回', '详情应明确退币由老师手动发起。');
 has(detailSource, 'canRefund && onRequestRefund', '已退币或无权限时不得展示退币入口。');
 has(panelSource, '<GrowthCoinIcon', '手动退币确认弹窗的成长币应使用金币图标。');
 has(classViewSource, '<GrowthCoinIcon', '撤回本次兑换确认弹窗的成长币应使用金币图标。');
@@ -39,5 +42,38 @@ has(appSource, 'handleRefundVendingRecord', 'App 应统一处理货柜手动退�
 has(appSource, 'manualRefunds={manualVendingRefundsForSpace}', '货柜管理与班级兑换记录应共用同一份手动退币结果。');
 has(appSource, "refundReason: 'exchange_revoked'", '学生流水应按撤回兑换记录老师手动退币。');
 has(flowSource, "record.category === 'vending_exchange' || item.refundReason === 'exchange_revoked'", '货柜支出应按关联原单识别手动或自动退还。');
+
+const { code } = await transform(detailSource.replace(/^import .*;$/gm, ''), { loader: 'tsx', format: 'cjs', jsx: 'transform' });
+const detailModule = { exports: {} };
+vm.runInNewContext(code, {
+  module: detailModule, React,
+  MobileBottomSheet: ({ children }) => children,
+  GrowthCoinIcon: () => null,
+  useGrowthCoinTerms: () => ({ name: '成长币' }),
+  formatCoinAmount: String,
+  VendingExchangeStatusTags: () => null,
+});
+const renderDetail = fields => renderToStaticMarkup(React.createElement(detailModule.exports.default, {
+  record: { status: 'failed', refundStatus: 'refunded', refundedAmount: 20, ...fields },
+  onClose() {},
+}));
+const refundedAt = '2026-11-05 10:34:00';
+for (const [fields, operator, time] of [
+  [{ refundReason: 'not_dispensed', refundedAt }, '系统', refundedAt],
+  [{}, '系统', '—'],
+  [{ refundReason: 'exchange_revoked', refundedBy: '李老师', refundedAt }, '李老师', refundedAt],
+  [{ refundReason: 'exchange_revoked', refundedBy: '李老师' }, '李老师', '—'],
+  [{ refundReason: 'exchange_revoked', refundedAt }, '—', refundedAt],
+  [{ refundStatus: 'pending' }, '—', '—'],
+  [{ refundStatus: 'none' }, '—', '—'],
+  [{ status: 'completed', refundStatus: 'pending' }, '—', '—'],
+  [{ status: 'completed', refundedAt }, '系统', refundedAt],
+]) {
+  const html = renderDetail(fields);
+  assert.match(html, new RegExp(`>退币人</dt><dd[^>]*>${operator}</dd>`));
+  assert.match(html, new RegExp(`>退币时间</dt><dd[^>]*>${time}</dd>`));
+  assert.doesNotMatch(html, /退币方式|操作人|操作老师|老师手动撤回/);
+}
+assert.doesNotMatch(renderDetail({ status: 'completed', refundStatus: 'none' }), />退币(?:人|时间)</);
 
 console.log('货柜手动退币入口与流水关联断言通过');

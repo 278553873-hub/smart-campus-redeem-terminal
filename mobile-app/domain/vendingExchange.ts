@@ -35,8 +35,9 @@ export interface VendingExchangeRecord {
   refundedAmount: number;
   /** 历史退币原因；缺省视为货柜未出货自动退还。 */
   refundReason?: VendingRefundReason;
-  /** 老师手动退币时记录操作人与时间，自动退币不填。 */
+  /** 人工退币时保存老师姓名。 */
   refundedBy?: string;
+  /** 退币完成时间，兼容缺少时间的历史记录。 */
   refundedAt?: string;
 }
 

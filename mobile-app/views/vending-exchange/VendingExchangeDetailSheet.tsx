@@ -18,16 +18,24 @@ export default function VendingExchangeDetailSheet({ record, onClose, canRefund 
   canRefund?: boolean;
   onRequestRefund?: () => void;
 }) {
-  const refundAuditRows: [string, React.ReactNode][] = record?.refundReason === 'exchange_revoked' ? [
-    ['退币方式', '老师手动撤回'],
-    ...(record.refundedBy ? [['操作老师', record.refundedBy] as [string, React.ReactNode]] : []),
-    ...(record.refundedAt ? [['退币时间', record.refundedAt] as [string, React.ReactNode]] : []),
-  ] : [];
+  const refundRows: [string, React.ReactNode][] = [];
+  if (record && (record.status === 'failed' || record.refundStatus !== 'none')) {
+    let operator = '—';
+    let refundTime = '—';
+    if (record.refundStatus === 'refunded') {
+      operator = record.refundReason === 'exchange_revoked' ? record.refundedBy?.trim() || '—' : '系统';
+      refundTime = record.refundedAt?.trim() || '—';
+    }
+    refundRows.push(
+      ['已退币数', <CoinAmount amount={record.refundedAmount} />],
+      ['退币人', operator],
+      ['退币时间', refundTime],
+    );
+  }
   const groups: { title: string; rows: [string, React.ReactNode][] }[] = record ? [
     { title: '兑换结果', rows: [
       ['兑换状态', <VendingExchangeStatusTags record={record} />],
-      ...(record.refundStatus !== 'none' || record.status === 'failed' ? [['已退币数', <CoinAmount amount={record.refundedAmount} />] as [string, React.ReactNode]] : []),
-      ...refundAuditRows,
+      ...refundRows,
     ] },
     { title: '商品信息', rows: [
       ['商品名称', record.productName], ['商品分类', record.categoryName], ['兑换数量', `${record.quantity}件`],
