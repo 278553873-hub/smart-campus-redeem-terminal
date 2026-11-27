@@ -4,6 +4,8 @@ const source = readFileSync(new URL('./MeFeatureViews.tsx', import.meta.url), 'u
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const classSourceTriggerSource = readFileSync(new URL('../components/ClassSourceTrigger.tsx', import.meta.url), 'utf8');
 const compactRemoveButtonSource = readFileSync(new URL('../components/ui/CompactRemoveButton.tsx', import.meta.url), 'utf8');
+const imageTileSource = readFileSync(new URL('../components/ui/MobileImageTile.tsx', import.meta.url), 'utf8');
+const medalEditorSource = readFileSync(new URL('./SchoolMedalEditorSheet.tsx', import.meta.url), 'utf8');
 const featureStart = source.indexOf('export const SubjectManagementView');
 const sheetStart = source.indexOf('interface EditSheetProps');
 
@@ -96,13 +98,17 @@ for (const required of [
   'text-[var(--tm-brand-reward-strong)]',
   'export const SuggestionFeedbackView',
   'const canSubmit = Boolean(text.trim())',
-  'aria-label="上传反馈图片"',
-  '<CompactRemoveButton',
-  'ariaLabel={`删除第${index + 1}张反馈图片`}',
-  'border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-white',
+  '<MobileImageUploadTile ariaLabel="上传反馈图片"',
+  '<MobileImagePreviewTile',
+  'removeLabel={`删除第${index + 1}张反馈图片`}',
 ]) {
   requireText(featureSource, required, `管理子页面迁移后缺少原有能力或语义色：${required}`);
 }
+
+requireText(medalEditorSource, '<MobileImageUploadTile ariaLabel="上传奖章图片"', '学校特色奖章应复用建议反馈的图片上传卡。');
+requireText(medalEditorSource, '<MobileImagePreviewTile removeLabel="删除奖章图片"', '学校特色奖章应复用带删除操作的公共方形图片预览卡。');
+requireText(imageTileSource, '<CompactRemoveButton onClick={onRemove} ariaLabel={removeLabel}', '公共图片预览卡应统一承载右上角删除入口。');
+requireText(imageTileSource, 'border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-bg-surface)]', '公共图片上传卡应使用浅红虚线和白色底面。');
 
 if (featureSource.includes('h-7 w-7') || featureSource.includes('<X className="h-3.5 w-3.5"')) {
   throw new Error('反馈图片删除入口不得保留页面内写死的旧尺寸。');

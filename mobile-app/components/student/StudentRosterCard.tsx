@@ -127,7 +127,10 @@ const StudentRosterCard: React.FC<StudentRosterCardProps> = ({
         {showLevelIcons && <StudentPerformanceLevelIcons level={level} iconSize="student-card" />}
         {showLevelScore && <StudentPerformanceLevelScore netScore={shownTotalScore} className="mt-[2px]" />}
         {displaySettings.showFullStudentNo && (
-          <span aria-hidden="true" className="min-h-[var(--tm-student-card-identity-height)] w-full shrink-0 px-[var(--tm-space-1)] font-[NumberFont] text-[length:var(--tm-student-card-name-font-size)] leading-[var(--tm-student-card-identity-height)] tabular-nums text-[var(--tm-text-secondary)] [overflow-wrap:anywhere]">
+          <span
+            aria-hidden="true"
+            className={`min-h-[var(--tm-student-card-identity-height)] w-full shrink-0 px-[var(--tm-space-1)] font-[NumberFont] text-[length:var(--tm-student-card-name-font-size)] leading-[var(--tm-student-card-identity-height)] tabular-nums text-[var(--tm-text-secondary)] [overflow-wrap:anywhere] ${!displaySettings.showLevel && !contextLabel ? 'pt-[var(--tm-space-1)]' : ''}`}
+          >
             {fullStudentNo}
           </span>
         )}

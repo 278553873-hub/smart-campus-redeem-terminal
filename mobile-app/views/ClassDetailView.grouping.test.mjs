@@ -7,6 +7,7 @@ const searchInputSource = read('../components/ui/MobileSearchInput.tsx');
 const compactSelectSource = read('../components/student/StudentCompactSelectItem.tsx');
 const rosterNumberSource = read('../components/student/StudentRosterNumber.tsx');
 const compactSelectGridSource = read('../components/student/StudentCompactSelectGrid.tsx');
+const imageTileSource = read('../components/ui/MobileImageTile.tsx');
 const pickerSource = read('../components/student/MobileStudentPickerSheet.tsx');
 const rosterCardSource = read('../components/student/StudentRosterCard.tsx');
 const mobileStylesSource = read('../index.css');
@@ -331,9 +332,9 @@ if (viewSource.includes('确认移动') || viewSource.includes('showMoveStudentC
 requireText(viewSource, 'handleSaveAdjustStudentGroup', '调整学生应保存到当前具体小组。');
 requireText(viewSource, 'handleSaveStudentGroupSettings', '小组设置应同时保存当前小组的名称和头像。');
 requireText(viewSource, '? { ...group, name, avatarKey: studentGroupAvatarKey }', '小组设置不得影响其他小组。');
-requireText(viewSource, "relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-inner)] border-2 bg-[var(--tm-bg-surface-soft)]", '小组头像选择应复用学生系统头像的方形图片规格。');
-requireText(viewSource, "border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]", '小组头像选中态应复用学生系统头像的品牌边框和轻外环。');
-requireText(viewSource, 'absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)]', '小组头像选中态应复用学生系统头像右下角的实心勾选角标。');
+requireText(viewSource, '<MobileImageSelectionTile', '小组头像应复用公共图片选择卡。');
+requireText(imageTileSource, 'rounded-[var(--tm-radius-card-compact)] border bg-transparent', '公共图片选择卡应使用透明底和1像素边框占位。');
+requireText(imageTileSource, "selected ? 'border-[var(--tm-brand-primary)]' : 'border-transparent'", '公共图片选择卡应使用单层品牌色选中边框。');
 if (viewSource.includes("${selected ? 'bg-[var(--tm-brand-primary-soft)]'")) {
   failures.push('小组头像选中态不应使用整块浅粉背景。');
 }

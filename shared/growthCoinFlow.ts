@@ -17,12 +17,12 @@ export interface GrowthCoinScoreAward {
 }
 export type GrowthCoinAward = GrowthCoinAwardPeriod | GrowthCoinScoreAward;
 /** 历史退款未存原因时沿用货柜未出货退还，班级撤回须明确记录。 */
-export type GrowthCoinExchangeRefundReason = 'not_dispensed' | 'exchange_revoked';
+export type GrowthCoinExchangeRefundReason = 'not_dispensed' | 'exchange_revoked' | 'vending_correction';
 export type GrowthCoinIssueRecord = { id: string; amount: number; time: string; relatedRecordId?: string } & (
   | { category: 'growth_award'; period: GrowthCoinAwardPeriod }
   | { category: 'growth_award'; award: GrowthCoinScoreAward }
   | { category: 'class_reward' | 'bank_interest'; detail: string }
-  | { category: 'exchange_refund'; productName: string; quantity: number; refundReason?: GrowthCoinExchangeRefundReason }
+  | { category: 'exchange_refund'; productName: string; quantity?: number; refundReason?: GrowthCoinExchangeRefundReason }
 );
 
 export type GrowthCoinRecoveryReason = 'evaluation_revoked' | 'evaluation_targets_changed' | 'evaluation_score_changed';
@@ -37,7 +37,8 @@ export type GrowthCoinConsumeRecord = {
   /** 发币撤回关联原收入；金额是实际扣币数，不是应扣数。 */
   relatedRecordId?: string;
 } & (
-  | { category: Exclude<GrowthCoinExpenseCategory, 'award_recovery'>; productName: string; quantity: number }
+  | { category: 'vending_exchange'; productName: string; quantity?: number; vendingRecharged?: boolean }
+  | { category: Exclude<GrowthCoinExpenseCategory, 'award_recovery' | 'vending_exchange'>; productName: string; quantity: number }
   | { category: 'award_recovery'; reason: GrowthCoinRecoveryReason }
 );
 
@@ -53,6 +54,7 @@ export interface GrowthCoinFlowRecord {
   quantity?: number;
   refundReason?: GrowthCoinExchangeRefundReason;
   relatedRecordId?: string;
+  vendingRecharged?: boolean;
 }
 
 export const GROWTH_COIN_FLOW_LABELS: Record<GrowthCoinFlowCategory, string> = {
@@ -90,14 +92,14 @@ export const formatGrowthAwardDetail = (award: GrowthCoinAward): string => {
     : `每周奖励（${start.month}月${start.day}日—${end.month}月${end.day}日）`;
 };
 
-const formatExchangeRefundDetail = (productName: string, quantity: number, reason?: GrowthCoinExchangeRefundReason) => (
-  reason === 'exchange_revoked' ? `撤回兑换 · ${productName}` : `未出货退还 · ${productName}×${quantity}`
+const formatExchangeRefundDetail = (productName: string, reason?: GrowthCoinExchangeRefundReason) => (
+  reason === 'exchange_revoked' ? `撤回兑换 · ${productName}` : `未出货退还 · ${productName}`
 );
 
 export const getCampusCoinIssueDetail = (record: GrowthCoinIssueRecord): string => {
   if (record.category === 'growth_award') return formatGrowthAwardDetail('award' in record ? record.award : record.period);
   if (record.category === 'bank_interest') return '存款利息';
-  if (record.category === 'exchange_refund') return formatExchangeRefundDetail(record.productName, record.quantity, record.refundReason);
+  if (record.category === 'exchange_refund') return formatExchangeRefundDetail(record.productName, record.refundReason);
   return record.detail;
 };
 
@@ -113,6 +115,7 @@ export const toGrowthCoinExpenseFlow = (record: GrowthCoinConsumeRecord): Growth
   id: record.id, category: record.category, amount: record.amount, type: 'expense', date: record.time,
   detail: record.category === 'award_recovery' ? RECOVERY_REASON_LABELS[record.reason] : record.productName,
   ...(record.category !== 'award_recovery' ? { productName: record.productName, quantity: record.quantity } : {}),
+  ...(record.category === 'vending_exchange' && record.vendingRecharged ? { vendingRecharged: true } : {}),
   relatedRecordId: record.relatedRecordId,
 });
 
@@ -130,10 +133,10 @@ export const getGrowthCoinFlowDetail = (
   }
   if (record.category === 'bank_interest') return '存款利息';
   if (record.category === 'manual_clear') return record.detail.replaceAll('成长币', coinName);
-  if (record.productName != null && record.quantity != null) {
-    const product = `${record.productName}×${record.quantity}`;
-    if (record.category === 'exchange_refund') return formatExchangeRefundDetail(record.productName, record.quantity, record.refundReason);
-    if (record.category === 'vending_exchange' || record.category === 'class_exchange') return product;
+  if (record.productName != null) {
+    if (record.category === 'exchange_refund') return formatExchangeRefundDetail(record.productName, record.refundReason);
+    if (record.category === 'vending_exchange') return record.productName;
+    if (record.category === 'class_exchange' && record.quantity != null) return `${record.productName}×${record.quantity}`;
   }
   return record.detail;
 };

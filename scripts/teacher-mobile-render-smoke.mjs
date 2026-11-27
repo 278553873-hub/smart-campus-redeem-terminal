@@ -73,11 +73,26 @@ const writeResults = () => {
 
 // 服务端渲染会在动态文本之间插入 <!-- --> 占位注释，比对可见文案前先去掉。
 const plainText = html => html.split('<!-- -->').join('');
+const assertPageTabs = (html, label, item) => {
+  const tabList = html.match(new RegExp(`<div(?=[^>]*role="tablist")(?=[^>]*aria-label="${label}")[^>]*>`));
+  if (!tabList?.[0].includes('h-[var(--tm-selection-touch-height)]') || !tabList[0].includes('bg-[var(--tm-page-plain-header-bg)]')) {
+    throw new Error(`${label}应使用统一的标题下方页签容器`);
+  }
+  const itemsStart = tabList.index + tabList[0].length;
+  const items = html.slice(itemsStart, html.indexOf('</div>', itemsStart));
+  const active = items.match(/<button(?=[^>]*role="tab")(?=[^>]*aria-selected="true")[^>]*>[\s\S]*?<\/button>/)?.[0] ?? '';
+  for (const expected of [
+    item, 'items-center justify-center', 'text-[length:var(--tm-font-size-body)]',
+    '[font-weight:var(--tm-font-weight-bold)]', 'w-[var(--tm-selection-underline-width)]', 'h-[var(--tm-selection-underline-height)]',
+  ]) {
+    if (!active.includes(expected)) throw new Error(`${label}选中页签缺少：${expected}`);
+  }
+};
 
 const verifyFormActionBar = (html, label, type = 'button') => {
   const footer = html.match(/<footer\b[^>]*>[\s\S]*?<\/footer>/)?.[0];
   const button = footer?.match(/<button\b[^>]*>[\s\S]*?<\/button>/)?.[0];
-  if (!footer?.includes('bg-[var(--tm-bg-surface)]') || !footer.includes('--mini-program-bottom-safe-area')) {
+  if (!footer?.includes('bg-[var(--tm-bg-surface)]') || !footer.includes('tm-bottom-action-safe-area')) {
     throw new Error(label + '应使用覆盖底部安全区的白色底栏');
   }
   if (!button?.includes('h-[var(--tm-form-action-height)]') || !button.includes('type="' + type + '"') || !plainText(button).includes('>' + label + '</button>')) {
@@ -572,7 +587,7 @@ await renderPage('货柜流水（周期与加分奖励）', () => import('../com
   student: { ...demoStudents[0], campusCoins: 320, points: 100, level: 2 }, onBack: noop,
 }, html => {
   const text = plainText(html);
-  for (const label of ['成长嘉奖', '加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）', '每月奖励', '兑换退还', '撤回兑换 · 班长体验券', '班长体验券×1', '发币撤回', '评价修改补发', '已撤回', '已退还', '未出货退还 · 笔记本×1', '评价对象修改', '评价分数修改']) {
+  for (const label of ['成长嘉奖', '加分奖励（德育 / 文明礼仪 / 尊师孝亲，+2分；智育 / 学习习惯 / 专注听讲，+3分）', '每月奖励', '兑换退还', '撤回兑换 · 班长体验券', '班长体验券×1', '发币撤回', '评价修改补发', '已撤回', '已退还', '未出货退还 · 笔记本', '评价对象修改', '评价分数修改']) {
     if (!text.includes(label)) throw new Error('货柜流水缺少展示规则：' + label);
   }
   if (html.includes('line-clamp-2')) throw new Error('货柜流水不应截断完整指标');
@@ -582,21 +597,44 @@ await renderPage('货柜首页（学校名称与图标）', () => import('../com
 }, html => {
   if (!html.includes('向阳币') || !html.includes('/assets/c4d_growth.png')) throw new Error('货柜首页未同步名称与图标');
 });
-define('localStorage', coinStorageBefore);
-
 for (const [balance, bankDeposit] of [[320.5, 1200.25], [1234567.89, 98765432.12], [123456789012.34, 987654321098.76]]) {
-  await renderPage('学生资产带（完整小数金额' + balance + '）', () => import('../mobile-app/components/student-detail/StudentCoinAssetBand'), {
-    balance, bankDeposit, onOpen: noop,
+  await renderPage('学生资料卡（完整小数金额' + balance + '）', () => loadCoinScoped(() => import('../mobile-app/components/student-detail/StudentDetailOverview')), {
+    student: demoStudents[0], className: '三年级1班',
+    medalCount: 3, archiveCount: 2, questionnaireCount: 4, reportCount: 0,
+    campusCoinDetail: { ...legacyCoinDetail, balance, bankDeposit },
+    onBack: noop, onEdit: noop, onOpenMedals: noop, onOpenArchive: noop, onOpenQuestionnaires: noop,
+    onOpenCoins: noop, onOpenReports: noop, onOpenStudentActions: noop,
   }, html => {
-    const text = plainText(html);
-    for (const value of [balance, bankDeposit]) {
-      const full = value.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
-      if (!text.includes(full)) throw new Error('资产带金额未完整保留小数：' + full);
+    const plainHtml = plainText(html);
+    const coinButton = plainHtml.match(/<button[^>]*student-detail-profile-metric\b[^>]*aria-label="查看向阳币明细[^>]*>[\s\S]*?<\/button>/)?.[0] ?? '';
+    const medalButton = plainHtml.match(/<button[^>]*student-detail-shortcut--medals\b[^>]*>[\s\S]*?<\/button>/)?.[0] ?? '';
+    const reportButton = plainHtml.match(/<button[^>]*student-detail-shortcut--reports\b[^>]*>[\s\S]*?<\/button>/)?.[0] ?? '';
+    const available = balance.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+    const saved = bankDeposit.toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+    if (!coinButton.includes(`>${available}<`) || coinButton.includes(saved) || /truncate|line-clamp/.test(coinButton)) {
+      throw new Error('成长币卡应完整显示可用余额并将存款收纳至明细：' + available);
     }
-    if (html.includes('truncate') || html.includes('line-clamp')) throw new Error('资产带不能省略长金额');
-    if (!html.includes('grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]') || html.includes('flex-wrap') || !html.includes('min-h-[var(--tm-student-detail-asset-height)]')) throw new Error('资产带两项余额应固定分栏、以短竖线分区并保留最低触控高度');
+    if (!coinButton.includes('>向阳币<') || !coinButton.includes(`aria-label="查看向阳币明细，可用 ${available}"`)) {
+      throw new Error('成长币入口应沿用学校名称与可访问的明细标签');
+    }
+    const metrics = Array.from(plainHtml.matchAll(/class="student-detail-profile-metric-value">([^<]+)<\/span><span class="student-detail-profile-metric-label">([^<]+)<\/span>/g), ([, value, label]) => `${label} ${value}`);
+    if (metrics.join('/') !== `向阳币 ${available}/档案 2/问卷 4`) {
+      throw new Error('资料卡应按顺序展示可用成长币、档案和问卷的实际数量');
+    }
+    if (!medalButton.includes('>我的奖章<') || !medalButton.includes('>3</strong>') || !medalButton.includes('aria-label="我的奖章，3枚"')) {
+      throw new Error('奖章快捷入口应显示奖章枚数并提供完整的可访问标签');
+    }
+    if (!reportButton.includes('>我的报告<') || !reportButton.includes('>0</strong>') || !reportButton.includes('aria-label="我的报告，0份"')) {
+      throw new Error('成长报告入口应显示报告数量并提供完整的可访问标签');
+    }
+    for (const shortcut of [medalButton, reportButton]) {
+      if (/<img\b/.test(shortcut) || (shortcut.match(/<svg\b/g)?.length ?? 0) !== 1) {
+        throw new Error('成长快捷入口只保留一个导航箭头');
+      }
+    }
   });
 }
+define('localStorage', coinStorageBefore);
 
 const { DEFAULT_SCHOOL_PARENT_EVALUATION_CONFIG } = await import('../mobile-app/domain/parentEvaluationVisibility');
 for (const allowHomeroomTeacherCustomization of [true, false]) {
@@ -793,13 +831,28 @@ for (const scenario of [
   { name: '普通教师', students: rosterStudents, isSelectionMode: false, canManage: false },
   { name: '班主任多选', students: rosterStudents, isSelectionMode: true, canManage: true },
   { name: '空班', students: [], isSelectionMode: false, canManage: true },
+  {
+    name: '只开启完整学号', students: rosterStudents, isSelectionMode: false, canManage: true,
+    studentCardDisplaySettings: {
+      showLevel: false, levelForm: 'icon', showFullStudentNo: true,
+      showEvaluation: false, showPraise: true, showCriticism: true,
+    },
+  },
 ]) {
   await renderPage('学生列表（' + scenario.name + '）', () => import('../mobile-app/views/ClassDetailView'), {
-    classInfo: rosterClass, students: scenario.students, currentTeacherName: rosterTeacher.name,
+    classInfo: { ...rosterClass, studentCardDisplaySettings: scenario.studentCardDisplaySettings },
+    students: scenario.students, currentTeacherName: rosterTeacher.name,
     isSelectionMode: scenario.isSelectionMode, selectedIds: new Set(),
     canConfigureCardDisplay: scenario.canManage, canResetStudentEvaluationCounts: scenario.canManage, canAddStudent: scenario.canManage,
     onSelectStudent: noop, onToggleSelectionMode: noop, onSelectionChange: noop, onBack: noop, onAddStudent: noop,
     onUpdateStudentCardDisplaySettings: noop, onUpdateGroupCardDisplaySettings: noop,
+  }, html => {
+    if (/总分（|累计表扬|累计待改进/.test(html)) throw new Error('默认学生卡片及只开启学号时都应隐藏总分与评价分值');
+    if (!scenario.students.length) return;
+    const hasVisibleFullStudentNo = html.includes(`>${scenario.students[0].studentNo}</span>`);
+    if (hasVisibleFullStudentNo !== Boolean(scenario.studentCardDisplaySettings?.showFullStudentNo)) {
+      throw new Error('完整学号默认隐藏，仅开启后显示');
+    }
   });
 }
 // 领取后的学生卡片必须实际渲染默认蛋，不能误用美术对比素材或历史经验。
@@ -912,9 +965,36 @@ for (const schoolType of ['primary', 'middle']) {
   const dataReportSpace = { id: 'data-report-' + schoolType, title: '示范学校', type: 'school', role: 'administrator', schoolType };
   await renderPage('学生评价报表初始页（' + schoolType + '）', () => import('../mobile-app/views/LeaderReportView'), {
     onBack: noop, currentSpace: dataReportSpace,
-  });
+  }, html => assertPageTabs(html, '学生评价报表类型', '教师使用情况'));
   await renderPage('班级评价报表初始页（' + schoolType + '）', () => import('../mobile-app/views/MoralEducationCockpitView'), {
     onBack: noop, currentSpace: dataReportSpace,
+  });
+  const settlementCycle = schoolType === 'primary' ? 'week' : 'month';
+  await renderPage('班评报表2.0初始页（' + schoolType + '）', () => import('../mobile-app/views/MoralEducationCockpitView'), {
+    onBack: noop,
+    currentSpace: { ...dataReportSpace, classLeaderboardSettlementCycle: settlementCycle },
+    variant: 'v2',
+  }, html => {
+    if (!html.includes('mobile-segmented-control--pill teacher-mobile-gold-period class-report-v2-glass class-report-v2-period') || !html.includes('class-report-v2-date class-report-v2-glass')) throw new Error('周期切换应复用成长曲线滑块，并与日期共用玻璃样式');
+    if (!html.includes('class-report-v2-gradient tm-gold-header-surface') || !html.includes('class-report-v2-grades') || html.includes('aria-label="评价概况"')) throw new Error('2.0应复用学生详情渐变，收紧年级筛选并移除评价概况');
+    const gradesIndex = html.indexOf('class-report-v2-grades');
+    const scrollRootIndex = html.indexOf('data-view-scroll-root="true"');
+    if (gradesIndex < 0 || scrollRootIndex < 0 || gradesIndex >= scrollRootIndex) throw new Error('2.0年级切换应位于顶部筛选区、滚动内容区上方');
+    const statsIndex = html.indexOf('aria-label="当前周期评价统计"');
+    const rankingIndex = html.indexOf('>班级排行榜<');
+    const detailsTabsIndex = html.indexOf('class-report-v2-direction-tabs');
+    const detailsPanelIndex = html.indexOf('role="tabpanel" aria-label="待改进明细"');
+    if (statsIndex < 0 || rankingIndex <= statsIndex || detailsTabsIndex <= rankingIndex || detailsPanelIndex <= detailsTabsIndex) throw new Error('2.0应按统计卡片→班级排行榜→底部吸顶表扬/待改进明细顺序展示');
+    if (html.includes('已评班级') || html.includes('全校加分与扣分趋势')) throw new Error('2.0应移除班级覆盖统计与日周月度趋势图');
+    if (!html.includes('class-report-v2-ribbon-title') || !html.includes('class-report-v2-details-sticky') || !html.includes('class-report-v2-cycle-badge')) throw new Error('2.0应保留排行榜飘带标题、考核周期浮标和底部表扬/待改进吸顶页签');
+    if (/<h2[^>]*>(指标分布|评价明细)<\/h2>/.test(html)) throw new Error('2.0应移除指标分布标题和独立评价明细板块');
+    if (!html.includes('class-report-v2-compare-table') || !html.includes('具体指标') || !html.includes('涉及班级') || !html.includes('class-report-v2-class-tag')) throw new Error('2.0应展示轻量化锁定对比表及同年级分行班级标签');
+    for (const label of ['班级评价报表', '按日', '按周', '按月', '表扬', '待改进']) {
+      if (!plainText(html).includes(label)) throw new Error('班评报表2.0缺少：' + label);
+    }
+    const dateLabel = settlementCycle === 'week' ? '选择周' : '选择月份';
+    if (!html.includes('aria-label="' + dateLabel + '，当前')) throw new Error('日期入口应匹配学校考核周期');
+    if (!html.includes('aria-label="统计周期"') || html.includes('aria-controls="class-report-period-menu"')) throw new Error('2.0应直接显示周期切换');
   });
 }
 for (const settlementCycle of ['week', 'month']) {
@@ -1248,6 +1328,8 @@ try {
   for (const initialMode of ['owned', 'assigned']) {
     await renderPage('问卷采集列表（' + initialMode + '）', () => import('../mobile-app/views/questionnaire/QuestionnaireManagementView'), {
       ...questionnaireStyleProps, initialMode,
+    }, html => {
+      if (initialMode === 'owned') assertPageTabs(html, '采集状态', '收集中');
     });
   }
   for (const detailRecord of [record, teacherRecord, endedRecord, emptyRecord]) {
@@ -1348,6 +1430,90 @@ for (const scenario of [
   });
 }
 
+const { DEFAULT_PLATFORM_MEDALS } = await import('../mobile-app/domain/medal');
+const { STUDENT_TERM_OPTIONS } = await import('../mobile-app/domain/studentTerms');
+const chronologicalMedalTerms = STUDENT_TERM_OPTIONS.toReversed();
+const studentMedals = DEFAULT_PLATFORM_MEDALS.map((definition, index) => ({
+  definition, quantity: [1, 2, 3, 10, 100][index], awards: [],
+}));
+for (const medals of [studentMedals, []]) {
+  await renderPage(
+    medals.length ? '我的奖章（已获奖章）' : '我的奖章（无奖章）',
+    () => import('../mobile-app/views/StudentMedalDetailView'),
+    {
+      studentName: demoStudents[0].name,
+      medalTerms: chronologicalMedalTerms.map(term => ({ term, medals: term.isCurrent ? medals : [] })),
+      onBack: noop,
+    },
+    html => {
+      const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] ?? '';
+      if (!/<h1\b[^>]*><img\b[^>]*\balt="我的奖章"/.test(header)
+        || !html.includes('aria-label="返回学生详情"')
+        || !header.includes('absolute inset-0 block h-full w-full max-w-none object-cover')
+        || html.includes('role="dialog"')) {
+        throw new Error('我的奖章应以带有图片标题和返回按钮的独立页面展示');
+      }
+      const headerClipId = header.match(/clip-path:url\(#([^)]*)\)/)?.[1];
+      if (!header.includes('pt-[min(var(--tm-space-6),max(var(--mini-program-status-bar-height,0px),env(safe-area-inset-top,0px)))]')
+        || !header.includes('origin-top -scale-y-100')
+        || !headerClipId
+        || !html.includes(`<clipPath id="${headerClipId}" clipPathUnits="objectBoundingBox">`)) {
+        throw new Error('我的奖章头图应保留顶部安全区、金色背景和底边弧线');
+      }
+      const content = plainText(html);
+      if (!content.includes('（本学期）') || !html.includes('inert=""')) {
+        throw new Error('我的奖章应默认打开本学期，往期卡片可切换查看');
+      }
+      const termPagination = html.match(/<nav\b[^>]*aria-label="切换奖章学期"[\s\S]*?<\/nav>/)?.[0] ?? '';
+      if ((termPagination.match(/<button\b/g) ?? []).length !== chronologicalMedalTerms.length
+        || !termPagination.includes('aria-label="2026-2027学年 上学期" aria-current="page"')
+        || !termPagination.includes('h-0.5 w-full rounded-full')
+        || !termPagination.includes('bg-[#18647950]')
+        || !termPagination.includes('bg-[#18647920]')
+        || /aria-label="[上下]一学期"/.test(html)
+        || !html.includes('pb-[max(var(--tm-space-2),var(--mini-program-bottom-safe-area,0px),env(safe-area-inset-bottom,0px))]')) {
+        throw new Error('底部应按学期展示细分页条并突出本学期，白卡和分页条应避开手机底部安全区');
+      }
+      const termCards = html.match(/<article\b[\s\S]*?<\/article>/g) ?? [];
+      if (termCards.length !== chronologicalMedalTerms.length
+        || termCards.some((card, index) => {
+          const term = chronologicalMedalTerms[index];
+          const heading = card.match(/<h2\b[^>]*>([^<]*)<\/h2>/)?.[1];
+          return !card.includes(`aria-label="${term.label}"`)
+            || heading !== `${term.label.replace(/\s+/g, '')}${term.isCurrent ? '（本学期）' : ''}`;
+        })
+        || !termCards.at(-1)?.includes('data-view-scroll-root="true"')
+        || termCards.some(card => !card.includes('h-full w-full min-w-0 shrink-0 overflow-x-hidden overflow-y-auto'))
+        || !html.includes('select-none overflow-clip')
+        || !html.includes('[touch-action:pan-y_pinch-zoom]')
+        || !html.includes('transform:translateX(calc(-2 * (100% - 2 * var(--medal-term-card-gutter) + var(--medal-term-card-gap))))')
+        || !html.includes('--medal-term-card-gap:var(--tm-space-2);--medal-term-card-gutter:var(--tm-space-6)')) {
+        throw new Error('学期卡片应按时间顺序展示卡内学期标题，每次只停靠一张卡片');
+      }
+      if (medals.length) {
+        const tiles = html.match(/<li\b[\s\S]*?<\/li>/g) ?? [];
+        if (!html.includes('grid grid-cols-3')
+          || !html.includes('max-w-[var(--tm-medal-grid-icon-size)]')
+          || !medals.every(({ definition, quantity }, index) => {
+            const tile = tiles[index] ?? '';
+            const layers = Array.from(tile.matchAll(/style="transform:translateX\((\d+)px\)"/g), match => Number(match[1]));
+            const countLabel = tile.match(/>\*(\d+)<\/span>/)?.[1];
+            return tile.includes(definition.name)
+              && tile.includes('aria-haspopup="dialog"')
+              && tile.includes('items-baseline justify-center')
+              && tile.includes('min-w-0 truncate')
+              && layers.join(',') === [8, 4, 0].slice(-Math.min(quantity, 3)).join(',')
+              && countLabel === (quantity > 1 ? String(quantity) : undefined);
+          })) {
+          throw new Error('三列奖章应水平向右叠放，最多三层，名称和多枚数量应在同一行');
+        }
+      } else if (!content.includes('本学期暂无奖章')) {
+        throw new Error('无奖章的学期应显示空状态文字');
+      }
+    },
+  );
+}
+
 const { MOCK_BEHAVIOR_RECORDS } = await import('../mobile-app/constants');
 await renderPage('学生详情（实际积分）', () => import('../mobile-app/views/DashboardView'), {
   student: demoStudents[0],
@@ -1367,61 +1533,139 @@ await renderPage('学生详情（实际积分）', () => import('../mobile-app/v
   canEditOtherTeachersEvaluationRecords: false,
   campusCoinDetail: { balance: 0, issueRecords: [], consumeRecords: [], settlementEstimate: { period: 'weekly', amount: 0 } },
   onBack: noop,
+  onEditBasicInfo: noop,
+  onUpdateStudentStatus: noop,
+  onViewCampusCoins: noop,
+  onViewMedals: noop,
+  onUpdateEvaluationRecord: noop,
+  onViewCollectionRecord: noop,
+  onOpenStudentArchive: noop,
 }, html => {
-  const plainHtml = html.replace(/<!--.*?-->/g, '');
-  const start = plainHtml.indexOf('本学期五育积分');
-  const summary = plainHtml.slice(start, plainHtml.indexOf('</section>', start));
-  for (const score of ['1250', '-25', '0', '10', '15']) {
-    if (!summary.includes('>' + score + '</span>')) throw new Error('学生详情实际积分未正确展示：' + score);
+  const plainHtml = plainText(html);
+  const studentDetailRoot = plainHtml.match(/<div class="student-detail-page\b[^>]*>/)?.[0] ?? '';
+  if (!studentDetailRoot.includes('data-color-theme="yellow"')
+      || !studentDetailRoot.includes('--tm-brand-primary:#FFD700')
+      || !studentDetailRoot.includes('--tm-brand-secondary:#FF8600')
+      || !studentDetailRoot.includes('--tm-brand-tertiary:#FF4D07')
+      || /--tm-status-(?:negative|positive)/.test(studentDetailRoot)) {
+    throw new Error('学生详情首页应独立使用黄色品牌令牌并沿用原有状态色');
   }
-  if (!summary.includes('总分')) throw new Error('学生详情缺少总分摘要');
-  const total = summary.match(/总分<\/span><span[^>]*>([^<]+)<\/span>/)?.[1];
-  if (total !== '1250') throw new Error('学生详情总分应为实际分项之和，实际为：' + total);
+  const profileMetrics = plainHtml.match(/<ul class="student-detail-profile-metrics"[^>]*>[\s\S]*?<\/ul>/)?.[0] ?? '';
+  const metricLabels = Array.from(profileMetrics.matchAll(/class="student-detail-profile-metric-label">([^<]+)<\/span>/g), match => match[1]);
+  if (metricLabels.join('/') !== '成长币/档案/问卷'
+      || !plainHtml.includes('class="student-detail-profile-edit">编辑信息')) {
+    throw new Error('资料卡应展示右上角编辑信息及成长币、档案、问卷三列概况');
+  }
+  const glass = plainHtml.match(/<svg[^>]*class="student-detail-profile-glass"[^>]*>([\s\S]*?)<\/svg>/)?.[1] ?? '';
+  const coveredPath = glass.match(/<mask\b[\s\S]*?<path d="([^"]+)" fill="black"/)?.[1];
+  const frontPath = glass.match(/<\/defs>[\s\S]*?<path d="([^"]+)" fill="url\(/)?.[1];
+  if (!frontPath || frontPath !== coveredPath || !/<\/defs><rect\b[^>]+mask="url\(/.test(glass)) {
+    throw new Error('资料卡填充和后层遮罩应共用一条连续轮廓');
+  }
+  if (/<header\b[^>]*class="student-detail-header(?:\s|")|>学生详情</.test(plainHtml)
+      || !plainHtml.includes('<h1 id="student-detail-profile-name" tabindex="-1">演示学生1</h1>')
+      || !/<button\b[^>]*class="student-detail-profile-back"[^>]*aria-label="返回"/.test(plainHtml)) {
+    throw new Error('学生详情首页应直接显示姓名主标题和资料卡上方的返回按钮');
+  }
+  const profileToolbar = plainHtml.match(/<div class="student-detail-profile-toolbar">([\s\S]*?)<section class="student-detail-profile\b/)?.[1] ?? '';
+  if (!profileToolbar || /<select\b/.test(profileToolbar)) {
+    throw new Error('学生详情首页暂不展示学期切换胶囊');
+  }
+  if (!plainHtml.includes('class="student-detail-profile-gender"')
+      || !plainHtml.includes('aria-label="在校，查看学籍状态操作"')
+      || !/<div class="student-detail-profile-meta"><span>[^<]+<\/span><span><span class="sr-only">学号 <\/span>[^<]+<\/span>/.test(plainHtml)) {
+    throw new Error('资料卡应显示头像性别、可操作的在校标签，以及分行的班级和学号');
+  }
+  for (const text of ['我的奖章', '我的报告', '五育成长曲线', '按周', '按月', '全部评价']) {
+    if (!plainHtml.includes(text)) throw new Error('学生详情缺少：' + text);
+  }
+  if (!/<h2\b[^>]*id="student-detail-timeline-title"[^>]*>动态<\/h2>/.test(plainHtml) || plainHtml.includes('里程碑')) {
+    throw new Error('学生详情应直接展示动态板块');
+  }
+  const growthHeader = plainHtml.match(/<div class="student-detail-growth-header">[\s\S]*?<\/h2>([\s\S]*?)<div class="student-detail-growth-indicators"/)?.[1] ?? '';
+  if (!growthHeader.startsWith('<div class="student-detail-growth-summary"><p class="student-detail-growth-total">总分 <strong>1250</strong></p>')
+      || !growthHeader.includes('aria-label="成长曲线统计周期"')) {
+    throw new Error('成长曲线标题下方应同一行展示实际总分及周期切换');
+  }
+  const indicatorLabels = Array.from(
+    plainHtml.matchAll(/class="student-detail-growth-indicator"[^>]*><span class="student-detail-growth-indicator-pill">([^<]+)<span class="student-detail-growth-indicator-score">([^<]+)<\/span><\/span>/g),
+    ([, name, score]) => `${name.trim()} ${score}`,
+  );
+  if (indicatorLabels.join('/') !== '崇德 1250/求知 -25/向阳 0/尚美 10/躬行 15/乐创 0') {
+    throw new Error('成长曲线应按目录顺序展示学校一级指标完整名称和学期累计积分');
+  }
+  if (!plainHtml.includes('aria-label="崇德按周累计积分') || !plainHtml.includes('1250 分')) throw new Error('成长曲线应保留历史分类对应的实际分项积分');
+  if (!plainHtml.includes('dateTime="2026-11-03"') || !plainHtml.includes('主动收拾餐桌，认真完成清洁任务。')) throw new Error('首页动态应呈现实际评价记录及日期');
+});
+
+const { teacherIndicatorCatalogs } = await import('../mobile-app/data/teacherIndicatorCatalog');
+await renderPage('学生五育成长曲线（零积分）', () => import('../mobile-app/components/student-detail/StudentDetailGrowthChart'), {
+  indicators: teacherIndicatorCatalogs.student.levels,
+  scores: [], records: [], term: STUDENT_TERM_OPTIONS[1], totalScore: 0,
+}, html => {
+  const text = plainText(html);
+  const zeroChart = text.match(/aria-label="崇德按周累计积分，([^"]+)"/)?.[1] ?? '';
+  if (!text.includes('总分 <strong>0</strong></p>') || !/(?:\d{2}\/\d{2} 0 分，){4}\d{2}\/\d{2} 0 分/.test(zeroChart)) {
+    throw new Error('零积分时应展示 0 分总分和带五个零分点的折线图');
+  }
 });
 
 for (const scenario of [
   { label: '有学生', students: rosterStudents },
   { label: '空班', students: [] },
 ]) {
-  await renderPage('颁发奖章（' + scenario.label + '）', () => import('../mobile-app/views/MedalIssuanceView'), {
+  await renderPage('发放奖章（' + scenario.label + '）', () => import('../mobile-app/views/MedalIssuanceView'), {
     classInfo: rosterClass, students: scenario.students, onBack: noop,
   });
 }
 const { createDefaultSchoolMedalSettings, getManuallyIssuableMedals } = await import('../mobile-app/domain/schoolMedals');
 const defaultSchoolMedals = createDefaultSchoolMedalSettings();
+for (const { label, medals } of [
+  { label: '平台奖章默认开放', medals: getManuallyIssuableMedals(defaultSchoolMedals) },
+  { label: '暂无可发放奖章', medals: [] },
+]) {
+  await renderPage('发放奖章（' + label + '）', () => import('../mobile-app/views/MedalIssuanceView'), {
+    classInfo: rosterClass, students: rosterStudents, onBack: noop,
+    schoolMedals: medals, onIssueSchoolMedals: async () => '发放成功',
+  }, html => {
+    assertPageTabs(html, '奖章分类', '平台奖章');
+    if (!html.includes('学校特色奖章')) throw new Error('学校奖章为空时仍应显示分类页签');
+    if (!html.includes('overflow-y-auto bg-[var(--tm-page-plain-content-bg)]')) throw new Error('奖章页签下方应使用公共内容背景');
+    if (!medals.length && !html.includes('暂无可发放的奖章')) throw new Error('暂无可发放奖章时应展示缺省态');
+  });
+}
 const configuredSchoolMedals = {
   ...defaultSchoolMedals,
   availableMedalIds: ['school-reading-star'],
   customMedals: [{ id: 'school-reading-star', name: '悦读之星', scope: 'school', icon: 'book', quantity: 1 }],
 };
-for (const { label, settings, expected, excludes } of [
-  { label: '默认奖章', settings: defaultSchoolMedals, expected: ['移除', '进步之星', '三好学生', '五育之星'], excludes: ['悦读之星'] },
-  { label: '学校自选', settings: configuredSchoolMedals, expected: ['移除', '悦读之星'], excludes: ['进步之星'] },
-  { label: '全量移除', settings: { ...defaultSchoolMedals, availableMedalIds: [] }, expected: ['暂无可颁发的奖章'], excludes: ['移除', '进步之星'] },
+for (const { label, settings } of [
+  { label: '默认配置', settings: defaultSchoolMedals },
+  { label: '保留已有学校发放配置', settings: configuredSchoolMedals },
 ]) {
   await renderPage('奖章设置（' + label + '）', () => import('../mobile-app/views/SchoolMedalSettingsView'), {
-    settings, onBack: noop, onSave: async () => {},
+    settings, onBack: noop, onSaveCustomMedal: async () => {}, onDeleteCustomMedal: async () => {},
   }, html => {
+    assertPageTabs(html, '奖章类型', '平台奖章');
     const surfaces = ['bg-[var(--tm-page-plain-header-bg)]', 'bg-[var(--tm-page-plain-content-bg)]'];
-    const gallery = settings.availableMedalIds.length
-      ? ['bg-[var(--tm-bg-surface)]', 'grid-cols-3', 'max-w-[var(--tm-medal-settings-icon-size)]']
-      : [];
-    for (const text of ['奖章库', ...surfaces, ...gallery, ...expected]) {
+    const gallery = [
+      'bg-[var(--tm-bg-surface)]', 'grid-cols-4 gap-y-[var(--tm-space-2)]', '进步之星', '三好学生', '五育之星',
+      'space-y-[var(--tm-layout-card-gap)]',
+      'pt-[var(--tm-layout-first-card-gap)]',
+      'h-[var(--tm-medal-settings-icon-size)]', 'w-[var(--tm-medal-settings-icon-size)]',
+    ];
+    for (const text of ['平台奖章', '学校特色奖章', 'role="tablist"', ...surfaces, ...gallery]) {
       if (!html.includes(text)) throw new Error('奖章设置缺少：' + text);
     }
-    const navigationActions = html.match(/<div[^>]+aria-label="奖章操作">[^]*?<\/div>/)?.[0] ?? '';
-    if (!navigationActions.includes(surfaces[0]) || !navigationActions.includes('text-[var(--tm-text-action)]') || navigationActions.includes('text-[var(--tm-brand-primary-strong)]')) {
-      throw new Error('奖章设置浏览入口应使用同一白色标题区和次级操作文字色');
-    }
-    for (const text of ['role="switch"', '班主任可颁发', '已启用', '合成规则', ...excludes]) {
+    for (const text of ['奖章库', '>移除<', '新增奖章', '悦读之星', 'role="switch"']) {
       if (html.includes(text)) throw new Error('奖章设置出现多余内容：' + text);
     }
   });
 }
-await renderPage('颁发奖章（仅学校已启用的奖章）', () => import('../mobile-app/views/MedalIssuanceView'), {
+await renderPage('发放奖章（仅学校已启用的奖章）', () => import('../mobile-app/views/MedalIssuanceView'), {
   classInfo: rosterClass, students: rosterStudents, onBack: noop,
   schoolMedals: getManuallyIssuableMedals(configuredSchoolMedals),
-  onIssueSchoolMedals: async () => '颁发成功',
+  onIssueSchoolMedals: async () => '发放成功',
 }, html => {
   if (!html.includes('悦读之星')) throw new Error('应展示学校启用的自定义奖章');
   if (['进步之星', '新增奖章', '班级奖章'].some(label => html.includes(label))) throw new Error('学校发放页应只展示学校配置开放的奖章');
@@ -1492,13 +1736,22 @@ for (const scenario of [
 }
 await renderPage('学生详情（成长报告目录）', () => import('../mobile-app/views/DashboardView'), {
   student: rosterStudents[0], classInfo: rosterClass, currentSpace: profileSpace, initialSection: 'report',
-  scores: [], growthReports: [], collectionHistory: [], evaluationRecords: [],
+  scores: [], growthReports: [{ id: 'render-smoke-student-report', title: '11月成长报告', date: '2026-11' }], collectionHistory: [], evaluationRecords: [],
   campusCoinDetail: GET_MOCK_CAMPUS_COIN_DETAIL(rosterStudents[0]), currentTeacherId: rosterTeacher.id,
   currentTeacherName: rosterTeacher.name, canEditOtherTeachersEvaluationRecords: false,
-  onBack: noop, onEditBasicInfo: noop, onUpdateStudentStatus: noop, onViewCampusCoins: noop, onViewTermReport: noop, onViewInitialImagingReport: noop,
+  onBack: noop, onEditBasicInfo: noop, onUpdateStudentStatus: noop, onViewCampusCoins: noop, onViewMedals: noop, onViewTermReport: noop, onViewInitialImagingReport: noop,
   onUpdateEvaluationRecord: noop, onViewCollectionRecord: noop, onOpenStudentArchive: noop,
 }, html => {
-  if (!html.includes('学生初成像（2026年10月30日）')) throw new Error('成长报告缺少学生初成像入口');
+  const reportHtml = plainText(html);
+  if (reportHtml.includes('data-color-theme="yellow"') || reportHtml.includes('--tm-brand-primary:#FFD700')) {
+    throw new Error('黄色试点应限于学生详情首页');
+  }
+  if (!/<h1\b[^>]*>成长报告<\/h1>/.test(reportHtml) || !reportHtml.includes('aria-label="返回"')) {
+    throw new Error('成长报告子页面应保留标题与返回按钮');
+  }
+  for (const title of ['学生初成像（2026年10月30日）', '期末综合素质报告', '11月成长报告']) {
+    if (!html.includes(title)) throw new Error('成长报告目录缺少：' + title);
+  }
   if (html.includes('吴浩 · 示例报告')) throw new Error('初成像入口不应显示示例报告副标题');
 });
 await renderPage('学生初成像（嵌入可编辑H5）', () => import('../mobile-app/views/StudentInitialImagingReportView'), {
@@ -1575,7 +1828,7 @@ await renderPage('更新人脸数据页（清除后重新进入）', () => impor
 
 const meStyleActions = Object.fromEntries([
   'onNavigateToFiles', 'onEditTeacherProfile', 'onOpenTermGenerateModal', 'onViewLeaderReport',
-  'onOpenMoralEducationCockpit', 'onOpenWeeklyDutySchedule', 'onOpenParentEvaluationVisibility',
+  'onOpenMoralEducationCockpit', 'onOpenClassEvaluationReportV2', 'onOpenWeeklyDutySchedule', 'onOpenParentEvaluationVisibility',
   'onOpenHomeworkBatchImport', 'onOpenSettings', 'onOpenSubjectManagement', 'onOpenDepartmentManagement',
   'onOpenCoinIssuance', 'onOpenSuggestionFeedback', 'onOpenQuestionnaire', 'onOpenAssignedCollections',
   'onOpenArchiveDesign', 'onOpenReportManagement', 'onOpenAiHeadteacherAssistant', 'onOpenAiPrincipalAssistant',
@@ -1605,6 +1858,7 @@ for (const scenario of [
     if (text.includes('待填写采集') !== (scenario.pending > 0)) throw new Error('采集待办应按待办数量显示');
     if (scenario.role === 'administrator' && !html.includes('aria-label="成长币发放"')) throw new Error('管理员应保留成长币发放入口');
     if (scenario.role === 'teacher' && html.includes('aria-label="成长币发放"')) throw new Error('普通老师不应出现管理配置入口');
+    if (html.includes('aria-label="班评报表2.0"') !== html.includes('aria-label="班级评价报表"')) throw new Error('两版班评报表应使用相同的管理工具权限');
   });
 }
 
@@ -1669,8 +1923,10 @@ await renderPage('教师手机端个人版完善信息页', () => import('../mob
   }
   verifyFormActionBar(html, '进入体验', 'submit');
   if (!html.includes('disabled')) throw new Error('姓名和学校为空时进入体验按钮应不可用');
-  if (!html.includes('arco-autocomplete')) throw new Error('学校名称输入应复用 Arco 自动完成组件');
-  if (html.includes('arco-select-option')) throw new Error('未输入学校时不应展示匹配列表');
+  const schoolInput = html.match(/<input\b[^>]*placeholder="请输入学校名称"[^>]*>/)?.[0];
+  if (!schoolInput?.includes('autoComplete="off"') || schoolInput.includes('aria-autocomplete') || schoolInput.includes('list=')) {
+    throw new Error('学校名称应使用手填文本框');
+  }
 });
 
 // 班主任助理三种能力组合都要能打开：少挂一个能力分支就会出现打开即白屏。
@@ -2398,6 +2654,7 @@ for (const authorized of [true, false]) {
   }, html => {
     const text = plainText(html);
     for (const label of ['货柜管理', '商品库存', '兑换记录', '全部分类']) if (!text.includes(label)) throw new Error('货柜管理缺少：' + label);
+    assertPageTabs(html, '货柜管理内容', '商品库存');
     if (text.includes('搜索学生姓名') || html.includes('type="search"')) throw new Error('兑换记录应移除搜索功能');
     if (!html.includes('aria-selected="true"') || !html.includes('aria-label="商品库存"')) throw new Error('默认应进入商品库存');
     if (text.includes('未授权学生')) throw new Error('兑换明细泄露其他学校数据');
@@ -2460,11 +2717,12 @@ await renderPage('货柜兑换记录（默认货柜、货柜顺序与学校隔�
   if (text.includes('其他学校学生')) throw new Error('不得混入其他学校的数据');
 });
 await renderPage('货柜兑换流水行（学生班级及商品单价）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {
-  record: { ...vendingSample, studentName: '林天雅', className: '小2025级3班', productImage: '/assets/product-snapshot.png', quantity: 2, chargedAmount: 40, status: 'completed', refundStatus: 'none' }, today: '2026-11-05', onOpen: noop,
+  record: { ...vendingSample, studentName: '林天雅', className: '小2025级3班', productName: '铅笔*12', productImage: '/assets/product-snapshot.png', quantity: 2, chargedAmount: 40, status: 'completed', refundStatus: 'none' }, today: '2026-11-05', onOpen: noop,
 }, html => {
   const text = plainText(html);
-  for (const label of ['卡通笔袋', '林天雅（小2025级3班）', '今天 10:32', '兑换成功', '×2']) if (!text.includes(label)) throw new Error('兑换卡片缺少：' + label);
-  if (!html.includes('/assets/product-snapshot.png') || !html.includes('alt="卡通笔袋商品图"')) throw new Error('应展示记录中的商品图并保留替代文字');
+  for (const label of ['铅笔*12', '林天雅（小2025级3班）', '今天 10:32', '兑换成功']) if (!text.includes(label)) throw new Error('兑换卡片缺少：' + label);
+  if (text.includes('×2')) throw new Error('历史货柜记录也不应在配置的商品名后追加数量');
+  if (!html.includes('/assets/product-snapshot.png') || !html.includes('alt="铅笔*12商品图"')) throw new Error('应展示记录中的商品图并保留替代文字');
   if (!html.includes('商品单价20') || html.includes('实际扣币40') || text.includes('人北华侨城一楼')) throw new Error('列表展示商品单价和必要摘要，实际扣币与货柜在详情中查看');
 });
 await renderPage('货柜兑换失败流水行（保留退币状态）', () => import('../mobile-app/views/vending-exchange/VendingExchangeRecordCard'), {

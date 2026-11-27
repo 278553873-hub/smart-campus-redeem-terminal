@@ -4,6 +4,7 @@ import { ClassInfo, GuardianContact, GuardianRelation, Student } from '../types'
 import { ASSETS } from '../assets/images';
 import { MobileCard } from '../components/ui/MobileCard';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import { MobileImageSelectionTile } from '../components/ui/MobileImageTile';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import { MobileEditableRow } from '../components/ui/MobileEditableRow';
 import MobileToast from '../components/ui/MobileToast';
@@ -730,21 +731,15 @@ const StudentBasicEditView: React.FC<StudentBasicEditViewProps> = ({ student, cl
                     {group.avatars.map(avatar => {
                       const isSelected = pendingAvatar === avatar.src;
                       return (
-                        <button
+                        <MobileImageSelectionTile
                           key={avatar.id}
-                          type="button"
-                          aria-label={`选择${avatar.label}`}
-                          aria-pressed={isSelected}
+                          ariaLabel={`选择${avatar.label}`}
+                          selected={isSelected}
                           onClick={() => setPendingAvatar(avatar.src)}
-                          className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-card-compact)] border-2 bg-[var(--tm-bg-surface-soft)] transition-transform active:scale-95 ${isSelected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
+                          className="transition-transform active:scale-95"
                         >
                           <img src={avatar.src} alt="" className="h-full w-full object-cover" />
-                          {isSelected && (
-                            <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)] text-white [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
-                              <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                            </span>
-                          )}
-                        </button>
+                        </MobileImageSelectionTile>
                       );
                     })}
                   </div>

@@ -26,13 +26,12 @@ has(appSource, '!hasPlainPageOwnHeader && (', '全局标题栏应跳过兑换记
 has(appSource, 'hasPlainBackground && !hasStudentDetailBackground && !hasPlainPageOwnHeader', 'plain 页面顶部色带应跳过兑换记录页。');
 
 assert.ok(!viewSource.includes('getTeacherClassDisplayName'), '兑换记录页不应显示班级名称。');
-has(viewSource, '<ReportDateRangeTabs', '兑换记录页应使用与货柜管理一致的页签样式。');
+assert.match(viewSource, /<TextSelectionControl[^>]*ariaLabel="兑换记录分类"[^>]*variant="page"/, '兑换记录页应使用公共标题下方页签。');
 has(viewSource, "label: '班级兑换记录'", '兑换记录页应提供班级兑换记录页签。');
 has(viewSource, "label: '货柜兑换记录'", '学校来源应提供货柜兑换记录页签。');
-has(viewSource, 'semantics="tabs"', '兑换记录页签应使用标准页签语义。');
 has(viewSource, 'ariaLabel="兑换记录分类"', '兑换记录页签应有明确的读屏名称。');
 has(viewSource, '<VendingExchangeRecordsPanel', '货柜兑换记录应复用货柜管理的记录面板。');
-has(viewSource, 'onRefundRecord={onRefundRecord}', '货柜兑换记录应把老师手动退币动作交给上层。');
+has(viewSource, 'actions={actions}', '货柜兑换记录应把老师纠错动作交给上层。');
 has(viewSource, 'viewedMonth', '兑换记录页应记录当前浏览月份。');
 for (const panel of [viewSource, vendingPanelSource]) {
   has(panel, '<ExchangeRecordDateFilter', '班级和货柜记录应使用同一个日期筛选入口。');
@@ -77,15 +76,15 @@ has(ledgerSource, 'export const expandCoinLedgerRefundsForStudent', '撤回后�
 has(demoSource, 'export const createDemoCoinLedger', '演示流水应由数据层统一生成。');
 has(demoSource, "type: 'clear'", '手动清空成长币应作为一类记录进入同一时间线。');
 
-has(appSource, 'const getCoinLedgerForClass = (classId: string)', 'App 应按班级汇总成长币记录。');
-has(appSource, 'handleRecordCoinRedeem', '兑换成功后应写入成长币记录。');
-has(appSource, 'handleRecordCoinClear', '清空成长币后应写入成长币记录。');
+has(appSource, 'const getCoinLedgerForClass = (classId: string, account = coinAccount)', 'App 应按班级汇总成长币记录。');
+has(appSource, "handleRecordCoinTransaction(selectedClassInfo.id, 'redeem'", '兑换成功后应写入成长币记录。');
+has(appSource, "handleRecordCoinTransaction(selectedClassInfo.id, 'clear'", '清空成长币后应写入成长币记录。');
 has(appSource, 'handleRevokeCoinLedgerEntry', '撤回应写回成长币记录。');
 has(appSource, '<ClassExchangeRecordsDemoView', '兑换记录页应通过演示适配层注入货柜记录。');
 has(appSource, 'entries={getCoinLedgerForClass(selectedClassInfo.id)}', '兑换记录页应读取同一份流水。');
 has(cabinetDemoSource, 'createDemoVendingExchangeRecords', '货柜兑换记录应复用货柜管理的演示数据。');
 has(cabinetDemoSource, 'filter(record => record.classId === classInfo.id)', '货柜兑换记录应按当前班级截取。');
-has(cabinetDemoSource, 'applyManualVendingRefunds', '班级兑换记录应合并货柜手动退币结果。');
+has(cabinetDemoSource, 'applyVendingCorrections', '班级兑换记录应合并货柜手动退币结果。');
 has(appSource, 'expandCoinLedgerForStudent(entries, activeStudent.id)', '学生侧支出应从批次流水展开。');
 has(appSource, 'expandCoinLedgerRefundsForStudent(entries, activeStudent.id)', '学生侧收入应读取同一批次的撤回退还。');
 
@@ -116,7 +115,7 @@ has(viewSource, '涉及学生（', '详情抽屉应按学生展示扣减明细�
 has(viewSource, '兑换人', '详情应展示原兑换人。');
 has(viewSource, '撤回人', '详情应单独展示撤回人。');
 has(viewSource, "detailEntry.revokedBy?.trim() || '—'", '历史记录缺少撤回人时应展示占位。');
-has(appSource, 'const revokedBy = teacherProfile.name', '撤回时应记录当前操作人的姓名。');
+has(appSource, 'revokeCoinLedgerEntry(patch, entryId, revokedAt, teacherProfile.name', '撤回时应记录当前操作人的姓名。');
 has(viewSource, '撤回本次兑换', '可撤回的兑换记录应提供撤回入口。');
 has(viewSource, 'isCoinLedgerEntryRevocable(detailEntry)', '撤回入口应复用规则，不传入当天日期。');
 has(viewSource, '<MobileConfirmSheet', '撤回应先经过二次确认。');

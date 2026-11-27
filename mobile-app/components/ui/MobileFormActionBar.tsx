@@ -10,7 +10,7 @@ interface MobileFormActionBarProps {
 
 export default function MobileFormActionBar({ label, type, icon, disabled, onClick }: MobileFormActionBarProps) {
   return (
-    <footer className="shrink-0 bg-[var(--tm-bg-surface)] px-[var(--tm-space-5)] pb-[calc(var(--tm-space-4)+max(var(--mini-program-bottom-safe-area,0px),env(safe-area-inset-bottom,0px)))] pt-[var(--tm-space-4)]">
+    <footer className="tm-bottom-action-safe-area shrink-0 bg-[var(--tm-bg-surface)] px-[var(--tm-space-5)] pt-[var(--tm-space-4)]">
       <button
         type={type}
         disabled={disabled}

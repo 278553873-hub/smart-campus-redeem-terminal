@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import {
-  applyManualVendingRefunds, createVendingExchangeFilter, filterVendingExchangeRecords,
-  getVendingExchangeAuthorizedClasses, groupVendingExchangeRecordsByMonth, refundVendingExchangeRecordManually, scopeVendingExchangeRecords, VENDING_EXCHANGE_STATUS_LABELS,
+  applyVendingCorrection, applyVendingCorrections, createVendingExchangeFilter, filterVendingExchangeRecords, formatVendingExchangeStudentLabel,
+  getVendingCorrectionBalanceChange, getVendingCorrectionPreview, getVendingExchangeCoinFlows, getVendingExchangeNetCharge, getVendingExchangeOperations,
+  getVendingExchangeAuthorizedClasses, groupVendingExchangeRecordsByMonth, scopeVendingExchangeRecords, VENDING_EXCHANGE_STATUS_LABELS,
 } from './vendingExchange.ts';
 import { getTeacherSpaceMenuPolicy } from './teacherSpaceAccess.ts';
 
@@ -86,18 +87,62 @@ assert.deepEqual(groupVendingExchangeRecordsByMonth([], '2026-11'), [{ month: '2
 assert.deepEqual(groupVendingExchangeRecordsByMonth([
   ...query({}), { ...base, id: 'previous-year', time: '2025-12-31 23:59:59' },
 ], '2026-11').map(item => item.month), ['2026-11', '2026-10', '2025-12'], '跨年份按真实年月倒序');
-const refundable = { ...base, id: 'refundable', chargedAmount: 20, refundedAmount: 0, quantity: 1, time: '2026-11-05 09:00:00' };
-const refunded = refundVendingExchangeRecordManually(refundable, { operator: '刘飞', time: '2026-11-05 09:10:00' });
-assert.equal(refunded.status, 'failed', '手动退币后记录应落为兑换失败');
-assert.equal(refunded.refundStatus, 'refunded', '手动退币后记录应落为已退币');
-assert.equal(refunded.refundedAmount, 20, '手动退币按实际扣币整单退还');
-assert.equal(refunded.refundReason, 'exchange_revoked', '学生明细应按撤回兑换展示并明确是老师手动处理');
-assert.equal(refunded.refundedBy, '刘飞');
-assert.equal(refunded.refundedAt, '2026-11-05 09:10:00');
-assert.equal(refundVendingExchangeRecordManually(refunded, { operator: '重复', time: '2026-11-05 09:20:00' }), refunded, '同一货柜单不得重复退币');
-assert.equal(refundVendingExchangeRecordManually({ ...refundable, status: 'failed', refundStatus: 'refunded' }, { operator: '刘飞', time: '2026-11-05 09:10:00' }).status, 'failed', '系统已退币的失败记录不再生成新状态');
-const merged = applyManualVendingRefunds([refundable, { ...refundable, id: 'untouched' }], [refunded]);
-assert.equal(merged[0], refunded, '手动退币快照应覆盖同一货柜单');
-assert.equal(merged[1].id, 'untouched', '未退币记录保持原样');
+assert.equal(formatVendingExchangeStudentLabel(base), '王小明（2026级1班）');
+assert.equal(formatVendingExchangeStudentLabel({ ...base, className: '1班' }), '王小明（一年级1班）');
+assert.equal(formatVendingExchangeStudentLabel({ ...base, className: '' }), '王小明（一年级）');
+const original = { ...base, id: 'corrected', productName: '铅笔*12', chargedAmount: 20, refundedAmount: 0, time: '2026-11-05 09:00:00' };
+const teacherAction = { name: '刘飞', id: 'teacher-1', time: '2026-11-05 09:10:00' };
+const correct = (record, available) => applyVendingCorrection(record, getVendingCorrectionPreview(record, available), teacherAction);
+const autoRefunded = { ...original, status: 'failed', refundStatus: 'refunded', refundedAmount: 20, refundedAt: '2026-11-05 09:00:03' };
+assert.equal(getVendingExchangeNetCharge(original), 20);
+assert.equal(getVendingExchangeNetCharge(autoRefunded), 0);
+assert.deepEqual(getVendingCorrectionPreview(autoRefunded, 12), { type: 'charge', available: 12, amount: 12, shortfall: 8 });
+assert.equal(getVendingCorrectionPreview({ ...autoRefunded, refundStatus: 'pending' }, 20), null, '系统处理中的退款不可补扣');
+const partial = correct(autoRefunded, 12);
+assert.equal(partial.status, 'completed');
+assert.equal(getVendingExchangeNetCharge(partial), 12);
+assert.equal(getVendingCorrectionBalanceChange(partial), -12, '历史系统退款已计入基础余额');
+const refunded = correct(partial, 0);
+assert.equal(refunded.status, 'failed');
+assert.equal(refunded.refundStatus, 'refunded');
+assert.equal(refunded.refundedAmount, 12, '再次退币只退该单实际补扣的货币');
+assert.equal(getVendingExchangeNetCharge(refunded), 0);
+assert.equal(getVendingCorrectionBalanceChange(refunded), 0);
+const charged = correct(refunded, 30);
+assert.equal(charged.status, 'completed');
+assert.equal(getVendingCorrectionBalanceChange(charged), -20);
+assert.deepEqual(getVendingExchangeOperations(charged).map(op => [op.type, op.amount]), [
+  ['system_refund', 20], ['charge', 12], ['refund', 12], ['charge', 20],
+]);
+assert.equal(charged.operations[1].operator, '刘飞');
+assert.equal(charged.operations[1].operatorId, 'teacher-1');
+assert.equal(charged.operations[1].time, teacherAction.time);
+const flows = getVendingExchangeCoinFlows([charged]);
+assert.ok([...flows.expenses, ...flows.incomes].every(item => item.productName === '铅笔*12' && item.quantity === undefined), '货柜明细保留原商品名，无独立数量');
+assert.deepEqual(flows.expenses.map(item => [item.amount, item.vendingRecharged]), [[20, undefined], [12, true], [20, true]]);
+assert.deepEqual(flows.incomes.map(item => item.amount), [20, 12]);
+assert.equal(flows.incomes[0].relatedRecordId, flows.expenses[0].id);
+assert.equal(flows.incomes[1].relatedRecordId, flows.expenses[1].id);
+assert.equal(new Set([...flows.expenses, ...flows.incomes].map(item => item.id)).size, 5);
+const zeroCharge = correct(autoRefunded, 0);
+const zeroRefund = correct(zeroCharge, 0);
+assert.equal(zeroCharge.status, 'completed');
+assert.equal(zeroRefund.status, 'failed');
+assert.equal(zeroRefund.refundedAmount, 0);
+assert.equal(zeroRefund.operations.length, 3, '零金额纠错也保留历史');
+assert.deepEqual(getVendingExchangeCoinFlows([zeroRefund]), getVendingExchangeCoinFlows([autoRefunded]), '零金额纠错不新增收支流水');
+const originalRefund = correct(original, 0);
+assert.equal(originalRefund.refundedAmount, 20, '首次人工退币按原单实际扣款');
+assert.equal(getVendingCorrectionBalanceChange(originalRefund), 20);
+assert.equal(getVendingCorrectionBalanceChange(correct(originalRefund, 20)), 0);
+assert.equal(getVendingExchangeNetCharge({ ...original, quantity: 2, unitPrice: 20, chargedAmount: 40 }), 40, '历史扣币使用原流水金额');
+const fractionalRefund = correct(correct({ ...autoRefunded, refundedAmount: 19.99, chargedAmount: 19.99 }, 4.25), 0);
+assert.equal(fractionalRefund.refundedAmount, 4.25);
+const historicalManual = { ...autoRefunded, refundReason: 'exchange_revoked', refundedBy: '李老师' };
+assert.deepEqual(getVendingExchangeOperations(historicalManual).map(op => [op.type, op.operator]), [['refund', '李老师']]);
+const merged = applyVendingCorrections([original, { ...original, id: 'untouched' }], { [original.id]: charged });
+assert.equal(merged[0], charged);
+assert.equal(merged[1].id, 'untouched');
+assert.deepEqual(applyVendingCorrections([], { [original.id]: charged }), [charged], '原花名册变化后仍可查看已纠正的历史订单');
 
-console.log('货柜兑换查询与权限校验通过');
+console.log('货柜兑换查询、权限与反复纠错校验通过');

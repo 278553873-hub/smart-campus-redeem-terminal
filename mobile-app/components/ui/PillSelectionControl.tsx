@@ -42,7 +42,7 @@ const PillSelectionControl = <TValue extends string,>({
           onClick={() => onChange(item.value)}
           className={`flex min-h-[var(--tm-selection-touch-height)] ${fullWidth ? 'min-w-0' : 'min-w-[var(--tm-selection-pill-min-width)] shrink-0'} items-center justify-center transition-transform [transition-duration:var(--tm-duration-fast)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none motion-reduce:active:scale-100`}
         >
-          <span className={`flex h-[var(--tm-selection-pill-visible-height)] w-full items-center justify-center rounded-[var(--tm-selection-pill-radius)] border px-[var(--tm-space-3)] text-[length:var(--tm-font-size-compact)] font-semibold transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${selected
+          <span className={`flex h-[var(--tm-selection-pill-visible-height)] w-full items-center justify-center rounded-[var(--tm-selection-pill-radius)] border px-[var(--tm-selection-pill-inline-padding,var(--tm-space-3))] text-[length:var(--tm-selection-pill-font-size,var(--tm-font-size-compact))] font-semibold transition-[background-color,border-color,color] [transition-duration:var(--tm-duration-fast)] ${selected
             ? 'border-[var(--tm-selection-pill-active-border)] bg-[var(--tm-selection-pill-active-bg)] text-[var(--tm-selection-pill-active-text)] active:bg-[var(--tm-selection-pill-pressed-bg)]'
             : 'border-[var(--tm-selection-pill-inactive-border)] bg-[var(--tm-selection-pill-inactive-bg)] text-[var(--tm-selection-pill-inactive-text)] active:bg-[var(--tm-selection-pill-inactive-pressed-bg)]'}`}
           >

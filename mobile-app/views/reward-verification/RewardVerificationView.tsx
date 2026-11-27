@@ -1,10 +1,11 @@
 import { GrowthCoinIcon, useGrowthCoinTerms } from '../../../components/GrowthCoinBranding';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ChevronLeft, Gift, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileDangerConfirmSheet from '../../components/ui/MobileDangerConfirmSheet';
 import MobileRadioOptionCard from '../../components/ui/MobileRadioOptionCard';
 import MobileSearchInput from '../../components/ui/MobileSearchInput';
+import MobileToast from '../../components/ui/MobileToast';
 import { SearchIcon, MaleIcon, FemaleIcon, MenuIcon, CircleIcon } from '../../components/Icons';
 import StudentRosterNumber from '../../components/student/StudentRosterNumber';
 import { formatCoinAmount } from '../../utils/coinFormat';
@@ -25,10 +26,11 @@ interface RewardVerificationViewProps {
   students: Student[];
   onBack: () => void;
   onViewExchangeRecords: () => void;
+  getCoinAssets?: (studentId: string) => { balance: number; bankDeposit: number };
   /** 兑换成功后写入成长币记录，一条记录对应一次操作（可能包含多名学生）。 */
-  onRecordCoinRedeem: (productName: string, shares: CampusCoinLedgerShare[]) => void;
+  onRecordCoinRedeem: (productName: string, shares: CampusCoinLedgerShare[]) => void | Promise<void>;
   /** 清空学生成长币后写入成长币记录，便于老师、学生和家长追溯。 */
-  onRecordCoinClear: (shares: CampusCoinLedgerShare[]) => void;
+  onRecordCoinClear: (shares: CampusCoinLedgerShare[]) => void | Promise<void>;
 }
 
 interface ClassGood {
@@ -97,14 +99,20 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
   students: classStudents,
   onBack,
   onViewExchangeRecords,
+  getCoinAssets,
   onRecordCoinRedeem,
   onRecordCoinClear,
 }) => {
   const GROWTH_COIN_TERMS = useGrowthCoinTerms();
-  const [students, setStudents] = useState<RewardStudent[]>(() => classStudents.map(student => {
+  const [localStudents, setLocalStudents] = useState<RewardStudent[]>(() => classStudents.map(student => {
     const coinDetail = GET_MOCK_CAMPUS_COIN_DETAIL(student);
     return { ...student, campusCoins: coinDetail.balance, campusBankCoins: coinDetail.bankDeposit };
   }));
+  const students = useMemo(() => getCoinAssets ? classStudents.map(student => {
+    const { balance, bankDeposit } = getCoinAssets(student.id);
+    return { ...student, campusCoins: balance, campusBankCoins: bankDeposit };
+  }) : localStudents, [classStudents, getCoinAssets, localStudents]);
+  const writingCoins = useRef(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
   const [goods, setGoods] = useState<ClassGood[]>(INITIAL_GOODS);
   const [draftGoods, setDraftGoods] = useState<ClassGood[]>([]);
@@ -282,10 +290,12 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
     if (clearSelectedIds.size === 0) return;
     // 每次进入确认都回到默认口径，避免沿用上一次的危险选择。
     setClearScope(DEFAULT_COIN_CLEAR_SCOPE);
+    setFeedback('');
     setShowClearConfirm(true);
   };
 
-  const confirmClearCoins = () => {
+  const confirmClearCoins = async () => {
+    if (writingCoins.current) return;
     const count = clearSelectedIds.size;
     const clearedShares = buildCoinClearShares(
       students
@@ -298,8 +308,16 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
         })),
       clearScope,
     );
-    if (clearedShares.length > 0) onRecordCoinClear(clearedShares);
-    setStudents(current => current.map(student => (clearSelectedIds.has(student.id)
+    writingCoins.current = true;
+    try {
+      if (clearedShares.length > 0) await onRecordCoinClear(clearedShares);
+    } catch (error) {
+      setFeedback(error instanceof Error && error.name === 'Error' ? error.message : '清空失败，请重试');
+      return;
+    } finally {
+      writingCoins.current = false;
+    }
+    if (!getCoinAssets) setLocalStudents(current => current.map(student => (clearSelectedIds.has(student.id)
       ? {
         ...student,
         campusCoins: 0,
@@ -326,18 +344,27 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
     setSheetMode('redeem');
   };
 
-  const redeemGood = (good: ClassGood) => {
+  const redeemGood = async (good: ClassGood) => {
+    if (writingCoins.current) return;
     const insufficientStudents = selectedStudents.filter(student => student.campusCoins < good.price);
     if (insufficientStudents.length > 0) {
       setFeedback(`${insufficientStudents.map(student => student.name).join('、')}余额不足`);
       return;
     }
-    onRecordCoinRedeem(good.name, selectedStudents.map(student => ({
-      studentId: student.id,
-      studentName: student.name,
-      amount: good.price,
-    })));
-    setStudents(current => current.map(student => selectedStudentIds.has(student.id)
+    writingCoins.current = true;
+    try {
+      await onRecordCoinRedeem(good.name, selectedStudents.map(student => ({
+        studentId: student.id,
+        studentName: student.name,
+        amount: good.price,
+      })));
+    } catch (error) {
+      setFeedback(error instanceof Error && error.name === 'Error' ? error.message : '兑换失败，请重试');
+      return;
+    } finally {
+      writingCoins.current = false;
+    }
+    if (!getCoinAssets) setLocalStudents(current => current.map(student => selectedStudentIds.has(student.id)
       ? { ...student, campusCoins: student.campusCoins - good.price }
       : student));
     setSelectedStudentIds(new Set());
@@ -634,6 +661,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
         onConfirm={confirmClearCoins}
         onClose={() => setShowClearConfirm(false)}
       >
+        {feedback && <p role="alert" className="text-[length:var(--tm-font-size-compact)] text-[var(--tm-status-negative-strong)]">{feedback}</p>}
         {hasBankToClear && (
           <div className="grid gap-[var(--tm-form-option-gap)]" role="radiogroup" aria-label="选择清空范围">
             {clearScopeOptions.map(option => (
@@ -663,7 +691,7 @@ const RewardVerificationView: React.FC<RewardVerificationViewProps> = ({
         )}
       </MobileDangerConfirmSheet>
 
-      {statusToast && <div role="status" className="pointer-events-none absolute inset-x-[var(--tm-space-4)] top-[calc(var(--tm-size-touch)+var(--tm-space-4))] z-50 flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-chart-tooltip)] px-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)]"><Check className="h-[18px] w-[18px]" />{statusToast}</div>}
+      <MobileToast message={statusToast} />
     </div>
   );
 };

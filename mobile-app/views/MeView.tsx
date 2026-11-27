@@ -3,6 +3,7 @@ import {
     Award,
     BookOpen,
     Bluetooth,
+    ChartNoAxesCombined,
     PawPrint,
     CalendarRange,
     Camera,
@@ -53,6 +54,7 @@ interface MeViewProps {
     onOpenTermGenerateModal?: () => void;
     onViewLeaderReport?: () => void;
     onOpenMoralEducationCockpit?: () => void;
+    onOpenClassEvaluationReportV2?: () => void;
     onOpenWeeklyDutySchedule?: () => void;
     onOpenParentRecordingSettings?: () => void;
     onOpenParentEvaluationVisibility?: () => void;
@@ -139,6 +141,7 @@ const MeView: React.FC<MeViewProps> = ({
     onOpenTermGenerateModal,
     onViewLeaderReport,
     onOpenMoralEducationCockpit,
+    onOpenClassEvaluationReportV2,
     onOpenWeeklyDutySchedule,
     onOpenParentRecordingSettings,
     onOpenParentEvaluationVisibility,
@@ -167,7 +170,7 @@ const MeView: React.FC<MeViewProps> = ({
     // 设备是 App 本机能力，由版本开放，不依赖学校管理工具权限。
     if (availableTools?.moreTools.includes('bluetoothDevices') && onOpenBluetoothDevices) allowedMoreTools.add('bluetoothDevices');
 
-    const allPrimaryTools: MenuEntry<TeacherManagementToolId>[] = [
+    const allPrimaryTools: MenuEntry<TeacherManagementToolId | 'classEvaluationReportV2'>[] = [
         {
             id: 'headteacherAssistant',
             title: '班主任助理',
@@ -211,6 +214,13 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenMoralEducationCockpit,
         },
         {
+            id: 'classEvaluationReportV2',
+            title: '班评报表2.0',
+            icon: ChartNoAxesCombined,
+            iconColorClassName: 'bg-[var(--tm-report-v2-icon-bg)] text-[var(--tm-report-v2-ink)]',
+            onClick: onOpenClassEvaluationReportV2,
+        },
+        {
             id: 'termReport',
             title: '期末报告',
             imageSrc: ASSETS.MANAGEMENT.TERM_REPORT_V2,
@@ -220,7 +230,10 @@ const MeView: React.FC<MeViewProps> = ({
             onClick: onOpenTermGenerateModal,
         },
     ];
-    const primaryTools = allPrimaryTools.filter(item => allowedManagementTools.has(item.id) && Boolean(item.onClick));
+    const primaryTools = allPrimaryTools.filter(item => (
+        allowedManagementTools.has(item.id === 'classEvaluationReportV2' ? 'moralEducationCockpit' : item.id)
+        && Boolean(item.onClick)
+    ));
 
     const allMoreTools: MenuEntry<TeacherMoreToolId>[] = [
         {

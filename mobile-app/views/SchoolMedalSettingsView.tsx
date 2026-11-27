@@ -1,136 +1,135 @@
 import { useRef, useState } from 'react';
 import { resolveMedalIcon } from '../assets/medals';
 import MedalIconView from '../components/medal/MedalIcon';
-import MobileSelectionIndicator from '../components/student/MobileSelectionIndicator';
+import MobileFormActionBar from '../components/ui/MobileFormActionBar';
+import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobilePageHeader from '../components/ui/MobilePageHeader';
-import { PLATFORM_MEDAL_GROUPS } from '../domain/medal';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
+import { PLATFORM_MEDAL_GROUPS, type MedalDefinition } from '../domain/medal';
 import {
   getSchoolManualMedalCatalog,
-  type SchoolMedalAvailabilityChange,
+  type SchoolCustomMedalInput,
   type SchoolMedalSettings,
 } from '../domain/schoolMedals';
-
-type Mode = 'overview' | 'remove' | 'library';
+import SchoolMedalEditorSheet from './SchoolMedalEditorSheet';
 
 interface SchoolMedalSettingsViewProps {
   settings: SchoolMedalSettings;
   onBack: () => void;
-  onSave: (change: SchoolMedalAvailabilityChange, medalIds: readonly string[]) => Promise<void>;
+  onSaveCustomMedal: (input: SchoolCustomMedalInput) => Promise<void>;
+  onDeleteCustomMedal: (medalId: string) => Promise<void>;
 }
 
-const pageTitles: Record<Mode, string> = {
-  overview: '奖章设置',
-  remove: '移除奖章',
-  library: '奖章库',
-};
-const actionClass = 'inline-flex min-h-[var(--tm-size-touch)] min-w-[var(--tm-size-touch)] items-center justify-center whitespace-nowrap rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)]';
-const overviewActionClass = `${actionClass} text-[length:var(--tm-font-size-compact)] [font-weight:var(--tm-font-weight-regular)] text-[var(--tm-text-action)] active:bg-[var(--tm-bg-surface-muted)]`;
-const confirmActionClass = `${actionClass} text-[length:var(--tm-font-size-body)] [font-weight:var(--tm-font-weight-semibold)] text-[var(--tm-brand-primary-strong)] enabled:active:bg-[var(--tm-brand-primary-soft)] disabled:text-[var(--tm-text-disabled)]`;
-const tileClass = 'relative flex min-w-0 flex-col items-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-card-compact)] py-[var(--tm-space-1)] text-center';
+const medalTabs = [
+  { value: 'platform', label: '平台奖章' },
+  { value: 'custom', label: '学校特色奖章' },
+] as const;
+type MedalSettingsTab = typeof medalTabs[number]['value'];
 
-export default function SchoolMedalSettingsView({ settings, onBack, onSave }: SchoolMedalSettingsViewProps) {
-  const [mode, setMode] = useState<Mode>('overview');
-  const [selection, setSelection] = useState<Set<string>>(() => new Set());
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+interface MedalEditorSession {
+  version: number;
+  open: boolean;
+  medal?: MedalDefinition;
+  initialAvailability?: boolean;
+}
+
+const tileClass = 'flex min-w-0 flex-col items-center gap-[var(--tm-space-1)] text-center';
+
+export default function SchoolMedalSettingsView({ settings, onBack, onSaveCustomMedal, onDeleteCustomMedal }: SchoolMedalSettingsViewProps) {
+  const [tab, setTab] = useState<MedalSettingsTab>('platform');
+  const [editor, setEditor] = useState<MedalEditorSession | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MedalDefinition | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const deletingRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const editing = mode !== 'overview';
-  const inLibrary = mode === 'library';
+  const isPlatform = tab === 'platform';
   const enabledIds = new Set(settings.enabled ? settings.availableMedalIds : []);
   const manualIds = new Set(getSchoolManualMedalCatalog(settings).map(medal => medal.id));
-  const groups = [
-    ...PLATFORM_MEDAL_GROUPS,
-    { id: 'school', label: '学校奖章', medals: settings.customMedals },
-  ].map(group => ({
-    ...group,
-    medals: group.medals.filter(medal =>
-      manualIds.has(medal.id) && enabledIds.has(medal.id) !== inLibrary,
-    ),
-  })).filter(group => group.medals.length > 0);
-  const selectedIds = groups.flatMap(group => group.medals.filter(medal => selection.has(medal.id)).map(medal => medal.id));
+  const groups = (isPlatform
+    ? PLATFORM_MEDAL_GROUPS
+    : [{ id: 'school', label: medalTabs[1].label, medals: settings.customMedals }]
+  ).filter(group => group.medals.length > 0);
+  const contentBottomClass = isPlatform
+    ? 'pb-[calc(var(--tm-space-4)+max(var(--mini-program-bottom-safe-area,0px),env(safe-area-inset-bottom,0px)))]'
+    : 'pb-[var(--tm-space-4)]';
 
-  const changeMode = (next: Mode) => {
-    if (next === 'library' || mode === 'library') scrollRef.current?.scrollTo({ top: 0 });
-    setSelection(new Set());
-    setError('');
-    setMode(next);
+  const changeTab = (next: MedalSettingsTab) => {
+    if (tab === next) return;
+    scrollRef.current?.scrollTo({ top: 0 });
+    setTab(next);
   };
 
-  const toggleSelection = (id: string) => {
-    setSelection(current => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const openEditor = (medal?: MedalDefinition) => {
+    setEditor(previous => ({
+      version: (previous?.version ?? 0) + 1,
+      open: true,
+      medal,
+      initialAvailability: medal && manualIds.has(medal.id) ? enabledIds.has(medal.id) : undefined,
+    }));
   };
 
-  const confirm = async () => {
-    if (saving || !selectedIds.length) return;
-    setSaving(true);
-    setError('');
+  const requestDelete = () => {
+    if (!editor?.medal) return;
+    setDeleteError('');
+    setDeleteTarget(editor.medal);
+    setEditor({ ...editor, open: false });
+  };
+
+  const cancelDelete = () => {
+    if (deletingRef.current) return;
+    setDeleteTarget(null);
+    setDeleteError('');
+    setEditor(previous => previous ? { ...previous, open: true } : null);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || deletingRef.current) return;
+    deletingRef.current = true;
+    setDeleting(true);
+    setDeleteError('');
     try {
-      await onSave(inLibrary ? 'add' : 'remove', selectedIds);
-      changeMode('overview');
+      await onDeleteCustomMedal(deleteTarget.id);
+      setDeleteTarget(null);
+      setEditor(null);
     } catch {
-      setError('奖章设置保存失败，请重试');
+      setDeleteError('删除失败，请重试');
     } finally {
-      setSaving(false);
+      deletingRef.current = false;
+      setDeleting(false);
     }
-  };
-
-  const confirmLabel = inLibrary ? '添加' : '确认移除';
-  const handleBack = () => {
-    if (saving) return;
-    if (editing) changeMode('overview');
-    else onBack();
   };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]">
-      <MobilePageHeader title={pageTitles[mode]} onBack={handleBack} />
-      {(!editing || groups.length > 0) && (
-        <div className="flex shrink-0 items-center justify-end gap-[var(--tm-space-2)] bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-space-4)]" role="group" aria-label="奖章操作">
-          {editing ? (
-            <button type="button" className={confirmActionClass}
-              disabled={saving || !selectedIds.length} onClick={() => void confirm()}>
-              {saving ? '保存中…' : confirmLabel + (selectedIds.length ? `（${selectedIds.length}）` : '')}
-            </button>
-          ) : (
-            <>
-              {groups.length > 0 && (
-                <button type="button" className={overviewActionClass} onClick={() => changeMode('remove')}>移除</button>
-              )}
-              <button type="button" className={overviewActionClass} onClick={() => changeMode('library')}>奖章库</button>
-            </>
-          )}
-        </div>
-      )}
-      {error && <p className="px-[var(--tm-space-4)] pb-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] text-[var(--tm-status-negative-strong)]" role="alert">{error}</p>}
-      <div ref={scrollRef} data-view-scroll-root
-        className="min-h-0 flex-1 space-y-[var(--tm-layout-card-gap)] overflow-y-auto px-[var(--tm-space-3)] pb-[calc(var(--tm-space-4)+max(var(--mini-program-bottom-safe-area,0px),env(safe-area-inset-bottom,0px)))] pt-[var(--tm-space-2)] no-scrollbar">
+      <MobilePageHeader title="奖章设置" onBack={onBack} />
+      <TextSelectionControl value={tab} items={medalTabs} onChange={changeTab} ariaLabel="奖章类型"
+        variant="page" />
+      <div ref={scrollRef} data-view-scroll-root role="tabpanel" aria-label={isPlatform ? medalTabs[0].label : medalTabs[1].label}
+        className={`min-h-0 flex-1 space-y-[var(--tm-layout-card-gap)] overflow-y-auto px-[var(--tm-space-3)] pt-[var(--tm-layout-first-card-gap)] no-scrollbar ${contentBottomClass}`}>
         {groups.map(group => (
-          <section key={group.id} aria-labelledby={`school-medal-group-${group.id}`}
-            className="space-y-[var(--tm-space-4)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] py-[var(--tm-space-4)]">
-            <h2 id={`school-medal-group-${group.id}`} className="text-[length:var(--tm-font-size-card-title)] [font-weight:var(--tm-font-weight-bold)]">{group.label}</h2>
-            <ul className="grid grid-cols-3 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-4)]">
+          <section key={group.id} aria-labelledby={isPlatform ? `school-medal-group-${group.id}` : undefined}
+            className="space-y-[var(--tm-space-2)] rounded-[var(--tm-radius-card-compact)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-3)] pt-[var(--tm-space-2)] pb-[var(--tm-space-3)]">
+            {isPlatform && <h2 id={`school-medal-group-${group.id}`} className="text-[length:var(--tm-font-size-card-title)] [font-weight:var(--tm-font-weight-bold)]">{group.label}</h2>}
+            <ul className="grid gap-x-[var(--tm-space-2)] grid-cols-4 gap-y-[var(--tm-space-2)]">
               {group.medals.map(medal => {
-                const selected = selection.has(medal.id);
                 const content = (
                   <>
-                    <div className="aspect-square w-full max-w-[var(--tm-medal-settings-icon-size)] shrink-0" aria-hidden="true">
+                    <div className="h-[var(--tm-medal-settings-icon-size)] w-[var(--tm-medal-settings-icon-size)] shrink-0" aria-hidden="true">
                       <MedalIconView icon={resolveMedalIcon(medal.id, medal.icon)} className="h-full w-full text-[var(--tm-brand-reward)]" />
                     </div>
-                    <span className="[overflow-wrap:anywhere] text-[length:var(--tm-font-size-body)] [font-weight:var(--tm-font-weight-regular)]">{medal.name}</span>
+                    <span className="text-balance text-[length:var(--tm-font-size-compact)] leading-[var(--tm-space-4)] [overflow-wrap:anywhere] [font-weight:var(--tm-font-weight-regular)]">{medal.name}</span>
+                    {!isPlatform && manualIds.has(medal.id) && !enabledIds.has(medal.id) && (
+                      <span className="text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">已停用</span>
+                    )}
                   </>
                 );
                 return (
                   <li key={medal.id} className="min-w-0">
-                    {editing ? (
-                      <button type="button" className={`${tileClass} w-full transition-colors [transition-duration:var(--tm-duration-fast)] enabled:active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none`}
-                        aria-pressed={selected} disabled={saving} onClick={() => toggleSelection(medal.id)}>
+                    {!isPlatform ? (
+                      <button type="button" className={`${tileClass} w-full rounded-[var(--tm-radius-card-compact)] transition-colors [transition-duration:var(--tm-duration-fast)] enabled:active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] motion-reduce:transition-none`}
+                        onClick={() => openEditor(medal)}>
                         {content}
-                        <MobileSelectionIndicator selected={selected} className={`absolute right-[var(--tm-space-1)] top-[var(--tm-space-1)] ${selected ? '' : '!text-[var(--tm-border-control)]'}`} />
                       </button>
                     ) : (
                       <div className={tileClass}>{content}</div>
@@ -143,10 +142,22 @@ export default function SchoolMedalSettingsView({ settings, onBack, onSave }: Sc
         ))}
         {groups.length === 0 && (
           <p className="py-[var(--tm-space-8)] text-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-secondary)]" role="status">
-            {inLibrary ? '暂无可添加的奖章' : '暂无可颁发的奖章'}
+            {isPlatform ? '暂无平台奖章' : '暂无学校特色奖章'}
           </p>
         )}
       </div>
+      {!isPlatform && <MobileFormActionBar type="button" label="新增奖章" onClick={() => openEditor()} />}
+      {editor && (
+        <SchoolMedalEditorSheet key={editor.version} open={editor.open} medal={editor.medal}
+          initialAvailability={editor.initialAvailability} onSave={onSaveCustomMedal}
+          onRequestDelete={requestDelete}
+          onClose={() => setEditor({ ...editor, open: false })} />
+      )}
+      <MobileConfirmSheet open={Boolean(deleteTarget)} shape="subtle" tone="danger"
+        title={`删除“${deleteTarget?.name ?? '奖章'}”？`}
+        description="该奖章将从学校图库和可发列表中移除，已发放给学生的奖章继续保留。"
+        confirmLabel={deleting ? '删除中…' : '删除奖章'} confirmDisabled={deleting}
+        errorMessage={deleteError} onClose={cancelDelete} onConfirm={confirmDelete} />
     </div>
   );
 }

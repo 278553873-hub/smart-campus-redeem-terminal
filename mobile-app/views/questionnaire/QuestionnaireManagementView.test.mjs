@@ -786,7 +786,7 @@ requireText(viewSource, "{ value: 'completed', label: '已完成' },\n  { value:
 if ((viewSource.match(/<CompactSegmentedControl/g) ?? []).length < 3) {
   throw new Error('数据/答卷、答卷状态和教师待办填写进度必须复用同一个紧凑分段控件。');
 }
-forbidText(viewSource, '<TextSelectionControl', '问卷采集详情的状态筛选是页面级例外，不应继续使用纯文字选择控件。');
+requireText(viewSource, '<TextSelectionControl value={listFilter} items={listFilterOptions} onChange={setListFilter} ariaLabel="采集状态" variant="page"', '问卷采集列表应使用公共标题下方页签。');
 requireText(viewSource, 'ariaLabel="答卷状态"', '家长填写答卷筛选必须保留可识别的页签语义。');
 for (const filterLabel of ['ariaLabel="答卷状态"', 'ariaLabel="填写进度"']) {
   const controlStart = viewSource.lastIndexOf('<CompactSegmentedControl', viewSource.indexOf(filterLabel));

@@ -1,4 +1,4 @@
-import { DEFAULT_SCHOOL_MEDALS, PLATFORM_MEDALS, type MedalAwardRecord, type MedalDefinition } from './medal.ts';
+import { DEFAULT_SCHOOL_MEDALS, PLATFORM_MEDALS, type StudentMedalAward, type MedalDefinition, type MedalIcon } from './medal.ts';
 import type { TeacherProfile } from '../types';
 
 export interface MedalCompositionRule {
@@ -9,13 +9,13 @@ export interface MedalCompositionRule {
 export interface SchoolMedalSettings {
   enabled: boolean;
   homeroomCanIssue: boolean;
-  subjectTeacherCanIssue: boolean;
   availableMedalIds: string[];
   customMedals: MedalDefinition[];
+  archivedCustomMedals?: MedalDefinition[];
   rules: MedalCompositionRule[];
 }
 
-export interface SchoolMedalAward extends MedalAwardRecord {
+export interface SchoolMedalAward extends StudentMedalAward {
   classId: string;
   teacherId: string;
   source: 'teacher' | 'composed';
@@ -33,17 +33,21 @@ const DEFAULT_SCHOOL_MANUAL_MEDAL_IDS = [
 export const createDefaultSchoolMedalSettings = (): SchoolMedalSettings => ({
   enabled: true,
   homeroomCanIssue: true,
-  subjectTeacherCanIssue: false,
   availableMedalIds: [...DEFAULT_SCHOOL_MANUAL_MEDAL_IDS],
   customMedals: [...DEFAULT_SCHOOL_MEDALS],
   rules: [],
 });
 
-export const getSchoolMedalCatalog = (settings: SchoolMedalSettings) => [...PLATFORM_MEDALS, ...settings.customMedals];
+const getActiveSchoolMedalCatalog = (settings: SchoolMedalSettings) => [...PLATFORM_MEDALS, ...settings.customMedals];
+
+export const getSchoolMedalCatalog = (settings: SchoolMedalSettings) => [
+  ...getActiveSchoolMedalCatalog(settings),
+  ...(settings.archivedCustomMedals ?? []),
+];
 
 export const getSchoolManualMedalCatalog = (settings: SchoolMedalSettings) => {
   const composed = new Set(settings.rules.map(rule => rule.resultMedalId));
-  return getSchoolMedalCatalog(settings).filter(medal => !composed.has(medal.id));
+  return getActiveSchoolMedalCatalog(settings).filter(medal => !composed.has(medal.id));
 };
 
 export const getManuallyIssuableMedals = (settings: SchoolMedalSettings) => {
@@ -53,6 +57,15 @@ export const getManuallyIssuableMedals = (settings: SchoolMedalSettings) => {
 };
 
 export type SchoolMedalAvailabilityChange = 'add' | 'remove';
+
+export const SCHOOL_MEDAL_NAME_MAX_LENGTH = 12;
+
+export interface SchoolCustomMedalInput {
+  id?: string;
+  name: string;
+  icon: MedalIcon;
+  available?: boolean;
+}
 
 export function changeSchoolMedalAvailability(
   settings: SchoolMedalSettings,
@@ -73,13 +86,52 @@ export function changeSchoolMedalAvailability(
   return changed ? { ...settings, enabled: true, availableMedalIds: [...available] } : settings;
 }
 
+export function changeSchoolCustomMedal(
+  settings: SchoolMedalSettings,
+  input: SchoolCustomMedalInput,
+  newId: () => string,
+): SchoolMedalSettings {
+  const name = input.name.trim();
+  if (!name || name.length > SCHOOL_MEDAL_NAME_MAX_LENGTH) {
+    throw new Error(`请输入 1 至 ${SCHOOL_MEDAL_NAME_MAX_LENGTH} 字的奖章名称`);
+  }
+  const existing = input.id ? settings.customMedals.find(medal => medal.id === input.id) : undefined;
+  if (input.id && !existing) throw new Error('奖章已更新，请返回重新选择');
+  if (getActiveSchoolMedalCatalog(settings).some(medal => medal.id !== input.id && medal.name.trim() === name)) {
+    throw new Error('已有同名奖章，请换一个名称');
+  }
+
+  const medal: MedalDefinition = { id: existing?.id ?? newId(), name, scope: 'school', icon: input.icon, quantity: 1 };
+  const next = {
+    ...settings,
+    customMedals: existing
+      ? settings.customMedals.map(item => item.id === existing.id ? medal : item)
+      : [...settings.customMedals, medal],
+  };
+  if (!existing) return changeSchoolMedalAvailability(next, 'add', [medal.id]);
+  if (input.available === undefined) return next;
+  return changeSchoolMedalAvailability(next, input.available ? 'add' : 'remove', [medal.id]);
+}
+
+export function removeSchoolCustomMedal(settings: SchoolMedalSettings, medalId: string): SchoolMedalSettings {
+  const medal = settings.customMedals.find(item => item.id === medalId);
+  if (!medal) return settings;
+  return {
+    ...settings,
+    customMedals: settings.customMedals.filter(item => item.id !== medalId),
+    // 历史发放记录按编号读取定义，删除后继续保留对应名称和图片。
+    archivedCustomMedals: [...(settings.archivedCustomMedals ?? []), medal],
+    availableMedalIds: settings.availableMedalIds.filter(id => id !== medalId),
+  };
+}
+
 export const canIssueSchoolMedals = (
   settings: SchoolMedalSettings,
   teacher: Pick<TeacherProfile, 'homeroomClassIds' | 'teachingAssignments'>,
   classId: string,
 ) => settings.enabled && (
   (settings.homeroomCanIssue && teacher.homeroomClassIds.includes(classId))
-  || (settings.subjectTeacherCanIssue && teacher.teachingAssignments.some(assignment => assignment.classId === classId))
+  || teacher.teachingAssignments.some(assignment => assignment.classId === classId)
 );
 
 export const isCompositionRuleAvailable = (rule: MedalCompositionRule, available: ReadonlySet<string>) => (
@@ -114,9 +166,10 @@ export function validateMedalCompositionRule(
 export function createSchoolMedalAwards(
   settings: SchoolMedalSettings,
   previousAwards: SchoolMedalAward[],
-  { classId, teacherId, studentIds, medalIds, awardedAt, batchId }: {
+  { classId, teacherId, teacherName, studentIds, medalIds, awardedAt, batchId }: {
     classId: string;
     teacherId: string;
+    teacherName?: string;
     studentIds: string[];
     medalIds: string[];
     awardedAt: string;
@@ -135,7 +188,7 @@ export function createSchoolMedalAwards(
   for (const [studentId, earnedMedals] of studentAwards) {
     const addAward = (medalId: string, source: SchoolMedalAward['source']) => {
       earnedMedals.add(medalId);
-      awards.push({ id: `${batchId}-${awards.length}`, studentId, medalId, classId, teacherId, quantity: 1, awardedAt, source });
+      awards.push({ id: `${batchId}-${awards.length}`, studentId, medalId, classId, teacherId, teacherName, quantity: 1, awardedAt, source });
     };
     manualMedalIds.forEach(id => addAward(id, 'teacher'));
     let composed: boolean;

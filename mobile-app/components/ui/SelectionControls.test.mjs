@@ -11,7 +11,7 @@ for (const required of [
   'h-[var(--tm-selection-touch-height)]',
   'min-h-[var(--tm-selection-touch-height)]',
   'h-[var(--tm-selection-segment-visible-height)]',
-  "density?: 'default' | 'compact' | 'comfortable'",
+  "density?: 'default' | 'compact' | 'small'",
   "motion?: 'static' | 'sliding'",
   "variant?: 'default' | 'settings'",
   'h-[var(--tm-selection-segment-compact-track-height)]',
@@ -50,6 +50,17 @@ for (const required of [
   "aria-pressed={semantics === 'group' ? selected : undefined}",
 ]) {
   assert.ok(textSource.includes(required), `仅文字选择控件缺少结构或状态约束：${required}`);
+}
+
+for (const required of [
+  "const isPage = variant === 'page'",
+  'h-[var(--tm-selection-touch-height)] w-full shrink-0 overflow-x-auto no-scrollbar bg-[var(--tm-page-plain-header-bg)]',
+  'items-center justify-center whitespace-nowrap',
+  'text-[length:var(--tm-font-size-body)]',
+  '[font-weight:var(--tm-font-weight-bold)] text-[var(--tm-text-primary)]',
+  'absolute bottom-0 left-1/2 h-[var(--tm-selection-underline-height)] w-[var(--tm-selection-underline-width)] -translate-x-1/2 rounded-full bg-[var(--tm-brand-primary)]',
+]) {
+  assert.ok(textSource.includes(required), `标题下方页签必须复用统一规格：${required}`);
 }
 
 for (const forbidden of [
@@ -94,6 +105,8 @@ for (const [token, value] of [
   ['--tm-selection-segment-active-shadow', 'var(--tm-shadow-control)'],
   ['--tm-selection-text-active', 'var(--tm-brand-primary)'],
   ['--tm-selection-text-inactive', 'var(--tm-text-secondary)'],
+  ['--tm-selection-underline-width', '24px'],
+  ['--tm-selection-underline-height', '3px'],
   ['--tm-selection-pill-visible-height', '32px'],
   ['--tm-selection-pill-min-width', '60px'],
   ['--tm-selection-pill-radius', '8px'],
@@ -133,7 +146,7 @@ for (const forbidden of ['--tm-brand-primary-strong', 'h-8', 'min-w-[60px]', 'ro
 for (const required of [
   '多组切换控件连续出现时，视觉强度必须逐级下降',
   '不得使用偏深的 `--tm-brand-primary-strong` 代替普通 Tab',
-  '问卷采集详情是页面级例外',
+  '标题下方页签直接放在标题栏之后、内容滚动区之前',
   '答卷状态无论为两项还是三项，都必须单行等分',
   '业务页面只选择共享组件及其语义参数',
   '说明型选择卡片（如可见范围、权限范围、协作方式）统一使用 `--tm-selection-card-*`',

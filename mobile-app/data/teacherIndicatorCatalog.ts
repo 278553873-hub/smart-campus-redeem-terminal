@@ -20,6 +20,7 @@ export interface TeacherIndicatorLevelTwo {
 export interface TeacherIndicatorLevelOne {
   id: string;
   name: string;
+  legacyName?: string;
   children: TeacherIndicatorLevelTwo[];
 }
 
@@ -36,6 +37,16 @@ interface IndicatorCopy {
 }
 
 const createId = (...parts: string[]) => parts.join('-').replace(/\s+/g, '-');
+
+// 旧版演示评价记录和积分余额采用五育分类名，保留与现有学校指标的对应关系。
+const studentLegacyNames: Readonly<Partial<Record<string, string>>> = {
+  崇德: '德育',
+  求知: '智育',
+  向阳: '体育',
+  尚美: '美育',
+  躬行: '劳育',
+  乐创: '创造',
+};
 
 const studentCopyByName: Record<string, IndicatorCopy> = {
   '遵守纪律': {
@@ -95,7 +106,12 @@ const buildStudentCatalog = (): TeacherIndicatorCatalog => {
   classReportIndicatorDemoPaths.forEach(([levelOneName, levelTwoName, levelThreeName]) => {
     let levelOne = levels.find(item => item.name === levelOneName);
     if (!levelOne) {
-      levelOne = { id: createId('student', levelOneName), name: levelOneName, children: [] };
+      levelOne = {
+        id: createId('student', levelOneName),
+        name: levelOneName,
+        legacyName: studentLegacyNames[levelOneName],
+        children: [],
+      };
       levels.push(levelOne);
     }
 

@@ -328,6 +328,31 @@ export interface ArchiveWorkspace {
   auditEvents: ArchiveAuditEvent[];
 }
 
+export const getCurrentStudentArchives = (workspace: ArchiveWorkspace, studentId: string) => {
+  const drafts = workspace.drafts
+    .filter(item => item.studentId === studentId)
+    .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  const snapshots = workspace.snapshots
+    .filter(item => item.studentId === studentId && item.status === 'archived')
+    .sort((left, right) => right.dataUpdatedAt.localeCompare(left.dataUpdatedAt) || right.createdAt.localeCompare(left.createdAt));
+  const templateIds = new Set([
+    ...drafts.map(item => item.templateId),
+    ...snapshots.map(item => item.templateId),
+  ]);
+
+  return Array.from(templateIds).map(templateId => {
+    const draft = drafts.find(item => item.templateId === templateId);
+    const snapshot = snapshots.find(item => item.templateId === templateId);
+    return {
+      templateId,
+      templateName: draft?.templateName ?? snapshot?.templateName ?? '学生档案',
+      dataUpdatedAt: draft?.dataUpdatedAt ?? snapshot?.dataUpdatedAt ?? '',
+      draft,
+      snapshot,
+    };
+  }).sort((left, right) => right.dataUpdatedAt.localeCompare(left.dataUpdatedAt));
+};
+
 interface ArchiveWorkspaceContext {
   spaceId: string;
   teacherName: string;

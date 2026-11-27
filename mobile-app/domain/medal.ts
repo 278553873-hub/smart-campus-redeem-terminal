@@ -1,3 +1,5 @@
+import { getSchoolDate, getStudentTermForDate, getStudentTermOptions, type StudentTermOption } from './studentTerms.ts';
+
 export type MedalScope = 'platform' | 'school' | 'class';
 
 export type MedalIconKey = 'award' | 'book' | 'heart' | 'star' | 'trophy';
@@ -29,6 +31,20 @@ export interface MedalSummary {
   quantity: number;
 }
 
+export interface StudentMedalAward extends MedalAwardRecord {
+  teacherName?: string;
+  source?: 'teacher' | 'composed';
+}
+
+export interface StudentMedalSummary extends MedalSummary {
+  awards: StudentMedalAward[];
+}
+
+export interface StudentMedalTerm {
+  term: StudentTermOption;
+  medals: StudentMedalSummary[];
+}
+
 export const summarizeMedalAwards = (records: MedalAwardRecord[], definitions: MedalDefinition[]): MedalSummary[] => (
   definitions.flatMap(definition => {
     const quantity = records
@@ -37,6 +53,36 @@ export const summarizeMedalAwards = (records: MedalAwardRecord[], definitions: M
     return quantity > 0 ? [{ definition, quantity }] : [];
   })
 );
+
+export function summarizeStudentMedalsByTerm(
+  awards: StudentMedalAward[],
+  definitions: MedalDefinition[],
+  today = getSchoolDate(new Date()),
+): StudentMedalTerm[] {
+  const options = getStudentTermOptions(today);
+  const groups = new Map(options.map(term => [term.value, { term, records: [] as StudentMedalAward[] }]));
+  for (const award of awards) {
+    const awardedAt = new Date(award.awardedAt);
+    if (!award.awardedAt || !Number.isFinite(awardedAt.getTime())) continue;
+    const date = getSchoolDate(awardedAt);
+    if (date > today) continue;
+
+    const term = getStudentTermForDate(date);
+    const group = groups.get(term.value);
+    if (group) group.records.push(award);
+    else groups.set(term.value, { term, records: [award] });
+  }
+  return [...groups.values()]
+    .sort((a, b) => a.term.startDate.localeCompare(b.term.startDate))
+    .map(({ term, records }) => ({
+      term,
+      medals: summarizeMedalAwards(records, definitions).map(medal => ({
+        ...medal,
+        awards: records.filter(record => record.medalId === medal.definition.id)
+          .sort((a, b) => Date.parse(b.awardedAt) - Date.parse(a.awardedAt)),
+      })),
+    }));
+}
 
 export type MedalDisplayContext = 'issuance' | 'studentDetail' | 'termReport';
 

@@ -18,6 +18,7 @@ import PageCover from '../components/term-report/TermReportCover';
 import { useReportAppearance } from '../hooks/useReportAppearance';
 import TermReportTagEditor from '../components/term-report/TermReportTagEditor';
 import MobileToast from '../components/ui/MobileToast';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 import { TERM_REPORT_PERIOD } from '../domain/termReportTags';
 import { termReportTagKey } from '../services/termReportTagStore';
 import { useTermReportTags } from '../hooks/useTermReportTags';
@@ -31,7 +32,7 @@ import {
     CornerDownLeft,
     BookOpen, Calendar, TrendingUp, Home, Palmtree,
     PenTool, Star, MapPin, BrainCircuit, HeartHandshake, Map, Clock, Target,
-    Calculator, Languages, FlaskConical, Monitor, Palette, Smile, Dumbbell,
+    Calculator, Languages, FlaskConical, Palette, Smile, Dumbbell,
     Award, Quote, Sparkles, Compass, Megaphone, Layout, Users,
     Sun, MessageSquare, PenLine, Edit3, ArrowUpRight, Anchor, Lightbulb, X, Layers,
     FileText, Printer, ChevronLeft, ChevronRight
@@ -1356,19 +1357,11 @@ const PageSubjectDetail = ({ subject, grade, details, student, mode = 'a4', id }
     );
 };
 
-// 6. Subject Reports with Tab Switcher (学科报告-Tab切换版本)
-const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }: { student: Student, mode?: 'a4' | 'mobile', id?: string, initialSubject?: string }) => {
-    const [activeSubject, setActiveSubject] = useState(initialSubject || MOCK_SUBJECTS[0].subject);
-    const usesFirstGradeChineseRubric = activeSubject === '语文' && student.grade === '一年级';
+const subjectReportTabs = MOCK_SUBJECTS.map(({ subject }) => ({ value: subject, label: subject }));
 
-    const getIcon = (name: string) => {
-        const map: any = {
-            '语文': BookOpen, '数学': Calculator, '英语': Languages,
-            '道法': Users, '科学': FlaskConical, '信息技术': Monitor,
-            '体育': Dumbbell, '音乐': Sun, '美术': Palette, '生安心理': HeartHandshake
-        };
-        return map[name] || Award;
-    };
+// 6. Subject Report Detail
+const PageSubjectReportDetail = ({ student, activeSubject }: { student: Student, activeSubject: string }) => {
+    const usesFirstGradeChineseRubric = activeSubject === '语文' && student.grade === '一年级';
 
     // Get report content
     const gradeTemplates = MOCK_GRADE_SUBJECT_REPORT_TEMPLATES[student.grade];
@@ -1484,36 +1477,7 @@ const PageSubjectReportsWithTabs = ({ student, mode = 'a4', id, initialSubject }
     }, [parsedDimensions, usesFirstGradeChineseRubric]);
 
     return (
-        <ReportPageContainer mode={mode} id={id}>
-
-            {/* Tab导航 */}
-            <div className="mb-4 -mx-5 px-5 overflow-x-auto no-scrollbar">
-                <div className="flex gap-2 min-w-max pb-2" role="tablist" aria-label="切换学科报告">
-                    {MOCK_SUBJECTS.map((sub) => {
-                        const Icon = getIcon(sub.subject);
-                        const isActive = activeSubject === sub.subject;
-                        return (
-                            <button
-                                key={sub.subject}
-                                onClick={() => setActiveSubject(sub.subject)}
-                                role="tab"
-                                aria-selected={isActive}
-                                className={`
-                                    flex min-h-[var(--tm-size-touch)] items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-[background-color,color,box-shadow,transform]
-                                    ${isActive
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'bg-slate-100 text-slate-600 active:scale-95'
-                                    }
-                                `}
-                            >
-                                <Icon className="w-3.5 h-3.5" />
-                                {sub.subject}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
+        <ReportPageContainer mode="mobile">
             {/* 学科报告内容 */}
             <div>
                 {/* 等级显示 */}
@@ -2340,7 +2304,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     const [currentPage, setCurrentPage] = useState(0);
     const [activeSection, setActiveSection] = useState('cover');
     const [showSubjectSubPage, setShowSubjectSubPage] = useState(false);
-    const [currentSubjectName, setCurrentSubjectName] = useState('');
+    const [currentSubjectName, setCurrentSubjectName] = useState(subjectReportTabs[0].value);
     const isMale = student.gender === 'male';
     const displayStudentClassName = classInfo
         ? getTeacherClassDisplayName(classInfo, currentSpace)
@@ -2433,7 +2397,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
     // 处理学科选择 - 跳转到学科报告页
     const handleSubjectClick = (subject: string) => {
         console.log('打开学科报告页:', subject);
-        setCurrentSubjectName(subject);
+        setCurrentSubjectName(subject || subjectReportTabs[0].value);
         setShowSubjectSubPage(true);
     };
 
@@ -2646,8 +2610,12 @@ const TermReportView: React.FC<TermReportViewProps> = ({
                 </div>
             )}
 
+            {showSubjectSubPage && (
+                <TextSelectionControl value={currentSubjectName} items={subjectReportTabs} onChange={setCurrentSubjectName} ariaLabel="切换学科报告" variant="page" className="print:hidden" />
+            )}
+
             {/* Mobile Anchor Navigation (Only in Mobile Mode) */}
-            {viewMode === 'mobile' && isMale && mobileAnchorItems.length > 0 && (
+            {!showSubjectSubPage && viewMode === 'mobile' && isMale && mobileAnchorItems.length > 0 && (
                 <MobileAnchorBar activeSection={activeSection} onNavigate={scrollToSection} items={mobileAnchorItems} />
             )}
 
@@ -2657,11 +2625,7 @@ const TermReportView: React.FC<TermReportViewProps> = ({
                 {/* 学科报告页叠加层 */}
                 {showSubjectSubPage ? (
                     <div className="flex min-h-full w-full flex-col bg-white animate-in slide-in-from-right duration-300">
-                        <PageSubjectReportsWithTabs
-                            student={student}
-                            mode="mobile"
-                            initialSubject={currentSubjectName}
-                        />
+                        <PageSubjectReportDetail student={student} activeSubject={currentSubjectName} />
                     </div>
                 ) : (
                     <>

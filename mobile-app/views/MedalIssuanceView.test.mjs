@@ -8,17 +8,15 @@ const imagesSource = fs.readFileSync(new URL('../assets/images.ts', import.meta.
 const classListSource = fs.readFileSync(new URL('./ClassListView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 
-assert.match(classListSource, /label: '颁发奖章'/, '班级更多操作应提供颁发奖章入口。');
+assert.match(classListSource, /label: '发放奖章'/, '班级更多操作应提供发放奖章入口。');
 assert.match(classListSource, /canIssueMedalsInClass\?\.\(activeActionClass\.id\)/, '学校班级入口应检查当前老师的发放权限。');
 assert.match(classListSource, /onViewMedalIssuance/, '班级更多操作应将奖章发放交给路由层。');
 assert.match(appSource, /'medal_issuance'/, '教师端应注册奖章发放页面路由。');
 assert.doesNotMatch(viewSource, /公共奖章（校级）|自定义奖章（班级）/, '奖章选择界面不应展示旧版范围文案。');
 assert.match(medalDomainSource, /icon: 'book'/, '奖章定义应包含图标。');
-assert.match(viewSource, /CompactSegmentedControl/, '奖章分类应使用 Token 化的公共分段切换控件。');
-assert.match(viewSource, /sticky top-0 z-30 -mx-\[var\(--tm-space-4\)\] bg-\[var\(--tm-bg-surface\)\]/, '奖章分类切换应在内容滚动时使用不透明白色表面吸顶。');
-assert.match(viewSource, /bg-\[var\(--tm-bg-surface\)\][^"\n]*pt-\[var\(--tm-space-4\)\]/, '吸顶白色承载层应包含顶部间距，防止奖章内容从标题栏与切换条之间穿透。');
+assert.match(viewSource, /<\/header>\s+\{scope && scopes\.length > 1 && <TextSelectionControl<MedalScope>[\s\S]*?variant="page"[\s\S]*?\/>\}\s+<div className="[^"]*overflow-y-auto[^"]*pt-\[var\(--tm-layout-first-card-gap\)\]/, '奖章分类应在内容滚动区外紧接标题栏，并使用公共页签。');
 assert.match(viewSource, /平台奖章/, '奖章分类应提供平台奖章。');
-assert.match(viewSource, /学校奖章/, '奖章分类应提供学校奖章。');
+assert.match(viewSource, /学校特色奖章/, '奖章分类应提供学校特色奖章。');
 assert.match(viewSource, /班级奖章/, '奖章分类应提供班级奖章。');
 for (const categoryName of ['日常激励', '活动特长', '综合荣誉', '五育之星']) {
   assert.match(medalDomainSource, new RegExp(`label: '${categoryName}'`), `平台奖章应定义${categoryName}分类。`);
@@ -79,9 +77,8 @@ assert.doesNotMatch(viewSource, /medalIconClassName[\s\S]*rounded-full/, '奖章
 assert.doesNotMatch(viewSource, /box-shadow:var\(--tm-shadow-card\)/, '奖章网格不应使用白色卡片阴影。');
 assert.match(viewSource, /flex-col/, '奖章卡应采用图标在上、名称在下的上下结构。');
 assert.match(viewSource, /选择学生/, '底部主操作应先引导选择学生。');
-assert.match(viewSource, /已选 \{selectedMedals\.length\} 枚/, '选择奖章后应在固定底部展示已选数量。');
-assert.match(viewSource, /\{selectedMedalNames\}/, '已选提示应展示完整奖章名称。');
-assert.match(viewSource, /onClick=\{\(\) => setSheetMode\('students'\)\}[\s\S]*>选择学生<\/button>/, '主页主按钮应始终进入学生选择。');
+assert.doesNotMatch(viewSource, /已选 \{selectedMedals\.length\} 枚|selectedMedalNames/, '主页不应重复展示已选奖章摘要。');
+assert.match(viewSource, /<MobileFormActionBar[\s\S]*?label="选择学生"[\s\S]*?onClick=\{\(\) => setSheetMode\('students'\)\}/, '主页主按钮应复用公共底部操作并进入学生选择。');
 assert.match(viewSource, /MobileStudentPickerSheet/, '页面应复用公共学生选择弹窗。');
 assert.match(pickerSource, /StudentCompactSelectGrid/, '公共学生选择弹窗应继续复用学生多选网格。');
 assert.match(pickerSource, /搜索姓名、学号/, '学生选择应支持按姓名或学号搜索。');
@@ -90,13 +87,13 @@ assert.match(viewSource, /toggleAllStudents[\s\S]*activeStudents\.forEach/, '奖
 assert.match(viewSource, /selectAllAction=\{\{/, '奖章弹窗应复用公共全选操作。');
 assert.doesNotMatch(viewSource, /全选当前|全选本班|取消全班/, '奖章弹窗应统一使用“全选 / 取消全选”。');
 assert.match(viewSource, /onClick=\{\(\) => setSheetMode\('confirm'\)\}/, '学生选择底部按钮应提交并进入二次确认。');
-assert.match(viewSource, /`颁发奖章（\$\{selectedStudentIds\.size\}人）` : '颁发奖章'/, '学生选择底部按钮应显示“颁发奖章（N人）”。');
+assert.match(viewSource, /`发放奖章（\$\{selectedStudentIds\.size\}人）` : '发放奖章'/, '学生选择底部按钮应显示“发放奖章（N人）”。');
 assert.doesNotMatch(viewSource, /提交发放/, '奖章发放流程不应继续使用“提交发放”文案。');
 assert.match(viewSource, /title="确认发放"/, '奖章发放应提供二次确认层。');
 assert.match(viewSource, /selectedMedals\.map\(medal =>/, '二次确认应展示全部待发放奖章。');
 assert.match(viewSource, /selectedStudents\.map\(student =>/, '二次确认应展示全部待发放学生。');
 assert.doesNotMatch(viewSource, /selectedStudents\.slice\(0, 4\)/, '二次确认不得省略学生名单。');
 assert.match(viewSource, />返回修改<\/button>/, '二次确认应允许返回修改学生选择。');
-assert.match(viewSource, /颁发成功/, '颁发成功后应提供反馈。');
+assert.match(viewSource, /发放成功/, '发放成功后应提供反馈。');
 
 console.log('MedalIssuanceView assertions passed');

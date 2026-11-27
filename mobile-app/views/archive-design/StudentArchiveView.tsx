@@ -18,6 +18,7 @@ import {
   getArchiveAnswerValidationError,
   getArchiveGrowthMissingPolicy,
   getArchiveSystemValues,
+  getCurrentStudentArchives,
   getEnabledTemplatesForGrade,
   mergeArchiveGrowthSnapshots,
   persistArchiveWorkspace,
@@ -116,33 +117,13 @@ const StudentArchiveView: React.FC<StudentArchiveViewProps> = ({
     }
   };
 
-  const drafts = workspace.drafts
-    .filter(item => item.studentId === student.id)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  const snapshots = workspace.snapshots
-    .filter(item => item.studentId === student.id && item.status === 'archived')
-    .sort((a, b) => b.dataUpdatedAt.localeCompare(a.dataUpdatedAt) || b.createdAt.localeCompare(a.createdAt));
   const enabledTemplates = getEnabledTemplatesForGrade(workspace, student.grade);
   const studentNo = student.studentNo ?? student.id;
   const pendingArchiveCollections = getPendingArchiveCollectionsForStudent(readQuestionnaires(), spaceId, studentNo);
   const pendingArchiveTemplateIds = new Set(pendingArchiveCollections.flatMap(record => (
     record.archiveTemplateId ? [record.archiveTemplateId] : []
   )));
-  const currentArchives = Array.from(new Set([
-    ...drafts.map(item => item.templateId),
-    ...snapshots.map(item => item.templateId),
-  ])).flatMap(templateId => {
-    const draft = drafts.find(item => item.templateId === templateId);
-    const snapshot = snapshots.find(item => item.templateId === templateId);
-    if (!draft && !snapshot) return [];
-    return [{
-      templateId,
-      templateName: draft?.templateName ?? snapshot?.templateName ?? '学生档案',
-      dataUpdatedAt: draft?.dataUpdatedAt ?? snapshot?.dataUpdatedAt ?? '',
-      draft,
-      snapshot,
-    }];
-  }).sort((left, right) => right.dataUpdatedAt.localeCompare(left.dataUpdatedAt));
+  const currentArchives = getCurrentStudentArchives(workspace, student.id);
   const currentArchiveTemplateIds = new Set(currentArchives.map(item => item.templateId));
   const canAddArchive = enabledTemplates.some(template => (
     pendingArchiveTemplateIds.has(template.id)

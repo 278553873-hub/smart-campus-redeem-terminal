@@ -5,6 +5,7 @@ const appSource = read('../App.tsx');
 const classListSource = read('./ClassListView.tsx');
 const classDetailSource = read('./ClassDetailView.tsx');
 const dashboardSource = read('./DashboardView.tsx');
+const overviewSource = read('../components/student-detail/StudentDetailOverview.tsx');
 const basicEditSource = read('./StudentBasicEditView.tsx');
 const bottomSheetSource = read('../components/ui/MobileBottomSheet.tsx');
 
@@ -23,8 +24,8 @@ requireText(classDetailSource, "students.filter(student => (student.status ?? 'a
 requireText(classListSource, 'getStudentsForClass', '班级列表应接收班级学生数据获取函数。');
 requireText(classListSource, 'leftStudents', '班级列表页应在当前页维护离校学生集合。');
 requireText(classListSource, 'showLeftStudentSheet', '班级列表页应在当前页打开离校学生轻量抽屉。');
-requireText(classListSource, 'relative h-full overflow-hidden', '班级列表页应固定为手机屏幕高度，避免离校学生弹窗挂到长列表底部看不见。');
-requireText(classListSource, 'h-full ${isSchoolSpace && activeListTab === \'class\' ? \'space-y-[var(--tm-class-list-toolbar-card-gap)]\' : \'space-y-3\'} overflow-y-auto', '班级列表内容应自己滚动，让弹窗覆盖当前手机屏幕。');
+requireText(classListSource, 'relative flex h-full min-h-0 flex-col overflow-hidden', '班级列表页应固定为手机屏幕高度，避免离校学生弹窗挂到长列表底部看不见。');
+requireText(classListSource, 'min-h-0 flex-1 overflow-y-auto', '班级列表内容应自己滚动，让弹窗覆盖当前手机屏幕。');
 requireText(classListSource, "label: '离校管理'", '班级卡片更多操作里应提供离校学生管理入口。');
 requireText(classListSource, 'activeActionClass &&', '班级更多操作应通过当前屏幕的底部弹窗展示。');
 requireText(bottomSheetSource, 'z-[1000] flex items-end', '班级更多操作弹窗应通过公共底部弹窗覆盖班级列表层级。');
@@ -48,16 +49,18 @@ if (basicEditSource.includes('设为离校') || basicEditSource.includes('学籍
 requireText(appSource, 'handleUpdateStudentStatus', 'App 应提供独立的学生状态更新处理函数。');
 requireText(appSource, 'onUpdateStudentStatus={handleUpdateStudentStatus}', 'App 应把独立学籍状态操作传给学生详情页。');
 requireText(dashboardSource, 'onUpdateStudentStatus', '学生详情页应接收独立学籍状态操作回调。');
-requireText(dashboardSource, 'id="student-resources-heading"', '更多操作应将成长档案和采集记录归入学生资料。');
-requireText(dashboardSource, 'id="student-enrollment-heading"', '更多操作应将学籍状态与子页入口分区。');
+requireText(overviewSource, "const status = isLeft ? '离校' : '在校'", '学生资料卡应展示真实的在校或离校状态。');
+requireText(overviewSource, 'aria-label={`${status}，查看学籍状态操作`}', '状态入口应向读屏用户说明当前学籍状态和点击用途。');
+requireText(overviewSource, 'onClick={onOpenStudentActions}', '学生资料卡中的学籍状态应打开学籍操作。');
+requireText(dashboardSource, 'onOpenStudentActions={() => setShowMoreActionsSheet(true)}', '学生资料卡的学籍入口应打开当前页的操作抽屉。');
+requireText(dashboardSource, 'title="学籍状态"', '学籍操作抽屉应直接说明管理对象。');
+requireText(dashboardSource, "{student.status !== 'left' && (", '只有在校学生应展示办理离校操作。');
 requireText(dashboardSource, '办理离校', '学籍状态分组应提供明确的办理离校操作。');
 if (dashboardSource.includes('showEnrollmentManagement') || dashboardSource.includes('showStatusActionSheet')) {
   throw new Error('学籍状态不应再进入子页面或叠加状态抽屉。');
 }
-if (dashboardSource.includes('<BadgeCheck className="h-3 w-3" />')) {
-  throw new Error('学生顶部信息卡不应重复展示在校/离校状态标签，学籍状态已由独立操作行承载。');
-}
-requireText(dashboardSource, 'setShowMoreActionsSheet(false);', '办理离校前应先关闭更多操作抽屉。');
+requireText(dashboardSource, 'setShowMoreActionsSheet(false);', '办理离校前应先关闭学籍操作抽屉。');
+requireText(dashboardSource, 'setShowLeaveConfirm(true);', '点击办理离校后应打开确认弹窗。');
 if (dashboardSource.includes('<div className="mt-1 text-xs font-medium text-slate-400">当前：{studentStatusLabel}</div>')) {
   throw new Error('学籍状态操作行不应重复展示两个状态，只保留一个在校/离校标签。');
 }
@@ -65,11 +68,8 @@ if (dashboardSource.includes('bg-slate-900 px-4 text-xs font-black text-white'))
   throw new Error('学籍状态管理按钮不应使用黑色强按钮，应使用更轻的页面内操作样式。');
 }
 requireText(dashboardSource, '设置离校后，该学生将不在学生列表展示。可在班级卡片更多操作中恢复。', '设置离校确认弹窗应简单说明后果和恢复入口。');
+requireText(dashboardSource, "onUpdateStudentStatus(student, 'left')", '确认离校后应调用独立的学籍更新操作。');
 if (dashboardSource.includes("onUpdateStudentStatus(student, 'active')")) {
   throw new Error('学生详情页不应提供离校学生恢复入口，恢复应只在班级卡片更多操作的离校学生列表中完成。');
 }
-if (dashboardSource.includes('onClick={() => setShowStatusActionSheet(true)}') && dashboardSource.includes('aria-label="学籍状态"')) {
-  throw new Error('姓名下方的学籍状态标签不应可点击，应通过独立管理按钮操作。');
-}
-
 console.log('student status flow assertions passed');

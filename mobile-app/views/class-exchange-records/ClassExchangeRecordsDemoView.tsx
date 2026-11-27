@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { createDemoVendingExchangeRecords } from '../../data/vendingExchange';
-import { applyManualVendingRefunds, getVendingExchangeAuthorizedClasses, type VendingExchangeRecord } from '../../domain/vendingExchange';
+import { applyVendingCorrections, getVendingExchangeAuthorizedClasses, type VendingExchangeActions, type VendingExchangeRecord } from '../../domain/vendingExchange';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
 import { localToday } from '../../components/ui/mobileDatePickerModel';
 import type { CampusCoinLedgerEntry } from '../../domain/campusCoinLedger';
@@ -16,17 +16,16 @@ interface Props {
   getStudents: (classId: string) => readonly Student[];
   students: Student[];
   entries: CampusCoinLedgerEntry[];
-  onRevokeEntry: (entryId: string) => void;
+  onRevokeEntry: (entryId: string) => void | Promise<void>;
   onBack: () => void;
-  manualRefunds?: readonly VendingExchangeRecord[];
-  onRefundRecord?: (record: VendingExchangeRecord) => void;
-  canRefundRecord?: (record: VendingExchangeRecord) => boolean;
+  corrections?: Readonly<Record<string, VendingExchangeRecord>>;
+  actions?: VendingExchangeActions;
 }
 
 /** 演示适配层：沿用货柜管理的同一批兑换记录，只截取当前班级。 */
 export default function ClassExchangeRecordsDemoView({
   classInfo, space, hasCabinet = true, teacher, classes, getStudents, students, entries, onRevokeEntry, onBack,
-  manualRefunds = [], onRefundRecord, canRefundRecord,
+  corrections = {}, actions,
 }: Props) {
   const today = useMemo(() => localToday(), []);
   const cabinetClassInfo = useMemo(() => ({
@@ -36,9 +35,11 @@ export default function ClassExchangeRecordsDemoView({
   const cabinet = useMemo(() => {
     if (space.type !== 'school' || !hasCabinet) return null;
     const authorizedClasses = getVendingExchangeAuthorizedClasses(space, teacher, classes);
+    if (!authorizedClasses.some(item => item.id === classInfo.id)) return null;
     const records = createDemoVendingExchangeRecords({
       schoolId: space.id,
-      classes: authorizedClasses,
+      classes: [classInfo],
+      classOrder: classes,
       getStudents,
       today,
       getClassLabel: item => getTeacherClassDisplayName(item, space),
@@ -46,17 +47,16 @@ export default function ClassExchangeRecordsDemoView({
     return {
       schoolId: space.id,
       classInfo: cabinetClassInfo,
-      records: applyManualVendingRefunds(records.filter(record => record.classId === classInfo.id), manualRefunds),
+      records: applyVendingCorrections(records, corrections).filter(record => record.classId === classInfo.id),
     };
-  }, [cabinetClassInfo, classInfo.id, classes, getStudents, hasCabinet, manualRefunds, space, teacher, today]);
+  }, [cabinetClassInfo, classInfo, classes, getStudents, hasCabinet, corrections, space, teacher, today]);
 
   return (
     <ClassExchangeRecordView
       students={students}
       entries={entries}
       cabinet={cabinet}
-      onRefundRecord={onRefundRecord}
-      canRefundRecord={canRefundRecord}
+      actions={actions}
       onRevokeEntry={onRevokeEntry}
       onBack={onBack}
     />

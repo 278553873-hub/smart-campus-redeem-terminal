@@ -215,6 +215,11 @@
   font-weight: var(--tm-font-weight-regular);
 }
 
+/* 安全区依赖手机容器的局部变量，须在实际底栏计算，不能在外层全局 Token 中预计算。 */
+.tm-bottom-action-safe-area {
+  padding-bottom: calc(var(--tm-action-bar-bottom-gap) + max(var(--mini-program-bottom-safe-area, 0px), env(safe-area-inset-bottom, 0px)));
+}
+
 .teacher-mobile-app,
 .teacher-mobile-app * {
   -ms-overflow-style: none;
@@ -533,7 +538,28 @@
 }
 
 .tm-mobile-toast {
-  animation: tm-toast-fade 1.8s ease-in-out both;
+  position: absolute;
+  top: var(--tm-toast-top);
+  left: 50%;
+  z-index: var(--tm-toast-z-index);
+  display: inline-flex;
+  width: max-content;
+  max-width: var(--tm-toast-max-width);
+  align-items: center;
+  justify-content: center;
+  padding: var(--tm-toast-padding-block) var(--tm-toast-padding-inline);
+  border-radius: var(--tm-toast-radius);
+  background: var(--tm-toast-bg);
+  color: var(--tm-toast-text);
+  font-size: var(--tm-toast-font-size);
+  font-weight: var(--tm-toast-font-weight);
+  line-height: var(--tm-toast-line-height);
+  text-align: center;
+  overflow-wrap: anywhere;
+  box-shadow: var(--tm-toast-shadow);
+  pointer-events: none;
+  transform: translateX(-50%);
+  animation: tm-toast-fade var(--tm-toast-duration) var(--tm-toast-easing) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -29,6 +29,7 @@ export const parentGrowthColors = {
   ink: teacher.textPrimary,
   muted: teacher.textSecondary,
   brand: teacher.primaryStrong,
+  medalLink: palette.red[800],
   positive: teacher.positive,
   actionStart: teacher.primary,
   actionEnd: teacher.primary,

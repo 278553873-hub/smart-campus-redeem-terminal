@@ -39,7 +39,7 @@ import TeacherUsageRankingSheet from '../components/report/TeacherUsageRankingSh
 import IndividualEvaluationRateHelp from '../components/report/IndividualEvaluationRateHelp';
 import MobileRankingBadge from '../components/ui/MobileRankingBadge';
 import MobilePageHeader from '../components/ui/MobilePageHeader';
-import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
 type RankingType = 'active' | 'low';
@@ -109,26 +109,6 @@ const getActivePeriodLabel = (period: LeaderReportPeriod, range: LeaderReportDat
     if (period === 'custom') return range ? `自定义 ${range.startDate} 至 ${range.endDate}` : '自定义';
     return leaderReportPeriods.find(item => item.key === period)?.label ?? '';
 };
-
-const ReportTypeTabs = ({
-    value,
-    onChange,
-}: {
-    value: ReportTab;
-    onChange: (value: ReportTab) => void;
-}) => (
-    <CompactSegmentedControl
-        shape="subtle"
-        value={value}
-        items={reportTypeTabs}
-        onChange={onChange}
-        ariaLabel="学生评价报表类型"
-        className="w-[var(--tm-report-header-tabs-width)]"
-        semantics="tabs"
-        density="comfortable"
-        motion="sliding"
-    />
-);
 
 const useAnimatedNumber = (targetValue: number, duration = 650, replayKey?: string) => {
     const target = Number.isFinite(targetValue) ? targetValue : 0;
@@ -2179,9 +2159,7 @@ const LeaderReportView: React.FC<LeaderReportViewProps> = ({ onBack, currentSpac
             style={teacherBrandCssVariables as React.CSSProperties}
         >
             <MobilePageHeader title="学生评价报表" onBack={onBack} />
-            <div className="relative z-40 flex shrink-0 items-center justify-center bg-[var(--tm-page-plain-header-bg)] px-[var(--tm-report-page-inline)]">
-                <ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />
-            </div>
+            <TextSelectionControl value={activeReportTab} items={reportTypeTabs} onChange={setActiveReportTab} ariaLabel="学生评价报表类型" variant="page" />
 
             <div className="relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar" onScroll={handleReportScroll}>
                 <div className={`sticky -top-px z-30 -mt-px border-b bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-report-page-inline)] pt-px transition-[border-color,box-shadow] [transition-duration:var(--tm-duration-panel)] ease-out motion-reduce:duration-0 ${isFilterPinned

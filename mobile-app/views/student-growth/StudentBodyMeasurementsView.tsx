@@ -22,6 +22,7 @@ import {
   type GrowthInputFieldKey,
 } from '../../../shared/studentGrowthFieldCatalog';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileToast from '../../components/ui/MobileToast';
 import {
   BottomAction,
   PageHeader,
@@ -308,7 +309,7 @@ const StudentBodyMeasurementsView: React.FC<StudentBodyMeasurementsViewProps> = 
           <button type="button" onClick={openEdit} className="flex min-h-[56px] w-full items-center gap-3 border-b border-[var(--tm-border-subtle)] text-left text-sm font-semibold text-[var(--tm-text-primary)]"><Pencil className="h-5 w-5 text-[var(--tm-text-tertiary)]" />修正本次记录</button>
           <button type="button" onClick={() => setShowRecordMenu(false)} className={`${secondaryButton} mt-4 w-full`}>取消</button>
         </MobileBottomSheet>
-        {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+        <MobileToast message={toast} />
       </div>
     );
   }
@@ -343,7 +344,7 @@ const StudentBodyMeasurementsView: React.FC<StudentBodyMeasurementsViewProps> = 
       >
         {renderGrowthFormFields()}
       </MobileBottomSheet>
-      {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+      <MobileToast message={toast} />
     </div>
   );
 };

@@ -85,7 +85,7 @@ export interface CampusCoinLedgerEntry {
 /** 运行期间产生的记录变更：新增记录及每笔撤回的时间和操作人。 */
 export interface CampusCoinLedgerPatch {
   entries: CampusCoinLedgerEntry[];
-  revocationsById: Record<string, { time: string; operator?: string }>;
+  revocationsById: Record<string, { time: string; operator?: string; originalEntry?: CampusCoinLedgerEntry }>;
 }
 
 export type CampusCoinLedgerFilter =
@@ -167,12 +167,13 @@ export const revokeCoinLedgerEntry = (
   entryId: string,
   revokedAt: string,
   revokedBy?: string,
+  originalEntry?: CampusCoinLedgerEntry,
 ): CampusCoinLedgerPatch => {
   // 同一笔兑换只落一次退还，保留首次撤回时间和操作人。
   if (patch.revocationsById[entryId]) return patch;
   return {
     ...patch,
-    revocationsById: { ...patch.revocationsById, [entryId]: { time: revokedAt, operator: revokedBy } },
+    revocationsById: { ...patch.revocationsById, [entryId]: { time: revokedAt, operator: revokedBy, ...(originalEntry && { originalEntry }) } },
   };
 };
 
@@ -181,7 +182,8 @@ export const applyCoinLedgerPatch = (
   base: CampusCoinLedgerEntry[],
   patch: CampusCoinLedgerPatch,
 ): CampusCoinLedgerEntry[] => (
-  [...patch.entries, ...base]
+  [...patch.entries, ...base.filter(entry => !patch.revocationsById[entry.id]?.originalEntry),
+    ...Object.values(patch.revocationsById).flatMap(item => item.originalEntry ? [item.originalEntry] : [])]
     .map(entry => {
       const revocation = patch.revocationsById[entry.id];
       return revocation
@@ -190,6 +192,23 @@ export const applyCoinLedgerPatch = (
     })
     .sort((left, right) => right.time.localeCompare(left.time))
 );
+
+/** 基础余额已含历史兑换，只叠加演示期间真正发生的变动。 */
+export const getCoinLedgerAssetChange = (patch: CampusCoinLedgerPatch, studentId: string) => {
+  let balance = 0;
+  let bankDeposit = 0;
+  for (const entry of patch.entries) {
+    if (patch.revocationsById[entry.id]) continue;
+    const share = entry.shares.find(item => item.studentId === studentId);
+    if (!share) continue;
+    balance -= share.amount;
+    bankDeposit -= share.bankAmount ?? 0;
+  }
+  for (const { originalEntry } of Object.values(patch.revocationsById)) {
+    balance += originalEntry?.shares.find(share => share.studentId === studentId)?.amount ?? 0;
+  }
+  return { balance, bankDeposit };
+};
 
 /** 未撤回的班级兑换均可整批撤回，不限制兑换日期；清空学生成长币不支持撤回。 */
 export const isCoinLedgerEntryRevocable = (entry: CampusCoinLedgerEntry) => (

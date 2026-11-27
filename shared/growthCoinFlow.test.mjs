@@ -57,7 +57,7 @@ const manualVendingRefund = find('vending-manual-refund');
 assert.equal(getGrowthCoinFlowStatus(manualVendingPurchase, [manualVendingPurchase, manualVendingRefund]), '已撤回', '老师手动退币应让原货柜支出显示已撤回');
 assert.equal(getGrowthCoinFlowDetail(manualVendingRefund), '撤回兑换 · 卡通笔袋', '老师手动退币在学生明细沿用撤回兑换样式');
 assert.equal(getGrowthCoinFlowStatus(purchase, [purchase, refund]), '已退还', '货柜机自动未出货退款仍显示已退还');
-assert.equal(getGrowthCoinFlowDetail(refund), '未出货退还 · 笔记本×1', '旧货柜退款缺少原因时保留原文案');
+assert.equal(getGrowthCoinFlowDetail(refund), '未出货退还 · 笔记本', '旧货柜退款缺少原因时仍显示未出货退还');
 assert.equal(getGrowthCoinFlowStatus(find('score-supplement'), records), undefined, '补发收入不增加标签');
 assert.equal(JSON.stringify(records), snapshot, '格式化和关联状态判断不能改写历史金额、时间或快照');
 

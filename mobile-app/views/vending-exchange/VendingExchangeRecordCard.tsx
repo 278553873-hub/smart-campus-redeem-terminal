@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GrowthCoinIcon, useGrowthCoinTerms } from '../../../components/GrowthCoinBranding';
 import { DEFAULT_PRODUCT_IMAGE, getProductImage, getProductImageScale } from '../../../shared/productImage';
-import type { VendingExchangeRecord } from '../../domain/vendingExchange';
+import { formatVendingExchangeStudentLabel, type VendingExchangeRecord } from '../../domain/vendingExchange';
 import { formatCoinLedgerTimeLabel } from '../../domain/campusCoinLedger';
 import { formatCoinAmount } from '../../utils/coinFormat';
 import VendingExchangeStatusTags from './VendingExchangeStatusTags';
@@ -18,7 +18,7 @@ export default function VendingExchangeRecordCard({ record, today, onOpen }: Pro
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const imageProduct = { image: record.productImage?.trim() === failedImage ? undefined : record.productImage };
   const imageSrc = getProductImage(imageProduct);
-  const studentLabel = record.className ? `${record.studentName}（${record.className}）` : record.studentName;
+  const studentLabel = formatVendingExchangeStudentLabel(record);
   const timeLabel = record.time.slice(0, 4) === today.slice(0, 4)
     ? formatCoinLedgerTimeLabel(record.time, today) : record.time.slice(0, 16);
 
@@ -37,7 +37,7 @@ export default function VendingExchangeRecordCard({ record, today, onOpen }: Pro
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-[var(--tm-space-3)]">
           <span className="min-w-0 truncate text-[length:var(--tm-font-size-body)] [font-weight:var(--tm-font-weight-semibold)] text-[var(--tm-text-primary)]">
-            {record.productName}{record.quantity > 1 && <span className="ml-[var(--tm-space-1)] whitespace-nowrap tabular-nums text-[var(--tm-text-secondary)]">×{record.quantity}</span>}
+            {record.productName}
           </span>
           <span className="flex shrink-0 items-center gap-1 text-[length:var(--tm-font-size-body)] [font-weight:var(--tm-font-weight-semibold)] tabular-nums text-[var(--tm-text-primary)]" aria-label={`商品单价${formatCoinAmount(record.unitPrice)}${coinTerms.name}`}>
             <GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" />

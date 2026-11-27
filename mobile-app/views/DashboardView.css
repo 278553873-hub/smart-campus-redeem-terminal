@@ -1,0 +1,11 @@
+.student-detail-content {
+    display: grid;
+    gap: 12px;
+    padding: var(--tm-gold-header-content-top) var(--tm-gold-header-gutter) 16px;
+}
+
+.student-detail-content button:focus-visible,
+.student-detail-header button:focus-visible {
+    outline: 2px solid var(--tm-focus-ring);
+    outline-offset: 2px;
+}

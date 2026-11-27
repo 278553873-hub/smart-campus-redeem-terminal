@@ -1,9 +1,11 @@
 import ParentRecordCard from './parent-app/ParentRecordCard';
 import MobileBottomSheet from '../mobile-app/components/ui/MobileBottomSheet';
+import StackedGlassCardBackground from '../mobile-app/components/ui/StackedGlassCardBackground';
+import { readSchoolMedalSettings, readSchoolStudentMedalTerms } from '../mobile-app/data/schoolMedalStore';
 import { readParentRecordingSettings, PARENT_RECORDING_UPDATED } from '../shared/parentRecordingSettings';
 import { DEMO_COIN_SCHOOL_ID, resolveCoinSchoolId } from '../shared/growthCoinBranding';
 import { GrowthCoinIcon, GrowthCoinScope, useGrowthCoinTerms } from './GrowthCoinBranding';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -94,6 +96,8 @@ import {
   type ParentEvaluationVisibilitySettings,
 } from '../shared/parentEvaluationVisibility';
 
+const StudentMedalDetailView = lazy(() => import('../mobile-app/views/StudentMedalDetailView'));
+
 interface ParentAppProps {
   colorScheme?: ParentGrowthScheme;
   showPhoneShell?: boolean;
@@ -114,7 +118,7 @@ interface ParentAppProps {
   onScreenChange?: (screen: Screen) => void;
 }
 
-type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine' | 'cardCollection' | 'cardDetail' | 'coinFlow';
+type Screen = 'binding' | 'growth' | 'reports' | 'archiveList' | 'archiveDetail' | 'questionnaireForm' | 'questionnaireDetail' | 'reportDetail' | 'bank' | 'growthRecords' | 'todo' | 'mine' | 'cardCollection' | 'cardDetail' | 'coinFlow' | 'medals';
 type ReportType = 'month' | 'term';
 type BankTab = 'deposit' | 'list';
 type GrowthRangeMode = 'day' | 'week' | 'month' | 'term';
@@ -720,7 +724,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
   onScreenChange,
 }) => {
   const [screen, setScreen] = useState<Screen>(() => initialScreen ?? (defaultHasBoundChild ? 'growth' : 'binding'));
-  const hasPlainPageBackground = screen === 'growthRecords' || screen === 'coinFlow';
+  const hasPlainPageBackground = screen === 'growthRecords' || screen === 'coinFlow' || screen === 'medals';
   useEffect(() => {
     onScreenChange?.(screen);
   }, [onScreenChange, screen]);
@@ -777,6 +781,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
     () => childrenList.find(child => child.id === activeChildId) ?? childrenList[0] ?? null,
     [activeChildId, childrenList]
   );
+  const medalSchoolId = activeChild ? resolveCoinSchoolId(activeChild.schoolCode) : '';
+  const activeChildMedalTerms = activeChild && (screen === 'growth' || screen === 'medals')
+    ? readSchoolStudentMedalTerms(medalSchoolId, activeChild.studentNo, readSchoolMedalSettings(medalSchoolId))
+    : [];
   const [, refreshRecordingSettings] = useState(0);
   useEffect(() => {
     const refresh = () => refreshRecordingSettings(value => value + 1);
@@ -801,6 +809,10 @@ const ParentApp: React.FC<ParentAppProps> = ({
   const behaviorDraft = behaviorDrafts[behaviorSubjectKey] ?? createParentBehaviorDraft();
   const activeParentRecords = activeChild ? recordsForParentChild(parentBehaviorRecords, PARENT_PROFILE.phone, activeChild) : [];
   const visibleParentRecords = parentRecordPreviewMode === 'empty' ? [] : activeParentRecords;
+  const openSchoolRecords = () => {
+    setRecordSource('school');
+    setScreen('growthRecords');
+  };
   const openBehaviorRecord = () => {
     if (!activeChild || !parentBehaviorRecordingEnabled) return;
     setBehaviorError('');
@@ -1484,7 +1496,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
     return (
       <ParentCard as="section" className="pg-bank">
         <div className="pg-section-heading">
-          <h2 className="pg-currency-heading"><GrowthCoinIcon className="h-8 w-8" alt="" />{GROWTH_COIN_TERMS.name}</h2>
+          <h2 className="pg-card-heading"><GrowthCoinIcon alt="" width={32} height={32} />{GROWTH_COIN_TERMS.name}</h2>
           {isBankEnabled && <button type="button" className="pg-link" onClick={() => setScreen('bank')} aria-label={`进入积分银行，可用${formatCoin(activeChild.availableCoins)}，已存${formatCoin(activeChild.bankBalance)}`}>进入银行<ChevronRight size={18} aria-hidden="true" /></button>}
         </div>
         <section className={`pg-balances${isBankEnabled ? '' : ' pg-balances-single'}`} aria-label={`${GROWTH_COIN_TERMS.name}资产`}>
@@ -1507,11 +1519,24 @@ const ParentApp: React.FC<ParentAppProps> = ({
     const positiveCount = 13;
     const improveCount = 1;
     const totalScore = DEMO_SELF_SCORE;
+    const medalCount = activeChildMedalTerms.reduce((total, { medals }) => (
+      total + medals.reduce((count, medal) => count + medal.quantity, 0)
+    ), 0);
     return (
       <section className="pg-evaluation" aria-labelledby="pg-evaluation-title">
-        <div className="pg-section-heading">
-          <h2 id="pg-evaluation-title">评价统计</h2>
-          <button type="button" className="pg-link" onClick={() => setScreen('growthRecords')}>查看记录<ChevronRight size={16} aria-hidden="true" /></button>
+        <StackedGlassCardBackground className="pg-evaluation-glass" notchShift={-0.08} />
+        {colorScheme !== 'original' && (
+          <img src="/assets/parent-growth/giraffe-soft-vinyl-v2.png" className="pg-mascot pg-mascot--peeking" alt="" width={158} height={105} />
+        )}
+        <div className="pg-evaluation-heading">
+          <h2 id="pg-evaluation-title" className="pg-card-heading">
+            <img src="/assets/parent-growth/evaluation-statistics.png" alt="" width={32} height={32} />
+            成长统计
+          </h2>
+          <button type="button" className="pg-evaluation-medals" onClick={() => setScreen('medals')} aria-label={`查看${activeChild?.name ?? '孩子'}的奖章，已获得 ${medalCount} 个奖章`}>
+            <span>已获得 <strong>{medalCount}</strong> 个奖章</span>
+            <ChevronRight size={14} aria-hidden="true" />
+          </button>
         </div>
         <div className={`pg-statistics ${showAnyEvaluationSummary ? '' : 'pg-statistics-total-only'}`}>
           <div className="pg-total"><span>本月总分</span><div><strong>{totalScore}</strong><span>分</span></div></div>
@@ -1523,8 +1548,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
           )}
         </div>
         {parentBehaviorRecordingEnabled && <ParentPrimaryButton fullWidth className="pg-records" onClick={openBehaviorRecord}>
-          <Plus size={20} aria-hidden="true" />记录表现
+          记录表现
         </ParentPrimaryButton>}
+        <button type="button" className="pg-link pg-evaluation-record-link" onClick={openSchoolRecords}>查看记录<ChevronRight size={16} aria-hidden="true" /></button>
       </section>
     );
   };
@@ -1913,7 +1939,9 @@ const ParentApp: React.FC<ParentAppProps> = ({
         <div className="pg-hero">
           <h1>成长</h1>
           <p>见证每一点进步</p>
-          <img src={colorScheme !== 'original' ? '/assets/parent-growth/giraffe-soft-vinyl-v2.png' : '/assets/parent-growth/reading-bird.png'} className={`pg-mascot${colorScheme !== 'original' ? ' pg-mascot--peeking' : ''}`} alt="" aria-hidden="true" width="144" height="144" />
+          {colorScheme === 'original' && (
+            <img src="/assets/parent-growth/reading-bird.png" className="pg-mascot" alt="" width={144} height={144} />
+          )}
         </div>
         <GrowthSummaryCards />
         <GrowthCoinEntry />
@@ -2846,6 +2874,20 @@ const ParentApp: React.FC<ParentAppProps> = ({
     if (inviteCandidateIds.length > 1) return InviteChildSelect();
     if (screen === 'binding') return Binding();
     if (screen === 'growthRecords') return GrowthRecords();
+    if (screen === 'medals' && activeChild) {
+      const backToGrowth = () => setScreen('growth');
+      return (
+        <Suspense fallback={<ParentPageHeader title="奖章" backLabel="返回成长页" onBack={backToGrowth} />}>
+          <StudentMedalDetailView
+            key={activeChild.id}
+            studentName={activeChild.name}
+            medalTerms={activeChildMedalTerms}
+            onBack={backToGrowth}
+            backLabel="返回成长页"
+          />
+        </Suspense>
+      );
+    }
     if (screen === 'cardCollection') return CardCollection();
     if (screen === 'cardDetail') return <HoloCardViewer onClose={() => setScreen('cardCollection')} />;
     if (screen === 'todo') return TodoPage();
@@ -2944,7 +2986,7 @@ const ParentApp: React.FC<ParentAppProps> = ({
       <PhoneMockup
         showDeviceFrame={showPhoneShell}
         screenOverlayRootId="teacher-mobile-overlay-root"
-        contentTopInsetMode="status-bar"
+        contentTopInsetMode={screen === 'medals' && activeChild && isLoggedIn && !hasInviteStandalonePage ? 'none' : 'status-bar'}
         hideCapsule={Boolean(previewRecord && evaluationImagePreview)}
         screenOverlay={
           previewRecord?.images && evaluationImagePreview ? (

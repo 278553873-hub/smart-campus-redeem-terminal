@@ -92,10 +92,13 @@ const scorePosition = fullNoRosterHtml.indexOf('>15</span>');
 const avatarPosition = fullNoRosterHtml.indexOf('h-[58px]');
 const fullNoPosition = fullNoRosterHtml.indexOf(visibleStudentNo);
 assert.ok(scorePosition >= 0 && scorePosition < fullNoPosition && fullNoPosition < avatarPosition, '完整学号位于总分下方、头像上方');
-assert.ok(render('MobileCard', {
+const fullNoWithoutScoreHtml = render('MobileCard', {
   ...rosterProps,
-  displaySettings: { ...fullNoSettings, showLevel: false },
-}).includes(visibleStudentNo), '关闭总分后仍显示完整学号');
+  displaySettings: { ...fullNoSettings, showLevel: false, showEvaluation: false },
+});
+assert.ok(fullNoWithoutScoreHtml.includes(visibleStudentNo), '只开启完整学号时仍显示完整学号');
+assert.ok(fullNoWithoutScoreHtml.includes('pt-[var(--tm-space-1)]'), '学号上方补齐头像容器内侧的留白');
+assert.ok(!fullNoRosterHtml.includes('pt-[var(--tm-space-1)]'), '有总分时使用总分与学号之间的常规间距');
 assert.ok(!render('MobileCard', {
   ...rosterProps,
   student: { ...rosterProps.student, studentNo: undefined },

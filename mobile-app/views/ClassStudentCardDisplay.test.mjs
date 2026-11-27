@@ -22,8 +22,8 @@ const guidelinesSource = read('../../design-system/teacher-mobile/TEACHER_MOBILE
 assert.match(typesSource, /studentCardDisplaySettings\?: StudentCardDisplaySettings/, '学生卡片显示设置应保存到班级信息。');
 assert.match(typesSource, /groupCardDisplaySettings\?: GroupCardDisplaySettings/, '小组卡片显示设置应保存到班级信息。');
 assert.match(typesSource, /showEvaluation: boolean/, '加扣分展示应使用独立总开关。');
-assert.match(domainSource, /showLevel: true[\s\S]*DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS/, '未配置班级应默认展示等级。');
-assert.match(evaluationDomainSource, /showEvaluation: true[\s\S]*showPraise: true[\s\S]*showCriticism: true/, '未配置班级与小组应默认展示全部加扣分。');
+assert.match(domainSource, /showLevel: true[\s\S]*DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS/, '通用学生卡片应默认展示等级。');
+assert.match(evaluationDomainSource, /showEvaluation: true[\s\S]*showPraise: true[\s\S]*showCriticism: true/, '通用评价配置应默认展示全部加扣分。');
 assert.doesNotMatch(evaluationDomainSource, /valueMode/, '加扣分固定按分值展示，默认配置不再保留次数或分值模式。');
 assert.match(groupDomainSource, /DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS/, '小组应复用公共加扣分展示默认配置。');
 assert.match(evaluationDomainSource, /settings\?\.showPraise[\s\S]*settings\?\.showPraiseCount/, '旧版卡片加分开关应自动迁移。');
@@ -59,9 +59,9 @@ assert.match(switchSource, /role="switch"/, '通用设置行应提供开关语�
 assert.match(switchSource, /surface\?: 'soft' \| 'plain'/, '通用设置开关行应支持无灰底的紧凑设置场景。');
 assert.doesNotMatch(switchSource, /(?:^|\s)border(?:\s|\")/, '设置开关行不应使用实体边框。');
 assert.doesNotMatch(switchSource, /focus-visible:ring/, '手机端设置开关聚焦时不应出现品牌红外环。');
-assert.match(segmentedControlSource, /compact \? 'px-\[var\(--tm-selection-segment-compact-inset\)\] py-0'/, '紧凑分段控件的滑块应使用统一的四周内距。');
+assert.match(segmentedControlSource, /insetTrack \? 'px-\[var\(--tm-selection-segment-compact-inset\)\] py-0'/, '紧凑分段控件的滑块应使用统一的四周内距。');
 assert.match(tokenSource, /--tm-selection-segment-compact-active-radius'[\s\S]*--tm-selection-segment-compact-inset/, '紧凑分段控件的滑块圆角应根据轨道圆角和内距派生。');
-assert.match(detailSource, /getStudentCardDisplaySettings\(classInfo\.studentCardDisplaySettings\)/, '学生页应读取当前班级的卡片显示设置。');
+assert.match(detailSource, /getStudentCardDisplaySettings\(classInfo\.studentCardDisplaySettings \?\? \{\s*showLevel: false,\s*showFullStudentNo: false,\s*showEvaluation: false,\s*\}\)/, '学生页应读取班级配置，未配置时三个开关默认关闭。');
 assert.match(detailSource, /getGroupCardDisplaySettings\(classInfo\.groupCardDisplaySettings\)/, '分组页应读取当前班级的小组卡片显示设置。');
 assert.equal((detailSource.match(/displaySettings=\{studentCardDisplaySettings\}/g) ?? []).length, 3, '学生页、小组详情和新增学生卡片都应使用同一显示设置。');
 assert.equal((detailSource.match(/showPraise=\{groupCardDisplaySettings\.showEvaluation && groupCardDisplaySettings\.showPraise\}/g) ?? []).length, 1, '小组加分显示设置应受总开关控制。');
@@ -81,7 +81,7 @@ assert.match(detailSource, /setMoreActionTarget\(null\);[\s\S]*setCardDisplayTar
 assert.match(typesSource, /StudentLevelForm = 'icon' \| 'score'/, '等级形式应使用图标与分值互斥的明确类型。');
 assert.match(typesSource, /levelForm: StudentLevelForm/, '等级形式应保存到学生卡片设置。');
 assert.doesNotMatch(typesSource, /studentLevelDisplayMode\?: StudentLevelDisplayMode/, '统计范围配置应从班级信息中移除。');
-assert.match(domainSource, /showLevel: true[\s\S]*levelForm: 'icon'[\s\S]*DEFAULT_EVALUATION_CARD_DISPLAY_SETTINGS/, '未配置班级应默认展示星级图标。');
+assert.match(domainSource, /levelForm: 'icon'/, '总分展示方式默认为星级图标。');
 assert.doesNotMatch(appSource, /onUpdateStudentLevelDisplayMode|canConfigureLevelDisplay/, '应用层不应再保留统计范围配置入口。');
 assert.match(appSource, /getStudentLevelNetScore\([\s\S]*'term'[\s\S]*CURRENT_PRINCIPAL_TERM/, '花名册等级应固定按本学期净得分计算。');
 assert.match(rosterCardSource, /displaySettings\.showLevel && displaySettings\.levelForm === 'icon'/, '只有图标形式才展示星级图标。');
@@ -96,7 +96,7 @@ assert.doesNotMatch(performanceMetaSource, /formatScore\(normalizedScore\)\}分/
 assert.match(performanceMetaSource, /formatScore\(normalizedScore\)\}/, '等级总分应直接展示数值。');
 assert.match(performanceMetaSource, /h-\[var\(--tm-student-card-level-row-height\)\]/, '等级图标与等级分值应共用同一等级行高度。');
 assert.match(tokenSource, /'--tm-student-card-level-row-height': '16px'[\s\S]*'--tm-student-card-level-score-font-size': '12px'/, '等级行高度与分值字号应由教师手机端 Token 统一管理。');
-assert.match(guidelinesSource, /学生页与分组页普通态工具栏的三点入口[\s\S]*设置按班级保存并默认全部开启/, '教师手机端规范应记录就近入口、默认值和保存范围。');
+assert.match(guidelinesSource, /学生页与分组页普通态工具栏的三点入口[\s\S]*设置按班级保存。未配置的班级默认关闭学生卡片的三个展示开关/, '教师手机端规范应记录就近入口、默认值和保存范围。');
 assert.match(guidelinesSource, /显示总分[\s\S]*总分[\s\S]*总分\+基础分/, '教师手机端规范应记录总分展示的三选一规则。');
 
 console.log('学生与小组卡片显示设置校验通过。');

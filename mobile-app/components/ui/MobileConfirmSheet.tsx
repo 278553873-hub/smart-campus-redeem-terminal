@@ -8,6 +8,7 @@ interface MobileConfirmSheetProps {
   description: React.ReactNode;
   errorMessage?: string;
   confirmLabel: string;
+  confirmDisabled?: boolean;
   cancelLabel?: string;
   tone?: 'primary' | 'danger';
   onConfirm: () => void;
@@ -22,6 +23,7 @@ const MobileConfirmSheet: React.FC<MobileConfirmSheetProps> = ({
   description,
   errorMessage,
   confirmLabel,
+  confirmDisabled = false,
   cancelLabel = '取消',
   shape = 'default',
   tone = 'primary',
@@ -38,7 +40,8 @@ const MobileConfirmSheet: React.FC<MobileConfirmSheetProps> = ({
       <button
         type="button"
         onClick={onConfirm}
-        className={`${buttonBase} ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} text-[var(--tm-text-inverse)] ${tone === 'danger' ? 'bg-[var(--tm-status-negative)]' : 'bg-[var(--tm-brand-primary)]'}`}
+        disabled={confirmDisabled}
+        className={`${buttonBase} ${shape === 'subtle' ? 'rounded-[var(--tm-radius-control-compact)]' : 'rounded-[var(--tm-radius-control)]'} text-[var(--tm-text-inverse)] disabled:opacity-60 ${tone === 'danger' ? 'bg-[var(--tm-status-negative)]' : 'bg-[var(--tm-brand-primary)]'}`}
       >
         {confirmLabel}
       </button>

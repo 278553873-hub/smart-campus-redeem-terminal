@@ -87,7 +87,7 @@ const StudentCoinDetailView: React.FC<StudentCoinDetailViewProps> = ({ student, 
     const records = [...issueRecords.map(toGrowthCoinIncomeFlow), ...consumeRecords.map(toGrowthCoinExpenseFlow)];
     return records.map(record => ({
       id: record.id,
-      categoryLabel: categoryLabels[record.category],
+      categoryLabel: record.vendingRecharged ? '货柜兑换补扣' : categoryLabels[record.category],
       detail: getGrowthCoinFlowDetail(record, { coinName: GROWTH_COIN_TERMS.name }),
       amount: record.amount,
       time: record.date,

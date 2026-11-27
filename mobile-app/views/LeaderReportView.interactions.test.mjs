@@ -4,9 +4,7 @@ const source = readFileSync(new URL('./LeaderReportView.tsx', import.meta.url), 
 const teacherRankingSheet = readFileSync(new URL('../components/report/TeacherUsageRankingSheet.tsx', import.meta.url), 'utf8');
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const reportDateTabsSource = readFileSync(new URL('../components/report/ReportDateRangeTabs.tsx', import.meta.url), 'utf8');
-const compactSegmentedSource = readFileSync(new URL('../components/ui/CompactSegmentedControl.tsx', import.meta.url), 'utf8');
 const pageHeaderSource = readFileSync(new URL('../components/ui/MobilePageHeader.tsx', import.meta.url), 'utf8');
-const tokenSource = readFileSync(new URL('../styles/teacherMobileTokens.ts', import.meta.url), 'utf8');
 
 const slice = (startMarker, endMarker) => {
   const start = source.indexOf(startMarker);
@@ -32,65 +30,9 @@ if (source.includes("label: '净得分'") || source.includes("net: '净得分'")
   throw new Error('学校数据报表不应继续向教师展示「净得分」或「净赋分」');
 }
 
-for (const required of [
-  '<CompactSegmentedControl',
-  'items={reportTypeTabs}',
-  'onChange={onChange}',
-  'ariaLabel="学生评价报表类型"',
-  'w-[var(--tm-report-header-tabs-width)]',
-  'semantics="tabs"',
-  'density="comfortable"',
-  'motion="sliding"',
-  "label: '教师使用情况'",
-  "label: '五育并举进展'",
-]) {
-  if (!reportTypeTabs.includes(required)) {
-    throw new Error(`学校数据报表类型需要复用一级紧凑分段控件，缺少：${required}`);
-  }
-}
-
-for (const forbidden of ['role="tablist"', 'role="tab"', 'aria-selected={selected}', '--tm-report-type-indicator-', 'selected && (']) {
-  if (reportTypeTabs.includes(forbidden)) {
-    throw new Error(`学校数据报表类型不应继续自行拼装开放式短线页签：${forbidden}`);
-  }
-}
-if (reportTypeTabs.includes('border-b') || reportTypeTabs.includes('border-[var(--tm-border-subtle)]')) {
-  throw new Error('学校数据报表类型切换与时间切换之间不应保留分割线');
-}
-for (const required of [
-  'h-[var(--tm-selection-touch-height)]',
-  'h-[var(--tm-selection-segment-visible-height)]',
-  'h-[var(--tm-selection-segment-compact-track-height)]',
-  'h-[var(--tm-selection-segment-compact-active-height)]',
-  'inset-x-0',
-  'mx-[var(--tm-selection-segment-compact-inset)]',
-  'data-sliding-indicator',
-  '[transition-duration:var(--tm-selection-segment-slide-duration)]',
-  'bg-[var(--tm-selection-segment-track-bg)]',
-  'bg-[var(--tm-selection-segment-active-bg)] text-[var(--tm-selection-segment-active-text)] [box-shadow:var(--tm-selection-segment-active-shadow)]',
-]) {
-  if (!compactSegmentedSource.includes(required)) {
-    throw new Error(`学校数据报表类型需要由公共紧凑分段控件建立一级层级，缺少：${required}`);
-  }
-}
-if (source.includes('--tm-report-type-indicator-') || source.includes('--tm-report-type-font-size')) {
-  throw new Error('学校数据报表类型改为公共紧凑分段后，不应保留旧短线或字号 Token');
-}
-for (const [token, value] of [
-  ['--tm-report-header-tabs-width', '100%'],
-  ['--tm-selection-segment-compact-track-height', '36px'],
-  ['--tm-selection-segment-compact-active-height', '32px'],
-  ['--tm-selection-segment-comfortable-touch-height', '48px'],
-  ['--tm-selection-segment-comfortable-track-height', '40px'],
-  ['--tm-selection-segment-comfortable-active-height', '36px'],
-  ['--tm-selection-segment-compact-font-size', '15px'],
-  ['--tm-selection-segment-compact-inset', '2px'],
-  ['--tm-selection-segment-compact-track-radius', 'var(--tm-radius-inner)'],
-  ['--tm-selection-segment-slide-duration', '220ms'],
-  ['--tm-selection-segment-slide-easing', 'cubic-bezier(0.22, 1, 0.36, 1)'],
-]) {
-  if (!tokenSource.includes(`'${token}': '${value}'`)) {
-    throw new Error(`学校数据报表标题切换规格错误：${token} 应为 ${value}`);
+for (const label of ['教师使用情况', '五育并举进展']) {
+  if (!reportTypeTabs.includes(`label: '${label}'`)) {
+    throw new Error(`学生评价报表缺少类型：${label}`);
   }
 }
 
@@ -98,13 +40,11 @@ for (const required of [
   'relative min-h-0 flex-1 overflow-y-auto pb-8 no-scrollbar',
   'px-[var(--tm-report-page-inline)]',
   'space-y-[var(--tm-space-3)]',
-  '<ReportTypeTabs value={activeReportTab} onChange={setActiveReportTab} />',
   'sticky -top-px z-30 -mt-px border-b bg-[var(--tm-page-plain-content-bg)]',
   'onScroll={handleReportScroll}',
   "? 'border-[var(--tm-border-subtle)] [box-shadow:var(--tm-shadow-control)]'",
   ": 'border-transparent'",
   '<MobilePageHeader title="学生评价报表" onBack={onBack} />',
-  'relative z-40 flex shrink-0 items-center justify-center',
   '<ReportDateRangeTabs',
   'items={leaderReportDateTabs}',
   'onChange={handleReportPeriodChange}',
@@ -117,8 +57,9 @@ for (const required of [
   }
 }
 
-if ((leaderView.match(/<ReportTypeTabs/g) ?? []).length !== 1) {
-  throw new Error('学校数据报表只应渲染一套报表类型页签');
+if (!/<MobilePageHeader[^>]*>\s*<TextSelectionControl[^>]*items=\{reportTypeTabs\}[^>]*variant="page"/.test(leaderView)
+    || (leaderView.match(/ariaLabel="学生评价报表类型"/g) ?? []).length !== 1) {
+  throw new Error('学生评价报表应在标题下方渲染一套公共页签。');
 }
 
 for (const forbidden of ['紧凑筛选', '完整筛选', 'blur-[2px]']) {

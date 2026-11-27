@@ -173,7 +173,9 @@ assert.match(canonical, /'--tm-record-negative-text': teacherEvaluationScoreSema
 assert.match(canonical, /'--tm-record-negative-border': teacherBrandPalette\.red\[100\]/);
 assert.doesNotMatch(canonical, /teacherBrandPalette\.rose|\brose:\s*\{/);
 assert.match(guidelines, /不得维护或引入独立暗红色板/);
-assert.match(canonical, /page: '#F8F6F5'/);
+assert.match(canonical, /page: '#F6F8F9'/);
+assert.match(canonical, /'--tm-bg-page': teacherBrandSemantic\.page/);
+assert.match(canonical, /'--tm-page-plain-content-bg': teacherBrandSemantic\.page/);
 assert.match(canonical, /surfaceGlass: 'rgba\(255, 255, 255, 0\.96\)'/);
 assert.match(canonical, /tailField: 'rgba\(67, 176, 246, 0\.05\)'/);
 assert.match(canonical, /'--tm-shadow-card': '0 12px 28px -20px rgba\([^']+\)'/);

@@ -28,17 +28,17 @@ export const createDemoGrowthCoinIssueRecords = (studentId: string): GrowthCoinI
   { id: `${studentId}-issue-3`, category: 'bank_interest', detail: '存款利息', amount: 5, time: '2026-10-26 09:35' },
   { id: `${studentId}-issue-monthly`, category: 'growth_award', period: { type: 'monthly', month: '2026-10' }, amount: 80, time: '2026-11-01 00:00' },
   { id: `${studentId}-issue-cross-year`, category: 'growth_award', period: { type: 'weekly', startDate: '2025-12-29', endDate: '2026-01-04' }, amount: 20, time: '2026-01-05 00:00' },
-  { id: `${studentId}-refund`, category: 'exchange_refund', productName: '笔记本', quantity: 1, amount: 20, time: '2026-10-26 09:35', relatedRecordId: `${studentId}-vending-refunded` },
+  { id: `${studentId}-refund`, category: 'exchange_refund', productName: '笔记本', amount: 20, time: '2026-10-26 09:35', relatedRecordId: `${studentId}-vending-refunded` },
   { id: `${studentId}-class-refund`, category: 'exchange_refund', refundReason: 'exchange_revoked', productName: '班长体验券', quantity: 1, amount: 300, time: '2026-10-26 09:35', relatedRecordId: `${studentId}-class-exchange-revoked` },
-  { id: `${studentId}-vending-manual-refund`, category: 'exchange_refund', refundReason: 'exchange_revoked', productName: '卡通笔袋', quantity: 1, amount: 20, time: '2026-10-27 09:40', relatedRecordId: `${studentId}-vending-manual` },
+  { id: `${studentId}-vending-manual-refund`, category: 'exchange_refund', refundReason: 'exchange_revoked', productName: '卡通笔袋', amount: 20, time: '2026-10-27 09:40', relatedRecordId: `${studentId}-vending-manual` },
 ];
 
 export const createDemoGrowthCoinConsumeRecords = (studentId: string): GrowthCoinConsumeRecord[] => [
-  { id: `${studentId}-vending`, category: 'vending_exchange', productName: '铅笔', quantity: 3, amount: 30, time: '2026-10-26 09:35' },
+  { id: `${studentId}-vending`, category: 'vending_exchange', productName: '铅笔*12', amount: 30, time: '2026-10-26 09:35' },
   { id: `${studentId}-class-exchange`, category: 'class_exchange', productName: '免作业卡', quantity: 1, amount: 10, time: '2026-10-26 09:35' },
   { id: `${studentId}-class-exchange-revoked`, category: 'class_exchange', productName: '班长体验券', quantity: 1, amount: 300, time: '2026-10-25 10:00' },
-  { id: `${studentId}-vending-refunded`, category: 'vending_exchange', productName: '笔记本', quantity: 1, amount: 20, time: '2026-10-26 09:30' },
-  { id: `${studentId}-vending-manual`, category: 'vending_exchange', productName: '卡通笔袋', quantity: 1, amount: 20, time: '2026-10-27 09:30' },
+  { id: `${studentId}-vending-refunded`, category: 'vending_exchange', productName: '笔记本', amount: 20, time: '2026-10-26 09:30' },
+  { id: `${studentId}-vending-manual`, category: 'vending_exchange', productName: '卡通笔袋', amount: 20, time: '2026-10-27 09:30' },
   // 应撤回5币、可用2币：只记实际扣除的2币。存款和未来奖励不参与抵扣。
   { id: `${studentId}-recovery`, category: 'award_recovery', reason: 'evaluation_revoked', amount: 2, time: '2026-10-25 09:35', relatedRecordId: `${studentId}-score-revoked` },
   { id: `${studentId}-recovery-object`, category: 'award_recovery', reason: 'evaluation_targets_changed', amount: 2, time: '2026-10-24 09:35', relatedRecordId: `${studentId}-score-object` },

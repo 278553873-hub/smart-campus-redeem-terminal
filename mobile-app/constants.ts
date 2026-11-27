@@ -101,7 +101,7 @@ export const DEFAULT_COIN_ISSUANCE_CONFIG: CoinIssuanceConfig = {
 };
 
 export const GET_MOCK_CAMPUS_COIN_DETAIL = (
-  student: Student,
+  student: Pick<Student, 'id'>,
   savedIssuanceConfig: CoinIssuanceConfig = DEFAULT_COIN_ISSUANCE_CONFIG,
   classStudentCount = 60,
   // 由结算接口按当前班级和周期传入，Mock 默认按 1 次评价演示可发放状态。

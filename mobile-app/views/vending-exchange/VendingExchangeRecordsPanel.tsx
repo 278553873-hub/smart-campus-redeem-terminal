@@ -12,7 +12,7 @@ import type { ClassInfo } from '../../types';
 import type { VendingCabinetInventory } from '../../domain/vendingInventory';
 import {
   createVendingExchangeFilter, filterVendingExchangeRecords, groupVendingExchangeRecordsByMonth, scopeVendingExchangeRecords,
-  type VendingExchangeFilter, type VendingExchangeRecord,
+  type VendingCorrectionPreview, type VendingExchangeActions, type VendingExchangeFilter, type VendingExchangeRecord,
 } from '../../domain/vendingExchange';
 import VendingExchangeDetailSheet from './VendingExchangeDetailSheet';
 import VendingExchangeRecordCard from './VendingExchangeRecordCard';
@@ -26,8 +26,7 @@ interface Props {
   records: readonly VendingExchangeRecord[];
   today?: string;
   active?: boolean;
-  onRefundRecord?: (record: VendingExchangeRecord) => void;
-  canRefundRecord?: (record: VendingExchangeRecord) => boolean;
+  actions?: VendingExchangeActions;
   /** 班级兑换记录保留日期入口，但不提供右侧的货柜、商品等多条件筛选。 */
   showFilterAction?: boolean;
 }
@@ -35,11 +34,14 @@ interface Props {
 const PAGE_SIZE = 30;
 
 export default function VendingExchangeRecordsPanel({
-  schoolId, authorizedClasses, cabinets = [], records, today: suppliedToday, active = true, onRefundRecord, canRefundRecord, showFilterAction = true,
+  schoolId, authorizedClasses, cabinets = [], records, today: suppliedToday, active = true, actions, showFilterAction = true,
 }: Props) {
   const [today] = useState(() => suppliedToday ?? localToday());
   const coinTerms = useGrowthCoinTerms();
-  const [showRefundConfirm, setShowRefundConfirm] = useState(false);
+  const [confirmation, setConfirmation] = useState<{ record: VendingExchangeRecord; preview: VendingCorrectionPreview } | null>(null);
+  const [confirmError, setConfirmError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [statusToast, setStatusToast] = useState('');
   const [filter, setFilter] = useState(() => createVendingExchangeFilter(today));
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -86,16 +88,35 @@ export default function VendingExchangeRecordsPanel({
     matches.slice(0, visibleCount), filter.dateRange.end.slice(0, 7),
   ), [matches, visibleCount, filter.dateRange.end]);
   const detail = scopedRecords.find(record => record.id === detailId) ?? null;
-  const canRefund = Boolean(detail && onRefundRecord && detail.status === 'completed' && detail.refundStatus === 'none'
-    && (canRefundRecord?.(detail) ?? true));
-  const confirmRefund = () => {
-    if (!detail || !onRefundRecord) return;
-    const amount = detail.chargedAmount;
-    onRefundRecord(detail);
-    setShowRefundConfirm(false);
-    setDetailId(null);
-    setStatusToast(`已退回 ${formatCoinAmount(amount)} ${coinTerms.name}`);
+  const correction = detail ? actions?.preview(detail) : null;
+  const requestCorrection = () => {
+    if (!detail || !correction) return;
+    setConfirmError('');
+    setConfirmation({ record: detail, preview: correction });
   };
+  const confirmCorrection = async () => {
+    if (!confirmation || !actions || submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setConfirmError('');
+    try {
+      const operation = await actions.confirm(confirmation.record, confirmation.preview);
+      setConfirmation(null);
+      const amount = `${formatCoinAmount(operation.amount)} ${coinTerms.name}`;
+      setStatusToast(operation.amount === 0 ? '兑换结果已更新'
+        : operation.type === 'refund' ? `已退回 ${amount}` : `已补扣 ${amount}`);
+    } catch (error) {
+      setConfirmError(error instanceof Error && error.name === 'Error' ? error.message : '保存失败，请重试');
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  };
+  const confirmPreview = confirmation?.preview;
+  const isCharge = confirmPreview?.type === 'charge';
+  const coinAmount = (amount: number) => <span className="inline-flex items-center gap-[var(--tm-space-1)]">
+    {formatCoinAmount(amount)}<GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" /><span className="sr-only">{coinTerms.name}</span>
+  </span>;
   const updateFilter = (changes: VendingMoreFilter | Pick<VendingExchangeFilter, 'dateRange'>) => {
     setFilter(current => ({ ...current, ...changes }));
     setVisibleCount(PAGE_SIZE);
@@ -149,16 +170,22 @@ export default function VendingExchangeRecordsPanel({
         </div>
       </div>
       {showFilterAction && <VendingExchangeFilterSheet open={filterSheetOpen && active} value={{ ...filter, terminalDeviceId }} terminals={terminals} classes={authorizedClasses} categories={categories} onConfirm={updateFilter} onClose={() => setFilterSheetOpen(false)} />}
-      <VendingExchangeDetailSheet record={detail} onClose={() => setDetailId(null)} canRefund={canRefund} onRequestRefund={canRefund ? () => setShowRefundConfirm(true) : undefined} />
+      <VendingExchangeDetailSheet record={detail} onClose={() => setDetailId(null)} correction={correction?.type} onRequestCorrection={requestCorrection} />
       <MobileConfirmSheet
-        open={showRefundConfirm}
-        title="确认未出货并退币"
-        description={detail ? (
-          <>将退回{detail.studentName} {formatCoinAmount(detail.chargedAmount)}<span className="inline-flex items-center gap-[var(--tm-space-1)]"><GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" /><span className="sr-only">{coinTerms.name}</span></span>，记录变为“兑换失败·已退币”，学生明细显示“撤回兑换”。退币后不可撤销。</>
-        ) : ''}
-        confirmLabel="确认退币"
-        onConfirm={confirmRefund}
-        onClose={() => setShowRefundConfirm(false)}
+        open={Boolean(confirmation && active)}
+        title={isCharge ? '确认商品已出货' : '确认未出货并退币'}
+        description={confirmation && confirmPreview ? <>
+          确认{confirmation.record.studentName}{isCharge ? '已收到' : '未收到'}「{confirmation.record.productName}」？
+          {isCharge && confirmPreview.shortfall > 0 && <>可用余额 {coinAmount(confirmPreview.available)}，还差 {coinAmount(confirmPreview.shortfall)}。</>}
+          {isCharge ? <>本次补扣 {coinAmount(confirmPreview.amount)}。</> : <>本次退回 {coinAmount(confirmPreview.amount)}。</>}
+        </> : ''}
+        errorMessage={confirmError}
+        confirmLabel={submitting ? '正在保存…' : isCharge
+          ? (confirmPreview?.amount ? `确认补扣 ${formatCoinAmount(confirmPreview.amount)}` : '确认已出货')
+          : '确认退币'}
+        confirmDisabled={submitting}
+        onConfirm={confirmCorrection}
+        onClose={() => { if (!submittingRef.current) setConfirmation(null); }}
       />
       {statusToast && <MobileToast message={statusToast} />}
     </div>

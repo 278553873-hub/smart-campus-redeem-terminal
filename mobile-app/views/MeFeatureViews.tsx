@@ -9,7 +9,6 @@ import {
     CircleHelp,
     Edit3,
     GripVertical,
-    ImagePlus,
     KeyRound,
     Lock,
     Palette,
@@ -23,11 +22,11 @@ import RecentTeacherAccounts from '../components/me/RecentTeacherAccounts';
 import type { RecentTeacherLogin } from '../data/recentTeacherLogins';
 import { PREVIEW_RECENT_TEACHER_LOGINS } from '../data/recentTeacherLoginPreview';
 import type { DemoTeacherSwitchHandler, TeacherSupportDialogPreview } from '../data/teacherLoginAccounts';
-import CompactRemoveButton from '../components/ui/CompactRemoveButton';
 import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
 import MobileCardTabBar from '../components/ui/MobileCardTabBar';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileFormActionBar from '../components/ui/MobileFormActionBar';
+import { MobileImagePreviewTile, MobileImageUploadTile } from '../components/ui/MobileImageTile';
 import MobileRadioOptionCard from '../components/ui/MobileRadioOptionCard';
 import type { CoinIssuanceConfig } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
@@ -765,21 +764,15 @@ export const SuggestionFeedbackView: React.FC<SuggestionFeedbackViewProps> = ({ 
                     <div className="text-[14px] font-bold text-[var(--tm-text-primary)]">上传图片</div>
                     <div className="text-[12px] font-semibold tabular-nums text-[var(--tm-text-disabled)]">{images.length}/5</div>
                 </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
+                <div className="mt-[var(--tm-space-3)] grid grid-cols-3 gap-[var(--tm-space-2)]">
                     {images.map((image, index) => (
-                        <div key={`${image}-${index}`} className="relative flex aspect-square items-center justify-center rounded-[var(--tm-form-control-radius)] bg-[var(--tm-bg-surface-soft)] text-[12px] font-semibold text-[var(--tm-text-secondary)]">
+                        <MobileImagePreviewTile key={`${image}-${index}`}
+                            onRemove={() => onRemoveImage(index)} removeLabel={`删除第${index + 1}张反馈图片`}>
                             {image}
-                            <CompactRemoveButton
-                                onClick={() => onRemoveImage(index)}
-                                ariaLabel={`删除第${index + 1}张反馈图片`}
-                            />
-                        </div>
+                        </MobileImagePreviewTile>
                     ))}
                     {canAddImage && (
-                        <button type="button" onClick={onAddImage} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--tm-form-control-radius)] border border-dashed border-[var(--tm-brand-primary-soft-strong)] bg-white text-[12px] font-semibold text-[var(--tm-brand-primary)]" aria-label="上传反馈图片">
-                            <ImagePlus className="h-5 w-5" />
-                            上传图片
-                        </button>
+                        <MobileImageUploadTile ariaLabel="上传反馈图片" onClick={onAddImage} />
                     )}
                 </div>
             </FeaturePanel>

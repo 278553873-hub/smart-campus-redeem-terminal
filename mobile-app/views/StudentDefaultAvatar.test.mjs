@@ -6,7 +6,7 @@ const avatarCatalogSource = fs.readFileSync('mobile-app/assets/studentAvatarCata
 const constantsSource = fs.readFileSync('mobile-app/constants.ts', 'utf8');
 const parentAppSource = fs.readFileSync('components/ParentApp.tsx', 'utf8');
 const rosterCardSource = fs.readFileSync('mobile-app/components/student/StudentRosterCard.tsx', 'utf8');
-const studentDetailSource = fs.readFileSync('mobile-app/views/DashboardView.tsx', 'utf8');
+const studentDetailSource = fs.readFileSync('mobile-app/components/student-detail/StudentDetailOverview.tsx', 'utf8');
 
 assert.match(assetsSource, /STUDENT_GIRL_DEFAULT: studentGirlDefaultAvatar/);
 assert.match(avatarCatalogSource, /gender === 'male' \? studentBoyAvatars : studentGirlAvatars/);

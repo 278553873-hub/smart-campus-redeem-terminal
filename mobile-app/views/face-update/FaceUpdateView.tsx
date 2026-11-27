@@ -5,7 +5,7 @@ import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
 import MobileToast from '../../components/ui/MobileToast';
 import StudentHorizontalCard from '../../components/student/StudentHorizontalCard';
 import MobileEmptyState from '../../components/ui/MobileEmptyState';
-import ReportDateRangeTabs, { type ReportDateRangeTab } from '../../components/report/ReportDateRangeTabs';
+import TextSelectionControl, { type TextSelectionControlItem } from '../../components/ui/TextSelectionControl';
 import { ASSETS } from '../../assets/images';
 import type { ClassInfo, Student } from '../../types';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../../domain/teacherSpaceAccess';
@@ -120,9 +120,9 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
     );
   };
 
-  const tabItems: ReadonlyArray<ReportDateRangeTab<FaceTab>> = [
-    { value: 'pending', label: <span className="font-semibold tabular-nums">待录入（{pendingCount}）</span> },
-    { value: 'recorded', label: <span className="font-semibold tabular-nums">已录入（{completedCount}）</span> },
+  const tabItems: ReadonlyArray<TextSelectionControlItem<FaceTab>> = [
+    { value: 'pending', label: <span className="tabular-nums">待录入（{pendingCount}）</span> },
+    { value: 'recorded', label: <span className="tabular-nums">已录入（{completedCount}）</span> },
   ];
 
   const visibleStudents = activeTab === 'pending' ? pendingStudents : recordedStudents;
@@ -140,13 +140,12 @@ const FaceUpdateView: React.FC<FaceUpdateViewProps> = ({ classInfo, currentSpace
         </div>
       ) : (
         <>
-          <ReportDateRangeTabs
+          <TextSelectionControl
             value={activeTab}
             items={tabItems}
             onChange={setActiveTab}
             ariaLabel="按人脸录入状态切换学生"
-            semantics="tabs"
-            className="shrink-0"
+            variant="page"
           />
           <div
             role="tabpanel"

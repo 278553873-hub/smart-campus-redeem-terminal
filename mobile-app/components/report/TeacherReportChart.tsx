@@ -64,6 +64,7 @@ interface TeacherReportChartTheme {
     gridLine: string;
     tooltip: string;
     surface: string;
+    lineGradientTo: string;
     mutedOpacity: number;
     spacing: { xs: number; sm: number; md: number; lg: number };
 }
@@ -131,6 +132,7 @@ const readChartTheme = (element: HTMLElement): TeacherReportChartTheme => {
         gridLine: readToken(style, '--tm-chart-grid'),
         tooltip: readToken(style, '--tm-chart-tooltip'),
         surface: readToken(style, '--tm-bg-surface'),
+        lineGradientTo: readToken(style, '--tm-chart-line-gradient-to'),
         mutedOpacity: Number.parseFloat(readToken(style, '--tm-chart-series-muted-opacity')) || 0.4,
         spacing: {
             xs: Number.parseFloat(readToken(style, '--tm-space-1')),
@@ -509,6 +511,8 @@ interface TeacherReportLineChartProps {
     series: TeacherReportLineSeries[];
     optionKey: string;
     valueLabelSuffix?: string;
+    highlightLastValue?: boolean;
+    showValueLabels?: boolean;
     minValue?: number;
     maxValue?: number;
     className?: string;
@@ -520,6 +524,8 @@ export const TeacherReportLineChart: React.FC<TeacherReportLineChartProps> = ({
     series,
     optionKey,
     valueLabelSuffix = '',
+    highlightLastValue = false,
+    showValueLabels = false,
     minValue,
     maxValue,
     className = 'h-52',
@@ -535,7 +541,7 @@ export const TeacherReportLineChart: React.FC<TeacherReportLineChartProps> = ({
             textStyle: { color: theme.surface, fontSize: 12 },
             valueFormatter: (value: unknown) => `${value ?? ''}${valueLabelSuffix}`,
         },
-        grid: { left: 36, right: 12, top: 24, bottom: 30 },
+        grid: { left: 36, right: highlightLastValue ? 26 : 12, top: 24, bottom: 30 },
         xAxis: {
             type: 'category',
             boundaryGap: false,
@@ -554,19 +560,43 @@ export const TeacherReportLineChart: React.FC<TeacherReportLineChartProps> = ({
             axisTick: { show: false },
             splitLine: { lineStyle: { color: theme.gridLine, type: 'dashed' } },
         },
-        series: series.map(item => ({
-            name: item.name,
-            type: 'line',
-            smooth: 0.25,
-            symbol: 'circle',
-            symbolSize: 7,
-            showSymbol: true,
-            lineStyle: { width: 3 },
-            itemStyle: { borderWidth: 2, borderColor: theme.surface },
-            areaStyle: { opacity: 0.08 },
-            data: item.values,
-        })),
-    }), [categories, maxValue, minValue, series, valueLabelSuffix]);
+        series: series.map(item => {
+            const color = theme.colors[item.color];
+            const colorStops = theme.lineGradientTo
+                ? [{ offset: 0, color }, { offset: 1, color: theme.lineGradientTo }]
+                : undefined;
+            return {
+                name: item.name,
+                type: 'line',
+                smooth: 0.25,
+                symbol: 'circle',
+                symbolSize: 7,
+                showSymbol: true,
+                lineStyle: {
+                    width: 3,
+                    color: colorStops && { type: 'linear', x: 0, y: 0, x2: 1, y2: 0, colorStops },
+                },
+                itemStyle: { borderWidth: 2, borderColor: theme.surface },
+                areaStyle: colorStops
+                    ? { opacity: 0.18, color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops } }
+                    : { opacity: 0.08 },
+                label: showValueLabels ? {
+                    show: true, position: 'top', formatter: `{c}${valueLabelSuffix}`,
+                    color: theme.textPrimary, fontSize: 10,
+                } : undefined,
+                data: highlightLastValue ? item.values.map((value, index) => index === item.values.length - 1 ? {
+                    value,
+                    symbolSize: 10,
+                    label: {
+                        show: true, position: 'top', offset: [-10, 0],
+                        formatter: `${value}${valueLabelSuffix}`,
+                        backgroundColor: color, color: theme.textPrimary,
+                        padding: [4, 7], borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    },
+                } : value) : item.values,
+            };
+        }),
+    }), [categories, highlightLastValue, maxValue, minValue, series, showValueLabels, valueLabelSuffix]);
 
     return (
         <TeacherReportChart

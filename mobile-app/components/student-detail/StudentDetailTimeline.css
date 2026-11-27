@@ -1,0 +1,125 @@
+.student-detail-timeline {
+    padding: 0 4px;
+    color: var(--tm-text-primary);
+}
+
+.student-detail-timeline-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.student-detail-timeline-title {
+    position: relative;
+    display: grid;
+    min-width: var(--tm-size-touch);
+    min-height: var(--tm-size-touch);
+    place-items: center;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 750;
+}
+
+.student-detail-timeline-title::after {
+    position: absolute;
+    inset-inline: 2px;
+    bottom: 0;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--tm-student-detail-accent);
+    content: '';
+}
+
+.student-detail-timeline-all {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+    min-height: var(--tm-size-touch);
+    padding-left: 4px;
+    color: var(--tm-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.student-detail-timeline ul {
+    margin-top: 3px;
+}
+
+.student-detail-timeline li + li {
+    border-top: 1px solid var(--tm-border-subtle);
+}
+
+.student-detail-timeline-row {
+    display: flex;
+    width: 100%;
+    align-items: flex-start;
+    gap: clamp(8px, 3vw, 16px);
+    padding: 12px 0;
+    text-align: left;
+}
+
+.student-detail-timeline-row:active {
+    background: #f7eee7;
+}
+
+.student-detail-timeline-date {
+    display: grid;
+    flex: 0 0 42px;
+    align-content: start;
+    gap: 1px;
+    min-height: 39px;
+    margin-top: 2px;
+    border-right: 1px solid var(--tm-border-subtle);
+    color: var(--tm-text-secondary);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.student-detail-timeline-date strong {
+    font-size: 21px;
+    font-weight: 750;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.student-detail-timeline-copy {
+    display: grid;
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 3px;
+    padding-top: 2px;
+}
+
+.student-detail-timeline-text {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.student-detail-timeline-author {
+    color: var(--tm-text-secondary);
+    font-size: 12px;
+}
+
+.student-detail-timeline-media {
+    width: 29%;
+    max-width: 112px;
+    aspect-ratio: 1.42;
+    border-radius: 12px;
+    background: var(--tm-bg-surface-soft);
+    object-fit: cover;
+}
+
+.student-detail-timeline-empty {
+    padding: 20px 0;
+    color: var(--tm-text-secondary);
+    text-align: center;
+    font-size: 13px;
+}

@@ -1,0 +1,67 @@
+.tm-gold-header-screen {
+    --tm-gold-header-safe-top: max(var(--mini-program-status-bar-height, 0px), env(safe-area-inset-top, 0px));
+    --tm-gold-header-gutter: 14px;
+    --tm-gold-header-content-top: 1px;
+    --tm-gold-header-toolbar-gap: 4px;
+    --tm-gold-header-identity-top: 5px;
+    --tm-gold-header-offset: calc(
+        var(--tm-size-touch) + var(--tm-gold-header-toolbar-gap) + var(--tm-gold-header-identity-top) + var(--tm-gold-header-content-top)
+    );
+    --tm-gold-header-pattern: radial-gradient(
+        circle 168px at 16px 8px,
+        rgb(255 255 255 / 8%) 0 78%,
+        rgb(255 255 255 / 26%) 97%,
+        transparent 98%
+    );
+    padding-top: var(--tm-gold-header-safe-top);
+    background:
+        var(--tm-gold-header-pattern) left top / 100% var(--tm-gold-header-safe-top) no-repeat,
+        linear-gradient(
+            var(--tm-gold-header-start) var(--tm-gold-header-safe-top),
+            var(--tm-gold-header-background) var(--tm-gold-header-safe-top)
+        );
+}
+
+.tm-gold-header-surface {
+    --tm-gold-header-profile-height: clamp(154px, calc(0.45 * var(--tm-gold-header-profile-width, 100cqw)), 180px);
+    --tm-gold-header-scale: 1.2;
+    --tm-gold-header-extension: calc(
+        (var(--tm-gold-header-offset) + var(--tm-gold-header-safe-top)) * (var(--tm-gold-header-scale) - 1)
+    );
+    isolation: isolate;
+}
+
+.tm-gold-header-surface::before,
+.tm-gold-header-surface::after {
+    position: absolute;
+    z-index: -1;
+    inset-inline: calc(0px - var(--tm-gold-header-gutter));
+    pointer-events: none;
+    content: '';
+}
+
+.tm-gold-header-surface::before {
+    inset-block: calc(0px - var(--tm-gold-header-offset))
+        calc(100% - 45% * var(--tm-gold-header-scale) - var(--tm-gold-header-extension));
+    background:
+        var(--tm-gold-header-pattern) left bottom / 100% calc(100% + var(--tm-gold-header-safe-top)) no-repeat,
+        linear-gradient(180deg, var(--tm-gold-header-start), var(--tm-gold-header-middle) 35%, var(--tm-gold-header-end));
+    mask-image: linear-gradient(#000 36%, transparent 100%);
+}
+
+.tm-gold-header-surface::after {
+    inset-block: 0 calc(100% - 60% * var(--tm-gold-header-scale) - var(--tm-gold-header-extension));
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        var(--tm-gold-header-fade) 26%,
+        var(--tm-gold-header-fade-light) 70%,
+        var(--tm-gold-header-background) 100%
+    );
+}
+
+@media (max-width: 340px) {
+    .tm-gold-header-screen {
+        --tm-gold-header-gutter: 10px;
+    }
+}

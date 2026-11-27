@@ -1,14 +1,22 @@
-import StudentCoinAssetBand from '../components/student-detail/StudentCoinAssetBand';
-import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
-import React, { useState, useMemo } from 'react';
+import StudentDetailOverview from '../components/student-detail/StudentDetailOverview';
+import StudentDetailGrowthChart from '../components/student-detail/StudentDetailGrowthChart';
+import StudentDetailTimeline from '../components/student-detail/StudentDetailTimeline';
+import type { MedalSummary } from '../domain/medal';
+import { getStudentDetailScores } from '../domain/studentDetailGrowth';
+import { CURRENT_STUDENT_TERM, STUDENT_TERM_OPTIONS } from '../domain/studentTerms';
+import { teacherIndicatorCatalogs } from '../data/teacherIndicatorCatalog';
+import { studentDetailYellowVariables } from '../styles/teacherMobileYellowTheme';
+import '../styles/teacherMobileGoldHeader.css';
+import './DashboardView.css';
+import '../components/student-detail/StudentDetailYellowTheme.css';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Student, ScoreItem, GrowthReportItem, CampusCoinDetail, ClassInfo } from '../types';
 import { getTeacherClassDisplayName, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
-import { ASSETS } from '../assets/images';
 import {
-    MaleIcon, FemaleIcon, ChevronDownIcon, ChevronRightIcon,
+    ChevronDownIcon, ChevronRightIcon,
     GrowthIcon
 } from '../components/Icons';
-import { AlertTriangle, BadgeCheck, Camera, ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Ellipsis, FolderOpen, Pencil, X } from 'lucide-react';
+import { BadgeCheck, ChevronDown, ChevronLeft, ClipboardList, FileText, Pencil, X } from 'lucide-react';
 import { MOCK_BEHAVIOR_RECORDS } from '../constants';
 import type { StudentCollectionHistoryItem } from '../../shared/questionnaireStore';
 import StudentCollectionHistoryTab from './student-collection/StudentCollectionHistoryTab';
@@ -27,12 +35,15 @@ interface DashboardViewProps {
     currentSpace: TeacherSpaceOption;
     scores: ScoreItem[];
     growthReports: GrowthReportItem[];
+    medals?: MedalSummary[];
+    archiveCount?: number;
     onViewTermReport?: () => void; // New optional prop
     onViewInitialImagingReport?: () => void;
     onBack: () => void;
     onEditBasicInfo: () => void;
     onUpdateStudentStatus: (student: Student, status: Student['status']) => void;
     onViewCampusCoins: () => void;
+    onViewMedals: () => void;
     campusCoinDetail: CampusCoinDetail;
     collectionHistory: StudentCollectionHistoryItem[];
     evaluationRecords: StudentEvaluationRecord[];
@@ -46,29 +57,13 @@ interface DashboardViewProps {
     initialSection?: 'evaluation' | 'report' | 'collection';
 }
 
-const STUDENT_TERM_OPTIONS: StudentTermOption[] = [
-    { value: '2026-fall', label: '2026-2027学年 上学期', startDate: '2026-09-01', endDate: '2027-02-28', isCurrent: true },
-    { value: '2025-spring', label: '2025-2026学年 下学期', startDate: '2026-03-01', endDate: '2026-08-31' },
-    { value: '2025-fall', label: '2025-2026学年 上学期', startDate: '2025-09-01', endDate: '2026-02-28' },
-];
+const SHOW_OVERVIEW_TERM_SELECTOR = false;
 
 const TERM_SCORE_OFFSETS: Record<string, Record<string, number>> = {
     '2026-fall': {},
     '2025-spring': { moral: -4, intellectual: 3, physical: 5, aesthetic: -2, labor: 6 },
     '2025-fall': { moral: -8, intellectual: -2, physical: 2, aesthetic: 4, labor: -3 },
 };
-
-const FIVE_EDUCATION_CATEGORY_BY_LABEL: Record<string, string> = {
-    德育: 'moral',
-    智育: 'intellectual',
-    体育: 'physical',
-    美育: 'aesthetic',
-    劳育: 'labor',
-};
-
-const getTermValueForEvaluationDate = (value: string) => (
-    STUDENT_TERM_OPTIONS.find(option => value >= option.startDate && value <= option.endDate)?.value
-);
 
 const getFiveEducationTone = (category: string) => {
     switch (category) {
@@ -81,8 +76,14 @@ const getFiveEducationTone = (category: string) => {
     }
 };
 
-const StudentDetailHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (
-    <header className="shrink-0 bg-[var(--tm-page-plain-header-bg)] pt-[var(--mini-program-status-bar-height,0px)]">
+type StudentDetailSection = 'overview' | 'evaluation' | 'report' | 'collection';
+
+const StudentDetailHeader = ({ title, onBack, titleRef }: {
+    title: string;
+    onBack: () => void;
+    titleRef: React.Ref<HTMLHeadingElement>;
+}) => (
+    <header className="student-detail-header shrink-0 bg-[var(--tm-page-plain-header-bg)] pt-[var(--mini-program-status-bar-height,0px)]">
         <div className="relative flex h-[var(--tm-size-touch)] items-center pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
             <button
                 type="button"
@@ -92,7 +93,7 @@ const StudentDetailHeader = ({ title, onBack }: { title: string; onBack: () => v
             >
                 <ChevronLeft className="h-5 w-5" />
             </button>
-            <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">
+            <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]" ref={titleRef} tabIndex={-1}>
                 {title}
             </h1>
         </div>
@@ -295,12 +296,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     currentSpace,
     scores,
     growthReports,
+    medals = [],
+    archiveCount = 0,
     onViewTermReport,
     onViewInitialImagingReport,
     onBack,
     onEditBasicInfo,
     onUpdateStudentStatus,
     onViewCampusCoins,
+    onViewMedals,
     campusCoinDetail,
     collectionHistory,
     evaluationRecords,
@@ -313,18 +317,35 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onOpenStudentArchive,
     initialSection = 'evaluation',
 }) => {
-    const [activeTab, setActiveTab] = useState<'evaluation' | 'report'>(initialSection === 'report' ? 'report' : 'evaluation');
+    const [section, setSection] = useState<StudentDetailSection>(
+        initialSection === 'evaluation' ? 'overview' : initialSection,
+    );
+    const [selectedTerm, setSelectedTerm] = useState(CURRENT_STUDENT_TERM.value);
+    const titleRef = useRef<HTMLHeadingElement>(null);
+    const focusSectionTitle = useRef(false);
+
+    useEffect(() => {
+        if (!focusSectionTitle.current) return;
+        focusSectionTitle.current = false;
+        titleRef.current?.focus({ preventScroll: true });
+    }, [section]);
+
+    const openSection = (nextSection: StudentDetailSection) => {
+        if (nextSection === 'overview' && !SHOW_OVERVIEW_TERM_SELECTOR) {
+            setSelectedTerm(CURRENT_STUDENT_TERM.value);
+        }
+        focusSectionTitle.current = true;
+        setSection(nextSection);
+    };
 
     // UI States
     const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-    const [selectedTerm, setSelectedTerm] = useState(STUDENT_TERM_OPTIONS[0].value);
     const [activeEvaluationRecordId, setActiveEvaluationRecordId] = useState<string | null>(null);
     const [showEvaluationRecordEditor, setShowEvaluationRecordEditor] = useState(false);
     const [showAbilityModel, setShowAbilityModel] = useState(false);
     const [showCurrent, setShowCurrent] = useState(true);
     const [showClassAvg, setShowClassAvg] = useState(true);
     const [showMoreActionsSheet, setShowMoreActionsSheet] = useState(false);
-    const [showCollectionHistory, setShowCollectionHistory] = useState(initialSection === 'collection');
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
     const toggleSection = (id: string) => {
@@ -334,33 +355,30 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         setExpandedSections(newSet);
     };
 
-    const currentTermOption = STUDENT_TERM_OPTIONS.find(option => option.isCurrent) ?? STUDENT_TERM_OPTIONS[0];
-    const selectedTermOption = STUDENT_TERM_OPTIONS.find(option => option.value === selectedTerm) ?? currentTermOption;
+    const selectedTermOption = STUDENT_TERM_OPTIONS.find(option => option.value === selectedTerm) ?? CURRENT_STUDENT_TERM;
     const activeEvaluationRecord = evaluationRecords.find(record => record.id === activeEvaluationRecordId) ?? null;
     const canEditActiveEvaluationRecord = Boolean(activeEvaluationRecord && activeEvaluationRecord.source !== 'parent' && (
         activeEvaluationRecord.teacherId === currentTeacherId || canEditOtherTeachersEvaluationRecords
     ));
-    const evaluationScoreDeltas = useMemo(() => {
-        const deltas: Record<string, Record<string, number>> = {};
-        const applyRecord = (record: StudentEvaluationRecord, factor: number) => {
-            const termValue = getTermValueForEvaluationDate(record.evaluation_date);
-            const category = FIVE_EDUCATION_CATEGORY_BY_LABEL[record.indicatorPath[0]];
-            if (!termValue || !category) return;
-            deltas[termValue] ??= {};
-            deltas[termValue][category] = (deltas[termValue][category] ?? 0) + record.scoreChange * factor;
-        };
-        (MOCK_BEHAVIOR_RECORDS as StudentEvaluationRecord[]).forEach(record => applyRecord(record, -1));
-        evaluationRecords.forEach(record => applyRecord(record, 1));
-        return deltas;
-    }, [evaluationRecords]);
-    const currentScores = useMemo(() => {
-        const offsets = TERM_SCORE_OFFSETS[selectedTermOption.value] ?? {};
-        const recordDeltas = evaluationScoreDeltas[selectedTermOption.value] ?? {};
-        return scores
-            .filter(score => score.category !== 'creativity')
-            .map(score => ({ ...score, score: score.score + (offsets[score.category] ?? 0) + (recordDeltas[score.category] ?? 0) }));
-    }, [evaluationScoreDeltas, scores, selectedTermOption.value]);
+    const currentScores = useMemo(() => getStudentDetailScores({
+        scores: scores.filter(score => score.category !== 'creativity'),
+        records: evaluationRecords,
+        originalRecords: MOCK_BEHAVIOR_RECORDS as StudentEvaluationRecord[],
+        terms: STUDENT_TERM_OPTIONS,
+        selectedTerm: selectedTermOption.value,
+        offsets: TERM_SCORE_OFFSETS[selectedTermOption.value] ?? {},
+    }), [evaluationRecords, scores, selectedTermOption.value]);
     const totalScore = currentScores.reduce((total, item) => total + item.score, 0);
+    const selectedReports = growthReports.filter(report => report.date.slice(0, 7) >= selectedTermOption.startDate.slice(0, 7)
+        && report.date.slice(0, 7) <= selectedTermOption.endDate.slice(0, 7));
+    const openTermReport = selectedTermOption.isCurrent ? onViewTermReport : undefined;
+    const reportCount = selectedReports.length + Number(Boolean(openTermReport)) + Number(Boolean(onViewInitialImagingReport)
+        && isInitialImagingReportInPeriod(selectedTermOption.startDate, selectedTermOption.endDate));
+    const medalCount = medals.reduce((total, medal) => total + medal.quantity, 0);
+    const openEvaluationRecord = (record: StudentEvaluationRecord) => {
+        setShowEvaluationRecordEditor(false);
+        setActiveEvaluationRecordId(record.id);
+    };
     const studentStatusLabel = student.status === 'left' ? '离校' : '在校';
     const formatCompactClassName = (className: string) => {
         const match = className.match(/^(\d{4}级)(.+)$/);
@@ -443,10 +461,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 onDeleteRecord={onDeleteEvaluationRecord}
                 onUpdateRecord={onUpdateEvaluationRecord}
                 onBack={() => undefined}
-                onSelectRecord={(record) => {
-                    setShowEvaluationRecordEditor(false);
-                    setActiveEvaluationRecordId(record.id);
-                }}
+                onSelectRecord={openEvaluationRecord}
             />
         </div>
     );
@@ -467,27 +482,31 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     </span>
                     <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
                 </button>}
-                <button
+                {openTermReport && <button
+                    type="button"
+                    aria-expanded={expandedSections.has('term_report')}
                     onClick={() => toggleSection('term_report')}
                     className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                 >
                     <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-reward-soft)] text-[var(--tm-brand-reward-strong)]">
-                            <FileTextIcon className="h-4 w-4" />
+                            <FileText className="h-4 w-4" aria-hidden="true" />
                         </div>
                         <span>期末综合素质报告</span>
                     </div>
                     {expandedSections.has('term_report') ? <ChevronDownIcon className="h-4 w-4 text-[var(--tm-text-tertiary)]" /> : <ChevronRightIcon className="h-4 w-4 text-[var(--tm-text-tertiary)]" />}
-                </button>
-                {expandedSections.has('term_report') && (
+                </button>}
+                {openTermReport && expandedSections.has('term_report') && (
                     <div className="flex items-center justify-between border-t border-[var(--tm-border-subtle)] px-4 py-3 pl-[4.25rem]">
                         <span className="text-xs text-[var(--tm-text-secondary)]">{selectedTermOption.label}</span>
-                        <button onClick={onViewTermReport} className="min-h-11 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-strong)] active:scale-95">查看</button>
+                        <button onClick={openTermReport} className="min-h-11 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] px-3 text-xs font-semibold text-[var(--tm-brand-primary-strong)] active:scale-95">查看</button>
                     </div>
                 )}
-                {selectedTermOption.isCurrent ? growthReports.map((report) => (
+                {selectedReports.length > 0 ? selectedReports.map((report) => (
                     <div key={report.id} className="border-t border-[var(--tm-border-subtle)]">
                     <button
+                        type="button"
+                        aria-expanded={expandedSections.has(`growth_${report.id}`)}
                         onClick={() => toggleSection(`growth_${report.id}`)}
                         className="flex min-h-[60px] w-full items-center justify-between px-4 text-sm font-semibold text-[var(--tm-text-primary)] transition-colors active:bg-[var(--tm-bg-surface-soft)]"
                     >
@@ -502,7 +521,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     {expandedSections.has(`growth_${report.id}`) && (
                         <div className="border-t border-[var(--tm-border-subtle)] px-4 pb-4 pt-3 pl-[4.25rem] text-xs leading-relaxed text-[var(--tm-text-secondary)]">
                             <p className="line-clamp-2">本月在德育方面表现优异，积极参与班级事务，乐于助人...</p>
-                            <button className="mt-2 flex min-h-11 items-center gap-1 text-[11px] font-semibold text-[var(--tm-brand-primary-strong)]">查看完整报告 <ChevronRightIcon className="h-3 w-3" /></button>
                         </div>
                     )}
                 </div>
@@ -532,130 +550,80 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         );
     }
 
-    if (showCollectionHistory) {
-        return (
-            <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans">
-                <StudentDetailHeader title="采集记录" onBack={() => setShowCollectionHistory(false)} />
-                <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-safe pt-4 no-scrollbar">
-                    <StudentCollectionHistoryTab
-                        items={collectionHistory}
-                        termOptions={STUDENT_TERM_OPTIONS}
-                        selectedTerm={selectedTerm}
-                        onSelectedTermChange={setSelectedTerm}
-                        onOpen={onViewCollectionRecord}
-                    />
-                </main>
-            </div>
-        );
-    }
+    const sectionTitles = { evaluation: '评价记录', report: '成长报告', collection: '问卷采集记录' };
+    const isOverview = section === 'overview';
 
     return (
-        <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans">
-            {/* Student Detail Navigation */}
-            <StudentDetailHeader title="学生详情" onBack={onBack} />
+        <div
+            className={`student-detail-page relative flex h-full min-h-0 flex-col overflow-hidden bg-transparent font-sans ${isOverview ? "tm-gold-header-screen" : ""}`}
+            data-overview={isOverview || undefined}
+            data-color-theme={isOverview ? 'yellow' : undefined}
+            style={isOverview ? studentDetailYellowVariables as React.CSSProperties : undefined}
+        >
+            {!isOverview && (
+                <StudentDetailHeader title={sectionTitles[section]} titleRef={titleRef} onBack={() => openSection('overview')} />
+            )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar">
-            {/* A. Student Profile Card */}
-            <section className="mx-4 mt-4 overflow-hidden rounded-[var(--tm-radius-card-compact)] [background:var(--tm-student-detail-profile-bg)] [box-shadow:var(--tm-shadow-card)]">
-                <div className="p-4">
-                    <div className="flex min-w-0 items-start gap-4">
-                        <button
-                            type="button"
-                            onClick={onEditBasicInfo}
-                            aria-label="编辑基础信息"
-                            className="relative shrink-0 rounded-full text-left transition-transform active:scale-95"
-                        >
-                            <div className="relative h-[72px] w-[72px] overflow-hidden rounded-full border-2 border-[var(--tm-brand-primary-soft-strong)] bg-[var(--tm-bg-surface)] p-1 [box-shadow:var(--tm-shadow-avatar)]">
-                                <img
-                                    src={student.avatar || (student.gender === 'male' ? ASSETS.AVATAR.GENERIC_BOY : ASSETS.AVATAR.STUDENT_GIRL_DEFAULT)}
-                                    alt={`${student.name}头像`}
-                                    className="h-full w-full rounded-full object-cover"
+            <main key={section} data-view-scroll-root className="min-h-0 flex-1 overflow-y-auto pb-safe no-scrollbar">
+                {isOverview ? (
+                    <div className="student-detail-content">
+                        <StudentDetailOverview
+                            student={student}
+                            titleRef={titleRef}
+                            termSelector={SHOW_OVERVIEW_TERM_SELECTOR && (
+                                <StudentTermSelector
+                                    value={selectedTerm}
+                                    options={STUDENT_TERM_OPTIONS}
+                                    onChange={setSelectedTerm}
+                                    variant="glass"
+                                    ariaLabel="选择学生详情学期"
                                 />
-                            </div>
-                            <span className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border border-white bg-white text-[var(--tm-brand-primary)] [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
-                                <Camera className="h-4 w-4" strokeWidth={2.3} />
-                            </span>
-                        </button>
-                        <div className="min-w-0 flex-1">
-                            <div className="flex min-w-0 items-start justify-between gap-2">
-                                <button
-                                    type="button"
-                                    onClick={onEditBasicInfo}
-                                    aria-label="编辑学生姓名和性别"
-                                    className="flex min-h-[var(--tm-size-touch)] min-w-0 items-center gap-2 rounded-[var(--tm-radius-control-compact)] text-left active:opacity-70"
-                                >
-                                    <h2 className="flex min-w-0 items-center gap-2 text-2xl font-bold text-[var(--tm-text-primary)]">
-                                        <span className="truncate">{student.name}</span>
-                                        {student.gender === 'male'
-                                            ? <MaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-male)]" />
-                                            : <FemaleIcon className="h-4 w-4 shrink-0 text-[var(--tm-gender-female)]" />}
-                                    </h2>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowMoreActionsSheet(true)}
-                                    aria-label="更多学生操作"
-                                    className="-mr-2 -mt-2 flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"
-                                >
-                                    <Ellipsis className="h-5 w-5" />
-                                </button>
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                                <button
-                                    type="button"
-                                    onClick={onEditBasicInfo}
-                                    aria-label={`编辑所在班级，当前${displayStudentClassName}`}
-                                    className="flex min-h-[var(--tm-size-touch)] items-center text-left active:opacity-70"
-                                >
-                                    <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">{displayStudentClassName}</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={onEditBasicInfo}
-                                    aria-label={`编辑学号，当前${student.id}`}
-                                    className="flex min-h-[var(--tm-size-touch)] items-center text-left active:opacity-70"
-                                >
-                                    <span className="rounded-md bg-[var(--tm-bg-surface-soft)] px-2 py-1 text-[11px] font-medium text-[var(--tm-text-secondary)]">ID: {student.id}</span>
-                                </button>
-                                <span className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-muted)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive-strong)]'}`}>
-                                    <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-                                    {studentStatusLabel}
-                                </span>
-                            </div>
-                        </div>
+                            )}
+                            className={displayStudentClassName}
+                            medalCount={medalCount}
+                            archiveCount={archiveCount}
+                            questionnaireCount={collectionHistory.length}
+                            reportCount={reportCount}
+                            campusCoinDetail={campusCoinDetail}
+                            onBack={onBack}
+                            onEdit={onEditBasicInfo}
+                            onOpenMedals={onViewMedals}
+                            onOpenArchive={onOpenStudentArchive}
+                            onOpenQuestionnaires={() => openSection('collection')}
+                            onOpenCoins={onViewCampusCoins}
+                            onOpenReports={() => openSection('report')}
+                            onOpenStudentActions={() => setShowMoreActionsSheet(true)}
+                        />
+                        <StudentDetailGrowthChart
+                            indicators={teacherIndicatorCatalogs.student.levels}
+                            scores={currentScores}
+                            records={evaluationRecords}
+                            term={selectedTermOption}
+                            totalScore={totalScore}
+                        />
+                        <StudentDetailTimeline
+                            records={evaluationRecords}
+                            term={selectedTermOption}
+                            onOpenRecord={openEvaluationRecord}
+                            onViewAll={() => openSection('evaluation')}
+                        />
                     </div>
-                </div>
-
-                {/* B. Student Assets Band */}
-                <StudentCoinAssetBand balance={campusCoinDetail.balance} bankDeposit={campusCoinDetail.bankDeposit} onOpen={onViewCampusCoins} />
-            </section>
-
-            {/* 2. Scrollable Content */}
-            <div className="space-y-[var(--tm-layout-card-gap)] p-4">
-                {/* C. Tabs */}
-                <div className="sticky top-0 z-30 bg-[var(--tm-page-plain-content-bg)] py-2">
-                    <CompactSegmentedControl<'evaluation' | 'report'>
-                        value={activeTab}
-                        items={[
-                            { value: 'evaluation', label: '评价记录' },
-                            { value: 'report', label: '成长报告' },
-                        ]}
-                        onChange={setActiveTab}
-                        ariaLabel="学生详情内容"
-                        semantics="tabs"
-                        shape="subtle"
-                        motion="sliding"
-                        fullWidth
-                    />
-                </div>
-
-                {/* D. Content Area */}
-                <div className="min-h-[400px]">
-                    {activeTab === 'evaluation' && renderEvaluationTab()}
-                    {activeTab === 'report' && renderReportTab()}
-                </div>
-            </div>
-            </div>
+                ) : (
+                    <div className="px-4 pb-5 pt-4">
+                        {section === 'evaluation' && renderEvaluationTab()}
+                        {section === 'report' && renderReportTab()}
+                        {section === 'collection' && (
+                            <StudentCollectionHistoryTab
+                                items={collectionHistory}
+                                termOptions={STUDENT_TERM_OPTIONS}
+                                selectedTerm={selectedTerm}
+                                onSelectedTermChange={setSelectedTerm}
+                                onOpen={onViewCollectionRecord}
+                            />
+                        )}
+                    </div>
+                )}
+            </main>
 
             <MobileBottomSheet
                 open={Boolean(activeEvaluationRecord)}
@@ -668,7 +636,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             <button
                                 type="button"
                                 onClick={() => setShowEvaluationRecordEditor(true)}
-                                className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--tm-brand-primary)] active:bg-[var(--tm-brand-primary-soft)]"
+                                className="flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] shrink-0 items-center justify-center rounded-full text-[var(--student-detail-action-text,var(--tm-brand-primary))] active:bg-[var(--tm-brand-primary-soft)]"
                                 aria-label="修改评价"
                             >
                                 <Pencil className="h-4 w-4" />
@@ -690,66 +658,26 @@ const DashboardView: React.FC<DashboardViewProps> = ({
 
             <MobileBottomSheet
                 open={showMoreActionsSheet}
-                title="更多操作"
+                title="学籍状态"
                 onClose={() => setShowMoreActionsSheet(false)}
             >
-                <div className="space-y-5">
-                    <section aria-labelledby="student-resources-heading">
-                        <h3 id="student-resources-heading" className="pb-1 text-xs font-medium text-[var(--tm-text-tertiary)]">学生资料</h3>
-                        <div className="divide-y divide-[var(--tm-border-subtle)]">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowMoreActionsSheet(false);
-                                    onOpenStudentArchive();
-                                }}
-                                className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
-                            >
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary-soft)] text-[var(--tm-brand-primary-strong)]">
-                                    <FolderOpen className="h-4 w-4" />
-                                </span>
-                                <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">成长档案</span>
-                                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setShowMoreActionsSheet(false);
-                                    setShowCollectionHistory(true);
-                                }}
-                                className="flex min-h-[60px] w-full items-center gap-3 text-left active:bg-[var(--tm-bg-surface-soft)]"
-                            >
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-audience-student-soft)] text-[var(--tm-audience-student-strong)]">
-                                    <ClipboardList className="h-4 w-4" />
-                                </span>
-                                <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">采集记录</span>
-                                <span className="shrink-0 text-xs font-medium tabular-nums text-[var(--tm-text-tertiary)]">{collectionHistory.length}条</span>
-                                <ChevronRight className="h-4 w-4 shrink-0 text-[var(--tm-text-tertiary)]" />
-                            </button>
-                        </div>
-                    </section>
-
-                    <section aria-labelledby="student-enrollment-heading">
-                        <h3 id="student-enrollment-heading" className="pb-1 text-xs font-medium text-[var(--tm-text-tertiary)]">学籍状态</h3>
-                        <div className="flex min-h-[60px] items-center gap-3">
-                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]'}`}>
-                                {student.status === 'left' ? <AlertTriangle className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4" />}
-                            </span>
-                            <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">{studentStatusLabel}</span>
-                            {student.status !== 'left' && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowMoreActionsSheet(false);
-                                        setShowLeaveConfirm(true);
-                                    }}
-                                    className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center px-1 text-sm font-semibold text-[var(--tm-status-negative-strong)] active:opacity-60"
-                                >
-                                    办理离校
-                                </button>
-                            )}
-                        </div>
-                    </section>
+                <div className="flex min-h-[60px] items-center gap-3">
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--tm-radius-control-compact)] ${student.status === 'left' ? 'bg-[var(--tm-bg-surface-soft)] text-[var(--tm-text-secondary)]' : 'bg-[var(--tm-status-positive-soft)] text-[var(--tm-status-positive)]'}`}>
+                        <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--tm-text-primary)]">{studentStatusLabel}</span>
+                    {student.status !== 'left' && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setShowMoreActionsSheet(false);
+                                setShowLeaveConfirm(true);
+                            }}
+                            className="flex min-h-[var(--tm-size-touch)] shrink-0 items-center px-1 text-sm font-semibold text-[var(--tm-status-negative-strong)] active:opacity-60"
+                        >
+                            办理离校
+                        </button>
+                    )}
                 </div>
             </MobileBottomSheet>
 
@@ -796,23 +724,5 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
     );
 };
-
-// --- Helper Components (Moved to top level) ---
-const Clock = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-    </svg>
-);
-
-const FileTextIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" x2="8" y1="13" y2="13" />
-        <line x1="16" x2="8" y1="17" y2="17" />
-        <line x1="10" x2="8" y1="9" y2="9" />
-    </svg>
-);
 
 export default DashboardView;

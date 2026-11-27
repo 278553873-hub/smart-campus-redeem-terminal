@@ -6,6 +6,7 @@ const archiveFormRendererSource = fs.readFileSync(new URL('./ArchiveFormRenderer
 const archiveGrowthRendererSource = fs.readFileSync(new URL('./ArchiveGrowthDataRenderer.tsx', import.meta.url), 'utf8');
 const storeSource = fs.readFileSync(new URL('../../../shared/studentArchiveStore.ts', import.meta.url), 'utf8');
 const dashboardSource = fs.readFileSync(new URL('../DashboardView.tsx', import.meta.url), 'utf8');
+const overviewSource = fs.readFileSync(new URL('../../components/student-detail/StudentDetailOverview.tsx', import.meta.url), 'utf8');
 const meSource = fs.readFileSync(new URL('../MeView.tsx', import.meta.url), 'utf8');
 const appSource = fs.readFileSync(new URL('../../App.tsx', import.meta.url), 'utf8');
 const primitivesSource = fs.readFileSync(new URL('./archivePagePrimitives.tsx', import.meta.url), 'utf8');
@@ -62,7 +63,9 @@ for (const legacyColor of ['amber-', 'emerald-', 'cyan-']) {
 requireText(appSource, "'student_archive'", '教师端导航必须注册学生成长档案页面。');
 requireText(appSource, '<ArchiveDesignView', '教师端必须渲染档案设计业务页面。');
 requireText(appSource, '<StudentArchiveView', '教师端必须渲染学生成长档案业务页面。');
-requireText(dashboardSource, '>成长档案</span>', '学生详情必须提供成长档案入口。');
+requireText(dashboardSource, 'onOpenArchive={onOpenStudentArchive}', '学生详情应将成长档案路由接入顶部资料卡。');
+requireText(overviewSource, "{ label: '档案', value: archiveCount, onOpen: onOpenArchive }", '档案数量应同时作为成长档案入口。');
+requireText(appSource, 'archiveCount={getCurrentStudentArchives(', '学生详情档案数量应使用与成长档案列表相同的口径。');
 
 for (const required of [
   '新建档案',
@@ -280,6 +283,7 @@ requireText(appSource, 'initialArchiveTemplateId={questionnaireInitialArchiveTem
 requireText(storeSource, 'upsertStudentArchiveCollectionAnswers', '采集提交必须合并更新学生当前档案。');
 requireText(studentViewSource, 'import MobileFloatingCreateButton', '学生档案首页必须复用公共悬浮创建按钮。');
 requireText(studentRootSource, '<MobileFloatingCreateButton label="新增档案" emphasis="raised" onClick={() => setShowArchivePicker(true)} />', '学生档案首页必须从右下角进入档案选择流程。');
+requireText(studentViewSource, 'getCurrentStudentArchives(workspace, student.id)', '成长档案首页应复用当前学生档案的查询逻辑。');
 requireText(studentRootSource, 'currentArchives.map(archive =>', '学生档案首页只能展示该学生已经形成的当前档案。');
 forbidText(studentRootSource, 'enabledTemplates.map(template =>', '学生档案首页不得把学校已启用档案直接铺成待采集列表。');
 forbidText(studentRootSource, '待采集', '学生档案首页不得继续展示待采集占位档案。');

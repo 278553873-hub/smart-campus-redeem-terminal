@@ -41,6 +41,7 @@ import GrowthFieldCategoryPicker from '../../components/growth/GrowthFieldCatego
 import AutoResizeTextarea from '../../components/ui/AutoResizeTextarea';
 import MobileClassCascadePicker from '../../components/ui/MobileClassCascadePicker';
 import CompactSegmentedControl from '../../components/ui/CompactSegmentedControl';
+import TextSelectionControl from '../../components/ui/TextSelectionControl';
 import MobileFloatingCreateButton from '../../components/ui/MobileFloatingCreateButton';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import MobileConfirmSheet from '../../components/ui/MobileConfirmSheet';
@@ -1740,18 +1741,8 @@ const QuestionnaireManagementView: React.FC<QuestionnaireManagementViewProps> = 
     return (
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
         <PageHeader title="问卷采集" onBack={onBack} />
-        <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] pt-4 no-scrollbar">
-          <CompactSegmentedControl
-            shape="subtle"
-            motion="sliding"
-            value={listFilter}
-            items={listFilterOptions}
-            onChange={setListFilter}
-            ariaLabel="采集状态"
-            fullWidth
-            className="text-[length:var(--tm-font-size-compact)]"
-          />
-
+        <TextSelectionControl value={listFilter} items={listFilterOptions} onChange={setListFilter} ariaLabel="采集状态" variant="page" />
+        <main className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-5 pb-[calc(var(--tm-size-floating-action)+var(--tm-space-5)+var(--tm-space-5)+env(safe-area-inset-bottom))] no-scrollbar">
           {listFilter === 'ended' && archivedRecords.length > 0 && (
             <div className="mt-2 flex justify-end">
               <button

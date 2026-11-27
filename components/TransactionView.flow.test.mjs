@@ -11,7 +11,7 @@ assert.ok(flows.some(record => getGrowthCoinFlowDetail(record).startsWith('每�
 assert.ok(flows.some(record => getGrowthCoinFlowDetail(record).startsWith('每月奖励（')));
 assert.ok(flows.some(record => record.category === 'bank_interest'));
 assert.ok(flows.some(record => record.category === 'class_reward'));
-assert.ok(flows.some(record => getGrowthCoinFlowDetail(record) === '铅笔×3'));
+assert.ok(flows.some(record => getGrowthCoinFlowDetail(record) === '铅笔*12'));
 assert.ok(flows.some(record => record.category === 'exchange_refund'));
 assert.ok(flows.some(record => record.category === 'award_recovery'));
 assert.equal(new Set(flows.map(record => record.id)).size, flows.length);

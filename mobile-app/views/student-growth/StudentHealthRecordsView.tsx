@@ -19,6 +19,7 @@ import {
   validateHealthExamInput,
 } from '../../../shared/studentGrowthStore';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
+import MobileToast from '../../components/ui/MobileToast';
 import {
   BottomAction,
   PageHeader,
@@ -261,7 +262,7 @@ const StudentHealthRecordsView: React.FC<StudentHealthRecordsViewProps> = ({
           </button>
           <button type="button" onClick={() => setShowRecordMenu(false)} className={`${secondaryButton} mt-4 w-full`}>取消</button>
         </MobileBottomSheet>
-        {toast && <div className="pointer-events-none absolute inset-x-5 bottom-6 z-[70] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-text-primary)] px-4 py-3 text-center text-[13px] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">{toast}</div>}
+        <MobileToast message={toast} />
       </div>
     );
   }

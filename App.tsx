@@ -53,7 +53,6 @@ import SchoolPcDataScreen from './components/data-screen/StudentEvaluationDataSc
 import ScreenPanoramaHost from './components/screen-navigation/ScreenPanoramaHost';
 import { SchoolCockpitEntry, StudentHonorEntry } from './components/SchoolScreenEntries';
 import StudentHonorScreen from './components/student-honor-screen/StudentHonorScreen';
-import TeacherDemoSearchExample from './components/TeacherDemoSearchExample';
 import TeacherAccountSwitchPreviewControls, { TeacherSupportRegistrationPreviewControls } from './components/TeacherAccountSwitchPreviewControls';
 import TeacherMobileDeveloperNotes, { type TeacherMobileDeveloperNotesContext } from './components/TeacherMobileDeveloperNotes';
 import letoAiLogo from './assets/letoai-logo.png';
@@ -1530,7 +1529,6 @@ const AppSwitcher: React.FC = () => {
   const parentGradientScheme = defaultParentGradientPreview.schemeId;
   const parentGradientStyle = defaultParentGradientPreview.styleId;
   const [showTeacherColorPreview, setShowTeacherColorPreview] = useState(false);
-  const [showTeacherProfileSetupPreview, setShowTeacherProfileSetupPreview] = useState(false);
   const [showAirecDevicePreview, setShowAirecDevicePreview] = useState(false);
   const [showClassActionsPreview, setShowClassActionsPreview] = useState(false);
   const [showClassExchangePreview, setShowClassExchangePreview] = useState(false);
@@ -1984,7 +1982,6 @@ const AppSwitcher: React.FC = () => {
             onPreviewDeviceBoundsChange={isTeacherTabletPreview ? handleTeacherPreviewDeviceBoundsChange : undefined}
             screenRef={teacherPhoneScreenRef}
             onGradientPreviewVisibilityChange={setShowTeacherColorPreview}
-            onProfileSetupVisibilityChange={setShowTeacherProfileSetupPreview}
             onMePreviewVisibilityChange={setShowTeacherMePreview}
             onSupportDialogOpenChange={handleTeacherSupportDialogOpenChange}
             supportDialogPreview={supportDialogPreview}
@@ -2163,17 +2160,6 @@ const AppSwitcher: React.FC = () => {
               </button>
               )}
             </div>
-
-            {currentApp === 'admin' && showTeacherProfileSetupPreview && (
-              <div className="w-full max-w-[calc(50vw-246px)] self-start max-[900px]:max-w-none max-[800px]:hidden">
-                <TeacherDemoSearchExample
-                  label="完善信息预览设置"
-                  title="预览设置"
-                  instruction="在「学校」输入框输入下方关键词"
-                  example="实验"
-                />
-              </div>
-            )}
 
             {currentApp === 'teacher-mobile-lite' && showTeacherDeviceFrame && (
               <TeacherDevicePreviewControls value={teacherPreviewDevice} onChange={setTeacherPreviewDevice} />

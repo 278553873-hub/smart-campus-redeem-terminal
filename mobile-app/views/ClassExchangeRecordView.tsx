@@ -9,7 +9,7 @@ import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileTag from '../components/ui/MobileTag';
 import MobileToast from '../components/ui/MobileToast';
-import ReportDateRangeTabs from '../components/report/ReportDateRangeTabs';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 import ExchangeRecordDateFilter, { formatExchangeRecordMonth } from './exchange-records/ExchangeRecordDateFilter';
 import VendingExchangeRecordsPanel from './vending-exchange/VendingExchangeRecordsPanel';
 import {
@@ -24,14 +24,14 @@ import {
   type CampusCoinLedgerEntry,
 } from '../domain/campusCoinLedger';
 import { formatCoinAmount } from '../utils/coinFormat';
-import type { VendingExchangeRecord } from '../domain/vendingExchange';
+import type { VendingExchangeActions, VendingExchangeRecord } from '../domain/vendingExchange';
 import type { ClassInfo, Student } from '../types';
 
 interface ClassExchangeRecordViewProps {
   /** 仅用于把记录里的学生对应到头像。 */
   students: Student[];
   entries: CampusCoinLedgerEntry[];
-  onRevokeEntry: (entryId: string) => void;
+  onRevokeEntry: (entryId: string) => void | Promise<void>;
   onBack: () => void;
   /** 校内有货柜机时传入；即使暂无兑换也保留货柜页签。 */
   cabinet?: {
@@ -39,8 +39,7 @@ interface ClassExchangeRecordViewProps {
     classInfo: ClassInfo;
     records: readonly VendingExchangeRecord[];
   } | null;
-  onRefundRecord?: (record: VendingExchangeRecord) => void;
-  canRefundRecord?: (record: VendingExchangeRecord) => boolean;
+  actions?: VendingExchangeActions;
 }
 
 const tabs = [
@@ -48,7 +47,7 @@ const tabs = [
   { value: 'cabinet', label: '货柜兑换记录' },
 ] as const;
 
-const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ students, entries, onRevokeEntry, onBack, cabinet = null, onRefundRecord, canRefundRecord }) => {
+const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ students, entries, onRevokeEntry, onBack, cabinet = null, actions }) => {
   const GROWTH_COIN_TERMS = useGrowthCoinTerms();
   const [todayKey] = useState(localToday);
   const [dateRange, setDateRange] = useState<MobileDateRange>(() => ({ start: '', end: todayKey }));
@@ -57,6 +56,8 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
   const monthSectionRefs = useRef(new Map<string, HTMLElement>());
   const [detailEntryId, setDetailEntryId] = useState<string | null>(null);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
+  const [revokeError, setRevokeError] = useState('');
+  const revoking = useRef(false);
   const [statusToast, setStatusToast] = useState('');
   const [selectedTab, setSelectedTab] = useState<'class' | 'cabinet'>('class');
   const hasCabinet = Boolean(cabinet);
@@ -121,13 +122,20 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
     setSelectedTab(next);
   };
 
-  const revokeEntry = () => {
-    if (!detailEntry || !isCoinLedgerEntryRevocable(detailEntry)) return;
-    const targetId = detailEntry.id;
-    setShowRevokeConfirm(false);
-    setDetailEntryId(null);
-    onRevokeEntry(targetId);
-    setStatusToast(`已撤回本次兑换，${GROWTH_COIN_TERMS.name}已退回`);
+  const revokeEntry = async () => {
+    if (revoking.current || !detailEntry || !isCoinLedgerEntryRevocable(detailEntry)) return;
+    revoking.current = true;
+    setRevokeError('');
+    try {
+      await onRevokeEntry(detailEntry.id);
+      setShowRevokeConfirm(false);
+      setDetailEntryId(null);
+      setStatusToast(`已撤回本次兑换，${GROWTH_COIN_TERMS.name}已退回`);
+    } catch {
+      setRevokeError('撤回失败，请重试');
+    } finally {
+      revoking.current = false;
+    }
   };
 
   const renderLeadingIcon = (entry: CampusCoinLedgerEntry) => {
@@ -160,13 +168,12 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
       </header>
 
       {cabinet && (
-        <ReportDateRangeTabs
+        <TextSelectionControl
           value={activeTab}
           items={tabs}
           onChange={changeTab}
           ariaLabel="兑换记录分类"
-          semantics="tabs"
-          className="shrink-0"
+          variant="page"
         />
       )}
 
@@ -241,8 +248,7 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
             authorizedClasses={[cabinet.classInfo]}
             records={cabinet.records}
             active={activeTab === 'cabinet'}
-            onRefundRecord={onRefundRecord}
-            canRefundRecord={canRefundRecord}
+            actions={actions}
             showFilterAction={false}
           />
         </div>
@@ -352,8 +358,9 @@ const ClassExchangeRecordView: React.FC<ClassExchangeRecordViewProps> = ({ stude
           <>将退回 {detailEntry.shares.length} 名学生共 {formatCoinAmount(detailEntry.totalAmount)}<span className="inline-flex items-center gap-[var(--tm-space-1)]"><GrowthCoinIcon alt="" aria-hidden="true" className="h-4 w-4 shrink-0" /><span className="sr-only">{GROWTH_COIN_TERMS.name}</span></span>，撤回后这条记录保留并标记为已撤回。</>
         ) : ''}
         confirmLabel="撤回"
+        errorMessage={revokeError}
         onConfirm={revokeEntry}
-        onClose={() => setShowRevokeConfirm(false)}
+        onClose={() => { setRevokeError(''); setShowRevokeConfirm(false); }}
       />
 
       {statusToast && <MobileToast message={statusToast} />}

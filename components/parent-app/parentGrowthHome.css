@@ -20,9 +20,53 @@
 .pg-hero h1{font-size:22px;font-weight:600;letter-spacing:.02em;line-height:1.3}
 .pg-hero p{font-size:var(--pg-meta);color:var(--pg-muted);margin-top:7px}
 .pg-mascot{position:absolute;right:0;bottom:-17px;width:120px;height:120px;object-fit:contain;z-index:2;pointer-events:none;filter:drop-shadow(var(--pg-mascot-shadow))}
-.pg-evaluation{position:relative;padding:18px;border:1.5px solid var(--pg-evaluation-border);border-radius:28px;background:var(--pg-evaluation-background);box-shadow:var(--pg-card-shadow)}
+.pg-evaluation {
+  --pg-evaluation-gutter: 18px;
+  --stacked-glass-front-tint: var(--pg-evaluation-front-tint);
+  position: relative;
+  isolation: isolate;
+  padding: 0 var(--pg-evaluation-gutter) 6px;
+}
+.pg-evaluation-glass {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.pg-evaluation-glass .stacked-glass-card-rear {
+  fill: rgb(255 255 255 / 42%);
+  stroke-opacity: 0.55;
+}
+.pg-evaluation-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-inline-end: calc(1px - var(--pg-evaluation-gutter));
+}
+.pg-evaluation-heading .pg-card-heading { margin-block-start: 20px }
+.pg-evaluation-medals {
+  display: flex;
+  min-width: 44%;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 12px 0 4px;
+  border-radius: 0 18px 8px 8px;
+  color: var(--pg-medal-link);
+  font-size: var(--pg-meta);
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.pg-evaluation-medals strong {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.pg-evaluation-medals svg { flex: none }
 .pg-evaluation h2,.pg-bank h2{font-size:var(--pg-title);font-weight:600;line-height:1.4;letter-spacing:-.02em}
-.pg-statistics{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);align-items:center;gap:14px;margin:18px 0}
+.pg-statistics{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);align-items:center;gap:14px;margin:8px 0 18px}
 .pg-total>span{font-size:var(--pg-meta);color:var(--pg-muted);font-weight:600}
 .pg-total>div{display:flex;align-items:baseline;gap:5px;margin-top:5px}
 .pg-total strong{font-size:32px;line-height:1.15;font-weight:700;letter-spacing:-.05em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-width:0}
@@ -39,9 +83,28 @@
 .parent-growth-home .pg-records{height:48px;border-radius:24px;background:linear-gradient(105deg,var(--pg-action-start),var(--pg-action-end));color:var(--pg-inverse);font-size:15px;font-weight:600;box-shadow:var(--pg-action-shadow)}
 .parent-growth-home .pg-bank{margin-top:12px;padding:16px 18px;border-radius:28px;background:var(--pg-bank-surface);box-shadow:var(--pg-card-shadow);color:var(--pg-ink)}
 .pg-section-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.pg-evaluation>.pg-section-heading .pg-link{margin-block:-11px}
 .pg-link{display:inline-flex;align-items:center;justify-content:center;gap:3px;color:var(--pg-brand);font-size:var(--pg-body);font-weight:600}
-.pg-currency-heading{display:flex;align-items:center;gap:8px}
+.pg-evaluation .pg-evaluation-record-link { display: flex; margin-inline: auto }
+.pg-evaluation .pg-evaluation-record-link:active { transform: none }
+.pg-evaluation-record-link::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border-radius: 18px;
+  content: '';
+}
+.pg-evaluation .pg-records,
+.pg-evaluation-medals {
+  position: relative;
+  z-index: 2;
+}
+.pg-card-heading{display:flex;align-items:center;gap:8px}
+.pg-card-heading > img {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  object-fit: contain;
+}
 .pg-balances{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px;padding:12px 0;background:var(--pg-balance-background);border-radius:20px}
 .pg-balances-single{grid-template-columns:minmax(0,1fr)}
 .pg-balances>div{min-width:0;padding:0 12px;text-align:center;display:flex;flex-direction:column;gap:5px}
@@ -50,7 +113,7 @@
 .pg-balances strong{font-size:var(--pg-number);font-weight:600;line-height:1.15;letter-spacing:-.03em;color:var(--pg-ink);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .pg-bank-actions{display:flex;justify-content:space-between;gap:8px;margin-top:9px}
 .parent-growth-home .pg-bank-actions .pg-link{font-size:var(--pg-body);font-weight:500;line-height:1.5;color:var(--pg-muted)}
-@container(max-width:330px){.pg-profile{gap:7px}.pg-statistics{gap:10px}.pg-counts{padding-left:10px}.pg-count{gap:3px}.pg-total strong{font-size:32px}.pg-count svg{display:none}.pg-evaluation,.parent-growth-home .pg-bank{padding-left:14px;padding-right:14px}.pg-balances strong{font-size:28px}}
+@container(max-width:330px){.pg-profile{gap:7px}.pg-statistics{gap:10px}.pg-counts{padding-left:10px}.pg-count{gap:3px}.pg-total strong{font-size:32px}.pg-count svg{display:none}.pg-evaluation{--pg-evaluation-gutter:14px}.parent-growth-home .pg-bank{padding-left:14px;padding-right:14px}.pg-balances strong{font-size:28px}}
 @media(prefers-reduced-motion:reduce){.parent-growth-home button{transition:none}}
 .pg-reward{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px;margin-top:12px;font-size:var(--pg-body);font-weight:400;line-height:1.5;color:var(--pg-muted)}
 .pg-reward>strong{font-size:var(--pg-body);font-weight:600;color:var(--pg-ink);font-variant-numeric:tabular-nums}
@@ -58,9 +121,9 @@
 
 .parent-growth-home::-webkit-scrollbar{display:none}
 
-/* 前蹄跨过成长卡片上沿，短颈收在框沿之后。 */
-.pg-mascot--peeking{right:8px;bottom:-13px;width:158px;height:105px;filter:none}
+/* 以卡片上沿定位，前蹄压住后卡的高光边。 */
+.pg-mascot--peeking{right:8px;top:-85px;bottom:auto;width:158px;height:105px;filter:none}
 
-/* 方案二仅提升评价统计标签字号，其他视觉保持原版。 */
+/* 方案二提升成长统计标签字号。 */
 .parent-growth-home:has(.pg-mascot--peeking) .pg-total>span,
 .parent-growth-home:has(.pg-mascot--peeking) .pg-count{font-size:var(--pg-body)}

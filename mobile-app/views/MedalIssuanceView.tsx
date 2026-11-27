@@ -1,12 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Award, Check, ChevronLeft, ImagePlus, Plus } from 'lucide-react';
+import { ChevronLeft, ImagePlus, Plus } from 'lucide-react';
 import type { ClassInfo, Student } from '../types';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
-import CompactSegmentedControl from '../components/ui/CompactSegmentedControl';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 import MobileStudentPickerSheet from '../components/student/MobileStudentPickerSheet';
 import MobileSelectionIndicator from '../components/student/MobileSelectionIndicator';
 import MedalIconView from '../components/medal/MedalIcon';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import MobileFormActionBar from '../components/ui/MobileFormActionBar';
+import MobileToast from '../components/ui/MobileToast';
+import { mobileSheetActionClass } from '../components/ui/mobileSheetActionStyles';
 import { ASSETS } from '../assets/images';
 import { resolveMedalIcon } from '../assets/medals';
 import { DEFAULT_CLASS_MEDALS, DEFAULT_PLATFORM_MEDALS, PLATFORM_MEDAL_GROUPS, PLATFORM_MEDALS, type MedalDefinition, type MedalScope } from '../domain/medal';
@@ -22,7 +25,11 @@ interface MedalIssuanceViewProps {
 type SheetMode = 'students' | 'confirm' | null;
 
 const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, students, onBack, schoolMedals, onIssueSchoolMedals }) => {
-  const [selectedScope, setScope] = useState<MedalScope>('platform');
+  const [selectedScope, setScope] = useState<MedalScope>(() => (
+    schoolMedals?.some(medal => medal.scope === 'school') && !schoolMedals.some(medal => medal.scope === 'platform')
+      ? 'school'
+      : 'platform'
+  ));
   const [classMedals, setClassMedals] = useState(DEFAULT_CLASS_MEDALS);
   const [selectedMedalIds, setSelectedMedalIds] = useState<Set<string>>(new Set());
   const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
@@ -47,8 +54,8 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
     .filter(group => group.medals.length > 0);
   const customMedals = schoolMedals?.filter(medal => medal.scope === 'school') ?? [];
   const scopes: { value: MedalScope; label: string }[] = [
-    ...(!isSchoolIssuance || platformGroups.length ? [{ value: 'platform' as const, label: '平台奖章' }] : []),
-    ...(!isSchoolIssuance || customMedals.length ? [{ value: 'school' as const, label: '学校奖章' }] : []),
+    { value: 'platform', label: '平台奖章' },
+    { value: 'school', label: '学校特色奖章' },
     ...(!isSchoolIssuance ? [{ value: 'class' as const, label: '班级奖章' }] : []),
   ];
   const scope = scopes.some(item => item.value === selectedScope) ? selectedScope : scopes[0]?.value;
@@ -132,16 +139,16 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
     setIsIssuing(true);
     setIssueError('');
     try {
-      if (isSchoolIssuance && !onIssueSchoolMedals) throw new Error('颁发失败，请重试');
+      if (isSchoolIssuance && !onIssueSchoolMedals) throw new Error('发放失败，请重试');
       const result = await onIssueSchoolMedals?.(selectedStudents.map(student => student.id), selectedMedals.map(medal => medal.id));
       setSelectedStudentIds(new Set());
       setSelectedMedalIds(new Set());
       setSheetMode(null);
-      setFeedback(result || '颁发成功');
+      setFeedback(result || '发放成功');
       clearTimeout(feedbackTimer.current);
-      feedbackTimer.current = setTimeout(() => setFeedback(''), 3200);
+      feedbackTimer.current = setTimeout(() => setFeedback(''), 1800);
     } catch (error) {
-      setIssueError(error instanceof Error && error.name === 'Error' ? error.message : '颁发失败，请重试');
+      setIssueError(error instanceof Error && error.name === 'Error' ? error.message : '发放失败，请重试');
     } finally {
       submitting.current = false;
       setIsIssuing(false);
@@ -161,30 +168,24 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
   };
   const medalGridClass = 'grid grid-flow-row grid-cols-4 gap-x-[var(--tm-space-2)] gap-y-[var(--tm-space-3)]';
 
-  const selectedMedalNames = selectedMedals.map(medal => medal.name).join('、');
   return (
-    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-bg-surface)]">
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--tm-page-plain-content-bg)] text-[var(--tm-text-primary)]">
       <header className="relative flex h-[var(--tm-size-touch)] shrink-0 items-center bg-[var(--tm-page-plain-header-bg)] pl-[var(--tm-space-4)] [padding-right:max(var(--tm-space-4),var(--mini-program-capsule-right-inset,0px))]">
         <button type="button" onClick={onBack} className="-ml-[var(--tm-space-2)] flex h-[var(--tm-size-touch)] w-[var(--tm-size-touch)] items-center justify-center rounded-full text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]" aria-label="返回班级列表"><ChevronLeft className="h-5 w-5" /></button>
-        <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">颁发奖章</h1>
+        <h1 className="pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[length:var(--tm-font-size-section-title)] font-semibold text-[var(--tm-text-primary)]">发放奖章</h1>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-4)] pb-[calc(var(--tm-size-touch)+var(--tm-space-8)+var(--tm-space-8)+var(--tm-space-4))] no-scrollbar">
-        <div className="sticky top-0 z-30 -mx-[var(--tm-space-4)] bg-[var(--tm-bg-surface)] px-[var(--tm-space-4)] pb-[var(--tm-space-3)] pt-[var(--tm-space-4)]">
-          {scope && scopes.length > 1 && <CompactSegmentedControl<MedalScope>
-            shape="subtle"
-            value={scope}
-            onChange={setScope}
-            ariaLabel="奖章分类"
-            fullWidth
-            motion="sliding"
-            semantics="tabs"
-            className="w-full"
-            items={scopes}
-          />}
-        </div>
+      {scope && scopes.length > 1 && <TextSelectionControl<MedalScope>
+        value={scope}
+        onChange={setScope}
+        ariaLabel="奖章分类"
+        variant="page"
+        items={scopes}
+      />}
 
-        {scope === 'platform' && (
+      <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--tm-page-plain-content-bg)] px-[var(--tm-space-4)] pt-[var(--tm-layout-first-card-gap)] pb-[var(--tm-space-4)] no-scrollbar">
+
+        {scope === 'platform' && (platformGroups.length > 0 ? (
           <div className="space-y-[var(--tm-layout-card-gap)]" aria-label="平台奖章分类">
             {platformGroups.map(group => (
               <section key={group.id} aria-labelledby={`medal-group-${group.id}`}>
@@ -193,12 +194,11 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
               </section>
             ))}
           </div>
-        )}
+        ) : <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="暂无可发放的奖章" className="min-h-[360px]" />)}
 
-        {scope === 'school' && (isSchoolIssuance
-          ? <div className={medalGridClass} aria-label="学校奖章">{customMedals.map(renderMedal)}</div>
+        {scope === 'school' && (customMedals.length > 0
+          ? <div className={medalGridClass} aria-label="学校特色奖章">{customMedals.map(renderMedal)}</div>
           : <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="请联系学校管理员添加" className="min-h-[360px]" />)}
-        {!scope && <MobileEmptyState imageSrc={ASSETS.DEFAULT_STATE.BOX_CLIPBOARD} title="暂无可发放的奖章" className="min-h-[360px]" />}
 
         {scope === 'class' && <div className={medalGridClass} aria-label="班级奖章">
           {classMedals.map(renderMedal)}
@@ -209,15 +209,12 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         </div>}
       </div>
 
-      <footer className="absolute inset-x-0 bottom-0 z-30 border-t border-[var(--tm-border-subtle)] bg-[var(--tm-bg-surface-glass)] px-[var(--tm-space-4)] pb-[calc(var(--tm-space-4)+env(safe-area-inset-bottom))] pt-[var(--tm-space-3)] backdrop-blur-xl">
-        {selectedMedals.length > 0 && (
-          <div aria-live="polite" className="mb-[var(--tm-space-2)] flex min-h-6 items-center gap-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold">
-            <span className="shrink-0 text-[var(--tm-brand-primary)]">已选 {selectedMedals.length} 枚</span>
-            <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap text-[var(--tm-text-secondary)] no-scrollbar">{selectedMedalNames}</span>
-          </div>
-        )}
-        <button type="button" disabled={selectedMedals.length === 0} onClick={() => setSheetMode('students')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">选择学生</button>
-      </footer>
+      <MobileFormActionBar
+        label="选择学生"
+        type="button"
+        disabled={selectedMedals.length === 0}
+        onClick={() => setSheetMode('students')}
+      />
 
       <MobileStudentPickerSheet
         open={sheetMode === 'students'}
@@ -236,16 +233,16 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
           onToggle: toggleAllStudents,
         }}
         footer={(
-          <button type="button" disabled={selectedStudentIds.size === 0} onClick={() => setSheetMode('confirm')} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-4 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">
-            {selectedStudentIds.size > 0 ? `颁发奖章（${selectedStudentIds.size}人）` : '颁发奖章'}
+          <button type="button" disabled={selectedStudentIds.size === 0} onClick={() => setSheetMode('confirm')} className={`${mobileSheetActionClass} flex w-full items-center justify-center bg-[var(--tm-brand-primary)] px-4 font-bold text-[var(--tm-text-inverse)] enabled:active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]`}>
+            {selectedStudentIds.size > 0 ? `发放奖章（${selectedStudentIds.size}人）` : '发放奖章'}
           </button>
         )}
       />
 
       <MobileBottomSheet open={sheetMode === 'confirm'} title="确认发放" onClose={() => { if (!isIssuing) setSheetMode(null); }} footer={(
         <div className="grid grid-cols-2 gap-[var(--tm-space-3)]">
-          <button type="button" disabled={isIssuing} onClick={() => { setIssueError(''); setSheetMode('students'); }} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-1)] rounded-[var(--tm-radius-control-compact)] border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-secondary)] active:bg-[var(--tm-bg-surface-soft)]"><ChevronLeft className="h-4 w-4" />返回修改</button>
-          <button type="button" disabled={isIssuing || !selectedMedals.length || !selectedStudents.length} onClick={issueMedals} className="flex min-h-[var(--tm-size-touch)] items-center justify-center gap-[var(--tm-space-2)] rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] px-3 text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:opacity-50"><Award className="h-[18px] w-[18px]" />{isIssuing ? '发放中…' : '确认发放'}</button>
+          <button type="button" disabled={isIssuing} onClick={() => { setIssueError(''); setSheetMode('students'); }} className={`${mobileSheetActionClass} flex items-center justify-center border border-[var(--tm-border-control)] bg-[var(--tm-bg-surface)] px-3 font-semibold text-[var(--tm-text-secondary)] enabled:active:bg-[var(--tm-bg-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-50`}>返回修改</button>
+          <button type="button" disabled={isIssuing || !selectedMedals.length || !selectedStudents.length} onClick={issueMedals} className={`${mobileSheetActionClass} flex items-center justify-center bg-[var(--tm-brand-primary)] px-3 font-bold text-[var(--tm-text-inverse)] enabled:active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-50`}>{isIssuing ? '发放中…' : '确认发放'}</button>
         </div>
       )}>
         <div className="space-y-[var(--tm-space-5)] pb-[var(--tm-space-2)]">
@@ -269,15 +266,25 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
               <h3 id="confirm-students-title" className="text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-primary)]">发放学生</h3>
               <span className="shrink-0 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-tertiary)]">{selectedStudents.length}人</span>
             </div>
-            <div className="mt-[var(--tm-space-3)] grid grid-cols-3 gap-x-[var(--tm-space-3)] gap-y-[var(--tm-space-2)]" role="list" aria-label="待发放学生">
-              {selectedStudents.map(student => <span key={student.id} role="listitem" className="min-w-0 break-words text-center text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-primary)]">{student.name}</span>)}
+            <div className="mt-[var(--tm-space-3)] grid grid-cols-3 gap-[var(--tm-space-3)]" role="list" aria-label="待发放学生">
+              {selectedStudents.map(student => (
+                <div key={student.id} role="listitem" className="flex min-w-0 flex-col items-center gap-[var(--tm-space-1)] text-center">
+                  <img
+                    src={student.avatar || (student.gender === 'female' ? ASSETS.AVATAR.GENERIC_GIRL : ASSETS.AVATAR.GENERIC_BOY)}
+                    alt=""
+                    decoding="async"
+                    className="h-12 w-12 shrink-0 rounded-full bg-[var(--tm-bg-surface-muted)] object-cover"
+                  />
+                  <span className="w-full break-words text-[length:var(--tm-font-size-compact)] font-medium leading-5 text-[var(--tm-text-primary)]">{student.name}</span>
+                </div>
+              ))}
             </div>
           </section>
         </div>
       </MobileBottomSheet>
 
       <MobileBottomSheet open={showCreateMedal} title="新增班级奖章" onClose={() => setShowCreateMedal(false)} footer={(
-        <button type="button" disabled={!newMedalName.trim()} onClick={createClassMedal} className="flex min-h-[var(--tm-size-touch)] w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-bold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-strong)] disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]">保存奖章</button>
+        <button type="button" disabled={!newMedalName.trim()} onClick={createClassMedal} className={`${mobileSheetActionClass} flex w-full items-center justify-center bg-[var(--tm-brand-primary)] font-bold text-[var(--tm-text-inverse)] enabled:active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2 disabled:bg-[var(--tm-bg-surface-muted)] disabled:text-[var(--tm-text-disabled)]`}>保存奖章</button>
       )}>
         <div className="space-y-[var(--tm-form-section-gap)]">
           <label className="block space-y-2">
@@ -301,7 +308,7 @@ const MedalIssuanceView: React.FC<MedalIssuanceViewProps> = ({ classInfo, studen
         </div>
       </MobileBottomSheet>
 
-      {feedback && <div role="status" className="pointer-events-none absolute inset-x-4 top-[calc(var(--tm-size-touch)+var(--tm-space-4))] z-50 flex min-h-[var(--tm-size-touch)] items-center justify-center gap-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-chart-tooltip)] px-4 text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-floating)]"><Check className="h-4 w-4" />{feedback}</div>}
+      <MobileToast message={feedback} />
     </div>
   );
 };

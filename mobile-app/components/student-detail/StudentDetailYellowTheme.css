@@ -1,0 +1,103 @@
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-back:active,
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-metric:active,
+.student-detail-page[data-color-theme='yellow'] .student-detail-timeline-row:active {
+    background: transparent;
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-edit:active,
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-status:active {
+    opacity: 1;
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-shortcut:active {
+    filter: none;
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-edit {
+    color: var(--tm-brand-primary-strong);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-info h1,
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-total strong {
+    color: var(--tm-text-primary);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-metric-value {
+    color: var(--tm-brand-primary);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-meta,
+.student-detail-page[data-color-theme='yellow'] .student-detail-profile-metric-label {
+    color: var(--tm-text-secondary);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-shortcut--medals {
+    --shortcut-accent: var(--tm-brand-primary-strong);
+    --shortcut-surface-start: var(--tm-brand-primary-soft);
+    --shortcut-surface-end: var(--tm-brand-primary-soft-strong);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-title {
+    color: var(--tm-text-inverse);
+    text-shadow: 0 1px 2px color-mix(in srgb, var(--tm-brand-primary-strong) 68%, transparent);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-title::before {
+    background: linear-gradient(
+        112deg,
+        var(--tm-brand-primary),
+        var(--tm-gold-header-middle) 62%,
+        var(--tm-gold-header-end)
+    );
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-title::after {
+    background: var(--tm-brand-primary);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-indicator-pill {
+    color: var(--student-detail-growth-indicator-inactive-text);
+    background: var(--tm-brand-primary-soft);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-indicator[aria-pressed='true'] .student-detail-growth-indicator-pill {
+    color: var(--student-detail-growth-indicator-active-text);
+    background: var(--tm-brand-primary);
+}
+
+.student-detail-page[data-color-theme='yellow'] .student-detail-growth-plot {
+    --tm-brand-reward: var(--tm-brand-primary);
+    --tm-chart-line-gradient-to: var(--tm-gold-header-middle);
+    --tm-text-primary: var(--student-detail-growth-chart-label);
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+    .student-detail-page[data-color-theme='yellow'] .student-detail-growth {
+        --student-detail-growth-indicator-inactive-text: var(--tm-brand-primary-strong);
+    }
+
+    .student-detail-page[data-color-theme='yellow'] .student-detail-profile-metric-value,
+    .student-detail-page[data-color-theme='yellow'] .student-detail-growth-title {
+        color: var(--tm-text-primary);
+    }
+
+    .student-detail-page[data-color-theme='yellow'] .student-detail-growth-title {
+        text-shadow: none;
+    }
+
+    .student-detail-page[data-color-theme='yellow'] .student-detail-growth-plot {
+        --tm-brand-reward: var(--student-detail-growth-chart-contrast);
+        --tm-chart-line-gradient-to: initial;
+    }
+}
+
+@media (forced-colors: active) {
+    .student-detail-page[data-color-theme='yellow'] .student-detail-growth-indicator[aria-pressed='true'] .student-detail-growth-indicator-pill {
+        outline: 1px solid Highlight;
+        outline-offset: -1px;
+    }
+}
+.student-detail-page[data-color-theme='yellow'] {
+    font-family: var(--tm-font-family-body);
+}
+

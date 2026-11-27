@@ -31,9 +31,10 @@ export const createDemoVendingCabinets = (schoolId: string): VendingCabinetInven
 };
 
 /** 与现有演示花名册及商品共用数据来源；生产环境由兑换明细接口替换此适配层。 */
-export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudents, today, getClassLabel = item => item.name }: {
+export const createDemoVendingExchangeRecords = ({ schoolId, classes, classOrder = classes, getStudents, today, getClassLabel = item => item.name }: {
   schoolId: string;
   classes: readonly ClassInfo[];
+  classOrder?: readonly ClassInfo[];
   getStudents: (classId: string) => readonly Student[];
   today: string;
   getClassLabel?: (item: ClassInfo) => string;
@@ -41,7 +42,9 @@ export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudent
   const products = MOCK_PRODUCTS.filter(product => product.type === 'standard');
   const categoryNames = new Map(DEFAULT_SHOP_CATEGORIES.map(item => [item.id, item.name]));
   const offsets = [0, 0, 1, 2, 3, 6, 9, 12, 18, 25, 38, 65];
-  return classes.flatMap((classInfo, classIndex) => {
+  const classIndexById = new Map(classOrder.map((item, index) => [item.id, index]));
+  return classes.flatMap((classInfo, indexInScope) => {
+    const classIndex = classIndexById.get(classInfo.id) ?? indexInScope;
     const students = getStudents(classInfo.id);
     if (!students.length) return [];
     return offsets.map((offset, index) => {
@@ -49,8 +52,7 @@ export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudent
       const product = products[(classIndex * 7 + index * 13) % products.length];
       const terminal = TERMINAL_DEVICES[(classIndex + index) % TERMINAL_DEVICES.length];
       const status: VendingExchangeStatus = index === 4 ? 'failed' : 'completed';
-      const quantity = index === 7 ? 2 : 1;
-      const chargedAmount = Number((quantity * product.price).toFixed(2));
+      const chargedAmount = Number(product.price.toFixed(2));
       const date = shiftDate(today, -offset);
       const minute = `${date} ${String(10 + index % 7).padStart(2, '0')}:${String((classIndex * 3 + index * 7) % 60).padStart(2, '0')}`;
       return {
@@ -60,7 +62,7 @@ export const createDemoVendingExchangeRecords = ({ schoolId, classes, getStudent
         classId: classInfo.id, className: getClassLabel(classInfo), gradeName: classInfo.gradeLevel,
         productId: product.id, productName: product.name, productImage: product.image, categoryId: product.category ?? 'uncategorized',
         categoryName: categoryNames.get(product.category ?? '') ?? '未分类',
-        quantity, unitPrice: product.price, chargedAmount,
+        unitPrice: product.price, chargedAmount,
         terminalDeviceId: terminal.id, terminalDeviceName: terminal.name,
         channelName: `${String(index % 7 + 1).padStart(2, '0')}${String(classIndex % 7 + 1).padStart(2, '0')}`,
         time: `${minute}:00`, status,

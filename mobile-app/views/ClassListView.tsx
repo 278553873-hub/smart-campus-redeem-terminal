@@ -518,7 +518,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
                     onClick: () => runClassAction(onViewRewardVerification),
                 },
                 ...((canIssueMedalsInClass?.(activeActionClass.id) ?? !isSchoolSpace) ? [{
-                    label: '颁发奖章',
+                    label: '发放奖章',
                     icon: AwardIcon,
                     onClick: () => runClassAction(onViewMedalIssuance),
                 }] : []),
@@ -580,7 +580,7 @@ const ClassListView: React.FC<ClassListViewProps> = ({
             ],
         } : null,
     ] as Array<ClassActionGroup | null>).filter((group): group is ClassActionGroup => group !== null)
-        .map(group => ({ ...group, items: group.items.filter(item => showUnreleasedClassTools || !['作业录入', '颁发奖章', '家长端展示'].includes(item.label)) }))
+        .map(group => ({ ...group, items: group.items.filter(item => showUnreleasedClassTools || !['作业录入', '家长端展示'].includes(item.label)) }))
         .filter(group => group.items.length > 0) : [];
 
     const copyClassCode = async (classInfo: ClassInfo) => {

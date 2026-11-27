@@ -9,6 +9,7 @@ import MobileBottomSheet from '../components/ui/MobileBottomSheet';
 import MobileClassCascadePicker from '../components/ui/MobileClassCascadePicker';
 import MobileConfirmSheet from '../components/ui/MobileConfirmSheet';
 import MobileEmptyState from '../components/ui/MobileEmptyState';
+import MobileToast from '../components/ui/MobileToast';
 import type { ClassInfo } from '../types';
 import { getTeacherClassDisplayName, getTeacherSchoolGradeOptions, type TeacherSpaceOption } from '../domain/teacherSpaceAccess';
 
@@ -784,11 +785,7 @@ const EvaluationRecordsLogView: React.FC<EvaluationRecordsLogViewProps> = ({ cla
                 onConfirm={deleteActiveRecord}
             />
 
-            {statusMessage && (
-                <div role="status" className="pointer-events-none absolute bottom-5 left-1/2 z-[1200] -translate-x-1/2 rounded-full bg-[var(--tm-text-primary)] px-4 py-2 text-[length:var(--tm-font-size-meta)] font-medium text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)]">
-                    {statusMessage}
-                </div>
-            )}
+            <MobileToast message={statusMessage} />
         </div>
     );
 };

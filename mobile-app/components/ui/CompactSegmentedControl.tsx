@@ -1,4 +1,5 @@
 import React from 'react';
+import './CompactSegmentedControl.css';
 
 export interface CompactSegmentedControlItem<TValue extends string> {
   value: TValue;
@@ -15,10 +16,10 @@ interface CompactSegmentedControlProps<TValue extends string> {
   sizing?: 'equal' | 'content';
   className?: string;
   semantics?: 'tabs' | 'group';
-  density?: 'default' | 'compact' | 'comfortable';
+  density?: 'default' | 'compact' | 'small';
   motion?: 'static' | 'sliding';
   variant?: 'default' | 'settings';
-  shape?: 'default' | 'subtle';
+  shape?: 'default' | 'subtle' | 'pill';
   disabled?: boolean;
 }
 
@@ -61,9 +62,8 @@ const CompactSegmentedControl = <TValue extends string,>({
   const selectedWeight = items[selectedIndex]?.weight ?? 1;
   const precedingWeight = items.slice(0, selectedIndex).reduce((sum, item) => sum + (item.weight ?? 1), 0);
   const settingsVariant = variant === 'settings';
-  const compact = !settingsVariant && density === 'compact';
-  const comfortable = !settingsVariant && density === 'comfortable';
-  const insetTrack = compact || comfortable;
+  const small = !settingsVariant && density === 'small';
+  const insetTrack = small || (!settingsVariant && density === 'compact');
   const subtleShape = shape === 'subtle';
   const trackRadiusStyle = subtleShape ? { borderRadius: 'var(--tm-form-control-radius)' } : undefined;
   const activeRadiusStyle = subtleShape ? {
@@ -77,22 +77,21 @@ const CompactSegmentedControl = <TValue extends string,>({
       ? `calc(var(--tm-selection-segment-settings-item-width) * ${items.length})`
       : undefined
     : undefined;
-  const touchHeightClass = comfortable
-    ? 'h-[var(--tm-selection-segment-comfortable-touch-height)]'
-    : 'h-[var(--tm-selection-touch-height)]';
-  const touchMinHeightClass = comfortable
-    ? 'min-h-[var(--tm-selection-segment-comfortable-touch-height)]'
-    : 'min-h-[var(--tm-selection-touch-height)]';
-  const trackHeightClass = comfortable
-    ? 'h-[var(--tm-selection-segment-comfortable-track-height)]'
-    : compact
+  const trackHeightClass = small
+    ? 'h-[var(--tm-selection-segment-small-track-height)]'
+    : insetTrack
       ? 'h-[var(--tm-selection-segment-compact-track-height)]'
       : 'h-[var(--tm-selection-touch-height)]';
-  const activeHeightClass = comfortable
-    ? 'h-[var(--tm-selection-segment-comfortable-active-height)]'
-    : compact
+  const activeHeightClass = small
+    ? 'h-[var(--tm-selection-segment-small-active-height)]'
+    : insetTrack
       ? 'h-[var(--tm-selection-segment-compact-active-height)]'
       : 'h-[var(--tm-selection-segment-visible-height)]';
+  const fontSizeClass = small
+    ? 'text-[length:var(--tm-selection-segment-small-font-size)]'
+    : insetTrack
+      ? 'text-[length:var(--tm-selection-segment-compact-font-size)]'
+      : 'text-[length:var(--tm-font-size-body)]';
   const motionInsetClass = insetTrack
     ? 'px-[var(--tm-selection-segment-compact-inset)]'
     : 'px-[var(--tm-space-1)]';
@@ -100,7 +99,7 @@ const CompactSegmentedControl = <TValue extends string,>({
   return (
     <div
       ref={rootRef}
-      className={`${fullWidth ? 'grid w-full' : 'inline-grid'} relative ${touchHeightClass} items-center ${insetTrack ? 'text-[length:var(--tm-selection-segment-compact-font-size)]' : 'text-[length:var(--tm-font-size-body)]'} ${contentSizing ? 'px-[var(--tm-space-1)]' : ''} ${className}`}
+      className={`${fullWidth ? 'grid w-full' : 'inline-grid'} relative h-[var(--tm-selection-touch-height)] items-center ${fontSizeClass} ${contentSizing ? motionInsetClass : ''} ${shape === 'pill' ? 'mobile-segmented-control--pill' : ''} ${className}`}
       style={{
         gridTemplateColumns: contentSizing ? `repeat(${items.length}, max-content)` : items.map(item => `minmax(0, ${item.weight ?? 1}fr)`).join(' '),
         width: contentSizing ? 'max-content' : fullWidth ? undefined : settingsWidth,
@@ -116,6 +115,7 @@ const CompactSegmentedControl = <TValue extends string,>({
       {effectiveMotion === 'sliding' && (
         <span
           aria-hidden="true"
+          data-sliding-indicator-track
           className="pointer-events-none absolute inset-x-0 top-1/2 z-[1] -translate-y-1/2"
         >
           <span
@@ -150,7 +150,7 @@ const CompactSegmentedControl = <TValue extends string,>({
             aria-pressed={semantics === 'group' ? selected : undefined}
             disabled={disabled}
             onClick={() => !disabled && onChange(item.value)}
-            className={`${fullWidth || settingsVariant ? 'min-w-0' : 'min-w-[72px]'} relative z-10 flex ${touchMinHeightClass} items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${disabled ? 'cursor-not-allowed opacity-75' : ''} ${contentSizing ? 'px-0' : effectiveMotion === 'sliding' ? motionInsetClass : (insetTrack ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
+            className={`${fullWidth || settingsVariant ? 'min-w-0' : small ? 'min-w-[var(--tm-size-touch)]' : 'min-w-[72px]'} relative z-10 flex min-h-[var(--tm-selection-touch-height)] items-center justify-center font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus-ring)] ${disabled ? 'cursor-not-allowed opacity-75' : ''} ${contentSizing ? 'px-0' : effectiveMotion === 'sliding' ? motionInsetClass : (insetTrack ? 'px-[var(--tm-selection-segment-compact-inset)] py-0' : 'p-[var(--tm-space-1)]')}`}
           >
             <span style={activeRadiusStyle} className={`relative z-10 flex w-full items-center justify-center ${contentSizing ? 'whitespace-nowrap px-[var(--tm-space-3)]' : settingsVariant ? 'whitespace-nowrap px-[var(--tm-space-1)]' : 'px-[var(--tm-space-2)]'} [transition-duration:var(--tm-duration-fast)] motion-reduce:transition-none ${insetTrack ? 'rounded-[var(--tm-selection-segment-compact-active-radius)]' : 'rounded-[var(--tm-radius-control)]'} ${effectiveMotion === 'sliding' ? 'transition-colors' : 'transition-[background-color,color,box-shadow]'} ${activeHeightClass} ${selectedClass}`}>
               {item.label}

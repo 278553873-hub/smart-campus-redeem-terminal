@@ -1,79 +1,130 @@
 import React from 'react';
 import MobileBottomSheet from '../../components/ui/MobileBottomSheet';
 import { GrowthCoinIcon, useGrowthCoinTerms } from '../../../components/GrowthCoinBranding';
-import type { VendingExchangeRecord } from '../../domain/vendingExchange';
+import { formatVendingExchangeClassLabel, getVendingExchangeOperations, type VendingCorrection, type VendingExchangeRecord } from '../../domain/vendingExchange';
 import { formatCoinAmount } from '../../utils/coinFormat';
 import VendingExchangeStatusTags from './VendingExchangeStatusTags';
 
-function CoinAmount({ amount }: { amount: number }) {
+const operationLabels = {
+  exchange: '兑换，扣币',
+  system_refund: '未出货，自动退币',
+  refund: '未出货，退回',
+  charge: '已出货，补扣',
+} as const;
+
+const sectionTitleClass = 'text-[length:var(--tm-font-size-form-group-label)] font-semibold text-[var(--tm-text-primary)]';
+
+function CoinAmount({ amount, compact = false }: { amount: number; compact?: boolean }) {
   const coinTerms = useGrowthCoinTerms();
-  return <span className="inline-flex items-center gap-[var(--tm-space-1)]" aria-label={`${formatCoinAmount(amount)}${coinTerms.name}`}>
-    <GrowthCoinIcon alt="" aria-hidden="true" className="h-[var(--tm-space-4)] w-[var(--tm-space-4)] shrink-0" />{formatCoinAmount(amount)}
+  return <span className="inline-flex items-center gap-[var(--tm-space-1)] tabular-nums">
+    <GrowthCoinIcon alt="" aria-hidden="true" className={`shrink-0 ${compact ? 'size-[var(--tm-space-3)]' : 'size-[var(--tm-space-4)]'}`} />{formatCoinAmount(amount)}
+    <span className="sr-only"> {coinTerms.name}</span>
   </span>;
 }
 
-export default function VendingExchangeDetailSheet({ record, onClose, canRefund = false, onRequestRefund }: {
+export default function VendingExchangeDetailSheet({ record, onClose, correction, onRequestCorrection }: {
   record: VendingExchangeRecord | null;
   onClose: () => void;
-  canRefund?: boolean;
-  onRequestRefund?: () => void;
+  correction?: VendingCorrection;
+  onRequestCorrection?: () => void;
 }) {
-  const refundRows: [string, React.ReactNode][] = [];
-  if (record && (record.status === 'failed' || record.refundStatus !== 'none')) {
-    let operator = '—';
-    let refundTime = '—';
-    if (record.refundStatus === 'refunded') {
-      operator = record.refundReason === 'exchange_revoked' ? record.refundedBy?.trim() || '—' : '系统';
-      refundTime = record.refundedAt?.trim() || '—';
-    }
-    refundRows.push(
-      ['已退币数', <CoinAmount amount={record.refundedAmount} />],
-      ['退币人', operator],
-      ['退币时间', refundTime],
-    );
-  }
-  const groups: { title: string; rows: [string, React.ReactNode][] }[] = record ? [
-    { title: '兑换结果', rows: [
-      ['兑换状态', <VendingExchangeStatusTags record={record} />],
-      ...refundRows,
-    ] },
-    { title: '商品信息', rows: [
-      ['商品名称', record.productName], ['商品分类', record.categoryName], ['兑换数量', `${record.quantity}件`],
-      ['兑换时单价', <CoinAmount amount={record.unitPrice} />], ['实际扣币', <CoinAmount amount={record.chargedAmount} />],
-    ] },
-    { title: '学生信息', rows: [['学生姓名', record.studentName], ['学号', record.studentNo || '—'], ['年级', record.gradeName], ['班级', record.className]] },
-    { title: '兑换信息', rows: [['兑换时间', record.time], ['终端设备名称', record.terminalDeviceName], ['货道', record.channelName], ['兑换单号', record.orderNo]] },
-  ] : [];
+  const cabinetLabel = [record?.terminalDeviceName, record?.channelName && `${record.channelName} 货道`].filter(Boolean).join(' · ');
   return (
     <MobileBottomSheet
       open={Boolean(record)}
       title="兑换详情"
       onClose={onClose}
-      footer={canRefund && onRequestRefund ? (
+      footer={correction && onRequestCorrection ? (
         <button
           type="button"
-          onClick={onRequestRefund}
+          onClick={onRequestCorrection}
           className="flex h-12 w-full items-center justify-center rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-brand-primary)] text-[length:var(--tm-font-size-body)] font-semibold text-[var(--tm-text-inverse)] transition active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)]"
         >
-          未出货，退币
+          {correction === 'refund' ? '未出货，退币' : '已出货，补扣'}
         </button>
       ) : undefined}
     >
-      <div className="divide-y divide-[var(--tm-border-subtle)] pb-[var(--tm-space-4)]">
-        {groups.map(group => (
-          <section key={group.title} className="py-[var(--tm-space-3)] first:pt-0">
-            <h2 className="mb-[var(--tm-space-2)] text-[length:var(--tm-font-size-form-group-label)] [font-weight:var(--tm-font-weight-semibold)] text-[var(--tm-text-primary)]">{group.title}</h2>
-            <dl className="space-y-[var(--tm-space-3)]">
-              {group.rows.map(([label, value]) => (
-                <div key={label} className="flex items-start justify-between gap-[var(--tm-space-4)] text-[length:var(--tm-font-size-body)] tm-font-regular leading-relaxed">
-                  <dt className="shrink-0 text-[var(--tm-text-secondary)]">{label}</dt>
-                  <dd className="min-w-0 break-words text-right tabular-nums text-[var(--tm-text-primary)] [overflow-wrap:anywhere]">{value}</dd>
-                </div>
-              ))}
-            </dl>
+      {record && (
+        <div className="divide-y divide-[var(--tm-border-subtle)] pt-[var(--tm-space-3)]">
+          <section className="space-y-[var(--tm-space-2)] pb-[var(--tm-space-3)]">
+            <h2 className={sectionTitleClass}>学生信息</h2>
+            <DetailFields fields={[
+              ['学生姓名', record.studentName],
+              ['所在班级', formatVendingExchangeClassLabel(record) || '—'],
+            ]} />
           </section>
-        ))}
-      </div>
+          <section className="pt-[var(--tm-space-3)]">
+            <div className="mb-[var(--tm-space-2)] flex flex-wrap items-center justify-between gap-x-[var(--tm-space-3)] gap-y-[var(--tm-space-1)]">
+              <h2 className={sectionTitleClass}>兑换信息</h2>
+              <VendingExchangeStatusTags record={record} />
+            </div>
+            <DetailFields fields={[
+              ['商品', record.productName],
+              ['价格', <CoinAmount amount={record.unitPrice} />],
+              ['货柜', cabinetLabel || '—'],
+              ['兑换单号', record.orderNo || '—'],
+            ]} />
+            <VendingExchangeOperationHistory record={record} />
+          </section>
+        </div>
+      )}
     </MobileBottomSheet>
+  );
+}
+
+function DetailFields({ fields }: { fields: [string, React.ReactNode][] }) {
+  return (
+    <dl className="space-y-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] leading-5 text-[var(--tm-text-secondary)]">
+      {fields.map(([label, value]) => (
+        <div key={label} className="flex flex-wrap justify-between gap-x-[var(--tm-space-3)]">
+          <dt className="shrink-0">{label}</dt>
+          <dd className="ml-auto min-w-0 max-w-full text-right tabular-nums text-[var(--tm-text-primary)] [overflow-wrap:anywhere]">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function VendingExchangeOperationHistory({ record }: { record: VendingExchangeRecord }) {
+  const operations = [
+    { type: 'exchange' as const, amount: record.chargedAmount, operator: record.studentName, time: record.time, shortfall: undefined },
+    ...getVendingExchangeOperations(record),
+  ].reverse();
+
+  return (
+    <table aria-label="兑换操作记录" className="mt-[var(--tm-space-3)] w-full table-fixed border-separate border-spacing-0 text-left">
+      <thead className="sticky top-0 z-10 bg-[var(--tm-bg-surface)] text-[length:var(--tm-font-size-meta)] text-[var(--tm-text-secondary)]">
+        <tr className="[&>th]:bg-[var(--tm-bg-surface-soft)] [&>th]:py-[var(--tm-space-2)] [&>th]:font-medium [&>th:first-child]:rounded-l-[var(--tm-radius-control)] [&>th:last-child]:rounded-r-[var(--tm-radius-control)]">
+          <th scope="col" className="w-[19%] pl-[var(--tm-space-2)] pr-[var(--tm-space-2)]">操作人</th>
+          <th scope="col" className="w-[38%] pr-[var(--tm-space-2)]">操作时间</th>
+          <th scope="col">操作</th>
+        </tr>
+      </thead>
+      <tbody className="text-[length:var(--tm-font-size-meta)] tm-font-regular leading-5 tabular-nums text-[var(--tm-text-secondary)] [&>tr:not(:last-child)>td]:border-b">
+        {operations.map((operation, index) => {
+          const time = operation.time?.slice(0, 16);
+          return (
+            <tr key={operations.length - index} className="[&>td]:border-[var(--tm-border-subtle)] [&>td]:py-[var(--tm-space-3)] [&>td]:align-top">
+              <td className="px-[var(--tm-space-2)] [overflow-wrap:anywhere]">{operation.operator}</td>
+              <td className="pr-[var(--tm-space-2)]">
+                {time ? (
+                  <time dateTime={time.replace(' ', 'T')}>
+                    <span className="whitespace-nowrap">{time.slice(0, 10)}</span>{' '}
+                    <span className="whitespace-nowrap">{time.slice(11)}</span>
+                  </time>
+                ) : '—'}
+              </td>
+              <td className="pr-[var(--tm-space-2)]">
+                <div className="flex flex-wrap items-center gap-x-[var(--tm-space-1)]">
+                  <span>{operationLabels[operation.type]}</span>
+                  <CoinAmount amount={operation.amount} compact />
+                  {!!operation.shortfall && <span className="inline-flex items-center gap-[var(--tm-space-1)]">少扣 <CoinAmount amount={operation.shortfall} compact /></span>}
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }

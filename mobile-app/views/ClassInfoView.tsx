@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { MobileCard } from '../components/ui/MobileCard';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import MobileToast from '../components/ui/MobileToast';
+import TextSelectionControl from '../components/ui/TextSelectionControl';
 import TeacherAvatarImage from '../components/TeacherAvatar';
 import {
   buildClassName,
@@ -501,24 +503,6 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
     const visibleItems = parentTab === 'unbound' ? unboundParents : boundParents;
     return (
       <>
-        <div className="mb-[var(--tm-space-4)] grid grid-cols-2 rounded-[var(--tm-radius-control-compact)] bg-[var(--tm-bg-surface-muted)] p-[var(--tm-space-1)]" role="tablist" aria-label="家长绑定状态">
-          {([
-            { key: 'unbound' as const, label: '未绑定', count: unboundParents.length },
-            { key: 'bound' as const, label: '已绑定', count: boundParents.length },
-          ]).map(item => (
-            <button
-              key={item.key}
-              type="button"
-              role="tab"
-              aria-selected={parentTab === item.key}
-              onClick={() => setParentTab(item.key)}
-              className={`min-h-[var(--tm-size-touch)] rounded-[var(--tm-form-segment-active-radius)] text-[length:var(--tm-font-size-compact)] font-semibold tabular-nums ${parentTab === item.key ? 'bg-[var(--tm-bg-surface)] text-[var(--tm-text-primary)] [box-shadow:var(--tm-shadow-control)]' : 'text-[var(--tm-text-secondary)]'}`}
-            >
-              {item.label}({item.count})
-            </button>
-          ))}
-        </div>
-
         {visibleItems.length === 0 && (
           <div className="flex min-h-32 items-center justify-center text-[length:var(--tm-font-size-body)] text-[var(--tm-text-tertiary)]">
             {parentTab === 'unbound' ? '暂无未绑定学生' : '暂无已绑定家长'}
@@ -619,6 +603,19 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         <h1 className={`${phoneText.navTitle} pointer-events-none absolute inset-x-[calc(var(--tm-size-touch)+var(--tm-space-4))] truncate text-center text-[var(--tm-text-primary)]`}>{title}</h1>
       </header>
 
+      {page === 'parents' && (
+        <TextSelectionControl<ParentBindingTab>
+          value={parentTab}
+          items={[
+            { value: 'unbound', label: <span className="tabular-nums">未绑定({unboundParents.length})</span> },
+            { value: 'bound', label: <span className="tabular-nums">已绑定({boundParents.length})</span> },
+          ]}
+          onChange={setParentTab}
+          ariaLabel="家长绑定状态"
+          variant="page"
+        />
+      )}
+
       <div className="min-h-0 flex-1 overflow-y-auto px-[var(--tm-space-5)] py-[var(--tm-space-4)] no-scrollbar">
         {page === 'detail' && renderDetail()}
         {page === 'teachers' && renderTeacherList()}
@@ -654,13 +651,7 @@ const ClassInfoView: React.FC<ClassInfoViewProps> = ({
         </footer>
       )}
 
-      {toast && (
-        <div className="pointer-events-none absolute inset-x-[var(--tm-space-5)] top-[var(--tm-space-3)] z-[80] flex justify-center" role="status" aria-live="polite">
-          <div className={`rounded-[var(--tm-radius-control-compact)] px-[var(--tm-space-4)] py-[var(--tm-space-2)] text-[length:var(--tm-font-size-compact)] font-semibold text-[var(--tm-text-inverse)] [box-shadow:var(--tm-shadow-card-raised)] ${toast.success ? 'bg-[var(--tm-text-primary)]' : 'bg-[var(--tm-status-negative)]'}`}>
-            {toast.message}
-          </div>
-        </div>
-      )}
+      <MobileToast message={toast?.message ?? ''} />
 
       <MobileBottomSheet
         open={showEditSheet}

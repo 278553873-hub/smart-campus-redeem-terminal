@@ -1,12 +1,7 @@
-import React, { useId, useRef, useState } from 'react';
-import { AutoComplete } from '@arco-design/web-react';
-import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import React, { useId, useState } from 'react';
 import MobileFormActionBar from '../components/ui/MobileFormActionBar';
 import MobilePageHeader from '../components/ui/MobilePageHeader';
-import { mobileSheetActionClass } from '../components/ui/mobileSheetActionStyles';
-import { B_END_SCHOOL_OPTIONS, findBEndSchools, normalizeSchoolName, type BEndSchoolOption } from '../domain/teacherSchoolDirectory';
 import { phoneText } from '../styles/teacherMobileTokens';
-import './TeacherProfileSetupView.css';
 
 interface TeacherProfileSetupViewProps {
   onBack: () => void;
@@ -23,42 +18,21 @@ const fieldCardClass = 'rounded-[var(--tm-form-card-radius)] bg-[var(--tm-bg-sur
 const TeacherProfileSetupView: React.FC<TeacherProfileSetupViewProps> = ({ onBack, onSubmit }) => {
   const [name, setName] = useState('');
   const [schoolName, setSchoolName] = useState('');
-  const [selectedSchool, setSelectedSchool] = useState<BEndSchoolOption | null>(null);
-  const [blockedSchool, setBlockedSchool] = useState<BEndSchoolOption | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
   const nameId = useId();
   const schoolId = useId();
   const schoolHintId = useId();
   const trimmedName = name.trim();
   const trimmedSchoolName = schoolName.trim();
   const canSubmit = Boolean(trimmedName && trimmedSchoolName);
-  const schoolOptions = findBEndSchools(schoolName).map(school => school.name);
-
-  const handleSchoolChange = (value: string) => {
-    setSchoolName(value);
-    setSelectedSchool(null);
-  };
-
-  const handleSchoolSelect = (value: string) => {
-    setSelectedSchool(B_END_SCHOOL_OPTIONS.find(school => school.name === value) ?? null);
-  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canSubmit) return;
-    // 选择列表里的学校、或直接输入完整校名，都视为重复开通 B 端学校。
-    const matchedSchool = selectedSchool
-      ?? B_END_SCHOOL_OPTIONS.find(school => normalizeSchoolName(school.name) === normalizeSchoolName(trimmedSchoolName))
-      ?? null;
-    if (matchedSchool) {
-      setBlockedSchool(matchedSchool);
-      return;
-    }
     onSubmit({ name: trimmedName, schoolName: trimmedSchoolName });
   };
 
   return (
-    <div ref={rootRef} className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)] antialiased">
+    <div className="relative flex h-full min-h-0 flex-col text-[var(--tm-text-primary)] antialiased">
       <MobilePageHeader title="完善信息" onBack={onBack} />
 
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col bg-[var(--tm-page-plain-content-bg)]">
@@ -80,23 +54,16 @@ const TeacherProfileSetupView: React.FC<TeacherProfileSetupViewProps> = ({ onBac
 
             <div className={fieldCardClass}>
               <label htmlFor={schoolId} className={fieldLabelClass}>学校</label>
-              <AutoComplete
+              <input
+                id={schoolId}
                 value={schoolName}
-                data={schoolOptions}
-                onChange={handleSchoolChange}
-                onSelect={handleSchoolSelect}
+                onChange={event => setSchoolName(event.target.value)}
+                maxLength={SCHOOL_MAX_LENGTH}
+                autoComplete="off"
+                enterKeyHint="done"
+                aria-describedby={schoolHintId}
+                className={fieldClass}
                 placeholder="请输入学校名称"
-                className="teacher-school-autocomplete mt-2"
-                inputProps={{
-                  id: schoolId,
-                  maxLength: SCHOOL_MAX_LENGTH,
-                  autoComplete: 'organization',
-                  enterKeyHint: 'done',
-                  'aria-describedby': schoolHintId,
-                }}
-                filterOption={(inputValue, option) => normalizeSchoolName(String(option.props.value)).includes(normalizeSchoolName(inputValue))}
-                getPopupContainer={() => rootRef.current ?? document.body}
-                triggerProps={{ className: 'teacher-school-autocomplete-popup' }}
               />
               <p id={schoolHintId} className={`${phoneText.helper} mt-2 text-[var(--tm-text-tertiary)]`}>
                 填写学校后，可更快找到同校老师创建的班级
@@ -107,21 +74,6 @@ const TeacherProfileSetupView: React.FC<TeacherProfileSetupViewProps> = ({ onBac
 
         <MobileFormActionBar type="submit" label="进入体验" disabled={!canSubmit} />
       </form>
-
-      <MobileBottomSheet
-        open={Boolean(blockedSchool)}
-        title="该学校已启用试用"
-        onClose={() => setBlockedSchool(null)}
-        footer={(
-          <button type="button" onClick={() => setBlockedSchool(null)} className={`${mobileSheetActionClass} flex w-full items-center justify-center bg-[var(--tm-brand-primary)] px-[var(--tm-space-4)] font-semibold text-[var(--tm-text-inverse)] active:bg-[var(--tm-brand-primary-pressed)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus-ring)] focus-visible:ring-offset-2`}>
-            我知道了
-          </button>
-        )}
-      >
-        <p className="text-pretty text-[length:var(--tm-font-size-body)] font-medium leading-6 text-[var(--tm-text-secondary)]">
-          学校已完成学生信息导入，无需自行创建账号。请联系学校负责人，将您的账号添加到后台。
-        </p>
-      </MobileBottomSheet>
     </div>
   );
 };

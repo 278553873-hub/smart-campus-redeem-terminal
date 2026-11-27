@@ -1,0 +1,173 @@
+.student-detail-growth {
+    --tm-focus-ring: var(--tm-brand-reward-strong);
+    position: relative;
+    isolation: isolate;
+    container: student-detail-growth / inline-size;
+    min-width: 0;
+    padding-bottom: var(--tm-space-2);
+}
+
+.student-detail-growth::before {
+    position: absolute;
+    z-index: -1;
+    inset: var(--tm-space-4) 0 0;
+    border-radius: 18px;
+    background: var(--tm-bg-surface);
+    box-shadow: var(--tm-shadow-card-ambient);
+    content: '';
+}
+
+.student-detail-growth-title {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    width: fit-content;
+    max-width: 90%;
+    min-block-size: var(--tm-space-8);
+    align-items: center;
+    margin: 0;
+    margin-inline-start: calc(0px - var(--tm-space-2));
+    padding-block: var(--tm-space-1);
+    padding-inline: calc(var(--tm-space-4) + var(--tm-space-2)) var(--tm-space-4);
+    color: #fff;
+    font-family: 'Yuanti SC', 'YouYuan', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    font-size: var(--tm-font-size-section-title);
+    font-weight: var(--tm-student-detail-display-weight);
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-shadow: 0 1px 1px #8b4e003d;
+    -webkit-text-stroke: 0.6px currentColor;
+}
+
+.student-detail-growth-title::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: 8px 8px 7px 0;
+    background: linear-gradient(175deg, #f6b600 0%, #ffbd16 38%, #f5a100 100%);
+    content: '';
+}
+
+@supports (clip-path: shape(from 0 0, line to 100% 100%, close)) {
+    .student-detail-growth-title::before {
+        border-radius: 0;
+        clip-path: shape(
+            from 0 100%,
+            line to 4px 7px,
+            curve to 11px 0 with 5px 3px / 8px 0,
+            line to calc(100% - 11px) 0,
+            curve to calc(100% - 4px) 6px with calc(100% - 7px) 0 / calc(100% - 5px) 2px,
+            line to 100% calc(100% - 7px),
+            curve to calc(100% - 7px) 100% with 100% calc(100% - 3px) / calc(100% - 3px) 100%,
+            close
+        );
+    }
+}
+
+.student-detail-growth-title::after {
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline-start: 0;
+    width: var(--tm-space-2);
+    height: 6px;
+    background: #ed9404;
+    clip-path: polygon(0 0, 100% 0, 100% 100%);
+    content: '';
+}
+
+.student-detail-growth-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tm-space-2);
+    padding-inline: var(--tm-space-4);
+}
+
+.student-detail-growth-total {
+    margin: 0;
+    color: var(--tm-text-secondary);
+    font-size: var(--tm-font-size-compact);
+    overflow-wrap: anywhere;
+}
+
+.student-detail-growth-total strong {
+    color: var(--tm-brand-reward-strong);
+    font-size: var(--tm-font-size-metric);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+}
+
+.student-detail-growth-period {
+    flex: 0 0 calc(2 * var(--tm-size-touch));
+}
+
+.student-detail-growth-indicators {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(max(56px, calc((100% - 4 * var(--tm-space-1)) / 5)), 1fr));
+    column-gap: var(--tm-space-1);
+    padding-inline: var(--tm-space-4);
+}
+
+.student-detail-growth-indicator {
+    display: grid;
+    min-width: 0;
+    min-height: var(--tm-size-touch);
+    place-items: center;
+    border-radius: var(--tm-radius-control-compact);
+    font-size: var(--tm-font-size-meta);
+    font-weight: var(--tm-font-weight-regular);
+    text-align: center;
+}
+
+.student-detail-growth-indicator-pill {
+    width: 100%;
+    min-height: 26px;
+    padding: var(--tm-space-1);
+    border-radius: 999px;
+    background: var(--tm-brand-reward-soft);
+    color: var(--tm-brand-reward-strong);
+    line-height: 18px;
+    overflow-wrap: anywhere;
+}
+
+/* 五列和四列布局中，第二行的胶囊靠上，保留完整触控区。 */
+@container student-detail-growth (width >= 328px) {
+    .student-detail-growth-indicator:nth-child(n+6) {
+        align-items: start;
+    }
+}
+
+@container student-detail-growth (268px <= width < 328px) {
+    .student-detail-growth-indicator:nth-child(n+5) {
+        align-items: start;
+    }
+}
+
+.student-detail-growth-indicator-score {
+    color: var(--tm-text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.student-detail-growth-indicator[aria-pressed='true'] .student-detail-growth-indicator-pill {
+    background: var(--tm-student-detail-accent);
+    color: var(--tm-text-primary);
+    font-weight: var(--tm-font-weight-semibold);
+}
+
+.student-detail-growth-indicator:focus-visible {
+    outline: 2px solid var(--tm-focus-ring);
+    outline-offset: -2px;
+}
+
+.student-detail-growth-plot,
+.student-detail-growth-empty {
+    height: 140px;
+    margin: 0 var(--tm-space-2);
+}
+
+.student-detail-growth-empty {
+    display: grid;
+    place-items: center;
+    color: var(--tm-text-secondary);
+    font-size: var(--tm-font-size-body);
+}

@@ -1,0 +1,366 @@
+.student-detail-overview {
+    display: grid;
+    gap: var(--tm-layout-card-gap);
+    min-width: 0;
+    padding-top: var(--tm-gold-header-identity-top);
+    color: var(--tm-text-primary);
+}
+
+.student-detail-overview button:focus-visible {
+    outline: 2px solid var(--tm-focus-ring);
+    outline-offset: 2px;
+}
+
+.student-detail-profile-toolbar {
+    --student-detail-toolbar-side: calc(var(--tm-size-touch) + 3px);
+    --student-detail-toolbar-capsule-space: calc(
+        var(--mini-program-capsule-right-inset, 0px) - var(--tm-gold-header-gutter) + var(--tm-space-2)
+    );
+    /* 资料卡的金色背景向上延伸，工具栏整体叠在背景上方。 */
+    position: relative;
+    z-index: 1;
+    inset-block-start: calc(0px - var(--tm-gold-header-content-top) - var(--tm-gold-header-identity-top));
+    display: grid;
+    grid-template-columns:
+        minmax(var(--student-detail-toolbar-side), 1fr)
+        minmax(0, max-content)
+        minmax(max(var(--student-detail-toolbar-side), var(--student-detail-toolbar-capsule-space)), 1fr);
+    align-items: center;
+    margin-bottom: calc(var(--tm-gold-header-toolbar-gap) - var(--tm-layout-card-gap));
+}
+
+.student-detail-profile-back {
+    display: grid;
+    width: var(--tm-size-touch);
+    height: var(--tm-size-touch);
+    margin-inline-start: 3px;
+    place-items: center;
+    border-radius: 50%;
+}
+
+.student-detail-profile-back:active {
+    background: #fff6be;
+}
+
+.student-detail-profile {
+    position: relative;
+    container-type: inline-size;
+    min-width: 0;
+    border-radius: 18px;
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+.student-detail-profile-rear {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.student-detail-profile-glass {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.student-detail-profile-edit {
+    position: absolute;
+    z-index: 3;
+    inset: var(--profile-rear-offset) 1px auto auto;
+    display: flex;
+    width: calc(40% - var(--profile-notch-shift));
+    min-height: var(--tm-size-touch);
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 0 var(--tm-space-2) var(--tm-space-3) var(--tm-space-3);
+    border-radius: 0 18px 8px 8px;
+    color: #704710;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 17px;
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.student-detail-profile-edit svg {
+    flex: none;
+}
+
+.student-detail-profile-edit:active {
+    opacity: 0.7;
+}
+
+.student-detail-profile-surface {
+    position: relative;
+    isolation: isolate;
+    z-index: 2;
+    display: flex;
+    min-height: var(--tm-gold-header-profile-height);
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 18px;
+    padding-block: calc(var(--profile-notch-depth) - var(--tm-space-2)) 11px;
+}
+
+.student-detail-profile-identity {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 4.6cqw, 20px);
+    padding-inline: clamp(16px, 6.3cqw, 26px);
+}
+
+.student-detail-profile-avatar-frame {
+    position: relative;
+    flex: none;
+    width: calc(clamp(48px, 14.6cqw, 62px) * 1.1);
+}
+
+.student-detail-profile-avatar {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #ffedb6;
+    object-fit: cover;
+}
+
+.student-detail-profile-gender {
+    position: absolute;
+    inset: auto 0 0 auto;
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: #e5faef;
+    color: #159962;
+}
+
+.student-detail-profile-gender[data-gender="female"] {
+    background: #fff0f2;
+    color: #e14d64;
+}
+
+.student-detail-profile-info {
+    min-width: 0;
+}
+
+.student-detail-profile-name-row {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+}
+
+.student-detail-profile-info h1 {
+    min-width: 0;
+    margin: 0;
+    color: #232321;
+    font-size: 20px;
+    font-weight: 750;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.student-detail-profile-meta {
+    display: grid;
+    gap: 2px;
+    margin-top: 3px;
+    color: #605e56;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.student-detail-profile-status {
+    position: relative;
+    display: inline-flex;
+    min-width: var(--tm-size-touch);
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    background: var(--tm-student-detail-status-active-bg);
+    color: var(--tm-text-inverse);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+    white-space: nowrap;
+}
+
+.student-detail-profile-status::after {
+    position: absolute;
+    inset: 50% 0 auto;
+    height: var(--tm-size-touch);
+    transform: translateY(-50%);
+    content: '';
+}
+
+.student-detail-profile-status svg {
+    flex: none;
+    transform: rotate(180deg);
+}
+
+.student-detail-profile-status[data-left] {
+    min-width: 52px;
+    padding: 5px 8px;
+    background: var(--tm-bg-surface-muted);
+    color: var(--tm-text-secondary);
+}
+
+@media (prefers-contrast: more) {
+    .student-detail-profile-status:not([data-left]) {
+        color: var(--tm-text-primary);
+    }
+}
+
+.student-detail-profile-status:active {
+    opacity: 0.7;
+}
+
+.student-detail-profile-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+    padding: 0 6px;
+    list-style: none;
+}
+
+.student-detail-profile-metrics li {
+    min-width: 0;
+}
+
+.student-detail-profile-metric {
+    display: flex;
+    width: 100%;
+    min-height: var(--tm-size-touch);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 4px;
+    border-radius: var(--tm-radius-control-compact);
+    text-align: center;
+}
+
+.student-detail-profile-metric:active {
+    background: #f5e9cb;
+}
+
+.student-detail-profile-metric-value {
+    max-width: 100%;
+    color: var(--tm-student-detail-accent);
+    font-size: var(--tm-student-detail-metric-size);
+    font-weight: var(--tm-student-detail-display-weight);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+    .student-detail-profile-metric-value {
+        color: var(--tm-text-primary);
+    }
+}
+
+.student-detail-profile-metric-label {
+    max-width: 100%;
+    color: #575650;
+    font-size: var(--tm-font-size-meta);
+    font-weight: 500;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+.student-detail-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tm-space-2);
+}
+
+.student-detail-shortcut {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(64px, 42%);
+    min-width: 0;
+    min-height: calc(var(--tm-size-touch) + var(--tm-space-4));
+    align-items: center;
+    column-gap: var(--tm-space-1);
+    padding-inline-start: var(--tm-space-3);
+    overflow: hidden;
+    border-radius: var(--tm-radius-control-compact);
+    background:
+        radial-gradient(ellipse 61px 36px at 22px -8px, #fff3 66%, #fff9 79%, #fff0 96%),
+        linear-gradient(110deg, var(--shortcut-surface-start), var(--shortcut-surface-end));
+    text-align: start;
+    font-size: var(--tm-font-size-body);
+    line-height: 1.25;
+}
+
+.student-detail-shortcut::before {
+    grid-area: 1 / 2;
+    width: 100%;
+    align-self: end;
+    aspect-ratio: 1;
+    margin-block-end: calc(0px - var(--tm-space-1));
+    background: var(--shortcut-art) center / contain no-repeat;
+    opacity: var(--shortcut-art-opacity, 0.88);
+    pointer-events: none;
+    content: '';
+}
+
+.student-detail-shortcut--medals {
+    --shortcut-accent: #785019;
+    --shortcut-surface-start: #fff9e7;
+    --shortcut-surface-end: #fff0bb;
+    --shortcut-art: url('../../assets/resources/student-detail/shortcut-medals-glass.png');
+    --shortcut-art-opacity: 1;
+}
+
+.student-detail-shortcut--reports {
+    --shortcut-accent: #184e6d;
+    --shortcut-surface-start: #eaf8ff;
+    --shortcut-surface-end: #dcefff;
+    --shortcut-art: url('../../assets/resources/student-detail/shortcut-reports-glass.png');
+}
+
+.student-detail-shortcut:active {
+    filter: brightness(0.96);
+}
+
+.student-detail-shortcut-copy {
+    display: grid;
+    grid-area: 1 / 1;
+    min-width: 0;
+    gap: 2px;
+    padding-block: var(--tm-space-2);
+    overflow-wrap: anywhere;
+}
+
+.student-detail-shortcut-title {
+    font-weight: 600;
+}
+
+.student-detail-shortcut-count {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--tm-space-1);
+    color: var(--shortcut-accent);
+}
+
+.student-detail-shortcut-value {
+    min-width: 0;
+    font-size: var(--tm-font-size-group-title);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.student-detail-shortcut-count svg {
+    flex: none;
+}

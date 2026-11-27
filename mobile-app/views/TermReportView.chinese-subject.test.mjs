@@ -13,8 +13,7 @@ for (const dimension of ['课堂小明星', '识字小达人', '小小书法家'
 assert.match(reportSource, /scale=\{usesFirstGradeChineseRubric \? 'stars' : 'score'\}/);
 assert.match(reportSource, /usesFirstGradeChineseRubric \? '期末总评' : '学期等级'/);
 assert.match(reportSource, /return `\$\{Math\.round\(averageStars\)\}星`/);
-assert.match(reportSource, /role="tablist" aria-label="切换学科报告"/);
-assert.match(reportSource, /min-h-\[var\(--tm-size-touch\)\]/);
+assert.match(reportSource, /showSubjectSubPage && \(\s+<TextSelectionControl[^>]*ariaLabel="切换学科报告"[^>]*variant="page"/);
 assert.match(reportSource, /className="flex min-h-full w-full flex-col bg-white animate-in slide-in-from-right duration-300"/);
 assert.doesNotMatch(reportSource, /w-full h-full bg-white z-\[60\] flex flex-col sticky top-0/);
 assert.match(chartSource, /scale\?: 'score' \| 'stars'/);

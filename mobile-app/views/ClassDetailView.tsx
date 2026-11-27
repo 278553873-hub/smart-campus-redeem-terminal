@@ -12,6 +12,7 @@ import {
 import MobileEmptyState from '../components/ui/MobileEmptyState';
 import MobileSearchInput from '../components/ui/MobileSearchInput';
 import MobileBottomSheet from '../components/ui/MobileBottomSheet';
+import { MobileImageSelectionTile } from '../components/ui/MobileImageTile';
 import MobileSettingsSwitchRow from '../components/ui/MobileSettingsSwitchRow';
 import CardEvaluationDisplaySettings from '../components/student-performance/CardEvaluationDisplaySettings';
 import CardLevelDisplaySettings from '../components/student-performance/CardLevelDisplaySettings';
@@ -238,7 +239,11 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
             setPetNotice('已为全班学生领取初始蛋');
         } catch (error) { setPetClaimError(error instanceof Error ? error.message : '领取失败，请重试'); }
     };
-    const studentCardDisplaySettings = getStudentCardDisplaySettings(classInfo.studentCardDisplaySettings);
+    const studentCardDisplaySettings = getStudentCardDisplaySettings(classInfo.studentCardDisplaySettings ?? {
+        showLevel: false,
+        showFullStudentNo: false,
+        showEvaluation: false,
+    });
     const groupCardDisplaySettings = getGroupCardDisplaySettings(classInfo.groupCardDisplaySettings);
     const [activeView, setActiveView] = useState<'student' | 'group'>('student');
     const [searchQuery, setSearchQuery] = useState('');
@@ -1745,21 +1750,14 @@ const ClassDetailView: React.FC<ClassDetailViewProps> = ({
                                 {studentGroupAvatarOptions.map((preset) => {
                                     const selected = preset.key === studentGroupAvatarKey;
                                     return (
-                                        <button
-                                            type="button"
+                                        <MobileImageSelectionTile
                                             key={preset.key}
                                             onClick={() => setStudentGroupAvatarKey(preset.key)}
-                                            aria-pressed={selected}
-                                            aria-label={`${selected ? '已选择' : '选择'}${preset.label}小组头像`}
-                                            className={`relative aspect-square min-w-0 overflow-hidden rounded-[var(--tm-radius-card-compact)] border-2 bg-[var(--tm-bg-surface-soft)] ${selected ? 'border-[var(--tm-brand-primary)] ring-2 ring-[var(--tm-brand-primary-soft-strong)]' : 'border-transparent'}`}
+                                            selected={selected}
+                                            ariaLabel={`${selected ? '已选择' : '选择'}${preset.label}小组头像`}
                                         >
                                             <img src={preset.src} alt="" className="h-full w-full object-cover" decoding="async" />
-                                            {selected && (
-                                                <span className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-[var(--tm-brand-primary)] text-white [box-shadow:var(--tm-shadow-icon)]" aria-hidden="true">
-                                                    <CheckIcon className="h-3.5 w-3.5 [stroke-width:3]" />
-                                                </span>
-                                            )}
-                                        </button>
+                                        </MobileImageSelectionTile>
                                     );
                                 })}
                             </div>
